@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type JuryRolle = "mitglied" | "verantwortlicher" | "admin";
+export type JuryRolle = "mitglied" | "admin";
 
 export type JuryKontext = {
   rolle: JuryRolle;

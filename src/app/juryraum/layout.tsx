@@ -8,7 +8,7 @@ const NAV = [
   { href: "/juryraum/turniere", label: "Turniere" },
   { href: "/juryraum/besetzungen", label: "Besetzungen" },
   { href: "/juryraum/verfuegbarkeiten", label: "Verfügbarkeit" },
-  { href: "/juryraum/einladungen", label: "Einladungen", mindestens: "verantwortlicher" as const },
+  { href: "/juryraum/einladungen", label: "Einladungen", mindestens: "admin" as const },
   { href: "/juryraum/anreise", label: "Anreise" },
   { href: "/juryraum/unterkunft", label: "Unterkunft" },
   { href: "/juryraum/nachrichten", label: "Nachrichten" },
@@ -16,7 +16,7 @@ const NAV = [
   { href: "/juryraum/admin", label: "Administration", mindestens: "admin" as const },
 ];
 
-const ROLLEN_RANG = { mitglied: 0, verantwortlicher: 1, admin: 2 };
+const ROLLEN_RANG = { mitglied: 0, admin: 1 };
 
 export default async function JuryraumLayout({
   children,
@@ -54,11 +54,7 @@ export default async function JuryraumLayout({
           </div>
           <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>
             {kontext.verbandName ?? "Alle Verbände"} ·{" "}
-            {kontext.rolle === "admin"
-              ? "Administrator"
-              : kontext.rolle === "verantwortlicher"
-                ? "Verantwortlich"
-                : "Juror·in"}
+            {kontext.rolle === "admin" ? "JuryRaum-Verantwortliche" : "Juror·in"}
           </div>
         </div>
         <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
