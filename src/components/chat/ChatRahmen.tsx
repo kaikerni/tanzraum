@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useSelectedLayoutSegment, useRouter } from "next/navigation";
 import { Search, SquarePen, Megaphone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { alsChatEintrag, type ChatEintrag } from "@/lib/chat/getChat";
+import { alsChatEintrag, type ChatEintrag, type ChatStatus } from "@/lib/chat/getChat";
+import { ChatFreigaben } from "./ChatFreigaben";
 import { ChatAvatar, zeitKurz } from "./ChatAvatar";
 
-export function ChatRahmen({ start, children }: { start: ChatEintrag[]; children: React.ReactNode }) {
+export function ChatRahmen({ start, status, children }: { start: ChatEintrag[]; status: ChatStatus; children: React.ReactNode }) {
   const segment = useSelectedLayoutSegment();
   const router = useRouter();
   const [chats, setChats] = useState(start);
@@ -74,6 +75,7 @@ export function ChatRahmen({ start, children }: { start: ChatEintrag[]; children
             />
           </label>
         </div>
+        <ChatFreigaben status={status} />
         <ul className="flex-1 overflow-y-auto">
           {gefiltert.length === 0 && (
             <li className="px-5 py-8 text-center text-[13.5px] text-brand-ink-soft">

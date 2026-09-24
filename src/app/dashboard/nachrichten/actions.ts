@@ -103,3 +103,12 @@ export async function verbindungEntfernen(userId: string): Promise<AktionsErgebn
   revalidatePath("/dashboard/nachrichten/neu");
   return { error: null, ok: "Verbindung entfernt." };
 }
+
+export async function chatFreigabeSetzen(kindUserId: string, erteilt: boolean): Promise<AktionsErgebnis> {
+  if (!UUID.test(kindUserId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { error } = await supabase.rpc("chat_einwilligung_setzen", { p_kind_user_id: kindUserId, p_erteilt: erteilt });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath("/dashboard/nachrichten", "layout");
+  return { error: null, ok: erteilt ? "Chat freigeschaltet." : "Chat-Freigabe widerrufen." };
+}

@@ -163,3 +163,21 @@ export async function getVerbindungen(supabase: SupabaseClient): Promise<Verbind
   // deno-lint-ignore no-explicit-any
   return ((data ?? []) as any[]).map((v) => ({ userId: v.user_id, anzeige: v.anzeige, handle: v.handle, avatarUrl: v.avatar_url, status: v.status }));
 }
+
+export type ChatStatus = {
+  ichMinderjaehrig: boolean;
+  ichFreigeschaltet: boolean;
+  kinder: { userId: string; name: string; minderjaehrig: boolean; freigeschaltet: boolean }[];
+};
+
+export async function getChatStatus(supabase: SupabaseClient): Promise<ChatStatus> {
+  const { data } = await supabase.rpc("chat_status");
+  // deno-lint-ignore no-explicit-any
+  const s = ((data ?? []) as any[])[0];
+  return {
+    ichMinderjaehrig: Boolean(s?.ich_minderjaehrig),
+    ichFreigeschaltet: s ? Boolean(s.ich_freigeschaltet) : true,
+    // deno-lint-ignore no-explicit-any
+    kinder: ((s?.kinder ?? []) as any[]).map((k) => ({ userId: k.user_id, name: k.name, minderjaehrig: k.minderjaehrig, freigeschaltet: k.freigeschaltet })),
+  };
+}

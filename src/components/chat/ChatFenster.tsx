@@ -196,11 +196,13 @@ export function ChatFenster({
   start,
   startBilder,
   userId,
+  freigabeFehlt = false,
 }: {
   kopf: ChatKopf;
   start: ChatNachricht[];
   startBilder: Record<string, string>;
   userId: string;
+  freigabeFehlt?: boolean;
 }) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -541,7 +543,9 @@ export function ChatFenster({
       {!kopf.darfSchreiben ? (
         <div className="flex min-h-14 items-center justify-center gap-2 border-t border-brand-line bg-white px-4 text-center text-[13px] text-brand-ink-soft">
           <Megaphone size={15} />
-          {kopf.typ === "platform"
+          {freigabeFehlt
+            ? "Zum Schreiben müssen deine Eltern den Chat für dich freischalten."
+            : kopf.typ === "platform"
             ? "Hier schreibt nur das TanzRaum-Team."
             : kopf.typ === "dm"
               ? "In diesem Chat kann nicht mehr geschrieben werden."
