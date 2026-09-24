@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { signUp, type SignupState } from "./actions";
 
 const initialState: SignupState = { error: null, emailBestaetigenNoetig: false };
@@ -15,7 +16,7 @@ function SubmitButton() {
 }
 
 export function SignupForm() {
-  const [state, formAction] = useFormState(signUp, initialState);
+  const [state, formAction] = useActionState(signUp, initialState);
 
   if (state.emailBestaetigenNoetig) {
     return (

@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   --red: #c91919;
   --red-deep: #8f1013;
@@ -5,6 +7,12 @@
   --gold: #b88927;
   --gold-light: #e7cd8f;
   --gold-wash: #faf3e3;
+  --navy: #1c2b4a;
+  --navy-soft: #3a4a6b;
+  --green: #1e7a34;
+  --green-wash: #e6f4ea;
+  --amber: #b8790f;
+  --amber-wash: #fdf1e0;
   --ink: #211d1b;
   --ink-soft: #6b6560;
   --ink-faint: #a29c95;
@@ -15,6 +23,26 @@
   --radius-m: 10px;
   --radius-l: 16px;
   --shadow: 0 1px 2px rgba(33, 29, 27, 0.04), 0 8px 24px -12px rgba(33, 29, 27, 0.1);
+}
+
+@theme {
+  --color-brand-red: #c91919;
+  --color-brand-red-deep: #8f1013;
+  --color-brand-red-wash: #fbe9e9;
+  --color-brand-gold: #b88927;
+  --color-brand-gold-wash: #faf3e3;
+  --color-brand-navy: #1c2b4a;
+  --color-brand-navy-soft: #3a4a6b;
+  --color-brand-green: #1e7a34;
+  --color-brand-green-wash: #e6f4ea;
+  --color-brand-amber: #b8790f;
+  --color-brand-amber-wash: #fdf1e0;
+  --color-brand-ink: #211d1b;
+  --color-brand-ink-soft: #6b6560;
+  --color-brand-ink-faint: #a29c95;
+  --color-brand-line: #e7e2da;
+  --color-brand-bg: #f6f4f0;
+  --font-display: "Bricolage Grotesque", sans-serif;
 }
 
 * {
