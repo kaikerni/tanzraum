@@ -49,8 +49,8 @@ export function AppSidebar({
 
   return (
     <aside className="hidden md:flex w-[240px] shrink-0 flex-col border-r border-brand-line bg-white px-3 py-5">
-      <div className="mb-5 flex items-center gap-2 rounded-xl bg-brand-red-wash px-3 py-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-red text-sm font-bold text-white">
+      <div className="mb-5 flex items-center gap-2.5 rounded-xl bg-gradient-to-br from-brand-red-wash to-brand-gold-wash px-3 py-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-red text-sm font-bold text-white shadow-sm">
           {name
             .split(" ")
             .map((p) => p[0])
@@ -72,12 +72,15 @@ export function AppSidebar({
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px] font-medium transition-colors ${
+              className={`relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px] font-medium transition-all duration-150 ${
                 active
                   ? "bg-brand-red-wash text-brand-red-deep"
-                  : "text-brand-ink-soft hover:bg-brand-bg hover:text-brand-ink"
+                  : "text-brand-ink-soft hover:translate-x-0.5 hover:bg-brand-bg hover:text-brand-ink"
               }`}
             >
+              {active && (
+                <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand-red" />
+              )}
               <Icon size={17} strokeWidth={2} />
               {item.label}
             </Link>
@@ -87,7 +90,7 @@ export function AppSidebar({
 
       <Link
         href="/dashboard/hilfe"
-        className="mt-3 flex items-center gap-2 rounded-lg border border-brand-line px-3 py-2.5 text-[13px] font-medium text-brand-ink-soft hover:bg-brand-bg"
+        className="mt-3 flex items-center gap-2 rounded-lg border border-brand-line px-3 py-2.5 text-[13px] font-medium text-brand-ink-soft transition-colors hover:border-brand-gold hover:bg-brand-gold-wash hover:text-brand-ink"
       >
         <HelpCircle size={16} />
         Support &amp; Hilfe

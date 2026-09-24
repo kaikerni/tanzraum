@@ -33,9 +33,11 @@ export function QuickActions() {
             <Link
               key={a.href}
               href={a.href}
-              className="flex flex-col items-center gap-2 rounded-xl border border-brand-line bg-white px-3 py-4 text-center transition-colors hover:border-brand-red hover:bg-brand-red-wash"
+              className="group flex flex-col items-center gap-2.5 rounded-xl border border-brand-line bg-white px-3 py-4 text-center transition-all duration-150 hover:-translate-y-0.5 hover:border-brand-red hover:shadow-[var(--shadow-hover)]"
             >
-              <Icon size={20} className="text-brand-red" strokeWidth={2} />
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-red-wash text-brand-red transition-transform duration-150 group-hover:scale-110">
+                <Icon size={19} strokeWidth={2} />
+              </span>
               <span className="text-[12.5px] font-medium leading-tight text-brand-ink">{a.label}</span>
             </Link>
           );

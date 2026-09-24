@@ -18,8 +18,8 @@ export function AppHeader({
   const [menuOffen, setMenuOffen] = useState(false);
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-4 border-b border-brand-line bg-white px-6">
-      <Link href="/dashboard" className="flex shrink-0 items-center">
+    <header className="relative z-10 flex h-16 shrink-0 items-center gap-4 border-b border-brand-line bg-white px-6 shadow-[0_1px_0_rgba(33,29,27,0.04)]">
+      <Link href="/dashboard" className="flex shrink-0 items-center transition-opacity hover:opacity-80">
         <Image
           src="/tanzraum-logo-banner.webp"
           alt="TanzRaum"
@@ -30,7 +30,7 @@ export function AppHeader({
         />
       </Link>
 
-      <div className="mx-auto flex max-w-xl flex-1 items-center gap-2 rounded-full border border-brand-line bg-brand-bg px-4 py-2">
+      <div className="mx-auto flex max-w-xl flex-1 items-center gap-2 rounded-full border border-brand-line bg-brand-bg px-4 py-2 transition-all focus-within:border-brand-red focus-within:bg-white focus-within:shadow-[var(--shadow)]">
         <Search size={16} className="text-brand-ink-soft" />
         <input
           type="search"

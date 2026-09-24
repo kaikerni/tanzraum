@@ -19,10 +19,11 @@
   --paper: #ffffff;
   --bg: #f6f4f0;
   --line: #e7e2da;
-  --radius-s: 6px;
-  --radius-m: 10px;
-  --radius-l: 16px;
-  --shadow: 0 1px 2px rgba(33, 29, 27, 0.04), 0 8px 24px -12px rgba(33, 29, 27, 0.1);
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 20px;
+  --shadow: 0 1px 2px rgba(33, 29, 27, 0.04), 0 12px 28px -14px rgba(33, 29, 27, 0.14);
+  --shadow-hover: 0 4px 10px rgba(33, 29, 27, 0.06), 0 20px 36px -16px rgba(33, 29, 27, 0.18);
 }
 
 @theme {
@@ -236,6 +237,13 @@ h1.page-title {
   border-radius: var(--radius-l);
   box-shadow: var(--shadow);
   padding: 20px 24px;
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+a.card:hover,
+button.card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
 }
 
 .status-badge {

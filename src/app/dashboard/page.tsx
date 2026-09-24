@@ -71,19 +71,23 @@ export default async function DashboardPage() {
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       {/* Hero */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
-        <div className="relative overflow-hidden rounded-2xl bg-brand-navy px-8 py-10 text-white shadow-sm">
-          <h1 className="font-display text-3xl font-bold">
-            Willkommen zurück, {daten.vorname ?? "bei TanzRaum"}!
-          </h1>
-          <p className="mt-2 max-w-md text-[14px] text-white/80">
-            Hier hast du den kompletten Überblick über deine Vereine, Teams, Termine und alles
-            Wichtige in TanzRaum.
-          </p>
-          <p className="mt-4 font-display text-[15px] italic text-brand-gold-light">
-            Tanz verbindet – und du machst es möglich!
-          </p>
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-navy via-brand-navy to-[#0f1a30] px-8 py-10 text-white shadow-[var(--shadow-hover)]">
+          <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-brand-red/30 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 right-24 h-56 w-56 rounded-full bg-brand-gold/20 blur-3xl" />
+          <div className="relative">
+            <h1 className="font-display text-3xl font-bold tracking-tight">
+              Willkommen zurück, {daten.vorname ?? "bei TanzRaum"}!
+            </h1>
+            <p className="mt-2 max-w-md text-[14px] text-white/80">
+              Hier hast du den kompletten Überblick über deine Vereine, Teams, Termine und alles
+              Wichtige in TanzRaum.
+            </p>
+            <p className="mt-4 font-display text-[15px] italic text-brand-gold-light">
+              Tanz verbindet – und du machst es möglich!
+            </p>
+          </div>
         </div>
-        <div className="flex flex-col justify-between rounded-2xl border border-brand-line bg-white p-6 shadow-sm">
+        <div className="flex flex-col justify-between rounded-2xl border border-brand-line bg-white p-6 shadow-[var(--shadow-hover)]">
           <div className="text-[13px] font-medium text-brand-ink-soft">
             {new Date().toLocaleDateString("de-DE", {
               weekday: "long",
@@ -388,12 +392,16 @@ function KpiCard({
     blue: "bg-brand-blue-wash text-brand-blue",
   };
   return (
-    <div className="card">
-      <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full ${farben[farbe]}`}>
-        <Icon size={19} strokeWidth={2.2} />
+    <div className="card group cursor-default hover:!-translate-y-1 hover:!shadow-[var(--shadow-hover)]">
+      <div
+        className={`mb-3 flex h-11 w-11 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110 ${farben[farbe]}`}
+      >
+        <Icon size={20} strokeWidth={2.2} />
       </div>
-      <div className="font-display text-2xl font-bold text-brand-ink">{wert}</div>
-      <div className="text-[13px] text-brand-ink-soft">{label}</div>
+      <div className="font-display text-[26px] font-bold leading-none tracking-tight text-brand-ink">
+        {wert}
+      </div>
+      <div className="mt-1.5 text-[13px] text-brand-ink-soft">{label}</div>
       {zusatz && <div className="mt-1 text-[11.5px] text-brand-ink-faint">{zusatz}</div>}
     </div>
   );
