@@ -67,7 +67,7 @@ export async function getKennzahlen(supabase: SupabaseClient): Promise<Dashboard
 }
 
 export type Termin = {
-  typ: "training" | "turnier";
+  typ: "training" | "termin" | "sitzung" | "privat" | "turnier";
   titel: string;
   ort: string | null;
   datum: string | null;

@@ -320,6 +320,14 @@ export function TurniereKarte({ turniere }: { turniere: NaechstesTurnier[] }) {
 
 /* ---------------- Naechste Termine ---------------- */
 
+const TERMIN_TYP: Record<Termin["typ"], { label: string; klasse: string }> = {
+  training: { label: "Training", klasse: "kann" },
+  termin: { label: "Termin", klasse: "kann" },
+  sitzung: { label: "Sitzung", klasse: "kann" },
+  privat: { label: "Privat", klasse: "offen" },
+  turnier: { label: "Turnier", klasse: "vielleicht" },
+};
+
 export function TermineKarte({ termine }: { termine: Termin[] }) {
   return (
     <section className={`${KARTE} h-full`}>
@@ -349,9 +357,7 @@ export function TermineKarte({ termine }: { termine: Termin[] }) {
                   {t.von ? ` · ${t.von.slice(0, 5)} Uhr` : ""}
                 </div>
               </div>
-              <span className={`status-badge ${t.typ === "turnier" ? "vielleicht" : "kann"}`}>
-                {t.typ === "turnier" ? "Turnier" : "Training"}
-              </span>
+              <span className={`status-badge ${TERMIN_TYP[t.typ].klasse}`}>{TERMIN_TYP[t.typ].label}</span>
             </li>
           ))}
         </ul>
