@@ -12,33 +12,34 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import type { Bereich } from "@/lib/navigation";
+import { darf, type Tarif, type Zugriff } from "@/lib/navigation";
 
 type Aktion = {
   href: string;
   zeile1: string;
   zeile2: string;
   icon: LucideIcon;
-  // "plattform_admin" = nur Plattform-Admin (Turniere darf laut RLS nur er anlegen)
-  recht: Bereich | "plattform_admin";
+  tarif: Tarif;
+  // Liste = eines davon reicht. "plattform_admin" = nur Plattform-Admin (Turniere legt laut RLS nur er an).
+  rechte?: string[];
   iconKlasse?: string;
 };
 
 const AKTIONEN: Aktion[] = [
-  { href: "/dashboard/training/neu", zeile1: "Training", zeile2: "anlegen", icon: Plus, recht: "training_verwalten" },
-  { href: "/dashboard/mitglieder/neu", zeile1: "Mitglied", zeile2: "hinzufügen", icon: UserPlus, recht: "mitglieder_verwalten" },
-  { href: "/dashboard/nachrichten/neu", zeile1: "Nachricht", zeile2: "schreiben", icon: Mail, recht: "nachrichten" },
-  { href: "/dashboard/dateien/hochladen", zeile1: "Datei", zeile2: "hochladen", icon: Upload, recht: "dateien_hochladen" },
-  { href: "/dashboard/turniere/neu", zeile1: "Turnier", zeile2: "erfassen", icon: Trophy, recht: "plattform_admin", iconKlasse: "text-brand-gold" },
-  { href: "/dashboard/fahrgemeinschaften/neu", zeile1: "Fahrgemeinschaft", zeile2: "erstellen", icon: Car, recht: "fahrgemeinschaften" },
-  { href: "/dashboard/musik", zeile1: "Musik", zeile2: "verwalten", icon: Music, recht: "musik_verwalten" },
-  { href: "/dashboard/finanzen/neu", zeile1: "Einnahme/Ausgabe", zeile2: "erfassen", icon: Coins, recht: "finanzen" },
-  { href: "/dashboard/verein/bearbeiten", zeile1: "Vereinsdaten", zeile2: "bearbeiten", icon: Settings, recht: "vereinsdaten_verwalten" },
+  { href: "/dashboard/training/neu", zeile1: "Training", zeile2: "anlegen", icon: Plus, tarif: "verein", rechte: ["rolle_admin", "rolle_trainer"] },
+  { href: "/dashboard/mitglieder/neu", zeile1: "Mitglied", zeile2: "hinzufügen", icon: UserPlus, tarif: "verein", rechte: ["rolle_admin"] },
+  { href: "/dashboard/nachrichten/neu", zeile1: "Nachricht", zeile2: "schreiben", icon: Mail, tarif: "free" },
+  { href: "/dashboard/dateien/hochladen", zeile1: "Datei", zeile2: "hochladen", icon: Upload, tarif: "basic" },
+  { href: "/dashboard/turniere/neu", zeile1: "Turnier", zeile2: "erfassen", icon: Trophy, tarif: "verein", rechte: ["plattform_admin"], iconKlasse: "text-brand-gold" },
+  { href: "/dashboard/fahrgemeinschaften/neu", zeile1: "Fahrgemeinschaft", zeile2: "erstellen", icon: Car, tarif: "basic" },
+  { href: "/dashboard/musik", zeile1: "Musik", zeile2: "verwalten", icon: Music, tarif: "verein", rechte: ["rolle_admin", "rolle_trainer"] },
+  { href: "/dashboard/finanzen/neu", zeile1: "Einnahme/Ausgabe", zeile2: "erfassen", icon: Coins, tarif: "verein", rechte: ["beitraege"] },
+  { href: "/dashboard/verein/bearbeiten", zeile1: "Vereinsdaten", zeile2: "bearbeiten", icon: Settings, tarif: "verein", rechte: ["rolle_admin"] },
 ];
 
-export function QuickActions({ bereiche, istPlattformAdmin }: { bereiche: ReadonlySet<string>; istPlattformAdmin: boolean }) {
+export function QuickActions({ zugriff }: { zugriff: Zugriff }) {
   const sichtbar = AKTIONEN.filter((a) =>
-    a.recht === "plattform_admin" ? istPlattformAdmin : istPlattformAdmin || bereiche.has(a.recht),
+    a.rechte === undefined ? darf(zugriff, a.tarif) : a.rechte.some((r) => darf(zugriff, a.tarif, r)),
   );
   if (sichtbar.length === 0) return null;
 

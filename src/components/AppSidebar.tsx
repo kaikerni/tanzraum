@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Crown, Building2, HelpCircle, Heart } from "lucide-react";
-import { sichtbareNav } from "@/lib/navigation";
+import { sichtbareNav, type Zugriff } from "@/lib/navigation";
 
 export type SidebarKontext = {
   titel: string;
@@ -13,15 +13,15 @@ export type SidebarKontext = {
 
 export function AppSidebar({
   kontext,
-  bereiche,
+  zugriff,
   ungeleseneNachrichten,
 }: {
   kontext: SidebarKontext;
-  bereiche: string[];
+  zugriff: Zugriff;
   ungeleseneNachrichten: number;
 }) {
   const pathname = usePathname();
-  const eintraege = sichtbareNav(new Set(bereiche));
+  const eintraege = sichtbareNav(zugriff);
   const KontextIcon = kontext.istPlattformAdmin ? Crown : Building2;
 
   return (

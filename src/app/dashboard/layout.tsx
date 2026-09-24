@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardData } from "@/lib/dashboard/getDashboardData";
-import { getMeineBereiche } from "@/lib/dashboard/getBereiche";
+import { getZugriff } from "@/lib/dashboard/getBereiche";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AppHeader } from "@/components/AppHeader";
 import { MobileNav } from "@/components/MobileNav";
@@ -28,14 +28,14 @@ export default async function DashboardLayout({
     .maybeSingle();
   if (!onboarding || !onboarding.completed) redirect("/onboarding");
 
-  const [{ data: ungelesen }, { count: benachrichtigungen }, bereiche] = await Promise.all([
+  const [{ data: ungelesen }, { count: benachrichtigungen }, zugriff] = await Promise.all([
     supabase.rpc("eigene_ungelesene_nachrichten_anzahl"),
     supabase
       .from("benachrichtigungen")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
       .eq("gelesen", false),
-    getMeineBereiche(supabase, daten.istPlattformAdmin),
+    getZugriff(supabase, daten.istPlattformAdmin),
   ]);
 
   const name = [daten.vorname, daten.nachname].filter(Boolean).join(" ") || "TanzRaum-Nutzer";
@@ -49,7 +49,6 @@ export default async function DashboardLayout({
         istPlattformAdmin: false,
       };
   const ungeleseneNachrichten = Number(ungelesen ?? 0);
-  const bereichListe = [...bereiche];
 
   return (
     <div className="flex h-dvh flex-col bg-brand-bg">
@@ -61,10 +60,10 @@ export default async function DashboardLayout({
         ungeleseneBenachrichtigungen={benachrichtigungen ?? 0}
       />
       <div className="flex min-h-0 flex-1">
-        <AppSidebar kontext={kontext} bereiche={bereichListe} ungeleseneNachrichten={ungeleseneNachrichten} />
+        <AppSidebar kontext={kontext} zugriff={zugriff} ungeleseneNachrichten={ungeleseneNachrichten} />
         <main className="flex-1 overflow-y-auto px-3 pb-28 pt-4 sm:px-5 md:pb-8 md:pt-5 xl:px-6">{children}</main>
       </div>
-      <MobileNav bereiche={bereichListe} ungeleseneNachrichten={ungeleseneNachrichten} />
+      <MobileNav zugriff={zugriff} ungeleseneNachrichten={ungeleseneNachrichten} />
     </div>
   );
 }

@@ -37,13 +37,11 @@ export async function getAktuelleNachrichten(
   if (error || !data || data.length === 0) return [];
 
   const senderIds = [...new Set(data.map((n) => n.sender_id))];
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, vorname, nachname")
-    .in("id", senderIds);
+  // Echter Name oder nur @Handle nach Privatsphaere-Regel (DB-Funktion anzeige_namen).
+  const { data: namen } = await supabase.rpc("anzeige_namen", { p_user_ids: senderIds });
 
   const nameById = new Map(
-    (profile ?? []).map((p) => [p.id, [p.vorname, p.nachname].filter(Boolean).join(" ") || "Unbekannt"]),
+    ((namen ?? []) as { user_id: string; anzeige: string }[]).map((p) => [p.user_id, p.anzeige]),
   );
 
   return data.map((n) => ({

@@ -30,6 +30,7 @@ import {
 } from "@/components/dashboard/Karten";
 
 import type { DashboardDaten } from "@/lib/dashboard/getDashboardData";
+import { darf, hatTarif, type Zugriff } from "@/lib/navigation";
 import type {
   DashboardKennzahlen,
   Termin,
@@ -60,7 +61,7 @@ function begruessung(): string {
 
 export type DashboardAnsichtProps = {
   daten: DashboardDaten;
-  bereiche: ReadonlySet<string>;
+  zugriff: Zugriff;
   kennzahlen: DashboardKennzahlen | null;
   termine: Termin[];
   turniere: NaechstesTurnier[];
@@ -74,7 +75,7 @@ export type DashboardAnsichtProps = {
 
 export function DashboardAnsicht({
   daten,
-  bereiche,
+  zugriff,
   kennzahlen,
   termine,
   turniere,
@@ -85,7 +86,7 @@ export function DashboardAnsicht({
   nachrichten,
   wochen,
 }: DashboardAnsichtProps) {
-  const hatVerein = daten.istPlattformAdmin || daten.vereine.length > 0;
+  const hatVerein = daten.istPlattformAdmin || (hatTarif(zugriff, "basic") && daten.vereine.length > 0);
   const k = kennzahlen;
   const b = k?.beteiligung ?? null;
   const beteiligungDelta = b && b.prozent !== null && b.vormonat !== null ? Math.round(b.prozent - b.vormonat) : null;
@@ -156,7 +157,7 @@ export function DashboardAnsicht({
         verlauf={k.nachrichten.verlauf}
       />
     ),
-    hatVerein && b && (
+    b && (
       <KpiKarte
         key="beteiligung"
         id="beteiligung"
@@ -177,8 +178,8 @@ export function DashboardAnsicht({
     ),
   ].filter(Boolean);
 
-  const zeigeBeteiligung = hatVerein && bereiche.has("training");
-  const zeigeAltersklassen = bereiche.has("mitglieder");
+  const zeigeBeteiligung = darf(zugriff, "verein", "anwesenheit");
+  const zeigeAltersklassen = darf(zugriff, "verein", "mitglieder");
 
   return (
     <div className="mx-auto flex max-w-[1560px] flex-col gap-4">
@@ -237,7 +238,7 @@ export function DashboardAnsicht({
         {hatVerein && <HeuteKarte eintraege={heute} mehrereVereine={daten.istPlattformAdmin || daten.vereine.length > 1} />}
         <RadarKarte eintraege={radar} />
         <div className="md:col-span-2 xl:col-span-1">
-          <QuickActions bereiche={bereiche} istPlattformAdmin={daten.istPlattformAdmin} />
+          <QuickActions zugriff={zugriff} />
         </div>
       </div>
 

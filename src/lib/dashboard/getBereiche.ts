@@ -1,37 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Bereich } from "@/lib/navigation";
-
-const ALLE_BEREICHE: Bereich[] = [
-  "verein",
-  "kalender",
-  "training",
-  "turniere",
-  "mitglieder",
-  "trainer_netzwerk",
-  "nachrichten",
-  "dateien",
-  "fahrgemeinschaften",
-  "musik",
-  "finanzen",
-  "statistiken",
-  "vereinsverwaltung",
-  "training_verwalten",
-  "mitglieder_verwalten",
-  "dateien_hochladen",
-  "musik_verwalten",
-  "vereinsdaten_verwalten",
-];
+import type { Tarif, Zugriff } from "@/lib/navigation";
 
 /**
- * Bereiche des eingeloggten Nutzers ueber alle seine Vereine (Rollen-Standard + vereins_bereichsrechte).
- * Nur fuer die Anzeige -- die eigentliche Absicherung passiert in RLS bzw. den dashboard_*-Funktionen.
+ * Effektiver Tarif + Bereiche/Rollenmarker des eingeloggten Nutzers (DB: mein_tarif, meine_bereiche).
+ * Nur fuer die Anzeige -- abgesichert wird ueber RLS bzw. die dashboard_*-Funktionen.
  */
-export async function getMeineBereiche(
-  supabase: SupabaseClient,
-  istPlattformAdmin: boolean,
-): Promise<Set<string>> {
-  if (istPlattformAdmin) return new Set(ALLE_BEREICHE);
-  const { data, error } = await supabase.rpc("meine_bereiche");
-  if (error || !data) return new Set();
-  return new Set((data as { bereich: string }[]).map((r) => r.bereich));
+export async function getZugriff(supabase: SupabaseClient, istPlattformAdmin: boolean): Promise<Zugriff> {
+  if (istPlattformAdmin) return { tarif: "verein", bereiche: [], istPlattformAdmin: true };
+
+  const [{ data: tarif }, { data: bereiche }] = await Promise.all([
+    supabase.rpc("mein_tarif"),
+    supabase.rpc("meine_bereiche"),
+  ]);
+
+  return {
+    tarif: tarif === "basic" || tarif === "verein" ? (tarif as Tarif) : "free",
+    bereiche: [...new Set(((bereiche ?? []) as { bereich: string }[]).map((r) => r.bereich))],
+    istPlattformAdmin: false,
+  };
 }

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardData } from "@/lib/dashboard/getDashboardData";
-import { getMeineBereiche } from "@/lib/dashboard/getBereiche";
+import { getZugriff } from "@/lib/dashboard/getBereiche";
 import {
   getKennzahlen,
   getNaechsteTermine,
@@ -34,9 +34,9 @@ export default async function DashboardPage({
   const { wochen: wochenParam } = await searchParams;
   const wochen = ZEITRAEUME.find((w) => String(w) === wochenParam) ?? 8;
 
-  const [bereiche, kennzahlen, termine, turniere, altersklassen, heute, verlauf, radar, nachrichten] =
+  const [zugriff, kennzahlen, termine, turniere, altersklassen, heute, verlauf, radar, nachrichten] =
     await Promise.all([
-      getMeineBereiche(supabase, daten.istPlattformAdmin),
+      getZugriff(supabase, daten.istPlattformAdmin),
       getKennzahlen(supabase),
       getNaechsteTermine(supabase, 6),
       getNaechsteTurniere(supabase, 4),
@@ -50,7 +50,7 @@ export default async function DashboardPage({
   return (
     <DashboardAnsicht
       daten={daten}
-      bereiche={bereiche}
+      zugriff={zugriff}
       kennzahlen={kennzahlen}
       termine={termine}
       turniere={turniere}

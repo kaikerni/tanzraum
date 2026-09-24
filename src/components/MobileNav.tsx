@@ -4,20 +4,20 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MoreHorizontal, X, HelpCircle } from "lucide-react";
-import { sichtbareNav } from "@/lib/navigation";
+import { sichtbareNav, type Zugriff } from "@/lib/navigation";
 
 const BEVORZUGT = ["/dashboard", "/dashboard/training", "/dashboard/kalender", "/dashboard/nachrichten"];
 
 export function MobileNav({
-  bereiche,
+  zugriff,
   ungeleseneNachrichten,
 }: {
-  bereiche: string[];
+  zugriff: Zugriff;
   ungeleseneNachrichten: number;
 }) {
   const pathname = usePathname();
   const [offen, setOffen] = useState(false);
-  const alle = sichtbareNav(new Set(bereiche));
+  const alle = sichtbareNav(zugriff);
 
   const leiste = [
     ...BEVORZUGT.map((href) => alle.find((n) => n.href === href)).filter((n) => n !== undefined),
