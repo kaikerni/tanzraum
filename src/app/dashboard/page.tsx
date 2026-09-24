@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardData } from "@/lib/dashboard/getDashboardData";
 import { signOut } from "@/app/actions";
@@ -85,6 +86,25 @@ export default async function DashboardPage() {
           </div>
         ))}
       </section>
+
+      {daten.istJuryMitglied && (
+        <Link
+          href="/juryraum/dashboard"
+          className="card"
+          style={{
+            display: "block",
+            marginTop: 16,
+            textDecoration: "none",
+          }}
+        >
+          <span className="brand-font" style={{ fontSize: 15, fontWeight: 700 }}>
+            JuryRaum öffnen →
+          </span>
+          <span style={{ display: "block", fontSize: 12.5, color: "var(--ink-soft)", marginTop: 2 }}>
+            Einsätze, Verfügbarkeit und Jury-Organisation
+          </span>
+        </Link>
+      )}
     </div>
   );
 }

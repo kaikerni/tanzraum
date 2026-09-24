@@ -178,6 +178,64 @@ h1.page-title {
   background: var(--bg);
 }
 
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 11px;
+  border-radius: var(--radius-s);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-bottom: 2px;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  position: relative;
+}
+
+.nav-item:hover {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  box-shadow: var(--shadow);
+  padding: 20px 24px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.kann,
+.status-badge.zugesagt {
+  background: #e6f4ea;
+  color: #1e7a34;
+}
+
+.status-badge.vielleicht,
+.status-badge.offen {
+  background: var(--gold-wash);
+  color: var(--gold);
+}
+
+.status-badge.kann_nicht,
+.status-badge.abgesagt {
+  background: var(--red-wash);
+  color: var(--red-deep);
+}
+
 .auth-switch {
   margin-top: 20px;
   font-size: 13px;

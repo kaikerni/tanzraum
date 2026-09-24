@@ -22,6 +22,7 @@ export type DashboardDaten = {
   persoenlicherTarif: Tarif;
   tarifAktivBis: string | null;
   vereine: VereinsMitgliedschaft[];
+  istJuryMitglied: boolean;
 };
 
 /**
@@ -62,6 +63,13 @@ export async function getDashboardData(
     },
   );
 
+  const { data: juryMitgliedschaft } = await supabase
+    .from("juryraum_mitglieder")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("aktiv", true)
+    .maybeSingle();
+
   return {
     userId: profil.id,
     vorname: profil.vorname,
@@ -73,5 +81,6 @@ export async function getDashboardData(
     persoenlicherTarif: profil.tarif ?? "free",
     tarifAktivBis: profil.tarif_aktiv_bis,
     vereine,
+    istJuryMitglied: juryMitgliedschaft !== null,
   };
 }
