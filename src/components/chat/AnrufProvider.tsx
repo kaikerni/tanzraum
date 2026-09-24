@@ -70,6 +70,8 @@ export function AnrufProvider({ userId, children }: { userId: string; children: 
   const [stumm, setStumm] = useState(false);
   const [kameraAus, setKameraAus] = useState(false);
   const [jetzt, setJetzt] = useState(Date.now());
+  const [weg, setWeg] = useState<"direkt" | "relay" | null>(null);
+  const neustartVersucht = useRef(false);
   const anrufRef = useRef<Anruf | null>(null);
   const pc = useRef<RTCPeerConnection | null>(null);
   const lokal = useRef<MediaStream | null>(null);
@@ -98,6 +100,8 @@ export function AnrufProvider({ userId, children }: { userId: string; children: 
     bearbeitet.current.clear();
     setStumm(false);
     setKameraAus(false);
+    setWeg(null);
+    neustartVersucht.current = false;
     setze(null);
   }, [setze]);
 
@@ -114,14 +118,32 @@ export function AnrufProvider({ userId, children }: { userId: string; children: 
     [aufraeumen, supabase],
   );
 
-  async function iceServer(): Promise<RTCIceServer[]> {
+  // ICE-Server fuer genau diesen Anruf: STUN + kurzlebige TURN-Zugangsdaten (serverseitig von Cloudflare erzeugt).
+  // Der Browser bevorzugt direkte Wege automatisch; TURN greift nur, wenn keine direkte Verbindung klappt.
+  async function iceServer(anrufId: string): Promise<RTCIceServer[]> {
     try {
-      const { data } = await supabase.functions.invoke("anruf-ice", { method: "GET" });
-      if (data?.iceServers) return data.iceServers;
+      const { data } = await supabase.functions.invoke("anruf-ice", { body: { anruf_id: anrufId } });
+      if (Array.isArray(data?.iceServers) && data.iceServers.length) return data.iceServers;
     } catch {
-      /* Fallback */
+      /* Fallback: nur STUN */
     }
     return [{ urls: ["stun:stun.cloudflare.com:3478", "stun:stun.l.google.com:19302"] }];
+  }
+
+  // Wurde die Verbindung ueber das Relay (TURN) aufgebaut oder direkt?
+  async function verbindungsweg(v: RTCPeerConnection) {
+    try {
+      const stats = await v.getStats();
+      let paar: { localCandidateId?: string } | undefined;
+      stats.forEach((r) => {
+        if (r.type === "transport" && r.selectedCandidatePairId) paar = stats.get(r.selectedCandidatePairId);
+      });
+      if (!paar) stats.forEach((r) => r.type === "candidate-pair" && r.nominated && r.state === "succeeded" && (paar = r));
+      const lokal = paar?.localCandidateId ? stats.get(paar.localCandidateId) : undefined;
+      if (lokal) setWeg(lokal.candidateType === "relay" ? "relay" : "direkt");
+    } catch {
+      /* ohne Anzeige */
+    }
   }
 
   async function medien(art: Art) {
@@ -132,7 +154,7 @@ export function AnrufProvider({ userId, children }: { userId: string; children: 
   }
 
   async function verbindungAufbauen(a: Anruf, strom: MediaStream) {
-    const verbindung = new RTCPeerConnection({ iceServers: await iceServer() });
+    const verbindung = new RTCPeerConnection({ iceServers: await iceServer(a.id), iceTransportPolicy: "all", bundlePolicy: "max-bundle" });
     pc.current = verbindung;
     strom.getTracks().forEach((t) => verbindung.addTrack(t, strom));
     verbindung.onicecandidate = (e) => {
@@ -143,27 +165,69 @@ export function AnrufProvider({ userId, children }: { userId: string; children: 
       if (fernVideo.current) fernVideo.current.srcObject = e.streams[0];
       if (fernAudio.current) fernAudio.current.srcObject = e.streams[0];
     };
+    let wartet: ReturnType<typeof setTimeout> | null = null;
     verbindung.onconnectionstatechange = () => {
       const zustand = verbindung.connectionState;
+      if (wartet && zustand !== "disconnected") {
+        clearTimeout(wartet);
+        wartet = null;
+      }
       if (zustand === "connected" && anrufRef.current) {
         ton.current.stop();
+        setHinweis(null);
         setze({ ...anrufRef.current, phase: "aktiv", start: anrufRef.current.start ?? Date.now() });
+        verbindungsweg(verbindung);
+      } else if (zustand === "disconnected") {
+        // kurze Aussetzer (z. B. WLAN -> Mobilfunk) abwarten, dann Neuaufbau versuchen
+        wartet = setTimeout(() => neuVerbinden(verbindung), 4000);
       } else if (zustand === "failed") {
-        beenden("Die Verbindung ist abgebrochen.");
+        neuVerbinden(verbindung);
       }
     };
     return verbindung;
   }
 
+  async function neuVerbinden(v: RTCPeerConnection) {
+    const a = anrufRef.current;
+    if (!a || pc.current !== v) return;
+    if (neustartVersucht.current) {
+      beenden("Die Verbindung ist abgebrochen.");
+      return;
+    }
+    neustartVersucht.current = true;
+    setHinweis("Verbindung wird neu aufgebaut …");
+    if (a.rolle === "anrufer") {
+      try {
+        const angebot = await v.createOffer({ iceRestart: true });
+        await v.setLocalDescription(angebot);
+        await supabase.rpc("anruf_signal", { p_anruf_id: a.id, p_typ: "angebot", p_daten: { type: angebot.type, sdp: angebot.sdp } });
+      } catch {
+        beenden("Die Verbindung ist abgebrochen.");
+      }
+    }
+    // Der Angerufene wartet auf das neue Angebot des Anrufers; kommt nichts, wird aufgelegt.
+    setTimeout(() => {
+      if (anrufRef.current?.id === a.id && pc.current === v && v.connectionState !== "connected") beenden("Die Verbindung ist abgebrochen.");
+    }, 15000);
+  }
+
   async function signalVerarbeiten(s: { id: number; anruf_id: string; typ: string; daten: RTCSessionDescriptionInit & RTCIceCandidateInit }) {
     const a = anrufRef.current;
     if (!a || s.anruf_id !== a.id || bearbeitet.current.has(s.id)) return;
-    bearbeitet.current.add(s.id);
     const v = pc.current;
+    // Noch keine Verbindung (z. B. es klingelt noch): NICHT als verarbeitet markieren,
+    // beim Annehmen werden alle offenen Signale aus der Datenbank nachgeladen.
     if (!v) return;
+    bearbeitet.current.add(s.id);
     if (s.typ === "antwort" && a.rolle === "anrufer") {
       await v.setRemoteDescription(s.daten);
       for (const k of puffer.current.splice(0)) await v.addIceCandidate(k).catch(() => {});
+    } else if (s.typ === "angebot" && a.rolle === "angerufener" && v.remoteDescription) {
+      // neues Angebot waehrend des Anrufs = ICE-Neustart des Anrufers
+      await v.setRemoteDescription(s.daten);
+      const antwort = await v.createAnswer();
+      await v.setLocalDescription(antwort);
+      await supabase.rpc("anruf_signal", { p_anruf_id: a.id, p_typ: "antwort", p_daten: { type: antwort.type, sdp: antwort.sdp } });
     } else if (s.typ === "kandidat") {
       if (v.remoteDescription) await v.addIceCandidate(s.daten).catch(() => {});
       else puffer.current.push(s.daten);
@@ -216,6 +280,7 @@ export function AnrufProvider({ userId, children }: { userId: string; children: 
       if (!angebot) throw new Error("kein Angebot");
       bearbeitet.current.add(angebot.id);
       await v.setRemoteDescription(angebot.daten as RTCSessionDescriptionInit);
+      for (const k of puffer.current.splice(0)) await v.addIceCandidate(k).catch(() => {});
       const antwort = await v.createAnswer();
       await v.setLocalDescription(antwort);
       await supabase.rpc("anruf_signal", { p_anruf_id: a.id, p_typ: "antwort", p_daten: { type: antwort.type, sdp: antwort.sdp } });
@@ -378,6 +443,9 @@ export function AnrufProvider({ userId, children }: { userId: string; children: 
             )}
             <div className="text-[24px] font-bold drop-shadow">{anruf.partnerName}</div>
             <div className="mt-1 text-[14px] text-white/80 drop-shadow">{statusText}</div>
+            {anruf.phase === "aktiv" && weg && (
+              <div className="mt-1 text-[11.5px] text-white/60 drop-shadow">{weg === "relay" ? "Verbindung über TanzRaum-Relay" : "Direkte Verbindung"}</div>
+            )}
             {hinweis && <div className="mt-3 max-w-[320px] text-[12.5px] text-white/70">{hinweis}</div>}
           </div>
           <div className="relative z-10 flex items-center justify-center gap-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-6">

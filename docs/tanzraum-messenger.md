@@ -91,16 +91,35 @@ Edge Functions:
   Geheimnis im Vault). Der VAPID-Schlüssel liegt verschlüsselt im Vault.
 - `anruf-ice` – liefert die Verbindungsserver für Anrufe (STUN, optional TURN).
 
-## Anrufe über Mobilfunk (TURN-Relay)
+## Anrufe und TURN-Relay (Cloudflare)
 
-Ohne Relay funktionieren Anrufe in den meisten WLANs; über Mobilfunk brauchen sie ein TURN-Relay.
-Vorgesehen ist **Cloudflare** (1.000 GB/Monat frei). Einrichtung:
+Sprach- und Videoanrufe laufen per WebRTC. **Direkte Verbindungen werden bevorzugt**; das Cloudflare-TURN-Relay
+wird nur automatisch genutzt, wenn keine direkte Verbindung zustande kommt (z. B. Mobilfunk, Firmen-WLAN).
+Während des Anrufs zeigt die Oberfläche „Direkte Verbindung“ bzw. „Verbindung über TanzRaum-Relay“.
 
-1. Cloudflare-Dashboard → **Realtime** (früher „Calls“) → **TURN Server** → **Create**.
-2. Turn Token ID und API Token kopieren.
-3. Supabase → Edge Functions → **Secrets**:
-   `CLOUDFLARE_TURN_KEY_ID` und `CLOUDFLARE_TURN_API_TOKEN` anlegen.
+Ablauf:
 
-Alternativ ein eigener TURN-Server über `TURN_URLS`, `TURN_USERNAME`, `TURN_CREDENTIAL`.
+1. Beim Starten bzw. Annehmen fragt der Browser `anruf-ice` mit der Anruf-ID an.
+2. Die Edge Function prüft Anmeldung und Beteiligung (`anruf_ice_berechtigt`: nur Anrufer/Angerufener eines
+   klingelnden oder aktiven Anrufs) und erzeugt serverseitig **pro Anruf kurzlebige TURN-Zugangsdaten**
+   bei Cloudflare (gültig max. 4 Stunden = maximale Anrufdauer).
+3. Adressen auf Port 53 werden herausgefiltert (von Browsern blockiert); geliefert werden TURN über UDP, TCP und TLS (443).
+4. Bei Verbindungsabbruch wird einmal automatisch neu verbunden (ICE-Neustart), erst dann aufgelegt.
+
+Sicherheit:
+
+- `CLOUDFLARE_TURN_KEY_ID` und `CLOUDFLARE_TURN_API_TOKEN` liegen nur in Supabase → Edge Functions → Secrets
+  und werden nur in der Edge Function gelesen (Leerzeichen/Zeilenumbrüche werden abgefangen).
+- Weder Secrets noch Zugangsdaten landen im ausgelieferten JavaScript oder in Logs (geloggt wird höchstens ein HTTP-Status).
+- Selbsttest für Administratoren (liefert nur Diagnose, nie Zugangsdaten), z. B. per SQL:
+
+  ```sql
+  select net.http_post('https://<projekt>.supabase.co/functions/v1/anruf-ice', '{"selbsttest":true}'::jsonb, '{}'::jsonb,
+    jsonb_build_object('Content-Type','application/json','x-tanzraum-geheimnis',
+      (select decrypted_secret from vault.decrypted_secrets where name = 'chat_push_geheimnis')));
+  -- Ergebnis danach in net._http_response
+  ```
+
+Alternativ zu Cloudflare kann ein eigener TURN-Server über `TURN_URLS`, `TURN_USERNAME`, `TURN_CREDENTIAL` genutzt werden.
 
 Gruppenanrufe in Vereins- und Gruppenchats sind für später vorgesehen (benötigen einen Konferenzdienst, z. B. LiveKit).
