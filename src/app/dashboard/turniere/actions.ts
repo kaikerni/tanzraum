@@ -11,7 +11,6 @@ import type { StartRueckmeldung } from "@/lib/turniere/getTurniere";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATUM = /^\d{4}-\d{2}-\d{2}$/;
-const ZEIT = /^\d{2}:\d{2}$/;
 
 function text(formData: FormData, feld: string): string | null {
   const wert = String(formData.get(feld) ?? "").trim();
@@ -80,13 +79,11 @@ export async function startSpeichern(_prev: AktionsErgebnis, formData: FormData)
   const turnierId = uuid(formData, "turnier_id");
   const vereinId = uuid(formData, "verein_id");
   const tag = text(formData, "tag");
-  const startzeit = text(formData, "startzeit");
   const solisten = formData.getAll("solisten").map(String).filter((s) => UUID.test(s));
   const status = text(formData, "status") ?? "geplant";
 
   if (!startId && (!turnierId || !vereinId)) return { error: "Turnier oder Verein fehlt." };
   if (tag && !DATUM.test(tag)) return { error: "Ungültiger Tag." };
-  if (startzeit && !ZEIT.test(startzeit)) return { error: "Ungültige Startzeit." };
   if (!["geplant", "gemeldet", "abgesagt"].includes(status)) return { error: "Ungültiger Status." };
 
   const werte = {
@@ -96,7 +93,6 @@ export async function startSpeichern(_prev: AktionsErgebnis, formData: FormData)
     disziplin_id: uuid(formData, "disziplin_id"),
     altersklasse_id: uuid(formData, "altersklasse_id"),
     tag,
-    startzeit,
     startnummer: text(formData, "startnummer"),
     status,
     notiz: text(formData, "notiz"),

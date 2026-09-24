@@ -50,7 +50,6 @@ export type Start = {
   altersklasseId: string | null;
   altersklasse: string | null;
   tag: string | null;
-  startzeit: string | null;
   startnummer: string | null;
   status: StartStatus;
   notiz: string | null;
@@ -72,7 +71,6 @@ export type MeinStart = {
   ersterTag: string;
   letzterTag: string;
   tag: string | null;
-  startzeit: string | null;
   vereinName: string;
   teilnahme: string;
   disziplin: string | null;
@@ -85,8 +83,6 @@ export type MeinStart = {
 };
 
 export type StartTeilnehmer = { vmId: string; name: string; status: StartRueckmeldung | null; kommentar: string | null };
-
-const zeit = (t: unknown) => (t ? String(t).slice(0, 5) : null);
 
 // deno-lint-ignore no-explicit-any
 function alsTurnier(t: any): Turnier {
@@ -175,7 +171,6 @@ export async function getVereinsStarts(
     altersklasseId: s.altersklasse_id,
     altersklasse: s.altersklasse,
     tag: s.tag,
-    startzeit: zeit(s.startzeit),
     startnummer: s.startnummer,
     status: s.status,
     notiz: s.notiz,
@@ -202,7 +197,6 @@ export async function getMeineStarts(supabase: SupabaseClient, ab: string): Prom
     ersterTag: s.erster_tag,
     letzterTag: s.letzter_tag,
     tag: s.tag,
-    startzeit: zeit(s.startzeit),
     vereinName: s.verein_name,
     teilnahme: s.teilnahme,
     disziplin: s.disziplin,

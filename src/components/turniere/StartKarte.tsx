@@ -58,7 +58,7 @@ export function StartKarte({
         <div className="min-w-0 flex-1">
           <p className={`text-[14px] font-bold text-brand-ink ${start.status === "abgesagt" ? "line-through" : ""}`}>{startTitel(start)}</p>
           <p className="text-[12.5px] text-brand-ink-soft">
-            {[details || null, start.tag ? datumKurz(start.tag) : null, start.startzeit ? `${start.startzeit} Uhr` : null, start.startnummer ? `Startnr. ${start.startnummer}` : null]
+            {[details || null, start.tag ? datumKurz(start.tag) : null, start.startnummer ? `Startnr. ${start.startnummer}` : null]
               .filter(Boolean)
               .join(" · ") || "Details folgen"}
           </p>

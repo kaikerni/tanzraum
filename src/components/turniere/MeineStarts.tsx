@@ -29,7 +29,7 @@ export function MeineStarts({ starts, heute, mitTurnierLink = true }: { starts: 
                 )}
                 <p className="text-[12.5px] text-brand-ink-soft">
                   {s.tag ? datumKurz(s.tag) : zeitraum(s.ersterTag, s.letzterTag)}
-                  {s.startzeit ? ` · ${s.startzeit} Uhr` : ""} · {s.turnierOrt}
+                  {` · ${s.turnierOrt}`}
                 </p>
                 <p className="text-[12.5px] text-brand-ink-soft">
                   {mitTurnierLink && <strong className="text-brand-ink">{s.teilnahme}</strong>}

@@ -117,10 +117,6 @@ export function StartFormular({
           </select>
         </label>
         <label className="field">
-          <span>Startzeit (falls bekannt)</span>
-          <input type="time" name="startzeit" defaultValue={start?.startzeit ?? ""} />
-        </label>
-        <label className="field">
           <span>Status</span>
           <select name="status" defaultValue={start?.status ?? "geplant"}>
             <option value="geplant">Geplant</option>

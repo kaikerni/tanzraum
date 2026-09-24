@@ -188,7 +188,7 @@ export default async function SaisonplanungSeite({ searchParams }: { searchParam
                         <li key={x.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-brand-bg px-2.5 py-2">
                           <span className={`text-[13.5px] font-semibold text-brand-ink ${x.status === "abgesagt" ? "line-through opacity-60" : ""}`}>{startTitel(x)}</span>
                           <span className="text-[12.5px] text-brand-ink-soft">
-                            {[x.disziplin, x.altersklasse, x.tag ? datumKurz(x.tag) : null, x.startzeit].filter(Boolean).join(" · ")}
+                            {[x.disziplin, x.altersklasse, x.tag ? datumKurz(x.tag) : null].filter(Boolean).join(" · ")}
                           </span>
                           <span className="ml-auto flex flex-wrap items-center gap-1.5">
                             {x.teilnehmer > 0 && x.status !== "abgesagt" && !vorbei && (

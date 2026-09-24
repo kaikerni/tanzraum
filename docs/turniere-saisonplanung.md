@@ -17,7 +17,7 @@
 Berechtigt: Vereinsadmin und alle mit Bereich **„saison“** (standardmäßig Trainer/innen), nur mit Vereinslizenz.
 
 - **Starts planen** je Turnier: Gruppe **oder** Solo/Paar (Bezeichnung + Solisten), Disziplin, Altersklasse, Tag,
-  Startzeit, Startnummer, Status (**Geplant → Gemeldet**, Abgesagt), Notiz.
+  Startnummer, Status (**Geplant → Gemeldet**, Abgesagt), Notiz.
 - **Zusagen-Übersicht** je Start (dabei/unsicher/nicht dabei/offen) mit Namensliste für Planung und Gruppentrainer.
 - **Ergebnisse** nach dem Turnier: Platz, Punkte, Bemerkung.
 - **Saisonansicht** (1. August bis 31. Juli, z. B. 2026/27): Kennzahlen, Meldeschluss-Warnungen (≤ 14 Tage, noch nicht
