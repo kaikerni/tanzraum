@@ -5,6 +5,7 @@ export type AktuelleNachricht = {
   inhalt: string;
   gesendetAm: string;
   senderName: string;
+  ungelesen: boolean;
 };
 
 /**
@@ -19,15 +20,16 @@ export async function getAktuelleNachrichten(
 ): Promise<AktuelleNachricht[]> {
   const { data: teilnahmen } = await supabase
     .from("gespraech_teilnehmer")
-    .select("gespraech_id")
+    .select("gespraech_id, last_read_at")
     .eq("user_id", userId);
 
   const gespraechIds = (teilnahmen ?? []).map((t) => t.gespraech_id);
   if (gespraechIds.length === 0) return [];
+  const gelesenBis = new Map((teilnahmen ?? []).map((t) => [t.gespraech_id, t.last_read_at as string | null]));
 
   const { data, error } = await supabase
     .from("nachrichten")
-    .select("id, inhalt, gesendet_am, sender_id")
+    .select("id, inhalt, gesendet_am, sender_id, gespraech_id")
     .in("gespraech_id", gespraechIds)
     .order("gesendet_am", { ascending: false })
     .limit(anzahl);
@@ -49,5 +51,10 @@ export async function getAktuelleNachrichten(
     inhalt: n.inhalt,
     gesendetAm: n.gesendet_am,
     senderName: nameById.get(n.sender_id) ?? "Unbekannt",
+    ungelesen: (() => {
+      if (n.sender_id === userId) return false;
+      const bis = gelesenBis.get(n.gespraech_id);
+      return !bis || new Date(n.gesendet_am) > new Date(bis);
+    })(),
   }));
 }

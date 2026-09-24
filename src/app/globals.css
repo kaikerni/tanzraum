@@ -1,51 +1,61 @@
 @import "tailwindcss";
 
 :root {
-  --red: #c91919;
-  --red-deep: #8f1013;
-  --red-wash: #fbe9e9;
-  --gold: #b88927;
-  --gold-light: #e7cd8f;
-  --gold-wash: #faf3e3;
-  --navy: #1c2b4a;
-  --navy-soft: #3a4a6b;
-  --green: #1e7a34;
-  --green-wash: #e6f4ea;
-  --amber: #b8790f;
-  --amber-wash: #fdf1e0;
-  --ink: #211d1b;
-  --ink-soft: #6b6560;
-  --ink-faint: #a29c95;
+  --red: #e11d2e;
+  --red-deep: #a8121f;
+  --red-wash: #fdecee;
+  --gold: #c9921f;
+  --gold-light: #f2d58c;
+  --gold-wash: #fcf4e2;
+  --navy: #1b2130;
+  --navy-soft: #3b4356;
+  --green: #1f9d55;
+  --green-light: #5fcf8f;
+  --green-wash: #e7f6ee;
+  --amber: #f2a93b;
+  --amber-wash: #fef4e3;
+  --blue: #1f6feb;
+  --blue-wash: #e8f0fe;
+  --purple: #5b3fd1;
+  --purple-wash: #efeafd;
+  --ink: #1b2130;
+  --ink-soft: #5f6778;
+  --ink-faint: #98a0b0;
   --paper: #ffffff;
-  --bg: #f6f4f0;
-  --line: #e7e2da;
+  --bg: #f5f6f9;
+  --line: #e8eaf0;
   --radius-s: 8px;
   --radius-m: 12px;
-  --radius-l: 20px;
-  --shadow: 0 1px 2px rgba(33, 29, 27, 0.04), 0 12px 28px -14px rgba(33, 29, 27, 0.14);
-  --shadow-hover: 0 4px 10px rgba(33, 29, 27, 0.06), 0 20px 36px -16px rgba(33, 29, 27, 0.18);
+  --radius-l: 14px;
+  --shadow: 0 1px 2px rgba(27, 33, 48, 0.04), 0 6px 18px -10px rgba(27, 33, 48, 0.12);
+  --shadow-hover: 0 4px 10px rgba(27, 33, 48, 0.06), 0 16px 32px -16px rgba(27, 33, 48, 0.2);
 }
 
 @theme {
-  --color-brand-red: #c91919;
-  --color-brand-red-deep: #8f1013;
-  --color-brand-red-wash: #fbe9e9;
-  --color-brand-gold: #b88927;
-  --color-brand-gold-wash: #faf3e3;
-  --color-brand-navy: #1c2b4a;
-  --color-brand-navy-soft: #3a4a6b;
-  --color-brand-green: #1e7a34;
-  --color-brand-green-wash: #e6f4ea;
-  --color-brand-amber: #b8790f;
-  --color-brand-amber-wash: #fdf1e0;
-  --color-brand-blue: #2f6fe0;
-  --color-brand-blue-wash: #e8f0fd;
-  --color-brand-ink: #211d1b;
-  --color-brand-ink-soft: #6b6560;
-  --color-brand-ink-faint: #a29c95;
-  --color-brand-line: #e7e2da;
-  --color-brand-bg: #f6f4f0;
-  --font-display: "Bricolage Grotesque", sans-serif;
+  --color-brand-red: #e11d2e;
+  --color-brand-red-deep: #a8121f;
+  --color-brand-red-wash: #fdecee;
+  --color-brand-gold: #c9921f;
+  --color-brand-gold-light: #f2d58c;
+  --color-brand-gold-wash: #fcf4e2;
+  --color-brand-navy: #1b2130;
+  --color-brand-navy-soft: #3b4356;
+  --color-brand-green: #1f9d55;
+  --color-brand-green-light: #5fcf8f;
+  --color-brand-green-wash: #e7f6ee;
+  --color-brand-amber: #f2a93b;
+  --color-brand-amber-wash: #fef4e3;
+  --color-brand-blue: #1f6feb;
+  --color-brand-blue-wash: #e8f0fe;
+  --color-brand-purple: #5b3fd1;
+  --color-brand-purple-wash: #efeafd;
+  --color-brand-ink: #1b2130;
+  --color-brand-ink-soft: #5f6778;
+  --color-brand-ink-faint: #98a0b0;
+  --color-brand-line: #e8eaf0;
+  --color-brand-bg: #f5f6f9;
+  --font-display: var(--font-inter), "Inter", sans-serif;
+  --font-script: var(--font-kaushan), "Kaushan Script", cursive;
 }
 
 * {
@@ -59,14 +69,14 @@ body {
 
 body {
   margin: 0;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-inter), "Inter", sans-serif;
   background: var(--bg);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
 }
 
 .brand-font {
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: var(--font-inter), "Inter", sans-serif;
 }
 
 button {
@@ -102,7 +112,8 @@ input {
 }
 
 .auth-card h1 {
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-weight: 700;
   font-size: 24px;
   margin: 0 0 4px;
   letter-spacing: -0.01em;
@@ -189,7 +200,8 @@ input {
 }
 
 h1.page-title {
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-weight: 700;
   font-size: 26px;
   margin: 0 0 4px;
   letter-spacing: -0.01em;
