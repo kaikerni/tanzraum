@@ -10,7 +10,10 @@ export const metadata: Metadata = {
   description: "Vereinsverwaltung für karnevalistischen Tanzsport",
   icons: {
     icon: "/tanzraum-logo-mark.webp",
+    apple: "/apple-touch-icon.png",
   },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "TanzRaum", statusBarStyle: "default" },
 };
 
 export default function RootLayout({

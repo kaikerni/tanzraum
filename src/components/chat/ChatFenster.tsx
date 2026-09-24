@@ -17,10 +17,12 @@ import {
   Megaphone,
   Plus,
   Lock,
+  Bell,
+  BellOff,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { alsNachricht, type ChatKopf, type ChatNachricht, type Umfrage } from "@/lib/chat/getChat";
-import { chatEinstellung, nachrichtLoeschen, umfrageAbstimmen } from "@/app/dashboard/nachrichten/actions";
+import { chatEinstellung, chatStummSetzen, nachrichtLoeschen, umfrageAbstimmen } from "@/app/dashboard/nachrichten/actions";
 import { ChatAvatar } from "./ChatAvatar";
 
 const NAMENSFARBEN = ["text-brand-red", "text-brand-blue", "text-brand-green", "text-brand-purple", "text-brand-gold", "text-brand-navy-soft"];
@@ -197,12 +199,14 @@ export function ChatFenster({
   startBilder,
   userId,
   freigabeFehlt = false,
+  stumm: startStumm = false,
 }: {
   kopf: ChatKopf;
   start: ChatNachricht[];
   startBilder: Record<string, string>;
   userId: string;
   freigabeFehlt?: boolean;
+  stumm?: boolean;
 }) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -219,6 +223,7 @@ export function ChatFenster({
   const [sendet, setSendet] = useState(false);
   const [fehler, setFehler] = useState<string | null>(null);
   const [einstellungLaeuft, starteEinstellung] = useTransition();
+  const [stumm, setStumm] = useState(startStumm);
   const liste = useRef<HTMLDivElement>(null);
   const eingabe = useRef<HTMLTextAreaElement>(null);
   const amEnde = useRef(true);
@@ -362,6 +367,26 @@ export function ChatFenster({
             {kopf.nurLeitungSchreibt && istGruppe ? " · nur Leitung schreibt" : ""}
           </div>
         </div>
+        {kopf.typ !== "platform" && (
+          <button
+            type="button"
+            onClick={async () => {
+              const neu = !stumm;
+              setStumm(neu);
+              const e = await chatStummSetzen(kopf.id, neu);
+              if (e.error) {
+                setStumm(!neu);
+                setFehler(e.error);
+              }
+            }}
+            aria-pressed={stumm}
+            aria-label={stumm ? "Stummschaltung aufheben" : "Chat stummschalten"}
+            title={stumm ? "Stummschaltung aufheben" : kopf.nurLeitungSchreibt ? "Stummschalten (Ankündigungen kommen trotzdem)" : "Chat stummschalten"}
+            className={`flex h-10 w-10 items-center justify-center rounded-full hover:bg-brand-bg ${stumm ? "text-brand-ink-faint" : "text-brand-ink-soft"}`}
+          >
+            {stumm ? <BellOff size={18} /> : <Bell size={18} />}
+          </button>
+        )}
         {kopf.istLeitung && (
           <button
             type="button"

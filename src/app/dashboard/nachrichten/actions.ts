@@ -112,3 +112,11 @@ export async function chatFreigabeSetzen(kindUserId: string, erteilt: boolean): 
   revalidatePath("/dashboard/nachrichten", "layout");
   return { error: null, ok: erteilt ? "Chat freigeschaltet." : "Chat-Freigabe widerrufen." };
 }
+
+export async function chatStummSetzen(gespraechId: string, stumm: boolean): Promise<AktionsErgebnis> {
+  if (!UUID.test(gespraechId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { error } = await supabase.rpc("chat_stumm_setzen", { p_gespraech_id: gespraechId, p_stumm: stumm });
+  if (error) return { error: freundlicherFehler(error) };
+  return { error: null };
+}

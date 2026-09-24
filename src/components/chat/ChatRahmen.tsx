@@ -7,6 +7,7 @@ import { Search, SquarePen, Megaphone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { alsChatEintrag, type ChatEintrag, type ChatStatus } from "@/lib/chat/getChat";
 import { ChatFreigaben } from "./ChatFreigaben";
+import { PushSchalter } from "./PushSchalter";
 import { ChatAvatar, zeitKurz } from "./ChatAvatar";
 
 export function ChatRahmen({ start, status, children }: { start: ChatEintrag[]; status: ChatStatus; children: React.ReactNode }) {
@@ -76,6 +77,7 @@ export function ChatRahmen({ start, status, children }: { start: ChatEintrag[]; 
           </label>
         </div>
         <ChatFreigaben status={status} />
+        <PushSchalter />
         <ul className="flex-1 overflow-y-auto">
           {gefiltert.length === 0 && (
             <li className="px-5 py-8 text-center text-[13.5px] text-brand-ink-soft">
