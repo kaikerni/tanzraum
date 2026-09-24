@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Crown, Building2, HelpCircle, Heart } from "lucide-react";
@@ -85,7 +86,14 @@ export function AppSidebar({
           <div className="hidden px-1 xl:block">
             <div className="text-[11.5px] text-brand-ink-faint">TanzRaum v1.0</div>
             <div className="text-[11.5px] text-brand-ink-faint">Gemeinsam. Organisiert. Verbunden.</div>
-            <p className="mt-4 -rotate-6 font-[family-name:var(--font-script)] text-[21px] leading-snug text-brand-ink">
+            <Image
+              src="/tanzraum-taenzer-illustration.webp"
+              alt=""
+              width={700}
+              height={491}
+              className="mt-4 h-auto w-full select-none"
+            />
+            <p className="-mt-3 -rotate-6 font-[family-name:var(--font-script)] text-[21px] leading-snug text-brand-ink">
               Mehr als Tanz –<br />
               eine Gemeinschaft!{" "}
               <Heart size={18} className="inline fill-brand-red text-brand-red" />
