@@ -19,6 +19,13 @@ export default async function DashboardLayout({
   if (!daten) redirect("/login");
   if (daten.gesperrt) redirect("/gesperrt");
 
+  const { data: onboarding } = await supabase
+    .from("onboarding_progress")
+    .select("completed")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!onboarding || !onboarding.completed) redirect("/onboarding");
+
   const { data: ungelesen } = await supabase.rpc("eigene_ungelesene_nachrichten_anzahl");
 
   const name = [daten.vorname, daten.nachname].filter(Boolean).join(" ") || "TanzRaum-Nutzer";
