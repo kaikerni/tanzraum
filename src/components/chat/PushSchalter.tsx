@@ -100,11 +100,11 @@ export function PushSchalter() {
           onClick={einschalten}
           className="flex min-h-10 w-full items-center gap-2 rounded-xl bg-brand-blue-wash px-3 text-left text-[12.5px] font-semibold text-brand-blue"
         >
-          <BellRing size={16} /> Benachrichtigungen auf diesem Gerät aktivieren
+          <BellRing size={16} /> Messenger-Benachrichtigungen auf diesem Gerät aktivieren
         </button>
       ) : (
         <button type="button" onClick={ausschalten} className="flex min-h-9 items-center gap-1.5 text-[12px] text-brand-ink-faint hover:text-brand-ink">
-          <Bell size={14} /> Benachrichtigungen an · auf diesem Gerät ausschalten
+          <Bell size={14} /> Messenger-Benachrichtigungen an · auf diesem Gerät ausschalten
         </button>
       )}
       {fehler && <p className="form-error mt-2">{fehler}</p>}

@@ -6,7 +6,7 @@ self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim(
 self.addEventListener("push", (event) => {
   event.waitUntil(
     (async () => {
-      let info = { titel: "TanzRaum", text: "Du hast eine neue Nachricht.", url: "/dashboard/nachrichten", tag: "tanzraum-chat" };
+      let info = { titel: "TanzRaum-Messenger", text: "Du hast eine neue Nachricht.", url: "/dashboard/nachrichten", tag: "tanzraum-chat" };
       try {
         const antwort = await fetch("/api/chat/push-info", { credentials: "include", cache: "no-store" });
         if (antwort.ok) info = { ...info, ...(await antwort.json()) };

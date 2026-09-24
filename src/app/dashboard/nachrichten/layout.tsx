@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getChatListe, getKontaktanfragen } from "@/lib/chat/getChat";
 import { ChatRahmen } from "@/components/chat/ChatRahmen";
+
+export const metadata: Metadata = { title: "TanzRaum-Messenger" };
 
 export default async function NachrichtenLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
