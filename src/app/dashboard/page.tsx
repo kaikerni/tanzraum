@@ -25,6 +25,7 @@ import {
 } from "@/lib/dashboard/getAdminOverview";
 import { getAktuelleNachrichten } from "@/lib/dashboard/getNachrichten";
 import { QuickActions } from "@/components/QuickActions";
+import { TanzraumAssistent } from "@/components/TanzraumAssistent";
 
 const TARIF_LABEL: Record<string, string> = {
   free: "Free",
@@ -87,19 +88,23 @@ export default async function DashboardPage() {
             </p>
           </div>
         </div>
-        <div className="flex flex-col justify-between rounded-2xl border border-brand-line bg-white p-6 shadow-[var(--shadow-hover)]">
-          <div className="text-[13px] font-medium text-brand-ink-soft">
-            {new Date().toLocaleDateString("de-DE", {
-              weekday: "long",
-              day: "2-digit",
-              month: "long",
-              year: "numeric",
-            })}
+        {daten.istPlattformAdmin ? (
+          <TanzraumAssistent />
+        ) : (
+          <div className="flex flex-col justify-between rounded-2xl border border-brand-line bg-white p-6 shadow-[var(--shadow-hover)]">
+            <div className="text-[13px] font-medium text-brand-ink-soft">
+              {new Date().toLocaleDateString("de-DE", {
+                weekday: "long",
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              })}
+            </div>
+            <p className="mt-4 font-display text-lg leading-snug text-brand-ink">
+              „Disziplin heute – Erfolg morgen."
+            </p>
           </div>
-          <p className="mt-4 font-display text-lg leading-snug text-brand-ink">
-            „Disziplin heute – Erfolg morgen."
-          </p>
-        </div>
+        )}
       </div>
 
       {/* KPI-Karten (nur fuer Plattform-Admin, plattformweit) */}
