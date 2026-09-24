@@ -115,7 +115,7 @@ export function MobileNav({
                     </span>
                   )}
                 </span>
-                <span className="max-w-full truncate px-1">{item.label}</span>
+                <span className="max-w-full truncate px-1">{item.kurz ?? item.label}</span>
               </Link>
             );
           })}

@@ -1,13 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type ChatTyp = "dm" | "verein" | "eltern" | "trainingsgruppe" | "platform" | "juryraum";
+export type ChatTyp = "dm" | "verein" | "trainingsgruppe" | "juryraum";
+export type ChatBereich = "verein" | "gruppe" | "privat";
 
 export type ChatEintrag = {
   id: string;
   typ: ChatTyp;
+  bereich: ChatBereich;
   name: string;
   untertitel: string | null;
   partnerId: string | null;
+  partnerRolle: string | null;
+  blockiert: boolean;
   avatarUrl: string | null;
   letzteNachricht: string | null;
   letzteZeit: string;
@@ -29,6 +33,9 @@ export type ChatKopf = {
   istLeitung: boolean;
   nurLeitungSchreibt: boolean;
   partnerGelesenBis: string | null;
+  partnerRolle: string | null;
+  ichHabeBlockiert: boolean;
+  partnerBlockiert: boolean;
 };
 
 export type Umfrage = {
@@ -57,18 +64,33 @@ export type ChatNachricht = {
 };
 
 export type Kontakt = { userId: string; anzeige: string; handle: string | null; avatarUrl: string | null; grund: string };
-export type GruppenOption = { typ: "verein" | "eltern" | "trainingsgruppe"; vereinId: string; gruppeId: string | null; name: string; vereinName: string; vorhanden: string | null };
-export type Verbindung = { userId: string; anzeige: string; handle: string | null; avatarUrl: string | null; status: "verbunden" | "angefragt" | "eingehend" };
-export type SuchTreffer = Verbindung & { status: Verbindung["status"] | null; darfSchreiben: boolean };
+export type Kontaktanfrage = {
+  userId: string;
+  anzeige: string;
+  handle: string | null;
+  avatarUrl: string | null;
+  richtung: "eingehend" | "ausgehend" | "blockiert";
+};
+export type SuchTreffer = {
+  userId: string;
+  anzeige: string;
+  handle: string | null;
+  avatarUrl: string | null;
+  status: "verbunden" | "angefragt" | "eingehend" | "abgelehnt" | null;
+  darfSchreiben: boolean;
+};
 
 // deno-lint-ignore no-explicit-any
 export function alsChatEintrag(c: any): ChatEintrag {
   return {
     id: c.id,
     typ: c.typ,
+    bereich: c.bereich,
     name: c.name,
     untertitel: c.untertitel,
     partnerId: c.partner_id,
+    partnerRolle: c.partner_rolle,
+    blockiert: c.blockiert,
     avatarUrl: c.avatar_url,
     letzteNachricht: c.letzte_nachricht,
     letzteZeit: c.letzte_zeit,
@@ -121,6 +143,9 @@ export async function getChatKopf(supabase: SupabaseClient, id: string): Promise
     istLeitung: k.ist_leitung,
     nurLeitungSchreibt: k.nur_leitung_schreibt,
     partnerGelesenBis: k.partner_gelesen_bis,
+    partnerRolle: k.partner_rolle,
+    ichHabeBlockiert: k.ich_habe_blockiert,
+    partnerBlockiert: k.partner_blockiert,
   };
 }
 
@@ -145,39 +170,8 @@ export async function getKontakte(supabase: SupabaseClient): Promise<Kontakt[]> 
   return ((data ?? []) as any[]).map((k) => ({ userId: k.user_id, anzeige: k.anzeige, handle: k.handle, avatarUrl: k.avatar_url, grund: k.grund }));
 }
 
-export async function getGruppenOptionen(supabase: SupabaseClient): Promise<GruppenOption[]> {
-  const { data } = await supabase.rpc("chat_gruppen_optionen");
+export async function getKontaktanfragen(supabase: SupabaseClient): Promise<Kontaktanfrage[]> {
+  const { data } = await supabase.rpc("meine_kontaktanfragen");
   // deno-lint-ignore no-explicit-any
-  return ((data ?? []) as any[]).map((o) => ({
-    typ: o.typ,
-    vereinId: o.verein_id,
-    gruppeId: o.gruppe_id,
-    name: o.name,
-    vereinName: o.verein_name,
-    vorhanden: o.vorhanden,
-  }));
-}
-
-export async function getVerbindungen(supabase: SupabaseClient): Promise<Verbindung[]> {
-  const { data } = await supabase.rpc("meine_verbindungen");
-  // deno-lint-ignore no-explicit-any
-  return ((data ?? []) as any[]).map((v) => ({ userId: v.user_id, anzeige: v.anzeige, handle: v.handle, avatarUrl: v.avatar_url, status: v.status }));
-}
-
-export type ChatStatus = {
-  ichMinderjaehrig: boolean;
-  ichFreigeschaltet: boolean;
-  kinder: { userId: string; name: string; minderjaehrig: boolean; freigeschaltet: boolean }[];
-};
-
-export async function getChatStatus(supabase: SupabaseClient): Promise<ChatStatus> {
-  const { data } = await supabase.rpc("chat_status");
-  // deno-lint-ignore no-explicit-any
-  const s = ((data ?? []) as any[])[0];
-  return {
-    ichMinderjaehrig: Boolean(s?.ich_minderjaehrig),
-    ichFreigeschaltet: s ? Boolean(s.ich_freigeschaltet) : true,
-    // deno-lint-ignore no-explicit-any
-    kinder: ((s?.kinder ?? []) as any[]).map((k) => ({ userId: k.user_id, name: k.name, minderjaehrig: k.minderjaehrig, freigeschaltet: k.freigeschaltet })),
-  };
+  return ((data ?? []) as any[]).map((k) => ({ userId: k.user_id, anzeige: k.anzeige, handle: k.handle, avatarUrl: k.avatar_url, richtung: k.richtung }));
 }

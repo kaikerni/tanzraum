@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getChatKopf, getChatNachrichten, getChatStatus, signierteBildUrls } from "@/lib/chat/getChat";
+import { getChatKopf, getChatNachrichten, signierteBildUrls } from "@/lib/chat/getChat";
 import { ChatFenster } from "@/components/chat/ChatFenster";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -17,9 +17,8 @@ export default async function ChatSeite({ params }: { params: Promise<{ id: stri
   const kopf = await getChatKopf(supabase, id);
   if (!kopf) notFound();
 
-  const [nachrichten, status, { data: stumm }] = await Promise.all([
+  const [nachrichten, { data: stumm }] = await Promise.all([
     getChatNachrichten(supabase, id),
-    getChatStatus(supabase),
     supabase.rpc("chat_ist_stumm", { p_gespraech_id: id }),
   ]);
   const bilder = await signierteBildUrls(
@@ -34,7 +33,6 @@ export default async function ChatSeite({ params }: { params: Promise<{ id: stri
       start={nachrichten}
       startBilder={bilder}
       userId={user.id}
-      freigabeFehlt={status.ichMinderjaehrig && !status.ichFreigeschaltet}
       stumm={Boolean(stumm)}
     />
   );

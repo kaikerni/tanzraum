@@ -95,7 +95,7 @@ export function AppHeader({
         <button
           type="button"
           className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-brand-line text-brand-ink transition-colors hover:bg-brand-bg"
-          aria-label={`Nachrichten${ungeleseneNachrichten > 0 ? ` (${ungeleseneNachrichten} ungelesen)` : ""}`}
+          aria-label={`TanzRaum-Chat${ungeleseneNachrichten > 0 ? ` (${ungeleseneNachrichten} ungelesen)` : ""}`}
         >
           <MessageSquare size={18} />
           <Zaehler anzahl={ungeleseneNachrichten} />

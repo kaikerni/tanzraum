@@ -20,23 +20,6 @@ async function sitzung() {
   return supabase;
 }
 
-export async function dmStarten(userId: string): Promise<AktionsErgebnis> {
-  if (!UUID.test(userId)) return { error: "Ungültige Auswahl." };
-  const supabase = await sitzung();
-  const { data, error } = await supabase.rpc("chat_dm_starten", { p_user_id: userId });
-  if (error || !data) return { error: error ? freundlicherFehler(error) : "Der Chat konnte nicht geöffnet werden." };
-  redirect(`/dashboard/nachrichten/${data}`);
-}
-
-export async function gruppenchatAnlegen(typ: string, vereinId: string, gruppeId: string | null): Promise<AktionsErgebnis> {
-  if (!UUID.test(vereinId) || (gruppeId !== null && !UUID.test(gruppeId))) return { error: "Ungültige Auswahl." };
-  const supabase = await sitzung();
-  const { data, error } = await supabase.rpc("chat_anlegen", { p_typ: typ, p_verein_id: vereinId, p_gruppe_id: gruppeId });
-  if (error || !data) return { error: error ? freundlicherFehler(error) : "Der Chat konnte nicht angelegt werden." };
-  revalidatePath("/dashboard/nachrichten", "layout");
-  redirect(`/dashboard/nachrichten/${data}`);
-}
-
 export async function chatEinstellung(gespraechId: string, nurLeitung: boolean): Promise<AktionsErgebnis> {
   if (!UUID.test(gespraechId)) return { error: "Ungültige Auswahl." };
   const supabase = await sitzung();
@@ -77,46 +60,80 @@ export async function nutzerSuchen(suche: string): Promise<SuchTreffer[]> {
   }));
 }
 
-export async function verbindungAnfragen(userId: string): Promise<AktionsErgebnis> {
-  if (!UUID.test(userId)) return { error: "Ungültige Auswahl." };
-  const supabase = await sitzung();
-  const { data, error } = await supabase.rpc("verbindung_anfragen", { p_user_id: userId });
-  if (error) return { error: freundlicherFehler(error) };
-  revalidatePath("/dashboard/nachrichten/neu");
-  return { error: null, ok: data === "verbunden" ? "Ihr seid jetzt verbunden." : "Anfrage gesendet." };
-}
-
-export async function verbindungBeantworten(userId: string, annehmen: boolean): Promise<AktionsErgebnis> {
-  if (!UUID.test(userId)) return { error: "Ungültige Auswahl." };
-  const supabase = await sitzung();
-  const { error } = await supabase.rpc("verbindung_beantworten", { p_user_id: userId, p_annehmen: annehmen });
-  if (error) return { error: freundlicherFehler(error) };
-  revalidatePath("/dashboard/nachrichten/neu");
-  return { error: null, ok: annehmen ? "Verbunden." : "Anfrage abgelehnt." };
-}
-
-export async function verbindungEntfernen(userId: string): Promise<AktionsErgebnis> {
-  if (!UUID.test(userId)) return { error: "Ungültige Auswahl." };
-  const supabase = await sitzung();
-  const { error } = await supabase.rpc("verbindung_entfernen", { p_user_id: userId });
-  if (error) return { error: freundlicherFehler(error) };
-  revalidatePath("/dashboard/nachrichten/neu");
-  return { error: null, ok: "Verbindung entfernt." };
-}
-
-export async function chatFreigabeSetzen(kindUserId: string, erteilt: boolean): Promise<AktionsErgebnis> {
-  if (!UUID.test(kindUserId)) return { error: "Ungültige Auswahl." };
-  const supabase = await sitzung();
-  const { error } = await supabase.rpc("chat_einwilligung_setzen", { p_kind_user_id: kindUserId, p_erteilt: erteilt });
-  if (error) return { error: freundlicherFehler(error) };
-  revalidatePath("/dashboard/nachrichten", "layout");
-  return { error: null, ok: erteilt ? "Chat freigeschaltet." : "Chat-Freigabe widerrufen." };
-}
-
 export async function chatStummSetzen(gespraechId: string, stumm: boolean): Promise<AktionsErgebnis> {
   if (!UUID.test(gespraechId)) return { error: "Ungültige Auswahl." };
   const supabase = await sitzung();
   const { error } = await supabase.rpc("chat_stumm_setzen", { p_gespraech_id: gespraechId, p_stumm: stumm });
   if (error) return { error: freundlicherFehler(error) };
   return { error: null };
+}
+
+export type KontaktErgebnis = AktionsErgebnis & {
+  ergebnis?: "chat" | "anfrage_noetig" | "angefragt" | "eingehend" | "abgelehnt" | "nicht_moeglich";
+  ichMinderjaehrig?: boolean;
+};
+
+// Privatchat oeffnen, wenn erlaubt; sonst sagt die Datenbank, ob eine Kontaktanfrage noetig ist.
+export async function kontaktAufnehmen(userId: string): Promise<KontaktErgebnis> {
+  if (!UUID.test(userId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { data, error } = await supabase.rpc("kontakt_aufnehmen", { p_user_id: userId });
+  if (error) return { error: freundlicherFehler(error) };
+  // deno-lint-ignore no-explicit-any
+  const r = ((data ?? []) as any[])[0];
+  if (r?.ergebnis === "chat" && r.gespraech_id) redirect(`/dashboard/nachrichten/${r.gespraech_id}`);
+  const texte: Record<string, string> = {
+    angefragt: "Deine Kontaktanfrage ist noch offen.",
+    eingehend: "Diese Person hat dir eine Kontaktanfrage geschickt – du findest sie oben in deiner Chatliste.",
+    abgelehnt: "Diese Person hat deine Kontaktanfrage abgelehnt.",
+    nicht_moeglich: "Eine Kontaktaufnahme mit dieser Person ist nicht möglich.",
+  };
+  return { error: r?.ergebnis === "anfrage_noetig" ? null : (texte[r?.ergebnis] ?? "Nicht möglich."), ergebnis: r?.ergebnis, ichMinderjaehrig: r?.ich_minderjaehrig };
+}
+
+export async function kontaktanfrageSenden(userId: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(userId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { data, error } = await supabase.rpc("kontaktanfrage_senden", { p_user_id: userId });
+  if (error) return { error: freundlicherFehler(error) };
+  if (data === "direkt" || data === "angenommen") return kontaktAufnehmen(userId);
+  revalidatePath("/dashboard/nachrichten", "layout");
+  return { error: null, ok: "Kontaktanfrage gesendet. Sobald sie angenommen wird, könnt ihr chatten." };
+}
+
+export async function kontaktanfrageBeantworten(userId: string, aktion: "annehmen" | "ablehnen" | "blockieren"): Promise<AktionsErgebnis> {
+  if (!UUID.test(userId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { data, error } = await supabase.rpc("kontaktanfrage_beantworten", { p_user_id: userId, p_aktion: aktion });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath("/dashboard/nachrichten", "layout");
+  if (aktion === "annehmen" && data) redirect(`/dashboard/nachrichten/${data}`);
+  return { error: null, ok: aktion === "blockieren" ? "Person blockiert." : "Anfrage abgelehnt." };
+}
+
+export async function kontaktanfrageZurueckziehen(userId: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(userId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { error } = await supabase.rpc("kontaktanfrage_zurueckziehen", { p_user_id: userId });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath("/dashboard/nachrichten", "layout");
+  return { error: null, ok: "Anfrage zurückgezogen." };
+}
+
+export async function nutzerBlockieren(userId: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(userId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { error } = await supabase.rpc("nutzer_blockieren", { p_user_id: userId });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath("/dashboard/nachrichten", "layout");
+  return { error: null, ok: "Person blockiert." };
+}
+
+export async function nutzerFreigeben(userId: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(userId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { error } = await supabase.rpc("nutzer_freigeben", { p_user_id: userId });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath("/dashboard/nachrichten", "layout");
+  return { error: null, ok: "Blockierung aufgehoben." };
 }

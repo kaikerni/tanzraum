@@ -1,4 +1,4 @@
-import { Users, Megaphone, Baby, Building2 } from "lucide-react";
+import { Users, Building2 } from "lucide-react";
 import type { ChatTyp } from "@/lib/chat/getChat";
 
 const FARBEN = ["bg-brand-red", "bg-brand-blue", "bg-brand-green", "bg-brand-purple", "bg-brand-gold", "bg-brand-navy-soft"];
@@ -27,9 +27,8 @@ export function ChatAvatar({ typ, name, avatarUrl, groesse = 48 }: { typ: ChatTy
       </span>
     );
   }
-  const Icon = typ === "platform" ? Megaphone : typ === "eltern" ? Baby : typ === "verein" ? Building2 : Users;
-  const farbe =
-    typ === "platform" ? "bg-brand-red-wash text-brand-red" : typ === "eltern" ? "bg-brand-amber-wash text-brand-amber" : typ === "verein" ? "bg-brand-blue-wash text-brand-blue" : "bg-brand-green-wash text-brand-green";
+  const Icon = typ === "verein" ? Building2 : Users;
+  const farbe = typ === "verein" ? "bg-brand-blue-wash text-brand-blue" : "bg-brand-green-wash text-brand-green";
   return (
     <span style={stil} className={`flex shrink-0 items-center justify-center rounded-full ${farbe}`}>
       <Icon size={Math.round(groesse * 0.45)} />

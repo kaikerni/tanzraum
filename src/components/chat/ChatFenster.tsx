@@ -19,10 +19,11 @@ import {
   Lock,
   Bell,
   BellOff,
+  Ban,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { alsNachricht, type ChatKopf, type ChatNachricht, type Umfrage } from "@/lib/chat/getChat";
-import { chatEinstellung, chatStummSetzen, nachrichtLoeschen, umfrageAbstimmen } from "@/app/dashboard/nachrichten/actions";
+import { chatEinstellung, chatStummSetzen, nachrichtLoeschen, nutzerBlockieren, nutzerFreigeben, umfrageAbstimmen } from "@/app/dashboard/nachrichten/actions";
 import { ChatAvatar } from "./ChatAvatar";
 
 const NAMENSFARBEN = ["text-brand-red", "text-brand-blue", "text-brand-green", "text-brand-purple", "text-brand-gold", "text-brand-navy-soft"];
@@ -198,14 +199,12 @@ export function ChatFenster({
   start,
   startBilder,
   userId,
-  freigabeFehlt = false,
   stumm: startStumm = false,
 }: {
   kopf: ChatKopf;
   start: ChatNachricht[];
   startBilder: Record<string, string>;
   userId: string;
-  freigabeFehlt?: boolean;
   stumm?: boolean;
 }) {
   const router = useRouter();
@@ -245,7 +244,15 @@ export function ChatFenster({
     const { data } = await supabase.rpc("chat_kopf", { p_gespraech_id: kopf.id });
     // deno-lint-ignore no-explicit-any
     const k = (data as any[] | null)?.[0];
-    if (k) setKopf((alt) => ({ ...alt, partnerGelesenBis: k.partner_gelesen_bis, darfSchreiben: k.darf_schreiben, nurLeitungSchreibt: k.nur_leitung_schreibt }));
+    if (k)
+      setKopf((alt) => ({
+        ...alt,
+        partnerGelesenBis: k.partner_gelesen_bis,
+        darfSchreiben: k.darf_schreiben,
+        nurLeitungSchreibt: k.nur_leitung_schreibt,
+        ichHabeBlockiert: k.ich_habe_blockiert,
+        partnerBlockiert: k.partner_blockiert,
+      }));
   }, [supabase, kopf.id]);
 
   const gelesen = useCallback(async () => {
@@ -367,7 +374,24 @@ export function ChatFenster({
             {kopf.nurLeitungSchreibt && istGruppe ? " · nur Leitung schreibt" : ""}
           </div>
         </div>
-        {kopf.typ !== "platform" && (
+        {kopf.typ === "dm" && kopf.partnerId && (
+          <button
+            type="button"
+            onClick={async () => {
+              const partner = kopf.partnerId!;
+              if (!kopf.ichHabeBlockiert && !confirm(`${kopf.name} blockieren? Ihr könnt euch dann nicht mehr privat schreiben.`)) return;
+              const e = kopf.ichHabeBlockiert ? await nutzerFreigeben(partner) : await nutzerBlockieren(partner);
+              if (e.error) setFehler(e.error);
+              await kopfLaden();
+              router.refresh();
+            }}
+            aria-label={kopf.ichHabeBlockiert ? "Blockierung aufheben" : "Blockieren"}
+            title={kopf.ichHabeBlockiert ? "Blockierung aufheben" : "Blockieren"}
+            className={`flex h-10 w-10 items-center justify-center rounded-full hover:bg-brand-bg ${kopf.ichHabeBlockiert ? "text-brand-red" : "text-brand-ink-soft"}`}
+          >
+            <Ban size={18} />
+          </button>
+        )}
           <button
             type="button"
             onClick={async () => {
@@ -386,7 +410,6 @@ export function ChatFenster({
           >
             {stumm ? <BellOff size={18} /> : <Bell size={18} />}
           </button>
-        )}
         {kopf.istLeitung && (
           <button
             type="button"
@@ -568,13 +591,13 @@ export function ChatFenster({
       {!kopf.darfSchreiben ? (
         <div className="flex min-h-14 items-center justify-center gap-2 border-t border-brand-line bg-white px-4 text-center text-[13px] text-brand-ink-soft">
           <Megaphone size={15} />
-          {freigabeFehlt
-            ? "Zum Schreiben müssen deine Eltern den Chat für dich freischalten."
-            : kopf.typ === "platform"
-            ? "Hier schreibt nur das TanzRaum-Team."
-            : kopf.typ === "dm"
-              ? "In diesem Chat kann nicht mehr geschrieben werden."
-              : "Hier schreiben nur Vorstand, Trainer und Betreuer."}
+          {kopf.typ === "dm"
+            ? kopf.ichHabeBlockiert
+              ? "Du hast diese Person blockiert. Hebe die Blockierung oben auf, um wieder zu schreiben."
+              : kopf.partnerBlockiert
+                ? "Du kannst dieser Person nicht mehr schreiben."
+                : "Ihr seid nicht mehr im selben Verein. Für neue Nachrichten ist eine Kontaktanfrage nötig."
+            : "Hier schreiben nur Vorstand, Trainer und Betreuer."}
         </div>
       ) : umfrageOffen ? (
         <UmfrageFormular onSchliessen={() => setUmfrageOffen(false)} onSenden={(u) => senden({ umfrage: u })} />
