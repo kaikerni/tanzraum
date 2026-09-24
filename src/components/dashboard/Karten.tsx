@@ -285,7 +285,8 @@ export function TurniereKarte({ turniere }: { turniere: NaechstesTurnier[] }) {
           {turniere.map((t) => {
             const d = datumTeile(t.ersterTag);
             return (
-              <li key={t.id} className="flex items-center gap-3 py-2">
+              <li key={t.id}>
+                <Link href={`/dashboard/turniere/${t.id}`} className="flex items-center gap-3 py-2 hover:bg-brand-bg/60">
                 <span className="flex w-11 shrink-0 flex-col items-center rounded-lg bg-brand-red-wash py-1 leading-none text-brand-red">
                   <span className="text-[9.5px] font-semibold">{d.wochentag}</span>
                   <span className="text-[19px] font-bold">{d.tag}</span>
@@ -311,6 +312,7 @@ export function TurniereKarte({ turniere }: { turniere: NaechstesTurnier[] }) {
                     Neu
                   </span>
                 )}
+                </Link>
               </li>
             );
           })}

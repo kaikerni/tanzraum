@@ -64,6 +64,8 @@ export type Turniertag = {
   datum: string;
   tagNr: number;
   tageGesamt: number;
+  eigenes: boolean;
+  unsereStarts: number;
 };
 
 const zeit = (t: unknown) => (t ? String(t).slice(0, 5) : null);
@@ -122,6 +124,8 @@ export async function getTurniertage(supabase: SupabaseClient, von: string, bis:
     datum: t.datum,
     tagNr: t.tag_nr,
     tageGesamt: t.tage_gesamt,
+    eigenes: !!t.eigenes,
+    unsereStarts: t.unsere_starts ?? 0,
   }));
 }
 
@@ -196,9 +200,9 @@ export async function getKalenderEintraege(supabase: SupabaseClient, von: string
       titel: t.name,
       untertitel: [t.kategorie, t.tageGesamt > 1 ? `Tag ${t.tagNr} von ${t.tageGesamt}` : null].filter(Boolean).join(" · ") || null,
       ort: t.ort,
-      href: t.ausschreibungUrl,
-      extern: true,
-      hinweis: null,
+      href: `/dashboard/turniere/${t.id}`,
+      extern: false,
+      hinweis: t.unsereStarts > 0 ? (t.unsereStarts === 1 ? "Wir starten" : `Wir starten (${t.unsereStarts}×)`) : t.eigenes ? "Vereinsturnier" : null,
     });
   }
 
