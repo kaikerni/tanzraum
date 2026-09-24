@@ -125,6 +125,7 @@ export async function einladungErstellen(_prev: AktionsErgebnis, formData: FormD
   if (error) return { error: error.code === "42501" ? "Nur der Vereinsadmin darf einladen." : error.message };
 
   revalidatePath("/dashboard/verein");
+  revalidatePath("/dashboard/mitglieder/neu");
   return { error: null, ok: "Einladungslink erstellt – unten kopieren und verschicken." };
 }
 
@@ -134,6 +135,7 @@ export async function einladungWiderrufen(formData: FormData): Promise<void> {
   const { supabase } = await sitzung();
   await supabase.from("einladungen").update({ revoked: true }).eq("id", id);
   revalidatePath("/dashboard/verein");
+  revalidatePath("/dashboard/mitglieder/neu");
 }
 
 export async function vereinNeuAnlegen(_prev: AktionsErgebnis, formData: FormData): Promise<AktionsErgebnis> {
