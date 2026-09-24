@@ -47,6 +47,10 @@ export type Umfrage = {
   teilnehmer: number;
 };
 
+export type Anhang = { art: "datei" | "video" | "audio"; pfad: string; name: string; groesse: number | null; typ: string | null; dauer: number | null };
+export type Standort = { lat: number; lng: number; genauigkeit: number | null };
+export type Reaktion = { emoji: string; anzahl: number; ich: boolean };
+
 export type ChatNachricht = {
   id: string;
   senderId: string;
@@ -55,6 +59,9 @@ export type ChatNachricht = {
   inhalt: string;
   bildPfad: string | null;
   umfrage: Umfrage | null;
+  anhang: Anhang | null;
+  standort: Standort | null;
+  reaktionen: Reaktion[];
   antwortAuf: string | null;
   antwortSender: string | null;
   antwortText: string | null;
@@ -112,6 +119,9 @@ export function alsNachricht(n: any): ChatNachricht {
     inhalt: n.inhalt,
     bildPfad: n.bild_pfad,
     umfrage: n.umfrage,
+    anhang: n.anhang,
+    standort: n.standort,
+    reaktionen: n.reaktionen ?? [],
     antwortAuf: n.antwort_auf,
     antwortSender: n.antwort_sender,
     antwortText: n.antwort_text,

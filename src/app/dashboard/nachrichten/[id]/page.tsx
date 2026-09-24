@@ -17,9 +17,10 @@ export default async function ChatSeite({ params }: { params: Promise<{ id: stri
   const kopf = await getChatKopf(supabase, id);
   if (!kopf) notFound();
 
-  const [nachrichten, { data: stumm }] = await Promise.all([
+  const [nachrichten, { data: stumm }, { data: profil }] = await Promise.all([
     getChatNachrichten(supabase, id),
     supabase.rpc("chat_ist_stumm", { p_gespraech_id: id }),
+    supabase.from("profiles").select("vorname, handle").eq("id", user.id).maybeSingle(),
   ]);
   const bilder = await signierteBildUrls(
     supabase,
@@ -33,6 +34,7 @@ export default async function ChatSeite({ params }: { params: Promise<{ id: stri
       start={nachrichten}
       startBilder={bilder}
       userId={user.id}
+      meinName={profil?.vorname || (profil?.handle ? `@${profil.handle}` : "Jemand")}
       stumm={Boolean(stumm)}
     />
   );

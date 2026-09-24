@@ -70,7 +70,7 @@ export const NAV: NavEintrag[] = [
   { href: "/dashboard/mitglieder", label: "Mitglieder", icon: Users, tarif: "verein", recht: "mitglieder" },
   { href: "/dashboard/mitgliedsantraege", label: "Mitgliedsanträge", icon: FileSignature, tarif: "verein", recht: "beitritt" },
   { href: "/dashboard/trainer-netzwerk", label: "Trainer-Netzwerk", icon: Handshake, tarif: "verein", recht: "netzwerk" },
-  { href: "/dashboard/nachrichten", label: "TanzRaum-Chat", kurz: "Chat", icon: MessageSquare, tarif: "free" },
+  { href: "/dashboard/nachrichten", label: "TanzRaum-Messenger", kurz: "Chat", icon: MessageSquare, tarif: "free" },
   { href: "/dashboard/dateien", label: "Dateien", icon: Folder, tarif: "basic" },
   { href: "/dashboard/fahrgemeinschaften", label: "Fahrgemeinschaften", icon: Car, tarif: "basic", nichtNurFuer: ["rolle_betreuer"] },
   { href: "/dashboard/musik", label: "Musik", icon: Music, tarif: "basic", nichtNurFuer: ["rolle_betreuer", "rolle_eltern"] },

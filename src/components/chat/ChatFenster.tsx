@@ -20,14 +20,23 @@ import {
   Bell,
   BellOff,
   Ban,
+  Smile,
+  FileText,
+  MapPin,
+  Film,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { alsNachricht, type ChatKopf, type ChatNachricht, type Umfrage } from "@/lib/chat/getChat";
-import { chatEinstellung, chatStummSetzen, nachrichtLoeschen, nutzerBlockieren, nutzerFreigeben, umfrageAbstimmen } from "@/app/dashboard/nachrichten/actions";
+import { chatEinstellung, chatStummSetzen, nachrichtLoeschen, nutzerBlockieren, nutzerFreigeben, reagieren, umfrageAbstimmen } from "@/app/dashboard/nachrichten/actions";
+import { AnhangAnsicht, StandortAnsicht, groesseText } from "./NachrichtAnhang";
+import { EmojiAuswahl } from "./EmojiAuswahl";
+import { Sprachaufnahme } from "./Sprachaufnahme";
 import { ChatAvatar } from "./ChatAvatar";
 
 const NAMENSFARBEN = ["text-brand-red", "text-brand-blue", "text-brand-green", "text-brand-purple", "text-brand-gold", "text-brand-navy-soft"];
 const tagBerlin = (iso: string) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(new Date(iso));
+const REAKTIONEN = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🎉", "🔥"];
+const DOKUMENTE = ".pdf,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.zip";
 const uhrzeit = (iso: string) => new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" });
 
 function namensFarbe(id: string) {
@@ -199,12 +208,14 @@ export function ChatFenster({
   start,
   startBilder,
   userId,
+  meinName,
   stumm: startStumm = false,
 }: {
   kopf: ChatKopf;
   start: ChatNachricht[];
   startBilder: Record<string, string>;
   userId: string;
+  meinName: string;
   stumm?: boolean;
 }) {
   const router = useRouter();
@@ -223,6 +234,15 @@ export function ChatFenster({
   const [fehler, setFehler] = useState<string | null>(null);
   const [einstellungLaeuft, starteEinstellung] = useTransition();
   const [stumm, setStumm] = useState(startStumm);
+  const [dateiUrls, setDateiUrls] = useState<Record<string, string>>({});
+  const [anhangDatei, setAnhangDatei] = useState<{ datei: File; art: "datei" | "video" } | null>(null);
+  const [plusOffen, setPlusOffen] = useState(false);
+  const [emojiOffen, setEmojiOffen] = useState(false);
+  const [aufnahme, setAufnahme] = useState(false);
+  const [tippende, setTippende] = useState<Record<string, { name: string; bis: number }>>({});
+  const tippKanal = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const zuletztGetippt = useRef(0);
+  const dokumentEingabe = useRef<HTMLInputElement>(null);
   const liste = useRef<HTMLDivElement>(null);
   const eingabe = useRef<HTMLTextAreaElement>(null);
   const amEnde = useRef(true);
@@ -267,14 +287,39 @@ export function ChatFenster({
       .channel(`chat-${kopf.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "nachrichten", filter: `gespraech_id=eq.${kopf.id}` }, () => laden())
       .on("postgres_changes", { event: "*", schema: "public", table: "gespraech_teilnehmer", filter: `gespraech_id=eq.${kopf.id}` }, () => kopfLaden())
+      .on("postgres_changes", { event: "*", schema: "public", table: "nachricht_reaktionen", filter: `gespraech_id=eq.${kopf.id}` }, () => laden())
       .subscribe();
+    // "schreibt ..." ueber einen fluechtigen Broadcast-Kanal (nichts wird gespeichert)
+    const tippen = supabase
+      .channel(`tippen-${kopf.id}`, { config: { broadcast: { self: false } } })
+      .on("broadcast", { event: "tippt" }, ({ payload }) => {
+        if (!payload?.id || payload.id === userId) return;
+        setTippende((alt) => ({ ...alt, [payload.id]: { name: String(payload.name ?? "Jemand").slice(0, 40), bis: Date.now() + 4000 } }));
+      })
+      .subscribe();
+    tippKanal.current = tippen;
+    const aufraeumen = setInterval(() => {
+      setTippende((alt) => {
+        const jetzt = Date.now();
+        const neu = Object.fromEntries(Object.entries(alt).filter(([, v]) => v.bis > jetzt));
+        return Object.keys(neu).length === Object.keys(alt).length ? alt : neu;
+      });
+    }, 1000);
     const sichtbar = () => document.visibilityState === "visible" && gelesen();
     document.addEventListener("visibilitychange", sichtbar);
     return () => {
       supabase.removeChannel(kanal);
+      supabase.removeChannel(tippen);
+      clearInterval(aufraeumen);
       document.removeEventListener("visibilitychange", sichtbar);
     };
-  }, [supabase, kopf.id, laden, kopfLaden, gelesen]);
+  }, [supabase, kopf.id, laden, kopfLaden, gelesen, userId]);
+
+  function tippenMelden() {
+    if (Date.now() - zuletztGetippt.current < 2500) return;
+    zuletztGetippt.current = Date.now();
+    tippKanal.current?.send({ type: "broadcast", event: "tippt", payload: { id: userId, name: meinName } });
+  }
 
   // Beim Oeffnen und bei neuen fremden Nachrichten als gelesen markieren.
   const letzteFremde = [...aktuell].reverse().find((n) => !n.eigene)?.id;
@@ -295,6 +340,19 @@ export function ChatFenster({
         setBilder((alt) => ({ ...alt, ...neu }));
       });
   }, [nachrichten, bilder, supabase]);
+
+  useEffect(() => {
+    const fehlend = nachrichten.map((n) => n.anhang?.pfad).filter((p): p is string => !!p && !dateiUrls[p]);
+    if (fehlend.length === 0) return;
+    supabase.storage
+      .from("chat-dateien")
+      .createSignedUrls(fehlend, 3600)
+      .then(({ data }) => {
+        const neu: Record<string, string> = {};
+        for (const e of data ?? []) if (e.path && e.signedUrl) neu[e.path] = e.signedUrl;
+        setDateiUrls((alt) => ({ ...alt, ...neu }));
+      });
+  }, [nachrichten, dateiUrls, supabase]);
 
   // Automatisch nach unten scrollen, wenn man ohnehin unten ist.
   useLayoutEffect(() => {
@@ -317,14 +375,34 @@ export function ChatFenster({
     });
   }
 
-  async function senden(extra?: { umfrage?: { frage: string; optionen: string[]; mehrfach: boolean } }) {
+  async function dateiHochladen(blob: Blob, name: string) {
+    const endung = (name.split(".").pop() ?? "bin").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8) || "bin";
+    const pfad = `${kopf.id}/${crypto.randomUUID()}.${endung}`;
+    const { error } = await supabase.storage.from("chat-dateien").upload(pfad, blob, { contentType: blob.type || "application/octet-stream" });
+    if (error) throw new Error("Die Datei konnte nicht hochgeladen werden (max. 25 MB, nur Dokumente, Videos und Audio).");
+    return pfad;
+  }
+
+  async function senden(extra?: {
+    umfrage?: { frage: string; optionen: string[]; mehrfach: boolean };
+    standort?: { lat: number; lng: number; genauigkeit: number };
+    audio?: { blob: Blob; dauer: number };
+  }) {
     const inhalt = text.trim();
-    if (sendet || (!inhalt && !bild && !extra?.umfrage)) return;
+    const sonder = extra?.umfrage || extra?.standort || extra?.audio;
+    if (sendet || (!inhalt && !bild && !anhangDatei && !sonder)) return;
     setSendet(true);
     setFehler(null);
     try {
       let bildPfad: string | null = null;
-      if (bild && !extra?.umfrage) {
+      let anhang: Record<string, unknown> | null = null;
+      if (extra?.audio) {
+        const endung = extra.audio.blob.type.includes("mp4") ? "m4a" : extra.audio.blob.type.includes("ogg") ? "ogg" : "webm";
+        anhang = { art: "audio", pfad: await dateiHochladen(extra.audio.blob, `sprachnachricht.${endung}`), name: "Sprachnachricht", dauer: extra.audio.dauer };
+      } else if (anhangDatei && !sonder) {
+        anhang = { art: anhangDatei.art, pfad: await dateiHochladen(anhangDatei.datei, anhangDatei.datei.name), name: anhangDatei.datei.name };
+      }
+      if (bild && !sonder) {
         const blob = await bildVerkleinern(bild.datei);
         const endung = blob.type === "image/gif" ? "gif" : "jpg";
         bildPfad = `${kopf.id}/${crypto.randomUUID()}.${endung}`;
@@ -334,19 +412,24 @@ export function ChatFenster({
       const { error } = await supabase.from("nachrichten").insert({
         gespraech_id: kopf.id,
         sender_id: userId,
-        inhalt: extra?.umfrage ? "" : inhalt,
+        inhalt: sonder ? "" : inhalt,
         bild_pfad: bildPfad,
         umfrage: extra?.umfrage ?? null,
+        anhang,
+        standort: extra?.standort ?? null,
         antwort_auf: antwort?.id ?? null,
       });
       if (error) throw new Error(error.code === "42501" ? "Du darfst in diesem Chat nicht schreiben." : "Die Nachricht konnte nicht gesendet werden.");
-      if (!extra?.umfrage) {
+      if (!sonder) {
         setText("");
         setBild(null);
+        setAnhangDatei(null);
       }
       setUmfrageOffen(false);
       setAntwort(null);
       amEnde.current = true;
+      setPlusOffen(false);
+      setEmojiOffen(false);
       await laden();
       eingabe.current?.focus();
     } catch (e) {
@@ -356,6 +439,18 @@ export function ChatFenster({
     }
   }
 
+  function standortSenden() {
+    setPlusOffen(false);
+    if (!navigator.geolocation) return setFehler("Standort wird von diesem Gerät nicht unterstützt.");
+    if (!confirm("Deinen aktuellen Standort in diesem Chat teilen?")) return;
+    navigator.geolocation.getCurrentPosition(
+      (p) => senden({ standort: { lat: p.coords.latitude, lng: p.coords.longitude, genauigkeit: p.coords.accuracy } }),
+      () => setFehler("Kein Zugriff auf den Standort. Bitte in den Einstellungen erlauben."),
+      { enableHighAccuracy: true, timeout: 15000 },
+    );
+  }
+
+  const tippNamen = Object.values(tippende).map((t) => t.name);
   const ausgewaehlt = nachrichten.find((n) => n.id === auswahl) ?? null;
   const istGruppe = kopf.typ !== "dm";
 
@@ -370,8 +465,16 @@ export function ChatFenster({
         <div className="min-w-0 flex-1">
           <div className="truncate text-[15.5px] font-bold text-brand-ink">{kopf.name}</div>
           <div className="truncate text-[12px] text-brand-ink-soft">
-            {kopf.untertitel ?? "Privater Chat"}
-            {kopf.nurLeitungSchreibt && istGruppe ? " · nur Leitung schreibt" : ""}
+            {tippNamen.length > 0 ? (
+              <span className="font-medium text-brand-green">
+                {kopf.typ === "dm" ? "schreibt …" : `${tippNamen.slice(0, 2).join(", ")} ${tippNamen.length > 1 ? "schreiben" : "schreibt"} …`}
+              </span>
+            ) : (
+              <>
+                {kopf.untertitel ?? "Privatchat"}
+                {kopf.nurLeitungSchreibt && istGruppe ? " · nur Leitung schreibt" : ""}
+              </>
+            )}
           </div>
         </div>
         {kopf.typ === "dm" && kopf.partnerId && (
@@ -506,6 +609,8 @@ export function ChatFenster({
                             )}
                           </a>
                         )}
+                        {n.anhang && <AnhangAnsicht anhang={n.anhang} url={dateiUrls[n.anhang.pfad]} eigene={n.eigene} />}
+                        {n.standort && <StandortAnsicht standort={n.standort} />}
                         {n.umfrage && <UmfrageAnsicht n={n as ChatNachricht & { umfrage: Umfrage }} onAbgestimmt={laden} />}
                         {n.inhalt && (
                           <span className="whitespace-pre-wrap break-words">
@@ -519,8 +624,19 @@ export function ChatFenster({
                       {n.eigene && kopf.typ === "dm" && !n.geloescht &&
                         (gelesenVonPartner ? <CheckCheck size={14} className="text-brand-blue" aria-label="gelesen" /> : <Check size={14} aria-label="gesendet" />)}
                     </span>
+                    {n.reaktionen.length > 0 && (
+                      <span className={`absolute -bottom-3 ${n.eigene ? "right-2" : "left-2"} flex items-center gap-0.5 rounded-full border border-brand-line bg-white px-1.5 py-0.5 text-[12px] shadow-sm`}>
+                        {n.reaktionen.slice(0, 3).map((r) => (
+                          <span key={r.emoji}>{r.emoji}</span>
+                        ))}
+                        {n.reaktionen.reduce((a, r) => a + r.anzahl, 0) > 1 && (
+                          <span className="ml-0.5 text-[11px] text-brand-ink-soft">{n.reaktionen.reduce((a, r) => a + r.anzahl, 0)}</span>
+                        )}
+                      </span>
+                    )}
                   </div>
                 </div>
+                {n.reaktionen.length > 0 && <div className="h-3" />}
               </Fragment>
             );
           })}
@@ -529,7 +645,31 @@ export function ChatFenster({
 
       {/* Aktionen fuer die angetippte Nachricht */}
       {ausgewaehlt && !ausgewaehlt.geloescht && (
-        <div className="flex items-center gap-1 border-t border-brand-line bg-white px-2 py-1.5">
+        <div className="flex justify-center gap-1 border-t border-brand-line bg-white px-2 pt-1.5" role="group" aria-label="Reagieren">
+          {REAKTIONEN.map((emoji) => {
+            const meine = ausgewaehlt.reaktionen.find((r) => r.ich)?.emoji === emoji;
+            return (
+              <button
+                key={emoji}
+                type="button"
+                aria-pressed={meine}
+                aria-label={`Mit ${emoji} reagieren`}
+                onClick={async () => {
+                  const e = await reagieren(ausgewaehlt.id, meine ? null : emoji);
+                  if (e.error) setFehler(e.error);
+                  setAuswahl(null);
+                  laden();
+                }}
+                className={`flex h-10 w-10 items-center justify-center rounded-full text-[22px] transition-transform hover:scale-110 ${meine ? "bg-brand-red-wash" : ""}`}
+              >
+                {emoji}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {ausgewaehlt && !ausgewaehlt.geloescht && (
+        <div className="flex items-center gap-1 bg-white px-2 py-1.5">
           <span className="min-w-0 flex-1 truncate px-2 text-[12.5px] text-brand-ink-soft">
             {ausgewaehlt.eigene ? "Deine Nachricht" : ausgewaehlt.senderName} · {uhrzeit(ausgewaehlt.gesendetAm)}
           </span>
@@ -608,7 +748,15 @@ export function ChatFenster({
               <div className="min-w-0 flex-1">
                 <div className="text-[12px] font-bold text-brand-red">{antwort.eigene ? "Du" : antwort.senderName}</div>
                 <div className="truncate text-[12.5px] text-brand-ink-soft">
-                  {antwort.umfrage ? `📊 ${antwort.umfrage.frage}` : antwort.inhalt || "📷 Foto"}
+                  {antwort.umfrage
+                    ? `📊 ${antwort.umfrage.frage}`
+                    : antwort.standort
+                      ? "📍 Standort"
+                      : antwort.anhang
+                        ? antwort.anhang.art === "audio"
+                          ? "🎤 Sprachnachricht"
+                          : `📎 ${antwort.anhang.name}`
+                        : antwort.inhalt || "📷 Foto"}
                 </div>
               </div>
               <button type="button" onClick={() => setAntwort(null)} aria-label="Antwort abbrechen" className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-white">
@@ -626,6 +774,61 @@ export function ChatFenster({
               </button>
             </div>
           )}
+          {anhangDatei && (
+            <div className="mb-2 flex items-center gap-3 rounded-lg bg-brand-bg p-2">
+              <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-white text-brand-red">
+                {anhangDatei.art === "video" ? <Film size={22} /> : <FileText size={22} />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] font-semibold text-brand-ink">{anhangDatei.datei.name}</span>
+                <span className="block text-[12px] text-brand-ink-soft">{groesseText(anhangDatei.datei.size)} · wird mit deiner Nachricht gesendet</span>
+              </span>
+              <button type="button" onClick={() => setAnhangDatei(null)} aria-label="Anhang entfernen" className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-white">
+                <X size={16} />
+              </button>
+            </div>
+          )}
+          {plusOffen && (
+            <div className="mb-2 grid grid-cols-4 gap-2 rounded-2xl bg-brand-bg p-2">
+              {(
+                [
+                  ["Foto & Video", ImagePlus, "bg-brand-purple", () => dateiEingabe.current?.click()],
+                  ["Dokument", FileText, "bg-brand-blue", () => dokumentEingabe.current?.click()],
+                  ["Standort", MapPin, "bg-brand-green", standortSenden],
+                  ["Umfrage", BarChart3, "bg-brand-amber", () => setUmfrageOffen(true)],
+                ] as const
+              ).map(([label, Icon, farbe, aktion]) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => {
+                    setPlusOffen(false);
+                    aktion();
+                  }}
+                  className="flex flex-col items-center gap-1.5 rounded-xl py-2 text-[11.5px] font-medium text-brand-ink hover:bg-white"
+                >
+                  <span className={`flex h-11 w-11 items-center justify-center rounded-full text-white ${farbe}`}>
+                    <Icon size={20} />
+                  </span>
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+          <input
+            ref={dokumentEingabe}
+            type="file"
+            accept={DOKUMENTE}
+            className="hidden"
+            onChange={(e) => {
+              const datei = e.target.files?.[0];
+              e.target.value = "";
+              if (!datei) return;
+              if (datei.size > 25 * 1024 * 1024) return setFehler("Die Datei ist zu groß (max. 25 MB).");
+              setBild(null);
+              setAnhangDatei({ datei, art: "datei" });
+            }}
+          />
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -633,29 +836,58 @@ export function ChatFenster({
             }}
             className="flex items-end gap-1.5"
           >
-            <button type="button" onClick={() => dateiEingabe.current?.click()} aria-label="Foto senden" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-brand-ink-soft hover:bg-brand-bg">
-              <ImagePlus size={21} />
-            </button>
             <input
               ref={dateiEingabe}
               type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
+              accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
               className="hidden"
               onChange={(e) => {
                 const datei = e.target.files?.[0];
                 e.target.value = "";
                 if (!datei) return;
+                if (datei.type.startsWith("video/")) {
+                  if (datei.size > 25 * 1024 * 1024) return setFehler("Das Video ist zu groß (max. 25 MB).");
+                  setBild(null);
+                  return setAnhangDatei({ datei, art: "video" });
+                }
                 if (datei.size > 15 * 1024 * 1024) return setFehler("Das Foto ist zu groß.");
+                setAnhangDatei(null);
                 setBild({ datei, vorschau: URL.createObjectURL(datei) });
               }}
             />
-            <button type="button" onClick={() => setUmfrageOffen(true)} aria-label="Umfrage erstellen" className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full text-brand-ink-soft hover:bg-brand-bg sm:flex">
-              <BarChart3 size={20} />
-            </button>
+            {!aufnahme && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPlusOffen(!plusOffen);
+                    setEmojiOffen(false);
+                  }}
+                  aria-label="Anhang"
+                  aria-expanded={plusOffen}
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-brand-ink-soft transition-transform hover:bg-brand-bg ${plusOffen ? "rotate-45" : ""}`}
+                >
+                  <Plus size={23} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmojiOffen(!emojiOffen);
+                    setPlusOffen(false);
+                  }}
+                  aria-label="Emojis"
+                  aria-expanded={emojiOffen}
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-brand-bg ${emojiOffen ? "text-brand-red" : "text-brand-ink-soft"}`}
+                >
+                  <Smile size={21} />
+                </button>
+              </>
+            )}
             <label className="sr-only" htmlFor={`eingabe-${kopf.id}`}>
               Nachricht
             </label>
             <textarea
+              hidden={aufnahme}
               id={`eingabe-${kopf.id}`}
               ref={eingabe}
               value={text}
@@ -663,6 +895,7 @@ export function ChatFenster({
               maxLength={4000}
               onChange={(e) => {
                 setText(e.target.value);
+                tippenMelden();
                 e.target.style.height = "auto";
                 e.target.style.height = `${Math.min(e.target.scrollHeight, 132)}px`;
               }}
@@ -675,16 +908,34 @@ export function ChatFenster({
               placeholder="Nachricht"
               className="max-h-[132px] min-h-11 flex-1 resize-none rounded-3xl border border-brand-line bg-brand-bg px-4 py-2.5 text-[15px] text-brand-ink outline-none focus:border-brand-red"
             />
-            {text.trim() || bild ? (
+            {text.trim() || bild || anhangDatei ? (
               <button type="submit" disabled={sendet} aria-label="Senden" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-red text-white hover:bg-brand-red-deep disabled:opacity-60">
                 <Send size={19} />
               </button>
             ) : (
-              <button type="button" onClick={() => setUmfrageOffen(true)} aria-label="Umfrage erstellen" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-red text-white sm:hidden">
-                <BarChart3 size={19} />
-              </button>
+              <Sprachaufnahme
+                deaktiviert={sendet}
+                onAktiv={setAufnahme}
+                onFehler={setFehler}
+                onFertig={(blob, dauer) => senden({ audio: { blob, dauer } })}
+              />
             )}
           </form>
+          {emojiOffen && !aufnahme && (
+            <div className="-mx-2 mt-2 sm:-mx-3">
+              <EmojiAuswahl
+                onWahl={(emoji) => {
+                  const el = eingabe.current;
+                  const pos = el?.selectionStart ?? text.length;
+                  setText(text.slice(0, pos) + emoji + text.slice(el?.selectionEnd ?? pos));
+                  requestAnimationFrame(() => {
+                    el?.focus();
+                    el?.setSelectionRange(pos + emoji.length, pos + emoji.length);
+                  });
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

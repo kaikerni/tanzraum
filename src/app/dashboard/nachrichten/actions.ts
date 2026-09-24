@@ -32,9 +32,11 @@ export async function chatEinstellung(gespraechId: string, nurLeitung: boolean):
 export async function nachrichtLoeschen(nachrichtId: string): Promise<AktionsErgebnis> {
   if (!UUID.test(nachrichtId)) return { error: "Ungültige Auswahl." };
   const supabase = await sitzung();
-  const { data: bild, error } = await supabase.rpc("nachricht_loeschen", { p_nachricht_id: nachrichtId });
+  const { data: dateien, error } = await supabase.rpc("nachricht_loeschen", { p_nachricht_id: nachrichtId });
   if (error) return { error: freundlicherFehler(error) };
-  if (bild) await supabase.storage.from("chat-bilder").remove([bild as string]);
+  for (const d of (dateien ?? []) as { bucket: string; pfad: string }[]) {
+    await supabase.storage.from(d.bucket).remove([d.pfad]);
+  }
   return { error: null };
 }
 
@@ -136,4 +138,12 @@ export async function nutzerFreigeben(userId: string): Promise<AktionsErgebnis> 
   if (error) return { error: freundlicherFehler(error) };
   revalidatePath("/dashboard/nachrichten", "layout");
   return { error: null, ok: "Blockierung aufgehoben." };
+}
+
+export async function reagieren(nachrichtId: string, emoji: string | null): Promise<AktionsErgebnis> {
+  if (!UUID.test(nachrichtId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { error } = await supabase.rpc("nachricht_reagieren", { p_nachricht_id: nachrichtId, p_emoji: emoji });
+  if (error) return { error: freundlicherFehler(error) };
+  return { error: null };
 }

@@ -158,7 +158,7 @@ export function ChatRahmen({ start, anfragen, children }: { start: ChatEintrag[]
     <div className="-mx-3 -mb-28 -mt-4 flex h-[calc(100dvh-125px-env(safe-area-inset-bottom))] overflow-hidden border-brand-line bg-white sm:-mx-5 md:-mb-8 md:-mt-5 md:h-[calc(100dvh-76px)] xl:-mx-6">
       <aside className={`${imChat ? "hidden lg:flex" : "flex"} w-full shrink-0 flex-col border-r border-brand-line bg-white lg:w-[360px]`} aria-label="Chats">
         <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-4">
-          <h1 className="text-[22px] font-extrabold tracking-tight text-brand-ink">TanzRaum-Chat</h1>
+          <h1 className="text-[22px] font-extrabold tracking-tight text-brand-ink">TanzRaum-Messenger</h1>
           <Link
             href="/dashboard/nachrichten/neu"
             aria-label="Neuer Privatchat"
