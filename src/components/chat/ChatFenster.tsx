@@ -24,6 +24,9 @@ import {
   FileText,
   MapPin,
   Film,
+  Phone,
+  Video,
+  MoreVertical,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { alsNachricht, type ChatKopf, type ChatNachricht, type Umfrage } from "@/lib/chat/getChat";
@@ -31,6 +34,7 @@ import { chatEinstellung, chatStummSetzen, nachrichtLoeschen, nutzerBlockieren, 
 import { AnhangAnsicht, StandortAnsicht, groesseText } from "./NachrichtAnhang";
 import { EmojiAuswahl } from "./EmojiAuswahl";
 import { Sprachaufnahme } from "./Sprachaufnahme";
+import { useAnruf } from "./AnrufProvider";
 import { ChatAvatar } from "./ChatAvatar";
 
 const NAMENSFARBEN = ["text-brand-red", "text-brand-blue", "text-brand-green", "text-brand-purple", "text-brand-gold", "text-brand-navy-soft"];
@@ -219,6 +223,7 @@ export function ChatFenster({
   stumm?: boolean;
 }) {
   const router = useRouter();
+  const anruf = useAnruf();
   const supabase = useMemo(() => createClient(), []);
   const [kopf, setKopf] = useState(startKopf);
   const [aktuell, setAktuell] = useState(start);
@@ -234,6 +239,7 @@ export function ChatFenster({
   const [fehler, setFehler] = useState<string | null>(null);
   const [einstellungLaeuft, starteEinstellung] = useTransition();
   const [stumm, setStumm] = useState(startStumm);
+  const [menueOffen, setMenueOffen] = useState(false);
   const [dateiUrls, setDateiUrls] = useState<Record<string, string>>({});
   const [anhangDatei, setAnhangDatei] = useState<{ datei: File; art: "datei" | "video" } | null>(null);
   const [plusOffen, setPlusOffen] = useState(false);
@@ -477,61 +483,104 @@ export function ChatFenster({
             )}
           </div>
         </div>
-        {kopf.typ === "dm" && kopf.partnerId && (
-          <button
-            type="button"
-            onClick={async () => {
-              const partner = kopf.partnerId!;
-              if (!kopf.ichHabeBlockiert && !confirm(`${kopf.name} blockieren? Ihr könnt euch dann nicht mehr privat schreiben.`)) return;
-              const e = kopf.ichHabeBlockiert ? await nutzerFreigeben(partner) : await nutzerBlockieren(partner);
-              if (e.error) setFehler(e.error);
-              await kopfLaden();
-              router.refresh();
-            }}
-            aria-label={kopf.ichHabeBlockiert ? "Blockierung aufheben" : "Blockieren"}
-            title={kopf.ichHabeBlockiert ? "Blockierung aufheben" : "Blockieren"}
-            className={`flex h-10 w-10 items-center justify-center rounded-full hover:bg-brand-bg ${kopf.ichHabeBlockiert ? "text-brand-red" : "text-brand-ink-soft"}`}
-          >
-            <Ban size={18} />
-          </button>
+        {kopf.typ === "dm" && kopf.darfSchreiben && anruf && (
+          <>
+            <button
+              type="button"
+              disabled={anruf.belegt}
+              onClick={() => anruf.anrufen(kopf.id, "video", kopf.name)}
+              aria-label="Videoanruf"
+              title="Videoanruf"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-brand-ink-soft hover:bg-brand-bg disabled:opacity-40"
+            >
+              <Video size={20} />
+            </button>
+            <button
+              type="button"
+              disabled={anruf.belegt}
+              onClick={() => anruf.anrufen(kopf.id, "audio", kopf.name)}
+              aria-label="Sprachanruf"
+              title="Sprachanruf"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-brand-ink-soft hover:bg-brand-bg disabled:opacity-40"
+            >
+              <Phone size={19} />
+            </button>
+          </>
         )}
+        <div className="relative">
           <button
             type="button"
-            onClick={async () => {
-              const neu = !stumm;
-              setStumm(neu);
-              const e = await chatStummSetzen(kopf.id, neu);
-              if (e.error) {
-                setStumm(!neu);
-                setFehler(e.error);
-              }
-            }}
-            aria-pressed={stumm}
-            aria-label={stumm ? "Stummschaltung aufheben" : "Chat stummschalten"}
-            title={stumm ? "Stummschaltung aufheben" : kopf.nurLeitungSchreibt ? "Stummschalten (Ankündigungen kommen trotzdem)" : "Chat stummschalten"}
-            className={`flex h-10 w-10 items-center justify-center rounded-full hover:bg-brand-bg ${stumm ? "text-brand-ink-faint" : "text-brand-ink-soft"}`}
+            onClick={() => setMenueOffen(!menueOffen)}
+            aria-label="Weitere Optionen"
+            aria-expanded={menueOffen}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-brand-ink-soft hover:bg-brand-bg"
           >
-            {stumm ? <BellOff size={18} /> : <Bell size={18} />}
+            <MoreVertical size={19} />
           </button>
-        {kopf.istLeitung && (
-          <button
-            type="button"
-            disabled={einstellungLaeuft}
-            onClick={() =>
-              starteEinstellung(async () => {
-                const e = await chatEinstellung(kopf.id, !kopf.nurLeitungSchreibt);
-                if (e.error) setFehler(e.error);
-                await kopfLaden();
-              })
-            }
-            title={kopf.nurLeitungSchreibt ? "Allen das Schreiben erlauben" : "Nur Vorstand, Trainer und Betreuer schreiben lassen"}
-            className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold disabled:opacity-60 ${
-              kopf.nurLeitungSchreibt ? "border-brand-red bg-brand-red-wash text-brand-red-deep" : "border-brand-line text-brand-ink-soft hover:bg-brand-bg"
-            }`}
-          >
-            <Megaphone size={14} /> <span className="hidden sm:inline">{kopf.nurLeitungSchreibt ? "Nur Leitung" : "Alle schreiben"}</span>
-          </button>
-        )}
+          {menueOffen && (
+            <>
+              <button type="button" aria-label="Menü schließen" className="fixed inset-0 z-20 cursor-default" onClick={() => setMenueOffen(false)} />
+              <div className="absolute right-0 top-11 z-30 w-64 overflow-hidden rounded-xl border border-brand-line bg-white py-1 shadow-lg" role="menu">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={async () => {
+                    setMenueOffen(false);
+                    const neu = !stumm;
+                    setStumm(neu);
+                    const e = await chatStummSetzen(kopf.id, neu);
+                    if (e.error) {
+                      setStumm(!neu);
+                      setFehler(e.error);
+                    }
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[14px] text-brand-ink hover:bg-brand-bg"
+                >
+                  {stumm ? <Bell size={17} /> : <BellOff size={17} />}
+                  {stumm ? "Stummschaltung aufheben" : kopf.nurLeitungSchreibt ? "Stummschalten (Ankündigungen kommen trotzdem)" : "Stummschalten"}
+                </button>
+                {kopf.istLeitung && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={einstellungLaeuft}
+                    onClick={() => {
+                      setMenueOffen(false);
+                      starteEinstellung(async () => {
+                        const e = await chatEinstellung(kopf.id, !kopf.nurLeitungSchreibt);
+                        if (e.error) setFehler(e.error);
+                        await kopfLaden();
+                      });
+                    }}
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[14px] text-brand-ink hover:bg-brand-bg"
+                  >
+                    <Megaphone size={17} />
+                    {kopf.nurLeitungSchreibt ? "Allen das Schreiben erlauben" : "Nur Vorstand, Trainer & Betreuer schreiben"}
+                  </button>
+                )}
+                {kopf.typ === "dm" && kopf.partnerId && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={async () => {
+                      setMenueOffen(false);
+                      const partner = kopf.partnerId!;
+                      if (!kopf.ichHabeBlockiert && !confirm(`${kopf.name} blockieren? Ihr könnt euch dann nicht mehr privat schreiben oder anrufen.`)) return;
+                      const e = kopf.ichHabeBlockiert ? await nutzerFreigeben(partner) : await nutzerBlockieren(partner);
+                      if (e.error) setFehler(e.error);
+                      await kopfLaden();
+                      router.refresh();
+                    }}
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[14px] text-brand-red hover:bg-brand-red-wash"
+                  >
+                    <Ban size={17} />
+                    {kopf.ichHabeBlockiert ? "Blockierung aufheben" : `${kopf.name} blockieren`}
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </header>
 
       {/* Verlauf mit blasser Taenzer-Illustration im Hintergrund */}

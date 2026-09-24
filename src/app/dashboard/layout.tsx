@@ -4,6 +4,7 @@ import { getDashboardData } from "@/lib/dashboard/getDashboardData";
 import { getZugriff } from "@/lib/dashboard/getBereiche";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AppHeader } from "@/components/AppHeader";
+import { AnrufProvider } from "@/components/chat/AnrufProvider";
 import { MobileNav } from "@/components/MobileNav";
 
 export default async function DashboardLayout({
@@ -51,6 +52,7 @@ export default async function DashboardLayout({
   const ungeleseneNachrichten = Number(ungelesen ?? 0);
 
   return (
+    <AnrufProvider userId={user.id}>
     <div className="flex h-dvh flex-col bg-brand-bg">
       <AppHeader
         name={name}
@@ -65,5 +67,6 @@ export default async function DashboardLayout({
       </div>
       <MobileNav zugriff={zugriff} ungeleseneNachrichten={ungeleseneNachrichten} />
     </div>
+    </AnrufProvider>
   );
 }

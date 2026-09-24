@@ -11,6 +11,22 @@ export async function GET() {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({}, { status: 401 });
 
+  // Eingehender Anruf hat Vorrang
+  const { data: anruf } = await supabase.rpc("mein_eingehender_anruf");
+  // deno-lint-ignore no-explicit-any
+  const a = ((anruf ?? []) as any[])[0];
+  if (a) {
+    return NextResponse.json(
+      {
+        titel: a.art === "video" ? "📹 Eingehender Videoanruf" : "📞 Eingehender Sprachanruf",
+        text: `${a.anrufer} ruft dich über den TanzRaum-Messenger an`,
+        url: `/dashboard/nachrichten/${a.gespraech_id}`,
+        tag: `anruf-${a.id}`,
+      },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
   const chats = await getChatListe(supabase);
   const chat = chats.find((c) => c.ungelesen > 0);
   if (!chat) return NextResponse.json({ titel: "TanzRaum", text: "Du hast eine neue Nachricht.", url: "/dashboard/nachrichten" });

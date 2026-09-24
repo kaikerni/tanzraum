@@ -19,6 +19,8 @@ self.addEventListener("push", (event) => {
         badge: "/icon-192.png",
         tag: info.tag,
         renotify: true,
+        requireInteraction: String(info.tag).startsWith("anruf-"),
+        vibrate: String(info.tag).startsWith("anruf-") ? [400, 200, 400, 200, 400] : undefined,
         data: { url: info.url },
       });
     })(),
