@@ -243,24 +243,26 @@ export function NachrichtenKarte({ nachrichten }: { nachrichten: AktuelleNachric
               .join("")
               .toUpperCase();
             return (
-              <li key={n.id} className="flex items-center gap-3 py-2.5">
-                <span
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[12.5px] font-bold ${avatarFarbe(n.senderName)}`}
-                >
-                  {initialen}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[13.5px] font-semibold text-brand-ink">{n.senderName}</div>
-                  <div className="truncate text-[12.5px] text-brand-ink-soft">{n.inhalt}</div>
-                </div>
-                <div className="flex shrink-0 items-center gap-2.5">
-                  <span className="text-[12px] text-brand-ink-soft">{nachrichtZeit(n.gesendetAm)}</span>
-                  {n.ungelesen ? (
-                    <span className="h-2.5 w-2.5 rounded-full bg-brand-red" aria-label="ungelesen" />
-                  ) : (
-                    <span className="h-2.5 w-2.5" aria-hidden="true" />
-                  )}
-                </div>
+              <li key={n.id}>
+                <Link href={`/dashboard/nachrichten/${n.id}`} className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-brand-bg">
+                  <span
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[12.5px] font-bold ${avatarFarbe(n.senderName)}`}
+                  >
+                    {initialen}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13.5px] font-semibold text-brand-ink">{n.senderName}</div>
+                    <div className="truncate text-[12.5px] text-brand-ink-soft">{n.inhalt}</div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2.5">
+                    <span className="text-[12px] text-brand-ink-soft">{nachrichtZeit(n.gesendetAm)}</span>
+                    {n.ungelesen ? (
+                      <span className="h-2.5 w-2.5 rounded-full bg-brand-red" aria-label="ungelesen" />
+                    ) : (
+                      <span className="h-2.5 w-2.5" aria-hidden="true" />
+                    )}
+                  </div>
+                </Link>
               </li>
             );
           })}
