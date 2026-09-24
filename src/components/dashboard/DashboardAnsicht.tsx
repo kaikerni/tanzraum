@@ -26,6 +26,7 @@ import {
   TurniereKarte,
   TermineKarte,
   AltersklassenKarte,
+  KinderKarte,
   formatDatum,
 } from "@/components/dashboard/Karten";
 
@@ -39,6 +40,7 @@ import type {
   HeuteEintrag,
   WochenBeteiligung,
   RadarEintrag,
+  MeinKind,
 } from "@/lib/dashboard/getDashboardUebersicht";
 import type { AktuelleNachricht } from "@/lib/dashboard/getNachrichten";
 
@@ -70,6 +72,7 @@ export type DashboardAnsichtProps = {
   verlauf: WochenBeteiligung[];
   radar: RadarEintrag[];
   nachrichten: AktuelleNachricht[];
+  kinder: MeinKind[];
   wochen: number;
 };
 
@@ -84,6 +87,7 @@ export function DashboardAnsicht({
   verlauf,
   radar,
   nachrichten,
+  kinder,
   wochen,
 }: DashboardAnsichtProps) {
   const hatVerein = daten.istPlattformAdmin || (hatTarif(zugriff, "basic") && daten.vereine.length > 0);
@@ -232,6 +236,8 @@ export function DashboardAnsicht({
       {kpis.length > 0 && (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-6">{kpis}</div>
       )}
+
+      {kinder.length > 0 && <KinderKarte kinder={kinder} />}
 
       {/* Heute / Radar / Schnellaktionen */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">

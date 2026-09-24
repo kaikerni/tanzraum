@@ -4,6 +4,8 @@ import {
   Calendar,
   Activity,
   ClipboardCheck,
+  ClipboardList,
+  ShieldCheck,
   Trophy,
   CalendarRange,
   Users,
@@ -24,7 +26,15 @@ import {
 export type Tarif = "free" | "basic" | "verein";
 
 // Bereiche wie in bereiche_fuer_rolle / vereins_mitglieder.bereiche.
-export type Bereich = "mitglieder" | "anwesenheit" | "beitraege" | "material" | "saison" | "netzwerk" | "beitritt";
+export type Bereich =
+  | "mitglieder"
+  | "anwesenheit"
+  | "beitraege"
+  | "material"
+  | "trainingsplan"
+  | "saison"
+  | "netzwerk"
+  | "beitritt";
 
 // Rollenmarker aus meine_bereiche() -- nur von der offiziellen Vereinsrolle abgeleitet.
 export type RollenMarker = "rolle_admin" | "rolle_trainer" | "rolle_betreuer" | "rolle_mitglied" | "rolle_eltern";
@@ -40,7 +50,8 @@ export type NavEintrag = {
   label: string;
   icon: LucideIcon;
   tarif: Tarif;
-  recht?: Bereich | RollenMarker;
+  // "plattform_admin" = nur TanzRaum-Plattformadministrator
+  recht?: Bereich | RollenMarker | "plattform_admin";
 };
 
 export const NAV: NavEintrag[] = [
@@ -49,6 +60,7 @@ export const NAV: NavEintrag[] = [
   { href: "/dashboard/kalender", label: "Kalender", icon: Calendar, tarif: "basic" },
   { href: "/dashboard/training", label: "Training", icon: Activity, tarif: "basic" },
   { href: "/dashboard/anwesenheit", label: "Anwesenheit", icon: ClipboardCheck, tarif: "verein", recht: "anwesenheit" },
+  { href: "/dashboard/trainingsplan", label: "Trainingsplan", icon: ClipboardList, tarif: "verein", recht: "trainingsplan" },
   { href: "/dashboard/turniere", label: "Turniere", icon: Trophy, tarif: "free" },
   { href: "/dashboard/saisonplanung", label: "Saisonplanung", icon: CalendarRange, tarif: "verein", recht: "saison" },
   { href: "/dashboard/mitglieder", label: "Mitglieder", icon: Users, tarif: "verein", recht: "mitglieder" },
@@ -62,6 +74,7 @@ export const NAV: NavEintrag[] = [
   { href: "/dashboard/finanzen", label: "Finanzen", icon: Wallet, tarif: "verein", recht: "beitraege" },
   { href: "/dashboard/statistiken", label: "Statistiken", icon: BarChart3, tarif: "verein", recht: "rolle_admin" },
   { href: "/dashboard/vereinsverwaltung", label: "Vereinsverwaltung", icon: Settings2, tarif: "verein", recht: "rolle_admin" },
+  { href: "/admin", label: "TanzRaum-Administration", icon: ShieldCheck, tarif: "free", recht: "plattform_admin" },
   { href: "/dashboard/einstellungen", label: "Einstellungen", icon: Settings, tarif: "free" },
 ];
 

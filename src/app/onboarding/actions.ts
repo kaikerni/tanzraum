@@ -3,8 +3,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-const VEREINS_ADMIN_ROLLE_ID = "d8b4d77d-b91a-4b3d-9260-2c29ee7c09f9";
-
 async function getOrCreateProgress(userId: string) {
   const supabase = await createClient();
   const { data: bestehend } = await supabase
@@ -63,23 +61,16 @@ export async function vereinAnlegen(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: verein, error: vereinError } = await supabase
-    .from("vereine")
-    .insert({ name, kuerzel: kuerzel || null })
-    .select("id")
-    .single();
-  if (vereinError || !verein) return { error: vereinError?.message ?? "Verein konnte nicht angelegt werden." };
-
-  const { error: mitgliedError } = await supabase.from("vereins_mitglieder").insert({
-    user_id: user.id,
-    verein_id: verein.id,
-    rolle_id: VEREINS_ADMIN_ROLLE_ID,
+  // Verein + eigene Admin-Mitgliedschaft atomar in der DB (direktes Eintragen in fremde Vereine ist gesperrt).
+  const { data: vereinId, error: vereinError } = await supabase.rpc("verein_anlegen", {
+    p_name: name,
+    p_kuerzel: kuerzel || null,
   });
-  if (mitgliedError) return { error: mitgliedError.message };
+  if (vereinError || !vereinId) return { error: vereinError?.message ?? "Verein konnte nicht angelegt werden." };
 
   await supabase
     .from("onboarding_progress")
-    .update({ verein_id: verein.id, current_step: 3, updated_at: new Date().toISOString() })
+    .update({ verein_id: vereinId as string, current_step: 3, updated_at: new Date().toISOString() })
     .eq("user_id", user.id);
 
   redirect("/onboarding/fertig");

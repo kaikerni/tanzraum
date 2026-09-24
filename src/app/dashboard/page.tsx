@@ -10,6 +10,7 @@ import {
   getHeute,
   getBeteiligungVerlauf,
   getRadar,
+  getMeineKinder,
 } from "@/lib/dashboard/getDashboardUebersicht";
 import { getAktuelleNachrichten } from "@/lib/dashboard/getNachrichten";
 import { ZEITRAEUME } from "@/components/dashboard/ZeitraumAuswahl";
@@ -34,7 +35,7 @@ export default async function DashboardPage({
   const { wochen: wochenParam } = await searchParams;
   const wochen = ZEITRAEUME.find((w) => String(w) === wochenParam) ?? 8;
 
-  const [zugriff, kennzahlen, termine, turniere, altersklassen, heute, verlauf, radar, nachrichten] =
+  const [zugriff, kennzahlen, termine, turniere, altersklassen, heute, verlauf, radar, nachrichten, kinder] =
     await Promise.all([
       getZugriff(supabase, daten.istPlattformAdmin),
       getKennzahlen(supabase),
@@ -45,6 +46,7 @@ export default async function DashboardPage({
       getBeteiligungVerlauf(supabase, wochen),
       getRadar(supabase),
       getAktuelleNachrichten(supabase, user.id, 4),
+      getMeineKinder(supabase),
     ]);
 
   return (
@@ -59,6 +61,7 @@ export default async function DashboardPage({
       verlauf={verlauf}
       radar={radar}
       nachrichten={nachrichten}
+      kinder={kinder}
       wochen={wochen}
     />
   );

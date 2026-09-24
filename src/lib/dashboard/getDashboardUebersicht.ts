@@ -185,3 +185,27 @@ export async function getRadar(supabase: SupabaseClient): Promise<RadarEintrag[]
     untertitel: r.untertitel,
   }));
 }
+
+export type MeinKind = {
+  kindVmId: string;
+  name: string;
+  vereinName: string;
+  gruppen: string | null;
+  trainingHeute: string | null;
+  heuteAbgemeldet: boolean;
+};
+
+// Eltern-Dashboard: nur eigene Kinder laut eltern_kind_zuordnung.
+export async function getMeineKinder(supabase: SupabaseClient): Promise<MeinKind[]> {
+  const { data, error } = await supabase.rpc("dashboard_meine_kinder");
+  if (error || !data) return [];
+  // deno-lint-ignore no-explicit-any
+  return (data as any[]).map((k) => ({
+    kindVmId: k.kind_vm_id,
+    name: k.name,
+    vereinName: k.verein_name,
+    gruppen: k.gruppen,
+    trainingHeute: k.training_heute,
+    heuteAbgemeldet: Boolean(k.heute_abgemeldet),
+  }));
+}

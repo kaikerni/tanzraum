@@ -36,12 +36,17 @@ export async function getDashboardData(
   const { data: profil, error: profilError } = await supabase
     .from("profiles")
     .select(
-      "id, vorname, nachname, handle, avatar_url, gesperrt, ist_plattform_admin, tarif, tarif_aktiv_bis",
+      "id, vorname, nachname, handle, avatar_url, gesperrt, ist_plattform_admin",
     )
     .eq("id", userId)
     .maybeSingle();
 
   if (profilError || !profil) return null;
+
+  // Tarif/Laufzeit sind fuer andere nicht lesbar (Spaltenrechte) -> eigene Werte per RPC.
+  const { data: privat } = await supabase.rpc("mein_profil_privat").maybeSingle();
+  // deno-lint-ignore no-explicit-any
+  const eigen = (privat ?? {}) as any;
 
   const { data: mitgliedschaften } = await supabase
     .from("vereins_mitglieder")
@@ -78,8 +83,8 @@ export async function getDashboardData(
     avatarUrl: profil.avatar_url,
     gesperrt: profil.gesperrt,
     istPlattformAdmin: profil.ist_plattform_admin,
-    persoenlicherTarif: profil.tarif ?? "free",
-    tarifAktivBis: profil.tarif_aktiv_bis,
+    persoenlicherTarif: eigen.tarif ?? "free",
+    tarifAktivBis: eigen.tarif_aktiv_bis ?? null,
     vereine,
     istJuryMitglied: juryMitgliedschaft !== null,
   };

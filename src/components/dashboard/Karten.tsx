@@ -14,11 +14,13 @@ import {
   ChevronRight,
   CalendarClock,
   BarChart3,
+  Baby,
   type LucideIcon,
 } from "lucide-react";
 import { KarteKopf } from "./KarteKopf";
 import { istFertig } from "@/lib/navigation";
 import type {
+  MeinKind,
   AltersklassenVerteilung,
   HeuteEintrag,
   NaechstesTurnier,
@@ -382,6 +384,39 @@ export function AltersklassenKarte({ altersklassen }: { altersklassen: Alterskla
           ))}
         </ul>
       )}
+    </section>
+  );
+}
+
+/* ---------------- Meine Kinder (Eltern) ---------------- */
+
+export function KinderKarte({ kinder }: { kinder: MeinKind[] }) {
+  return (
+    <section className={KARTE}>
+      <KarteKopf icon={Baby} titel="Meine Kinder" untertitel="Training und Abmeldungen deiner Kinder heute" />
+      <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {kinder.map((k) => (
+          <li key={k.kindVmId} className="rounded-xl border border-brand-line p-3.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="truncate text-[14px] font-bold text-brand-ink">{k.name}</span>
+              {k.trainingHeute &&
+                (k.heuteAbgemeldet ? (
+                  <span className="status-badge abgesagt">heute abgemeldet</span>
+                ) : (
+                  <span className="status-badge zugesagt">heute Training</span>
+                ))}
+            </div>
+            <div className="mt-0.5 truncate text-[12.5px] text-brand-ink-soft">
+              {k.vereinName}
+              {k.gruppen ? ` · ${k.gruppen}` : ""}
+            </div>
+            <div className="mt-2 flex items-center gap-1.5 text-[12.5px] text-brand-ink">
+              <CalendarDays size={13} className="shrink-0 text-brand-ink-soft" />
+              {k.trainingHeute ?? "Heute kein Training"}
+            </div>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
