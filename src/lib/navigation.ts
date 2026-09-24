@@ -52,6 +52,8 @@ export type NavEintrag = {
   tarif: Tarif;
   // "plattform_admin" = nur TanzRaum-Plattformadministrator
   recht?: Bereich | RollenMarker | "plattform_admin";
+  // Ausgeblendet, wenn jemand ausschliesslich diese Vereinsrollen hat (laut Navi-Vorgabe).
+  nichtNurFuer?: RollenMarker[];
 };
 
 export const NAV: NavEintrag[] = [
@@ -68,8 +70,8 @@ export const NAV: NavEintrag[] = [
   { href: "/dashboard/trainer-netzwerk", label: "Trainer-Netzwerk", icon: Handshake, tarif: "verein", recht: "netzwerk" },
   { href: "/dashboard/nachrichten", label: "Nachrichten", icon: MessageSquare, tarif: "free" },
   { href: "/dashboard/dateien", label: "Dateien", icon: Folder, tarif: "basic" },
-  { href: "/dashboard/fahrgemeinschaften", label: "Fahrgemeinschaften", icon: Car, tarif: "basic" },
-  { href: "/dashboard/musik", label: "Musik", icon: Music, tarif: "basic" },
+  { href: "/dashboard/fahrgemeinschaften", label: "Fahrgemeinschaften", icon: Car, tarif: "basic", nichtNurFuer: ["rolle_betreuer"] },
+  { href: "/dashboard/musik", label: "Musik", icon: Music, tarif: "basic", nichtNurFuer: ["rolle_betreuer", "rolle_eltern"] },
   { href: "/dashboard/kostueme", label: "Kostüme & Material", icon: Shirt, tarif: "verein", recht: "material" },
   { href: "/dashboard/finanzen", label: "Finanzen", icon: Wallet, tarif: "verein", recht: "beitraege" },
   { href: "/dashboard/statistiken", label: "Statistiken", icon: BarChart3, tarif: "verein", recht: "rolle_admin" },
@@ -91,12 +93,21 @@ export function darf(zugriff: Zugriff, mindestTarif: Tarif, recht?: string): boo
   return recht === undefined || zugriff.bereiche.includes(recht);
 }
 
+function nurAusgeschlosseneRollen(zugriff: Zugriff, ausgeschlossen: RollenMarker[]): boolean {
+  const rollen = zugriff.bereiche.filter((b) => b.startsWith("rolle_") && b !== "rolle_sonstige");
+  return rollen.length > 0 && rollen.every((r) => (ausgeschlossen as string[]).includes(r));
+}
+
 export function sichtbareNav(zugriff: Zugriff): NavEintrag[] {
-  return NAV.filter((n) => darf(zugriff, n.tarif, n.recht));
+  return NAV.filter(
+    (n) =>
+      darf(zugriff, n.tarif, n.recht) &&
+      (zugriff.istPlattformAdmin || !n.nichtNurFuer || !nurAusgeschlosseneRollen(zugriff, n.nichtNurFuer)),
+  );
 }
 
 // Nur fuer diese Seiten werden "Alle anzeigen"-Links gesetzt; waechst mit jedem fertigen Modul.
-export const FERTIGE_SEITEN = new Set<string>(["/dashboard"]);
+export const FERTIGE_SEITEN = new Set<string>(["/dashboard", "/dashboard/verein"]);
 
 export function istFertig(href: string): boolean {
   return FERTIGE_SEITEN.has(href);

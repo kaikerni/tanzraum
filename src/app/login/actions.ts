@@ -25,5 +25,7 @@ export async function signIn(
     return { error: error.message };
   }
 
-  redirect(weiter.startsWith("/") ? weiter : "/dashboard");
+  // Nur interne Pfade: "//host" oder "/\host" wuerden der Browser als fremde Seite interpretieren.
+  const intern = weiter.startsWith("/") && !weiter.startsWith("//") && !weiter.startsWith("/\\");
+  redirect(intern ? weiter : "/dashboard");
 }
