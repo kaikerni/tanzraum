@@ -36,10 +36,26 @@ export default async function EinladungSeite({ params }: { params: Promise<{ tok
           </>
         ) : (
           <>
-            <h1>Einladung zu {info.verein_name}</h1>
+            <h1>{info.gruppe_name ? `Einladung zur Gruppe ${info.gruppe_name}` : `Einladung zu ${info.verein_name}`}</h1>
             <p className="subtitle">
-              Du wurdest als <strong>{info.rolle ?? "Mitglied"}</strong> eingeladen. Mit „Beitreten“ wirst du Mitglied
-              dieses Vereins.
+              {info.eingeladen_von ? (
+                <>
+                  <strong>{info.eingeladen_von}</strong> lädt dich ein
+                </>
+              ) : (
+                "Du wurdest eingeladen"
+              )}
+              , als <strong>{info.rolle ?? "Mitglied"}</strong>{" "}
+              {info.gruppe_name ? (
+                <>
+                  der Gruppe <strong>{info.gruppe_name}</strong> im Verein <strong>{info.verein_name}</strong>
+                </>
+              ) : (
+                <>
+                  dem Verein <strong>{info.verein_name}</strong>
+                </>
+              )}{" "}
+              beizutreten. Mit „Einladung annehmen“ bist du dabei.
             </p>
             <EinladungAnnehmen token={token} />
           </>

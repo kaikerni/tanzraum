@@ -15,20 +15,23 @@ function SubmitButton() {
   );
 }
 
-export function SignupForm() {
+export function SignupForm({ weiter }: { weiter: string }) {
   const [state, formAction] = useActionState(signUp, initialState);
 
   if (state.emailBestaetigenNoetig) {
     return (
       <p className="form-success">
-        Fast geschafft! Wir haben dir eine Bestätigungs-E-Mail geschickt. Bitte
-        klicke auf den Link darin, um dein Konto zu aktivieren.
+        Fast geschafft! Wir haben dir eine E-Mail von TanzRaum
+        (noreply@tanzraum.app) geschickt. Bitte klicke auf „E-Mail-Adresse
+        bestätigen“, um dein Konto zu aktivieren. Keine E-Mail da? Schau auch im
+        Spam-Ordner nach.
       </p>
     );
   }
 
   return (
     <form action={formAction} className="auth-form">
+      <input type="hidden" name="weiter" value={weiter} />
       <div className="field-row">
         <label className="field">
           <span>Vorname</span>

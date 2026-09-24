@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { AktionsErgebnis } from "@/components/ui/SendenButton";
+import { MAIL_FEHLER } from "@/lib/auth/fehler";
 
 // Alle Schreibzugriffe laufen mit der Sitzung des Nutzers -- RLS entscheidet, ob er darf
 // (Vereinsdaten: nur Vereinsadmin; Gruppen: Vereinsadmin/Trainer; Einladungen: Vereinsadmin).
@@ -118,15 +119,44 @@ export async function einladungErstellen(_prev: AktionsErgebnis, formData: FormD
   const { error } = await supabase.from("einladungen").insert({
     verein_id: vereinId,
     rolle_id: rolleId,
+    gruppe_id: text(formData, "gruppe_id"),
     created_by: user.id,
     expires_at: new Date(Date.now() + tage * 86400000).toISOString(),
     max_uses: anzahl,
   });
-  if (error) return { error: error.code === "42501" ? "Nur der Vereinsadmin darf einladen." : error.message };
+  if (error) {
+    if (error.code === "42501") return { error: "Nur der Vereinsadmin darf einladen." };
+    if (error.message.includes("Gruppe")) return { error: "Die Gruppe gehört nicht zu diesem Verein." };
+    return { error: "Die Einladung konnte nicht erstellt werden." };
+  }
 
   revalidatePath("/dashboard/verein");
   revalidatePath("/dashboard/mitglieder/neu");
-  return { error: null, ok: "Einladungslink erstellt – unten kopieren und verschicken." };
+  return { error: null, ok: "Einladung erstellt – unten per E-Mail senden oder den Link kopieren." };
+}
+
+// Versand ueber die Edge Function send-beitritt-einladung: Rechte, Empfaenger, Inhalt und Absender prueft/setzt
+// ausschliesslich der Server. Die Funktion liefert nur eigene, neutrale Meldungen zurueck.
+export async function einladungPerEmail(_prev: AktionsErgebnis, formData: FormData): Promise<AktionsErgebnis> {
+  const einladungId = text(formData, "einladung_id");
+  const email = text(formData, "email");
+  if (!einladungId) return { error: "Einladung fehlt." };
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Bitte gib eine gültige E-Mail-Adresse ein." };
+
+  const { supabase } = await sitzung();
+  const { error } = await supabase.functions.invoke("send-beitritt-einladung", { body: { einladung_id: einladungId, email } });
+  if (error) {
+    let meldung = MAIL_FEHLER;
+    try {
+      // deno-lint-ignore no-explicit-any
+      const antwort = await (error as any).context?.json?.();
+      if (typeof antwort?.error === "string") meldung = antwort.error;
+    } catch {
+      /* neutrale Meldung */
+    }
+    return { error: meldung };
+  }
+  return { error: null, ok: `Einladung an ${email} gesendet.` };
 }
 
 export async function einladungWiderrufen(formData: FormData): Promise<void> {

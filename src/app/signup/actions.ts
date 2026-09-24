@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { authFehlerText } from "@/lib/auth/fehler";
+import { basisUrl, internerPfad } from "@/lib/url";
 
 export type SignupState = { error: string | null; emailBestaetigenNoetig: boolean };
 
@@ -17,6 +19,7 @@ export async function signUp(
   const gender = String(formData.get("gender") ?? "");
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const weiter = internerPfad(String(formData.get("weiter") ?? "/dashboard"));
 
   if (!vorname || !nachname || !email || !password) {
     return { ...initialState, error: "Bitte alle Pflichtfelder ausfüllen." };
@@ -30,6 +33,8 @@ export async function signUp(
     email,
     password,
     options: {
+      // Link in der Bestaetigungs-E-Mail fuehrt ueber /auth/bestaetigen hierher zurueck (z. B. zur Einladung)
+      emailRedirectTo: `${await basisUrl()}${weiter}`,
       data: {
         vorname,
         nachname,
@@ -40,11 +45,11 @@ export async function signUp(
   });
 
   if (error) {
-    return { ...initialState, error: error.message };
+    return { ...initialState, error: authFehlerText(error, "Die Registrierung hat nicht geklappt. Bitte versuche es später erneut.") };
   }
 
   if (data.session) {
-    redirect("/dashboard");
+    redirect(weiter);
   }
 
   return { error: null, emailBestaetigenNoetig: true };

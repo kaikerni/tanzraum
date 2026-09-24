@@ -123,6 +123,7 @@ export type OffeneEinladung = {
   id: string;
   token: string;
   rolle: string | null;
+  gruppe: string | null;
   laeuftAb: string | null;
   uses: number;
   maxUses: number;
@@ -131,7 +132,7 @@ export type OffeneEinladung = {
 export async function getOffeneEinladungen(supabase: SupabaseClient, vereinId: string): Promise<OffeneEinladung[]> {
   const { data } = await supabase
     .from("einladungen")
-    .select("id, token, expires_at, uses, max_uses, revoked, rollen(name)")
+    .select("id, token, expires_at, uses, max_uses, revoked, rollen(name), gruppen(name)")
     .eq("verein_id", vereinId)
     .eq("revoked", false)
     .order("created_at", { ascending: false });
@@ -143,6 +144,7 @@ export async function getOffeneEinladungen(supabase: SupabaseClient, vereinId: s
       id: e.id,
       token: e.token,
       rolle: e.rollen?.name ?? null,
+      gruppe: e.gruppen?.name ?? null,
       laeuftAb: e.expires_at,
       uses: e.uses,
       maxUses: e.max_uses,

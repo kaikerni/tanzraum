@@ -249,9 +249,15 @@ export function VereinAnsicht({
           <KarteKopf
             icon={Ticket}
             titel="Mitglieder einladen"
-            untertitel="Einladungslink erstellen und per WhatsApp oder E-Mail verschicken. Wer den Link öffnet, wird mit der gewählten Rolle Mitglied."
+            untertitel="Einladung erstellen und direkt per E-Mail senden oder den Link kopieren (z. B. für WhatsApp). Wer die Einladung annimmt, wird mit der gewählten Rolle Mitglied – und bei gewählter Gruppe direkt Teil dieser Gruppe."
           />
-          <EinladungsVerwaltung vereinId={vereinId} rollen={auswahl.rollen} einladungen={einladungen} basisUrl={basis} />
+          <EinladungsVerwaltung
+            vereinId={vereinId}
+            rollen={auswahl.rollen}
+            gruppen={uebersicht.gruppen.map((g) => ({ id: g.id, name: g.name ?? "Gruppe" }))}
+            einladungen={einladungen}
+            basisUrl={basis}
+          />
         </section>
       )}
     </div>

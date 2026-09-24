@@ -1,8 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Copy, Check, XCircle } from "lucide-react";
-import { einladungErstellen, einladungWiderrufen } from "@/app/dashboard/verein/actions";
+import { Copy, Check, XCircle, Mail } from "lucide-react";
+import { einladungErstellen, einladungPerEmail, einladungWiderrufen } from "@/app/dashboard/verein/actions";
 import { SendenButton, Meldung, LEERES_ERGEBNIS } from "@/components/ui/SendenButton";
 import type { Auswahl, OffeneEinladung } from "@/lib/verein/getVerein";
 
@@ -24,14 +24,51 @@ function Kopieren({ link }: { link: string }) {
   );
 }
 
+function PerEmail({ einladungId }: { einladungId: string }) {
+  const [offen, setOffen] = useState(false);
+  const [ergebnis, aktion] = useActionState(einladungPerEmail, LEERES_ERGEBNIS);
+  if (!offen) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOffen(true)}
+        className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-brand-line px-3 text-[12.5px] font-medium text-brand-ink hover:bg-brand-bg"
+      >
+        <Mail size={13} /> Per E-Mail senden
+      </button>
+    );
+  }
+  return (
+    <form action={aktion} className="flex w-full flex-col gap-2 sm:w-auto">
+      <input type="hidden" name="einladung_id" value={einladungId} />
+      <div className="flex gap-2">
+        <input
+          type="email"
+          name="email"
+          required
+          placeholder="E-Mail-Adresse"
+          autoComplete="off"
+          className="min-h-9 w-full min-w-0 rounded-lg border border-brand-line px-3 text-[13px] sm:w-56"
+        />
+        <SendenButton laedtText="Sendet …" className="min-h-9 shrink-0 px-3 text-[12.5px]">
+          Senden
+        </SendenButton>
+      </div>
+      <Meldung ergebnis={ergebnis} />
+    </form>
+  );
+}
+
 export function EinladungsVerwaltung({
   vereinId,
   rollen,
+  gruppen,
   einladungen,
   basisUrl,
 }: {
   vereinId: string;
   rollen: Auswahl[];
+  gruppen: { id: string; name: string }[];
   einladungen: OffeneEinladung[];
   basisUrl: string;
 }) {
@@ -40,7 +77,7 @@ export function EinladungsVerwaltung({
 
   return (
     <div className="flex flex-col gap-4">
-      <form action={aktion} className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr_1fr_auto] sm:items-end">
+      <form action={aktion} className="grid grid-cols-1 gap-3 sm:grid-cols-[1.4fr_1.4fr_1fr_1fr_auto] sm:items-end">
         <input type="hidden" name="verein_id" value={vereinId} />
         <label className="field">
           <span>Rolle im Verein</span>
@@ -48,6 +85,17 @@ export function EinladungsVerwaltung({
             {rollen.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          <span>Gruppe (optional)</span>
+          <select name="gruppe_id" defaultValue="">
+            <option value="">Nur Verein</option>
+            {gruppen.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
               </option>
             ))}
           </select>
@@ -69,17 +117,19 @@ export function EinladungsVerwaltung({
           {einladungen.map((e) => {
             const link = `${basisUrl}/einladung/${e.token}`;
             return (
-              <li key={e.id} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center">
+              <li key={e.id} className="flex flex-col gap-2 p-3 sm:flex-row sm:flex-wrap sm:items-center">
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-semibold text-brand-ink">
-                    {e.rolle ?? "Mitglied"} · {e.uses}/{e.maxUses} genutzt
+                    {e.rolle ?? "Mitglied"}
+                    {e.gruppe ? ` · Gruppe ${e.gruppe}` : ""} · {e.uses}/{e.maxUses} genutzt
                   </div>
                   <div className="truncate text-[12px] text-brand-ink-soft">
                     {link}
                     {e.laeuftAb ? ` · gültig bis ${new Date(e.laeuftAb).toLocaleDateString("de-DE")}` : ""}
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <PerEmail einladungId={e.id} />
                   <Kopieren link={link} />
                   <form action={einladungWiderrufen}>
                     <input type="hidden" name="einladung_id" value={e.id} />

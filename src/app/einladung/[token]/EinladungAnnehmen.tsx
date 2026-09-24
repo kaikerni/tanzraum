@@ -10,8 +10,8 @@ export function EinladungAnnehmen({ token }: { token: string }) {
     <form action={aktion} className="flex flex-col gap-3">
       <input type="hidden" name="token" value={token} />
       <Meldung ergebnis={ergebnis} />
-      <SendenButton laedtText="Wird beigetreten …" className="w-full">
-        Beitreten
+      <SendenButton laedtText="Wird angenommen …" className="w-full">
+        Einladung annehmen
       </SendenButton>
     </form>
   );

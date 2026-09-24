@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardData } from "@/lib/dashboard/getDashboardData";
@@ -8,15 +7,9 @@ import {
   getAuswahllisten,
   getOffeneEinladungen,
 } from "@/lib/verein/getVerein";
+import { basisUrl } from "@/lib/url";
 import { OhneVerein } from "@/components/verein/OhneVerein";
 import { VereinAnsicht } from "@/components/verein/VereinAnsicht";
-
-async function basisUrl(): Promise<string> {
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  return `${proto}://${host}`;
-}
 
 export default async function MeinVereinSeite({
   searchParams,

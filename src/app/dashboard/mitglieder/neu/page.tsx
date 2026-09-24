@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ArrowLeft, Ticket } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardData } from "@/lib/dashboard/getDashboardData";
 import { getAuswahllisten, getOffeneEinladungen } from "@/lib/verein/getVerein";
+import { basisUrl } from "@/lib/url";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { EinladungsVerwaltung } from "@/components/verein/EinladungsVerwaltung";
@@ -28,13 +28,11 @@ export default async function MitgliedHinzufuegenSeite({
   const mitgliedschaft = adminVereine.find((v) => v.vereinId === gewaehlt) ?? adminVereine[0];
   if (!mitgliedschaft) redirect("/dashboard/mitglieder");
 
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-
-  const [listen, einladungen] = await Promise.all([
+  const [listen, einladungen, { data: gruppen }, basis] = await Promise.all([
     getAuswahllisten(supabase),
     getOffeneEinladungen(supabase, mitgliedschaft.vereinId),
+    supabase.from("gruppen").select("id, name").eq("verein_id", mitgliedschaft.vereinId).order("name"),
+    basisUrl(),
   ]);
 
   return (
@@ -55,8 +53,9 @@ export default async function MitgliedHinzufuegenSeite({
         <EinladungsVerwaltung
           vereinId={mitgliedschaft.vereinId}
           rollen={listen.rollen}
+          gruppen={(gruppen ?? []).map((g) => ({ id: g.id, name: g.name ?? "Gruppe" }))}
           einladungen={einladungen}
-          basisUrl={`${proto}://${host}`}
+          basisUrl={basis}
         />
       </section>
     </div>
