@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { Search, Bell, MessageCircle, ChevronDown, LogOut } from "lucide-react";
 import { signOut } from "@/app/actions";
 
@@ -17,9 +19,16 @@ export function AppHeader({
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-4 border-b border-brand-line bg-white px-6">
-      <div className="flex items-center gap-2">
-        <span className="font-display text-lg font-bold text-brand-red">TanzRaum</span>
-      </div>
+      <Link href="/dashboard" className="flex shrink-0 items-center">
+        <Image
+          src="/tanzraum-logo-banner.webp"
+          alt="TanzRaum"
+          width={168}
+          height={44}
+          className="h-10 w-auto"
+          priority
+        />
+      </Link>
 
       <div className="mx-auto flex max-w-xl flex-1 items-center gap-2 rounded-full border border-brand-line bg-brand-bg px-4 py-2">
         <Search size={16} className="text-brand-ink-soft" />

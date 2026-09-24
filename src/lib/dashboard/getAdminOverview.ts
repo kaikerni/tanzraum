@@ -63,3 +63,50 @@ export async function getMitgliederNachAltersklasse(
   // deno-lint-ignore no-explicit-any
   return (data as any[]).map((r) => ({ altersklasse: r.altersklasse, anzahl: Number(r.anzahl) }));
 }
+
+export type HeuteEintrag = {
+  titel: string;
+  halle: string | null;
+  von: string | null;
+  bis: string | null;
+  vereinName: string;
+};
+
+export async function getHeuteImVerein(supabase: SupabaseClient): Promise<HeuteEintrag[]> {
+  const { data, error } = await supabase.rpc("admin_heute_im_verein");
+  if (error || !data) return [];
+  // deno-lint-ignore no-explicit-any
+  return (data as any[]).map((r) => ({
+    titel: r.titel,
+    halle: r.halle,
+    von: r.von,
+    bis: r.bis,
+    vereinName: r.verein_name,
+  }));
+}
+
+export type WochenBeteiligung = { wocheStart: string; prozent: number | null };
+
+export async function getTrainingsbeteiligungVerlauf(
+  supabase: SupabaseClient,
+  wochen = 8,
+): Promise<WochenBeteiligung[]> {
+  const { data, error } = await supabase.rpc("admin_trainingsbeteiligung_verlauf", {
+    p_wochen: wochen,
+  });
+  if (error || !data) return [];
+  // deno-lint-ignore no-explicit-any
+  return (data as any[]).map((r) => ({
+    wocheStart: r.woche_start,
+    prozent: r.prozent === null ? null : Number(r.prozent),
+  }));
+}
+
+export type RadarEintrag = { typ: string; dringlichkeit: "hoch" | "info"; text: string };
+
+export async function getRadar(supabase: SupabaseClient): Promise<RadarEintrag[]> {
+  const { data, error } = await supabase.rpc("admin_radar");
+  if (error || !data) return [];
+  // deno-lint-ignore no-explicit-any
+  return (data as any[]).map((r) => ({ typ: r.typ, dringlichkeit: r.dringlichkeit, text: r.text }));
+}

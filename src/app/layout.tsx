@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "TanzRaum",
   description: "Vereinsverwaltung für karnevalistischen Tanzsport",
+  icons: {
+    icon: "/tanzraum-logo-mark.webp",
+  },
 };
 
 export default function RootLayout({

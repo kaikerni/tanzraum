@@ -1,13 +1,30 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, Trophy, Building2, Activity, ArrowRight, type LucideIcon } from "lucide-react";
+import {
+  Users,
+  Trophy,
+  Building2,
+  Activity,
+  ArrowRight,
+  Radar,
+  CalendarClock,
+  MessageSquare,
+  AlertCircle,
+  Info,
+  type LucideIcon,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardData } from "@/lib/dashboard/getDashboardData";
 import {
   getDashboardKpis,
   getNaechsteTermine,
   getMitgliederNachAltersklasse,
+  getHeuteImVerein,
+  getTrainingsbeteiligungVerlauf,
+  getRadar,
 } from "@/lib/dashboard/getAdminOverview";
+import { getAktuelleNachrichten } from "@/lib/dashboard/getNachrichten";
+import { QuickActions } from "@/components/QuickActions";
 
 const TARIF_LABEL: Record<string, string> = {
   free: "Free",
@@ -34,15 +51,21 @@ export default async function DashboardPage() {
   if (!daten) redirect("/login");
   if (daten.gesperrt) redirect("/gesperrt");
 
-  const [kpis, termine, altersklassen] = daten.istPlattformAdmin
+  const [kpis, termine, altersklassen, heute, verlauf, radar, nachrichten] = daten.istPlattformAdmin
     ? await Promise.all([
         getDashboardKpis(supabase),
         getNaechsteTermine(supabase, 6),
         getMitgliederNachAltersklasse(supabase),
+        getHeuteImVerein(supabase),
+        getTrainingsbeteiligungVerlauf(supabase, 8),
+        getRadar(supabase),
+        getAktuelleNachrichten(supabase, user.id, 4),
       ])
-    : [null, [], []];
+    : [null, [], [], [], [], [], await getAktuelleNachrichten(supabase, user.id, 4)];
 
   const maxAnzahl = Math.max(1, ...altersklassen.map((a) => a.anzahl));
+  const naechsteTurniere = termine.filter((t) => t.typ === "turnier").slice(0, 4);
+  const maxBeteiligung = Math.max(1, ...verlauf.map((w) => w.prozent ?? 0));
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
@@ -79,7 +102,7 @@ export default async function DashboardPage() {
       {daten.istPlattformAdmin && kpis && (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <KpiCard icon={Users} farbe="green" wert={kpis.mitgliederGesamt} label="Mitglieder" />
-          <KpiCard icon={Building2} farbe="navy" wert={kpis.vereineGesamt} label="Vereine" />
+          <KpiCard icon={Building2} farbe="blue" wert={kpis.vereineGesamt} label="Vereine" />
           <KpiCard
             icon={Trophy}
             farbe="gold"
@@ -88,7 +111,7 @@ export default async function DashboardPage() {
           />
           <KpiCard
             icon={Activity}
-            farbe="red"
+            farbe="navy"
             wert={
               kpis.trainingsbeteiligungProzent !== null ? `${kpis.trainingsbeteiligungProzent}%` : "–"
             }
@@ -174,6 +197,135 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* Heute im Verein */}
+        <div className="card lg:col-span-2">
+          <div className="mb-3 flex items-center gap-2">
+            <CalendarClock size={17} className="text-brand-ink-soft" />
+            <h2 className="font-display text-base font-bold text-brand-ink">Heute im Verein</h2>
+          </div>
+          {heute.length === 0 ? (
+            <p className="text-[13px] text-brand-ink-soft">Heute keine Termine.</p>
+          ) : (
+            <div className="flex flex-col">
+              {heute.map((h, i) => (
+                <div key={i} className="flex items-center gap-4 border-b border-brand-line py-2.5 last:border-0">
+                  <span className="w-20 shrink-0 whitespace-nowrap text-[12.5px] font-semibold text-brand-ink">
+                    {h.von ? h.von.slice(0, 5) : ""}
+                    {h.bis ? `–${h.bis.slice(0, 5)}` : ""}
+                  </span>
+                  <div className="flex-1">
+                    <div className="text-[13.5px] font-semibold text-brand-ink">{h.titel}</div>
+                    <div className="text-[12px] text-brand-ink-soft">
+                      {h.vereinName}
+                      {h.halle ? ` · ${h.halle}` : ""}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* TanzRaum Radar */}
+        <div className="card">
+          <div className="mb-1 flex items-center gap-2">
+            <Radar size={17} className="text-brand-ink-soft" />
+            <h2 className="font-display text-base font-bold text-brand-ink">TanzRaum Radar</h2>
+          </div>
+          <p className="mb-3 text-[12.5px] text-brand-ink-soft">
+            {radar.length > 0
+              ? `${radar.length} Ding${radar.length === 1 ? "" : "e"} brauchen deine Aufmerksamkeit`
+              : "Gerade nichts Dringendes"}
+          </p>
+          <div className="flex flex-col gap-2">
+            {radar.map((r, i) => (
+              <div
+                key={i}
+                className={`flex items-start gap-2 rounded-lg px-3 py-2 text-[12.5px] ${
+                  r.dringlichkeit === "hoch"
+                    ? "bg-brand-red-wash text-brand-red-deep"
+                    : "bg-brand-blue-wash text-brand-ink"
+                }`}
+              >
+                {r.dringlichkeit === "hoch" ? (
+                  <AlertCircle size={15} className="mt-0.5 shrink-0" />
+                ) : (
+                  <Info size={15} className="mt-0.5 shrink-0" />
+                )}
+                {r.text}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <QuickActions />
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* Aktuelle Nachrichten */}
+        <div className="card">
+          <div className="mb-3 flex items-center gap-2">
+            <MessageSquare size={17} className="text-brand-ink-soft" />
+            <h2 className="font-display text-base font-bold text-brand-ink">Aktuelle Nachrichten</h2>
+          </div>
+          {nachrichten.length === 0 ? (
+            <p className="text-[13px] text-brand-ink-soft">Keine neuen Nachrichten.</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {nachrichten.map((n) => (
+                <div key={n.id}>
+                  <div className="text-[13px] font-semibold text-brand-ink">{n.senderName}</div>
+                  <div className="truncate text-[12.5px] text-brand-ink-soft">{n.inhalt}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Naechste Turniere */}
+        <div className="card">
+          <h2 className="mb-3 font-display text-base font-bold text-brand-ink">Nächste Turniere</h2>
+          {naechsteTurniere.length === 0 ? (
+            <p className="text-[13px] text-brand-ink-soft">Keine bevorstehenden Turniere.</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {naechsteTurniere.map((t, i) => (
+                <div key={i} className="text-[13px]">
+                  <div className="font-semibold text-brand-ink">{t.titel}</div>
+                  <div className="text-brand-ink-soft">
+                    {formatDatum(t.datum)} · {t.ort ?? "Ort offen"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Trainingsbeteiligung-Verlauf */}
+        <div className="card">
+          <h2 className="mb-3 font-display text-base font-bold text-brand-ink">Trainingsbeteiligung</h2>
+          {verlauf.every((w) => w.prozent === null) ? (
+            <p className="text-[13px] text-brand-ink-soft">Noch keine Anwesenheitsdaten.</p>
+          ) : (
+            <div className="flex h-24 items-end gap-1.5">
+              {verlauf.map((w, i) => (
+                <div key={i} className="flex flex-1 flex-col items-center gap-1">
+                  <div
+                    className="w-full rounded-t bg-brand-green"
+                    style={{ height: `${((w.prozent ?? 0) / maxBeteiligung) * 80}px` }}
+                    title={`${w.prozent ?? 0}%`}
+                  />
+                  <span className="text-[9px] text-brand-ink-faint">
+                    {new Date(w.wocheStart).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Deine Vereine */}
       <div className="card">
         <h2 className="mb-3 font-display text-base font-bold text-brand-ink">Deine Vereine</h2>
@@ -223,16 +375,17 @@ function KpiCard({
   zusatz,
 }: {
   icon: LucideIcon;
-  farbe: "green" | "navy" | "gold" | "red";
+  farbe: "green" | "navy" | "gold" | "red" | "blue";
   wert: number | string;
   label: string;
   zusatz?: string;
 }) {
   const farben: Record<string, string> = {
     green: "bg-brand-green-wash text-brand-green",
-    navy: "bg-brand-bg text-brand-navy",
+    navy: "bg-brand-navy text-white",
     gold: "bg-brand-gold-wash text-brand-gold",
     red: "bg-brand-red-wash text-brand-red",
+    blue: "bg-brand-blue-wash text-brand-blue",
   };
   return (
     <div className="card">
