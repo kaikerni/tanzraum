@@ -58,7 +58,7 @@ export function TanzraumAssistent() {
         </span>
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-[16px] font-bold text-brand-ink">
-            TanzRaum Assistent
+            TanzRaum KI
             <span className="rounded-md bg-brand-purple-wash px-1.5 py-0.5 text-[10.5px] font-bold text-brand-purple">KI</span>
           </h2>
           <p className="text-[12.5px] text-brand-ink-soft">Dein smarter Helfer für den Vereinsalltag.</p>
