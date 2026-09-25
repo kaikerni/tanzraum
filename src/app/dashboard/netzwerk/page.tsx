@@ -8,6 +8,7 @@ import { NetzwerkListe } from "@/components/netzwerk/NetzwerkListe";
 import { KARTE } from "@/components/dashboard/Karten";
 import { SpotlightLeiste } from "@/components/spotlights/SpotlightLeiste";
 import { getSpotlightIch, getSpotlightLeiste } from "@/lib/spotlights/getSpotlights";
+import { SPOTLIGHTS_AKTIV } from "@/lib/spotlights/typen";
 
 export const metadata = { title: "TanzRaum-Netzwerk" };
 
@@ -22,22 +23,26 @@ export default async function NetzwerkSeite({ searchParams }: { searchParams: Pr
 
   // Free: Spotlights ansehen (und Profile daraus oeffnen), Map und Liste ab Basic
   if (!(await darfNetzwerk(supabase))) {
-    const [spotlights, ich] = await Promise.all([getSpotlightLeiste(supabase), getSpotlightIch(supabase, user)]);
+    const [spotlights, ich] = SPOTLIGHTS_AKTIV
+      ? await Promise.all([getSpotlightLeiste(supabase), getSpotlightIch(supabase, user)])
+      : [[], null];
     return (
       <div className="mx-auto flex max-w-[1200px] flex-col gap-3">
         <h1 className="flex items-center gap-2 text-[26px] font-extrabold tracking-tight text-brand-ink">
           <Globe size={24} className="text-brand-red" /> TanzRaum-Netzwerk
         </h1>
-        <section className={`${KARTE} py-3`} aria-label="Spotlights">
-          <SpotlightLeiste personen={spotlights} ich={ich} />
-        </section>
+        {ich && (
+          <section className={`${KARTE} py-3`} aria-label="Spotlights">
+            <SpotlightLeiste personen={spotlights} ich={ich} />
+          </section>
+        )}
         <section className={KARTE}>
           <p className="text-[14px] text-brand-ink">
-            🗺️ Map, Mitglieder- und Vereinssuche, Nachrichten und eigene Spotlights gibt es ab dem <strong>Basic-Tarif</strong> – oder
+            🗺️ Map, Mitglieder- und Vereinssuche und Nachrichten gibt es ab dem <strong>Basic-Tarif</strong> – oder
             automatisch über einen Verein mit Vereinslizenz.
           </p>
           <p className="mt-2 text-[13.5px] text-brand-ink-soft">
-            Mit Free siehst du Spotlights, kannst Profile ansehen und Kontaktanfragen senden und annehmen.
+            Mit Free kannst du Kontaktanfragen senden und annehmen (Nachrichten-Symbol oben).
           </p>
         </section>
       </div>
@@ -48,8 +53,8 @@ export default async function NetzwerkSeite({ searchParams }: { searchParams: Pr
   // Die Map ist immer die Standardansicht; Spotlights stehen immer oben
   const ansicht: Ansicht = roh === "liste" ? "liste" : "map";
   const [spotlights, ich, punkte, { data: map }] = await Promise.all([
-    getSpotlightLeiste(supabase),
-    getSpotlightIch(supabase, user),
+    SPOTLIGHTS_AKTIV ? getSpotlightLeiste(supabase) : Promise.resolve([]),
+    SPOTLIGHTS_AKTIV ? getSpotlightIch(supabase, user) : Promise.resolve(null),
     ansicht === "map" ? getMapPunkte(supabase) : Promise.resolve([]),
     ansicht === "map" ? supabase.rpc("meine_map_einstellungen") : Promise.resolve({ data: null }),
   ]);
@@ -86,9 +91,11 @@ export default async function NetzwerkSeite({ searchParams }: { searchParams: Pr
       </div>
 
       {/* Spotlights: persoenlich, 24 Stunden – immer sichtbar ueber Map und Liste */}
-      <section className={`${KARTE} py-3`} aria-label="Spotlights">
-        <SpotlightLeiste personen={spotlights} ich={ich} />
-      </section>
+      {ich && (
+        <section className={`${KARTE} py-3`} aria-label="Spotlights">
+          <SpotlightLeiste personen={spotlights} ich={ich} />
+        </section>
+      )}
 
       {ansicht === "map" && <NetzwerkMap punkte={punkte} fokusVerein={verein} ichAufMap={ichAufMap} />}
       {ansicht === "liste" && <NetzwerkListe />}

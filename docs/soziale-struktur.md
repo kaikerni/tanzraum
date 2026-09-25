@@ -40,10 +40,22 @@ Nicht umgesetzt (bewusst): Connect Match, Radar, Newsfeed, dauerhafte Beiträge,
 
 ## Spotlights
 
+> **Derzeit ausgeblendet (pausiert).** Der aktuelle Supabase-Tarif hat zu wenig Speicher. Es werden keine Spotlights
+> angezeigt und nichts in Supabase gespeichert; Tabellen und Funktionen bleiben erhalten. Künftig **nur Fotos**
+> (max. 5 MB, im Browser verkleinert).
+>
+> **Wieder einschalten** (nach Tarifwechsel):
+> 1. `src/lib/spotlights/typen.ts`: `SPOTLIGHTS_AKTIV = true`
+> 2. In `spotlight_erstellen` den Block „PAUSE“ (raise exception … derzeit nicht verfügbar) entfernen
+> 3. Upload-Regel anlegen:
+>    `create policy "Nutzer laedt eigenes Spotlight-Medium hoch" on storage.objects for insert to authenticated
+>    with check (bucket_id = 'spotlights' and (storage.foldername(name))[1] = (auth.uid())::text);`
+>
+> Die folgende Beschreibung gilt ab dem Wiedereinschalten.
+
 - Immer **persönlich**: Besitzer ist die angemeldete Person (`spotlight_erstellen` setzt ihn serverseitig), Anzeige nur
   mit persönlichem Namen und Profilbild – nie Verein, Gruppe oder Rolle; kein „Posten als Verein/Gruppe“.
-- Foto, Video (auch ganze Tänze – im Browser verkleinert, max. 50 MB, Länge nicht künstlich begrenzt) oder Text mit
-  Farbhintergrund, jeweils optional mit TanzRaum-Smiley; 24 Stunden sichtbar.
+- Nur **Fotos** (im Browser verkleinert, max. 5 MB), optional mit Text und TanzRaum-Smiley; 24 Stunden sichtbar.
 - Sichtbarkeit: „Alle im TanzRaum-Netzwerk“ (Standard, auch unter 15) oder „Nur mein Verein & meine Kontakte“ (verknüpfte
   Eltern können das festlegen; private Konten immer nur Verein & Kontakte).
 - Vollbild mit Fortschritt, ← →, Tippen/Pfeiltasten, Pause beim Halten, Profil öffnen, Melden, Reaktionen mit

@@ -9,6 +9,7 @@ import { PersonAktionen } from "@/components/netzwerk/PersonAktionen";
 import { farbeFuer, initialen } from "@/components/chat/ChatAvatar";
 import { PersonSpotlights } from "@/components/spotlights/PersonSpotlights";
 import { getSpotlightLeiste } from "@/lib/spotlights/getSpotlights";
+import { SPOTLIGHTS_AKTIV } from "@/lib/spotlights/typen";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const FUNKTION: Record<string, string> = { trainer: "Trainer/in", betreuer: "Betreuer/in", mitglied: "Tänzer/in" };
@@ -24,7 +25,7 @@ export default async function PersonSeite({ params }: { params: Promise<{ id: st
   const person = await getPerson(supabase, id);
   if (!person) notFound();
   const rollen = [...new Set(person.vereine.map((v) => v.rolle))].join(" · ");
-  const spotlight = (await getSpotlightLeiste(supabase)).find((p) => p.userId === person.id) ?? null;
+  const spotlight = SPOTLIGHTS_AKTIV ? ((await getSpotlightLeiste(supabase)).find((p) => p.userId === person.id) ?? null) : null;
 
   return (
     <div className="mx-auto flex max-w-[760px] flex-col gap-4">
@@ -103,10 +104,12 @@ export default async function PersonSeite({ params }: { params: Promise<{ id: st
         </section>
       )}
 
+      {SPOTLIGHTS_AKTIV && (
       <section className={KARTE} id="spotlights">
         <KarteKopf icon={Sparkles} titel="Spotlights" />
         <PersonSpotlights person={spotlight} />
       </section>
+      )}
     </div>
   );
 }

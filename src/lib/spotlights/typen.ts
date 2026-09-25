@@ -1,3 +1,7 @@
+// Spotlights vorerst ausgeblendet: der aktuelle Supabase-Tarif hat zu wenig Speicher. Zum Einschalten auf true
+// setzen UND in der Datenbank spotlight_erstellen sowie die Upload-Regel wieder freigeben (docs/soziale-struktur.md).
+export const SPOTLIGHTS_AKTIV = false;
+
 export type SpotlightPerson = {
   userId: string;
   name: string;

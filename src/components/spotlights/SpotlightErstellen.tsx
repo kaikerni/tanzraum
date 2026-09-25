@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, Film, Type, X, Globe, Users, Trash2 } from "lucide-react";
+import { Camera, X, Globe, Users, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { spotlightErstellen } from "@/app/dashboard/netzwerk/spotlight-actions";
 import { bildVerkleinern } from "@/lib/medien/bild";
@@ -40,7 +40,6 @@ export function SpotlightErstellen({
   const [fehler, setFehler] = useState<string | null>(null);
   const [laeuft, setLaeuft] = useState(false);
   const fotoInput = useRef<HTMLInputElement>(null);
-  const videoInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => () => void (vorschau && URL.revokeObjectURL(vorschau)), [vorschau]);
 
@@ -106,16 +105,12 @@ export function SpotlightErstellen({
 
         <div className="flex-1 overflow-y-auto p-4">
           <input ref={fotoInput} type="file" accept="image/*" hidden onChange={(e) => dateiGewaehlt(e.target.files?.[0], "foto")} />
-          <input ref={videoInput} type="file" accept="video/*" hidden onChange={(e) => dateiGewaehlt(e.target.files?.[0], "video")} />
 
           {!art ? (
-            <div className="grid grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 gap-2.5">
               {(
-                [
-                  ["Foto", Camera, () => fotoInput.current?.click()],
-                  ["Video", Film, () => videoInput.current?.click()],
-                  ["Text", Type, () => setArt("text")],
-                ] as const
+                // Spotlights: nur Fotos (Videos brauchen mehr Speicher als der aktuelle Tarif hat)
+                [["Foto", Camera, () => fotoInput.current?.click()]] as const
               ).map(([titel, Icon, klick]) => (
                 <button
                   key={titel}
@@ -126,8 +121,8 @@ export function SpotlightErstellen({
                   <Icon size={28} className="text-brand-red" /> {titel}
                 </button>
               ))}
-              <p className="col-span-3 mt-1 text-center text-[12.5px] text-brand-ink-soft">
-                Training, Auftritte, ganze Tänze, Kostüme, Erfolge … 24 Stunden sichtbar.
+              <p className="mt-1 text-center text-[12.5px] text-brand-ink-soft">
+                Training, Auftritte, Kostüme, Erfolge … als Foto, 24 Stunden sichtbar.
               </p>
             </div>
           ) : (

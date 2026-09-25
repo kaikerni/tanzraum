@@ -18,6 +18,7 @@ import { DashboardAnsicht } from "@/components/dashboard/DashboardAnsicht";
 import { KARTE } from "@/components/dashboard/Karten";
 import { SpotlightLeiste } from "@/components/spotlights/SpotlightLeiste";
 import { getSpotlightIch, getSpotlightLeiste } from "@/lib/spotlights/getSpotlights";
+import { SPOTLIGHTS_AKTIV } from "@/lib/spotlights/typen";
 
 export default async function DashboardPage({
   searchParams,
@@ -52,11 +53,13 @@ export default async function DashboardPage({
       getMeineKinder(supabase),
     ]);
   // Spotlights prominent oben (ansehen: alle, erstellen: ab Basic bzw. mit Vereinslizenz)
-  const [spotlightIch, spotlights] = await Promise.all([getSpotlightIch(supabase, user), getSpotlightLeiste(supabase)]);
+  const [spotlightIch, spotlights] = SPOTLIGHTS_AKTIV
+    ? await Promise.all([getSpotlightIch(supabase, user), getSpotlightLeiste(supabase)])
+    : [null, []];
 
   return (
     <>
-      {(spotlightIch.darfErstellen || spotlights.length > 0) && (
+      {spotlightIch && (spotlightIch.darfErstellen || spotlights.length > 0) && (
         <section className={`${KARTE} mx-auto mb-4 max-w-[1560px] py-3`} aria-label="Spotlights">
           <SpotlightLeiste personen={spotlights} ich={spotlightIch} />
         </section>
