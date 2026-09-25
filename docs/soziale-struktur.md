@@ -22,9 +22,10 @@ Nicht umgesetzt (bewusst): Connect Match, Radar, Newsfeed, dauerhafte Beiträge,
   (Vereine rot mit Haus/Logo, Mitglieder als Profilbild mit Goldrand), Infokarte statt Popup, Filter Vereine/Mitglieder.
 - **Vereine** erscheinen, sobald PLZ/Ort in den Vereinsdaten stehen – beim Speichern wird die Adresse serverseitig
   über Nominatim in Koordinaten umgewandelt (`verein_standort_setzen`).
-- **Mitglieder** nur freiwillig: Einstellungen → „TanzRaum Map“ (Standard **Nein**), nur Ort/Region, auf ca. 1 km
-  gerundet, leicht versetzt dargestellt. Private Konten nie.
-- **Unter 15:** individuell nur, wenn ein verknüpftes Elternteil „Mein Kind auf der TanzRaum Map anzeigen“ erlaubt.
+- **Mitglieder** (jedes Alter) nur freiwillig: Einstellungen → „TanzRaum Map“ (Standard **Nein**). **Niemals Straße oder
+  Adresse:** gespeichert werden nur PLZ und Ort aus dem Suchergebnis und die **Ortsmitte** (zusätzlich auf ca. 1 km
+  gerundet); die Datenbank lehnt Hausnummern und „Straße“ ab. Private Konten nie.
+- Verknüpfte Eltern können die Anzeige ihres Kindes ausschalten („Mein Kind darf auf der TanzRaum Map erscheinen“).
 - DB: `netzwerk_map`, `ist_auf_map`, `map_einstellungen_setzen`, `meine_map_einstellungen`.
 
 ## Liste & Profile
@@ -59,8 +60,11 @@ Siehe `docs/tanzraum-messenger.md` (Privatchat-Regeln). Zusätzlich:
 - **Verknüpfen:** Das Kind erzeugt in Einstellungen → Familie einen Eltern-Code (8 Zeichen, 30 Min.). Das Elternteil
   (volljährig, mit Geburtsdatum) gibt ihn ein. Ist das Kind in einem Verein, **bestätigt der Vereinsadmin** zusätzlich
   (Mitglieder-Seite). Max. 10 Versuche pro Stunde. Auch vom Verein angelegte Eltern-Kind-Zuordnungen zählen.
-- **Elternkontrollen** (nur bei bestätigter Verknüpfung, getrennt voneinander): 💬 Nachrichten erlauben (aus = keine
-  Privatchats außer mit den Eltern, in Gruppenchats nur lesen), 🗺️ Map-Anzeige, ✨ Spotlights nur Verein & Kontakte.
+- Der Jugendschutz betrifft **nur Direktnachrichten** (Fremde können Kinder unter 15 nicht finden, anfragen oder
+  anschreiben). Spotlights und Map sind für alle Altersgruppen gleich.
+- **Elternkontrollen** (nur bei bestätigter Verknüpfung, getrennt voneinander, alle optional): 💬 Nachrichten erlauben
+  (aus = keine Privatchats außer mit den Eltern, in Gruppenchats nur lesen), 🗺️ Map-Anzeige erlauben (Standard an),
+  ✨ Spotlights nur Verein & Kontakte.
   Die Freigabe hebt den Grundschutz nie auf.
 - **Aufheben** (Elternteil oder Vereinsadmin, nicht das Kind): ohne weiteres Elternteil gelten sofort wieder die
   Standardeinstellungen (`kind_einstellungen` wird gelöscht).

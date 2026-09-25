@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { freundlicherFehler } from "@/lib/fehler";
-import { geocode } from "@/lib/geo/geocode";
+import { ortFinden } from "@/lib/geo/geocode";
 import { sperrgrundText } from "@/lib/chat/sperrgrund";
 import { alsTreffer, type ListenTreffer, type NetzwerkKategorie } from "@/lib/netzwerk/tanzraumNetzwerk";
 import type { AktionsErgebnis } from "@/components/ui/SendenButton";
@@ -98,20 +98,21 @@ export async function melden(ziel: { userId?: string; spotlightId?: string }, gr
 }
 
 export async function mapEinstellungenSpeichern(_prev: AktionsErgebnis, formData: FormData): Promise<AktionsErgebnis> {
-  const ort = String(formData.get("ort") ?? "").trim().slice(0, 80);
+  const eingabe = String(formData.get("ort") ?? "").trim().slice(0, 80);
   const sichtbar = formData.get("sichtbar") === "ja";
   const supabase = await sitzung();
+  let ort: string | null = null;
   let lat: number | null = null;
   let lng: number | null = null;
-  if (ort) {
-    const position = await geocode(ort);
-    if (!position) return { error: "Diesen Ort haben wir nicht gefunden. Versuche es mit PLZ und Ort, z. B. „68159 Mannheim“." };
-    lat = position.lat;
-    lng = position.lng;
+  if (eingabe) {
+    // nur Ort/PLZ und Ortsmitte – eine eingetippte Strasse wird nie gespeichert
+    const treffer = await ortFinden(eingabe);
+    if (!treffer) return { error: "Diesen Ort haben wir nicht gefunden. Versuche es mit PLZ und Ort, z. B. „68159 Mannheim“." };
+    ({ ort, lat, lng } = treffer);
   }
-  const { error } = await supabase.rpc("map_einstellungen_setzen", { p_sichtbar: sichtbar, p_ort: ort || null, p_lat: lat, p_lng: lng });
+  const { error } = await supabase.rpc("map_einstellungen_setzen", { p_sichtbar: sichtbar, p_ort: ort, p_lat: lat, p_lng: lng });
   if (error) return { error: freundlicherFehler(error) };
   revalidatePath("/dashboard/einstellungen");
   revalidatePath("/dashboard/netzwerk");
-  return { error: null, ok: ort ? "Gespeichert." : "Ort entfernt – du wirst nicht auf der Map angezeigt." };
+  return { error: null, ok: ort ? `Gespeichert: ${ort}.` : "Ort entfernt – du wirst nicht auf der Map angezeigt." };
 }

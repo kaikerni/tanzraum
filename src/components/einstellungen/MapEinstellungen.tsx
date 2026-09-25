@@ -14,14 +14,8 @@ export function MapEinstellungen({ stand }: { stand: MapStand }) {
       <label className="field">
         <span>Ort oder Region</span>
         <input name="ort" defaultValue={stand.ort ?? ""} placeholder="z. B. 68159 Mannheim" maxLength={80} autoComplete="address-level2" />
-        <small className="text-[12px] text-brand-ink-soft">Nie deine Adresse eintragen – angezeigt wird nur der Ort (auf etwa 1 km gerundet).</small>
+        <small className="text-[12px] text-brand-ink-soft">Nur Ort oder PLZ – eine Straße oder Adresse wird nie gespeichert. Angezeigt wird die Ortsmitte.</small>
       </label>
-      {stand.unter15 ? (
-        <p className="rounded-xl bg-brand-bg px-3 py-2.5 text-[13px] text-brand-ink-soft">
-          🗺️ Unter 15 Jahren erscheinst du nur auf der Map, wenn ein verknüpftes Elternteil das erlaubt.
-          {stand.elternErlauben ? " Deine Eltern haben es erlaubt." : " Aktuell wirst du nicht angezeigt."}
-        </p>
-      ) : (
         <fieldset className="flex flex-col gap-1.5">
           <legend className="mb-1 text-[13.5px] font-semibold text-brand-ink">🗺️ Auf der TanzRaum Map anzeigen</legend>
           <div className="flex gap-2">
@@ -41,6 +35,8 @@ export function MapEinstellungen({ stand }: { stand: MapStand }) {
             ))}
           </div>
         </fieldset>
+      {!stand.elternErlauben && (
+        <p className="rounded-xl bg-brand-bg px-3 py-2.5 text-[13px] text-brand-ink-soft">🗺️ Deine Eltern haben die Anzeige auf der Map ausgeschaltet.</p>
       )}
       <p className="text-[12.5px] text-brand-ink-soft">
         Status: {stand.wirdAngezeigt ? "Du bist auf der Map zu sehen." : "Du bist nicht auf der Map zu sehen."} Private Konten erscheinen nie auf der Map.

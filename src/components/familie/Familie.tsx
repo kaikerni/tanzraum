@@ -63,7 +63,7 @@ export function ElternCode({ eltern, schutz }: { eltern: Elternteil[]; schutz: M
             <ShieldCheck size={15} /> Von deinen Eltern festgelegt
           </p>
           <p>Nachrichten: {schutz.nachrichtenErlaubt ? "erlaubt" : "deaktiviert"}</p>
-          <p>TanzRaum Map: {schutz.mapErlaubt ? "du wirst angezeigt" : "du wirst nicht angezeigt"}</p>
+          <p>TanzRaum Map: {schutz.mapErlaubt ? "erlaubt (wenn du es einschaltest)" : "ausgeschaltet"}</p>
           <p>Spotlights: {schutz.spotlightsNurKontakte ? "nur Verein & Kontakte" : "wie du es beim Erstellen wählst"}</p>
         </div>
       )}
@@ -154,8 +154,8 @@ export function MeineKinder({ kinder }: { kinder: Kind[] }) {
                 kind={k}
                 feld="map_erlaubt"
                 wert={k.mapErlaubt}
-                titel="🗺️ Mein Kind auf der TanzRaum Map anzeigen"
-                text="Nur mit Ort/Region, nie mit Adresse oder genauer Position."
+                titel="🗺️ Mein Kind darf auf der TanzRaum Map erscheinen"
+                text="Nur wenn dein Kind es selbst einschaltet – immer nur mit Ort, nie mit Straße oder Adresse. Aus: wird nicht angezeigt."
               />
               <Schalter
                 kind={k}
