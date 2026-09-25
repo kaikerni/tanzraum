@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { UserPlus } from "lucide-react";
+import { ShieldCheck, UserPlus } from "lucide-react";
+import { KARTE } from "@/components/dashboard/Karten";
+import { KarteKopf } from "@/components/dashboard/KarteKopf";
+import { ElternBestaetigungen } from "@/components/familie/Familie";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardData } from "@/lib/dashboard/getDashboardData";
 import { getMitgliederListe, getMitgliederAuswahl, getMitgliederVereine } from "@/lib/mitglieder/getMitglieder";
@@ -49,6 +52,7 @@ export default async function MitgliederSeite({
     getAuswahllisten(supabase),
     supabase.from("gruppen").select("id, name").eq("verein_id", vereinId).order("name"),
   ]);
+  const { data: offeneEltern } = istAdmin ? await supabase.rpc("offene_eltern_bestaetigungen", { p_verein_id: vereinId }) : { data: [] };
   if (mitglieder === null) redirect("/dashboard");
 
   return (
@@ -85,6 +89,13 @@ export default async function MitgliederSeite({
           )}
         </div>
       </div>
+
+      {(offeneEltern ?? []).length > 0 && (
+        <section className={KARTE}>
+          <KarteKopf icon={ShieldCheck} titel="Eltern-Verknüpfungen bestätigen" untertitel="Bitte nur bestätigen, wenn es wirklich Mutter oder Vater des Mitglieds ist." />
+          <ElternBestaetigungen offen={(offeneEltern as any[]).map((o) => ({ id: o.id, eltern: o.eltern, kind: o.kind }))} />
+        </section>
+      )}
 
       <MitgliederAnsicht
         vereinId={vereinId}

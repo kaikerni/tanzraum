@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Mail, KeyRound, EyeOff } from "lucide-react";
+import { Mail, KeyRound, EyeOff, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { EmailAendern, PasswortAendern, PrivatSchalter } from "@/components/einstellungen/KontoSicherheit";
+import { ElternCode, KindVerknuepfen, MeineKinder } from "@/components/familie/Familie";
+import { alterAm, getMeineEltern, getMeineKinder, getMeineSchutzEinstellungen } from "@/lib/familie/getFamilie";
+import { heuteBerlin } from "@/lib/training/getTraining";
 
 export const metadata = { title: "Einstellungen – TanzRaum" };
 
@@ -20,7 +23,16 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
   if (!user) redirect("/login?weiter=/dashboard/einstellungen");
 
   const { email } = await searchParams;
-  const { data: profil } = await supabase.from("profiles").select("konto_privat").eq("id", user.id).maybeSingle();
+  const [{ data: profil }, { data: geburtsdatum }] = await Promise.all([
+    supabase.from("profiles").select("konto_privat").eq("id", user.id).maybeSingle(),
+    supabase.rpc("mein_geburtsdatum"),
+  ]);
+  const minderjaehrig = !geburtsdatum || alterAm(String(geburtsdatum), heuteBerlin()) < 18;
+  const [kinder, eltern, schutz] = await Promise.all([
+    minderjaehrig ? Promise.resolve([]) : getMeineKinder(supabase),
+    minderjaehrig ? getMeineEltern(supabase) : Promise.resolve([]),
+    minderjaehrig ? getMeineSchutzEinstellungen(supabase) : Promise.resolve(null),
+  ]);
   const hinweis = email ? HINWEISE[email] : undefined;
 
   return (
@@ -44,6 +56,23 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
       <section className={KARTE}>
         <KarteKopf icon={EyeOff} titel="Privatsphäre" />
         <PrivatSchalter privat={!!profil?.konto_privat} />
+      </section>
+
+      <section className={KARTE}>
+        {minderjaehrig && schutz ? (
+          <>
+            <KarteKopf icon={Users} titel="Familie" untertitel="Eltern mit deinem Konto verknüpfen" />
+            <ElternCode eltern={eltern} schutz={schutz} />
+          </>
+        ) : (
+          <>
+            <KarteKopf icon={Users} titel="Familie" untertitel="Kinderkonten verknüpfen und Einstellungen für deine Kinder" />
+            <div className="flex flex-col gap-4">
+              <MeineKinder kinder={kinder} />
+              <KindVerknuepfen />
+            </div>
+          </>
+        )}
       </section>
 
       <section className={KARTE}>
