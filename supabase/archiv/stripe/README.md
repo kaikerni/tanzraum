@@ -1,8 +1,9 @@
-# Archiv: Stripe (abgeschaltet)
+# Archiv: Stripe (erste Version)
 
-TanzRaum bietet keine Kreditkartenzahlung an. Bezahlt wird per PayPal, SEPA-Lastschrift über PayPal
-oder – beim Vereinstarif jährlich – per Überweisung.
+Die erste Stripe-Anbindung (`create-checkout-session`, alter `stripe-webhook`) liegt hier als Quellcode.
 
-Die beiden Stripe-Edge-Functions `create-checkout-session` (Version 12) und `stripe-webhook` (Version 10)
-wurden deshalb in Supabase durch eine Version ersetzt, die nur noch HTTP 410 zurückgibt.
-Der ursprüngliche Quellcode liegt hier, damit er bei Bedarf wiederhergestellt werden kann.
+Stand heute ist Stripe **wieder aktiv**, aber neu gebaut:
+- `zahlung-starten` erstellt die Checkout-Session (Stripe) bzw. das PayPal-Abo,
+- `stripe-webhook` (neu) übersetzt Stripe-Ereignisse in die zentrale Tariflogik der Datenbank.
+
+`create-checkout-session` bleibt in Supabase als HTTP-410-Stub bestehen.

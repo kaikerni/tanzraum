@@ -1,6 +1,6 @@
 // Supabase Edge Function: chat-push
 // GET  -> { publicKey } (oeffentlicher VAPID-Schluessel zum Abonnieren im Browser)
-// POST -> { nachricht_id } bzw. { anruf_id } vom Datenbank-Trigger (Header x-tanzraum-geheimnis). Empfaenger bestimmt
+// POST -> { nachricht_id } bzw. { anruf_id } bzw. { admin_push: true } (neuer Kauf) vom Datenbank-Trigger (Header x-tanzraum-geheimnis). Empfaenger bestimmt
 //         ausschliesslich die DB-Funktion chat_push_ziele (gleiche Zugriffsregeln wie die App, ohne Absender,
 //         ohne Stummschaltung). Gesendet wird ein Push OHNE Inhalt; der Service Worker holt Titel/Text
 //         anschliessend angemeldet ueber /api/chat/push-info.
@@ -86,13 +86,15 @@ Deno.serve(async (req) => {
 
   try {
     const geheimnis = req.headers.get("x-tanzraum-geheimnis");
-    const { nachricht_id, anruf_id } = await req.json();
-    if (!geheimnis || (typeof nachricht_id !== "string" && typeof anruf_id !== "string")) return new Response("Ungültige Anfrage", { status: 400 });
+    const { nachricht_id, anruf_id, admin_push } = await req.json();
+    if (!geheimnis || (typeof nachricht_id !== "string" && typeof anruf_id !== "string" && admin_push !== true)) return new Response("Ungültige Anfrage", { status: 400 });
     const paar = await vapidPaar(admin);
     if (!paar) return new Response(JSON.stringify({ ok: false, grund: "VAPID fehlt" }), { status: 200 });
     const { oeffentlich, privat } = paar;
     const { data: ziele, error } =
-      typeof anruf_id === "string"
+      admin_push === true
+        ? await admin.rpc("admin_push_ziele", { p_geheimnis: geheimnis })
+        : typeof anruf_id === "string"
         ? await admin.rpc("anruf_push_ziele", { p_geheimnis: geheimnis, p_anruf_id: anruf_id })
         : await admin.rpc("chat_push_ziele", { p_geheimnis: geheimnis, p_nachricht_id: nachricht_id });
     if (error) return new Response("Nicht berechtigt", { status: 403 });
