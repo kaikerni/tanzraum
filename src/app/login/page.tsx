@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RechtsLinks } from "@/components/recht/RechtsLinks";
 import { LoginForm } from "./LoginForm";
 import { internerPfad } from "@/lib/url";
 
@@ -28,6 +29,7 @@ export default async function LoginPage({
           Noch kein Konto?{" "}
           <Link href={ziel === "/dashboard" ? "/signup" : `/signup?weiter=${encodeURIComponent(ziel)}`}>Jetzt registrieren</Link>
         </p>
+        <RechtsLinks className="mt-4 justify-center" />
       </div>
     </div>
   );

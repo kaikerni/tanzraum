@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { RechtsLinks } from "@/components/recht/RechtsLinks";
 import { usePathname } from "next/navigation";
 import { Crown, Building2, HelpCircle, Heart } from "lucide-react";
 import { sichtbareNav, type Zugriff } from "@/lib/navigation";
@@ -86,6 +87,7 @@ export function AppSidebar({
           <div className="hidden px-1 xl:block">
             <div className="text-[11.5px] text-brand-ink-faint">TanzRaum v1.0</div>
             <div className="text-[11.5px] text-brand-ink-faint">Gemeinsam. Organisiert. Verbunden.</div>
+            <RechtsLinks className="mt-2" />
             <Image
               src="/tanzraum-taenzer-illustration.webp"
               alt=""

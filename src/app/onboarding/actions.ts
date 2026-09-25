@@ -102,10 +102,19 @@ export async function onboardingAbschliessen() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  await supabase
+  const { data: fortschritt } = await supabase
     .from("onboarding_progress")
     .update({ completed: true, completed_at: new Date().toISOString() })
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .select("tarif, data")
+    .maybeSingle();
 
+  // Bei gewuenschtem BASIC/VEREIN direkt zur Bezahlung -- aktiv wird der Tarif erst nach bestaetigter Zahlung
+  const wunsch = fortschritt?.tarif;
+  if (wunsch === "basic" || wunsch === "verein") {
+    // deno-lint-ignore no-explicit-any
+    const periode = (fortschritt?.data as any)?.periode === "jahr" ? "jahr" : "monat";
+    redirect(`/dashboard/tarif?wunsch=${wunsch}&periode=${periode}${wunsch === "verein" ? "#verein" : ""}`);
+  }
   redirect("/dashboard");
 }

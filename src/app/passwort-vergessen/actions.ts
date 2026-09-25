@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { authFehlerText } from "@/lib/auth/fehler";
+import { authFehlerText, MAIL_FEHLER } from "@/lib/auth/fehler";
 import { basisUrl } from "@/lib/url";
 
 export type VergessenState = { error: string | null; gesendet: boolean };
@@ -20,5 +20,7 @@ export async function passwortLinkAnfordern(_prev: VergessenState, formData: For
   if (error && (error.status === 429 || error.code === "over_email_send_rate_limit" || error.code === "over_request_rate_limit")) {
     return { error: authFehlerText(error), gesendet: false };
   }
+  // Versand fehlgeschlagen (z. B. Brevo nicht erreichbar): keine falsche Erfolgsmeldung
+  if (error && (error.status ?? 0) >= 500) return { error: MAIL_FEHLER, gesendet: false };
   return { error: null, gesendet: true };
 }

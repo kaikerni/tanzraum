@@ -10,6 +10,7 @@ import {
 import { basisUrl } from "@/lib/url";
 import { OhneVerein } from "@/components/verein/OhneVerein";
 import { VereinAnsicht } from "@/components/verein/VereinAnsicht";
+import type { VereinslizenzStatus } from "@/components/verein/VereinslizenzKarte";
 
 export default async function MeinVereinSeite({
   searchParams,
@@ -43,12 +44,13 @@ export default async function MeinVereinSeite({
   const istAdmin = rolle.includes("admin");
   const darfGruppen = istAdmin || rolle.includes("trainer");
 
-  const [verein, uebersicht, auswahl, einladungen, basis] = await Promise.all([
+  const [verein, uebersicht, auswahl, einladungen, basis, lizenz] = await Promise.all([
     getVereinsDetails(supabase, vereinId),
     getVereinUebersicht(supabase, vereinId),
     getAuswahllisten(supabase),
     istAdmin ? getOffeneEinladungen(supabase, vereinId) : Promise.resolve([]),
     basisUrl(),
+    istAdmin ? supabase.rpc("vereinslizenz_status", { p_verein_id: vereinId }).then((r) => r.data as VereinslizenzStatus | null) : Promise.resolve(null),
   ]);
   if (!verein || !uebersicht) redirect("/dashboard");
 
@@ -63,6 +65,7 @@ export default async function MeinVereinSeite({
       basis={basis}
       istAdmin={istAdmin}
       darfGruppen={darfGruppen}
+      lizenz={lizenz}
     />
   );
 }

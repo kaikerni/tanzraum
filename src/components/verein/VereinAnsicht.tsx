@@ -25,6 +25,7 @@ import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { GruppenVerwaltung } from "@/components/verein/GruppenVerwaltung";
 import { EinladungsVerwaltung } from "@/components/verein/EinladungsVerwaltung";
 import { LogoUpload } from "@/components/verein/LogoUpload";
+import { VereinslizenzKarte, type VereinslizenzStatus } from "@/components/verein/VereinslizenzKarte";
 
 const TARIF_LABEL: Record<string, string> = { free: "Free", basic: "Basic", verein: "Verein" };
 
@@ -38,6 +39,7 @@ export function VereinAnsicht({
   basis,
   istAdmin,
   darfGruppen,
+  lizenz,
 }: {
   vereine: VereinsMitgliedschaft[];
   vereinId: string;
@@ -48,6 +50,7 @@ export function VereinAnsicht({
   basis: string;
   istAdmin: boolean;
   darfGruppen: boolean;
+  lizenz: VereinslizenzStatus | null;
 }) {
   const adresse = [
     [verein.strasse, verein.hausnummer].filter(Boolean).join(" "),
@@ -194,6 +197,8 @@ export function VereinAnsicht({
           )}
         </div>
       </section>
+
+      {istAdmin && lizenz && <VereinslizenzKarte status={lizenz} vereinId={vereinId} />}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <section className={KARTE}>

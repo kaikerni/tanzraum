@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Flag, ShieldCheck, Hammer } from "lucide-react";
+import { Flag, ShieldCheck, Hammer, CreditCard } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 
@@ -31,6 +31,15 @@ export default async function AdminSeite() {
           <span className="block text-[13px] text-brand-ink-soft">Gemeldete Personen und Spotlights prüfen</span>
         </span>
         {anzahl > 0 && <span className="rounded-full bg-brand-red px-2.5 py-0.5 text-[13px] font-bold text-white">{anzahl} offen</span>}
+      </Link>
+      <Link href="/dashboard/admin/tarife" className={`${KARTE} flex items-center gap-4 hover:border-brand-red`}>
+        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-gold-wash text-brand-gold">
+          <CreditCard size={22} />
+        </span>
+        <span className="flex-1">
+          <span className="block text-[16px] font-bold text-brand-ink">Tarife & Abos</span>
+          <span className="block text-[13px] text-brand-ink-soft">Wer hat FREE, BASIC oder VEREIN – Vereinslizenzen und Mitglieder</span>
+        </span>
       </Link>
       <section className={`${KARTE} flex items-center gap-3 text-[13.5px] text-brand-ink-soft`}>
         <Hammer size={18} /> Weitere Verwaltung (Vereine, Personen, Turnierkalender) ist in Arbeit.

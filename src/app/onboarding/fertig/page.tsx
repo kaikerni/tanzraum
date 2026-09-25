@@ -27,7 +27,7 @@ export default async function OnboardingFertigPage() {
       <h1 className="mb-2 font-display text-2xl font-bold text-brand-ink">Alles bereit!</h1>
       <div className="mb-5 flex flex-col gap-1 text-[13.5px] text-brand-ink-soft">
         <span>
-          Gewählter Tarif: <strong className="text-brand-ink">{TARIF_LABEL[status?.tarif ?? "free"]}</strong>
+          Gewünschter Tarif: <strong className="text-brand-ink">{TARIF_LABEL[status?.tarif ?? "free"]}</strong>
         </span>
         {vereinName && (
           <span>

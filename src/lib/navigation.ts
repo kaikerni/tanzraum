@@ -20,6 +20,7 @@ import {
   BarChart3,
   Settings2,
   Settings,
+  CreditCard,
   type LucideIcon,
 } from "lucide-react";
 
@@ -87,6 +88,7 @@ export const NAV: NavEintrag[] = [
   { href: "/dashboard/statistiken", label: "Statistiken", icon: BarChart3, tarif: "verein", recht: "rolle_admin" },
   { href: "/dashboard/vereinsverwaltung", label: "Vereinsverwaltung", icon: Settings2, tarif: "verein", recht: "rolle_admin" },
   { href: "/dashboard/admin", label: "TanzRaum-Administration", icon: ShieldCheck, tarif: "free", recht: "plattform_admin" },
+  { href: "/dashboard/tarif", label: "Mein Tarif", kurz: "Tarif", icon: CreditCard, tarif: "free" },
   { href: "/dashboard/einstellungen", label: "Einstellungen", icon: Settings, tarif: "free" },
 ];
 
@@ -117,7 +119,7 @@ export function sichtbareNav(zugriff: Zugriff): NavEintrag[] {
 }
 
 // Nur fuer diese Seiten werden "Alle anzeigen"-Links gesetzt; waechst mit jedem fertigen Modul.
-export const FERTIGE_SEITEN = new Set<string>(["/dashboard", "/dashboard/verein", "/dashboard/mitglieder", "/dashboard/training", "/dashboard/anwesenheit", "/dashboard/kalender", "/dashboard/nachrichten", "/dashboard/einstellungen", "/dashboard/turniere", "/dashboard/saisonplanung", "/dashboard/trainer-netzwerk", "/dashboard/netzwerk", "/dashboard/admin"]);
+export const FERTIGE_SEITEN = new Set<string>(["/dashboard", "/dashboard/verein", "/dashboard/mitglieder", "/dashboard/training", "/dashboard/anwesenheit", "/dashboard/kalender", "/dashboard/nachrichten", "/dashboard/einstellungen", "/dashboard/turniere", "/dashboard/saisonplanung", "/dashboard/trainer-netzwerk", "/dashboard/netzwerk", "/dashboard/admin", "/dashboard/tarif"]);
 
 export function istFertig(href: string): boolean {
   return FERTIGE_SEITEN.has(href);

@@ -2,45 +2,18 @@
 
 import { useState, useTransition } from "react";
 import { tarifWaehlen } from "../actions";
+import { euro, type Preise } from "@/lib/tarife";
 
 type Tarif = "free" | "basic" | "verein";
 type Periode = "monat" | "jahr";
 
-const TARIFE: {
-  id: Tarif;
-  icon: string;
-  name: string;
-  beschreibung: string;
-  preisMonat: string;
-  preisJahr: string;
-}[] = [
-  {
-    id: "free",
-    icon: "🆓",
-    name: "Free",
-    beschreibung: "Kostenlos, dauerhaft",
-    preisMonat: "0 €",
-    preisJahr: "0 €",
-  },
-  {
-    id: "basic",
-    icon: "⭐",
-    name: "Basic",
-    beschreibung: "Für dich persönlich",
-    preisMonat: "2,99 €/Monat",
-    preisJahr: "29,90 €/Jahr",
-  },
-  {
-    id: "verein",
-    icon: "🏆",
-    name: "Verein",
-    beschreibung: "Für den ganzen Verein",
-    preisMonat: "29,90 €/Monat",
-    preisJahr: "299 €/Jahr",
-  },
+const TARIFE: { id: Tarif; icon: string; name: string; beschreibung: string }[] = [
+  { id: "free", icon: "🆓", name: "Free", beschreibung: "Kostenlos, dauerhaft" },
+  { id: "basic", icon: "⭐", name: "Basic", beschreibung: "Für dich persönlich" },
+  { id: "verein", icon: "🏆", name: "Verein", beschreibung: "Lizenz für deinen ganzen Verein" },
 ];
 
-export function TarifForm() {
+export function TarifForm({ preise }: { preise: Preise | null }) {
   const [gewaehlt, setGewaehlt] = useState<Tarif | null>(null);
   const [periode, setPeriode] = useState<Periode>("monat");
   const [pending, startTransition] = useTransition();
@@ -68,7 +41,7 @@ export function TarifForm() {
             onClick={() => setPeriode("jahr")}
             className={`rounded-full px-3 py-1 font-medium ${periode === "jahr" ? "bg-brand-red text-white" : "text-brand-ink-soft"}`}
           >
-            Jährlich
+            Jährlich · 🎁 2 Monate gratis
           </button>
         </div>
       </div>
@@ -93,15 +66,19 @@ export function TarifForm() {
               </div>
             </div>
             <div className="text-[13px] font-semibold text-brand-ink">
-              {t.id === "free" ? "kostenlos" : periode === "monat" ? t.preisMonat : t.preisJahr}
+              {t.id === "free"
+                ? "kostenlos"
+                : preise
+                  ? `${euro(preise[t.id][periode])}/${periode === "monat" ? "Monat" : "Jahr"}`
+                  : ""}
             </div>
           </button>
         ))}
       </div>
 
       <p className="text-[12px] text-brand-ink-soft">
-        Bei Basic/Verein merken wir uns nur deinen Wunsch — die eigentliche Bezahlung richtest du
-        später bequem im Dashboard ein.
+        Bei Basic/Verein merken wir uns nur deinen Wunsch. Am Ende geht es direkt zur Bezahlung
+        (Karte/Lastschrift oder PayPal) – freigeschaltet wird nach bestätigter Zahlung.
       </p>
 
       <button

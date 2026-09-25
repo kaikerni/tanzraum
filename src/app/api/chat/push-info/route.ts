@@ -27,6 +27,24 @@ export async function GET() {
     );
   }
 
+  // Plattformadmin: neuer Kauf (BASIC-Abo oder Vereinslizenz) -- nur eigene, frische Benachrichtigung
+  const { data: kauf } = await supabase
+    .from("benachrichtigungen")
+    .select("id, text")
+    .eq("user_id", user.id)
+    .eq("typ", "tarif_kauf")
+    .eq("gelesen", false)
+    .gte("erstellt_am", new Date(Date.now() - 3 * 60 * 1000).toISOString())
+    .order("erstellt_am", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (kauf) {
+    return NextResponse.json(
+      { titel: "💳 Neuer Kauf bei TanzRaum", text: kauf.text, url: "/dashboard/admin/tarife", tag: `kauf-${kauf.id}` },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
   const chats = await getChatListe(supabase);
   const chat = chats.find((c) => c.ungelesen > 0);
   if (!chat) return NextResponse.json({ titel: "TanzRaum-Messenger", text: "Du hast eine neue Nachricht.", url: "/dashboard/nachrichten" });

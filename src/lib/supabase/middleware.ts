@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
-const OEFFENTLICHE_PFADE = ["/login", "/signup", "/gesperrt", "/auth", "/passwort-vergessen", "/passwort-neu"];
+const OEFFENTLICHE_PFADE = ["/login", "/signup", "/gesperrt", "/auth", "/passwort-vergessen", "/passwort-neu", "/impressum", "/datenschutz", "/nutzungsbedingungen"];
 
 function istOeffentlich(pathname: string) {
   return OEFFENTLICHE_PFADE.some(

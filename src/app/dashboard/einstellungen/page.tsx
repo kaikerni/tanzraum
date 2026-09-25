@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RechtsLinks } from "@/components/recht/RechtsLinks";
 import { redirect } from "next/navigation";
 import { Mail, KeyRound, EyeOff, Users, Map as MapIcon } from "lucide-react";
 import { MapEinstellungen } from "@/components/einstellungen/MapEinstellungen";
@@ -102,6 +103,7 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
           Passwort vergessen? <Link href="/passwort-vergessen" className="font-semibold text-brand-red">Link zum Zurücksetzen anfordern</Link>
         </p>
       </section>
+      <RechtsLinks className="justify-center" />
     </div>
   );
 }

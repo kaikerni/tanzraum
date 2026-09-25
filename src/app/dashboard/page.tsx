@@ -19,6 +19,7 @@ import { KARTE } from "@/components/dashboard/Karten";
 import { SpotlightLeiste } from "@/components/spotlights/SpotlightLeiste";
 import { getSpotlightIch, getSpotlightLeiste } from "@/lib/spotlights/getSpotlights";
 import { SPOTLIGHTS_AKTIV } from "@/lib/spotlights/typen";
+import { TarifZaehler, type TarifZaehlerDaten } from "@/components/admin/TarifZaehler";
 
 export default async function DashboardPage({
   searchParams,
@@ -57,8 +58,29 @@ export default async function DashboardPage({
     ? await Promise.all([getSpotlightIch(supabase, user), getSpotlightLeiste(supabase)])
     : [null, []];
 
+  // TanzRaum-Administration: Zaehler Free/Basic/Verein (Klick -> Listen)
+  let tarifZaehler: TarifZaehlerDaten | null = null;
+  if (daten.istPlattformAdmin) {
+    const { data } = await supabase.rpc("admin_tarif_zaehler");
+    const z = ((data ?? []) as TarifZaehlerDaten[])[0];
+    if (z) {
+      tarifZaehler = {
+        free: Number(z.free),
+        basic: Number(z.basic),
+        verein: Number(z.verein),
+        vereine_mit_lizenz: Number(z.vereine_mit_lizenz),
+        basic_pausiert: Number(z.basic_pausiert),
+      };
+    }
+  }
+
   return (
     <>
+      {tarifZaehler && (
+        <div className="mx-auto mb-4 max-w-[1560px]">
+          <TarifZaehler z={tarifZaehler} />
+        </div>
+      )}
       {spotlightIch && (spotlightIch.darfErstellen || spotlights.length > 0) && (
         <section className={`${KARTE} mx-auto mb-4 max-w-[1560px] py-3`} aria-label="Spotlights">
           <SpotlightLeiste personen={spotlights} ich={spotlightIch} />
