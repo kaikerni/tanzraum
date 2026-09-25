@@ -92,14 +92,15 @@ export function AppHeader({
           <Bell size={20} />
           <Zaehler anzahl={ungeleseneBenachrichtigungen} />
         </button>
-        <button
-          type="button"
+        <Link
+          href="/dashboard/nachrichten"
           className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-brand-line text-brand-ink transition-colors hover:bg-brand-bg"
-          aria-label={`TanzRaum-Messenger${ungeleseneNachrichten > 0 ? ` (${ungeleseneNachrichten} ungelesen)` : ""}`}
+          aria-label={`Nachrichten${ungeleseneNachrichten > 0 ? ` (${ungeleseneNachrichten} ungelesen)` : ""}`}
+          title="Nachrichten"
         >
           <MessageSquare size={18} />
           <Zaehler anzahl={ungeleseneNachrichten} />
-        </button>
+        </Link>
 
         <div className="relative" ref={menuRef}>
           <button

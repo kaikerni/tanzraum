@@ -29,11 +29,11 @@ export type NetzwerkProfil = {
   }[];
 };
 
-export const NETZWERK_TITEL: Record<NetzwerkModus, string> = { trainer: "Trainer-Netzwerk", tanzraum: "TanzRaum-Netzwerk" };
+export const NETZWERK_TITEL: Record<NetzwerkModus, string> = { trainer: "Trainer-Netzwerk" };
 
 export async function getNetzwerkModus(supabase: SupabaseClient): Promise<NetzwerkModus | null> {
   const { data } = await supabase.rpc("netzwerk_modus");
-  return data === "trainer" || data === "tanzraum" ? data : null;
+  return data === "trainer" ? data : null;
 }
 
 // deno-lint-ignore no-explicit-any

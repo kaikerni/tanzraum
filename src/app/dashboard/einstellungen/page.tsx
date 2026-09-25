@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Mail, KeyRound, EyeOff, Users } from "lucide-react";
+import { Mail, KeyRound, EyeOff, Users, Map as MapIcon } from "lucide-react";
+import { MapEinstellungen } from "@/components/einstellungen/MapEinstellungen";
 import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
@@ -27,6 +28,16 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
     supabase.from("profiles").select("konto_privat").eq("id", user.id).maybeSingle(),
     supabase.rpc("mein_geburtsdatum"),
   ]);
+  const { data: mapDaten } = await supabase.rpc("meine_map_einstellungen");
+  // deno-lint-ignore no-explicit-any
+  const m = ((mapDaten ?? []) as any[])[0];
+  const mapStand = {
+    mapSichtbar: !!m?.map_sichtbar,
+    ort: m?.ort ?? null,
+    unter15: m?.unter_15 ?? true,
+    elternErlauben: !!m?.eltern_erlauben,
+    wirdAngezeigt: !!m?.wird_angezeigt,
+  };
   const minderjaehrig = !geburtsdatum || alterAm(String(geburtsdatum), heuteBerlin()) < 18;
   const [kinder, eltern, schutz] = await Promise.all([
     minderjaehrig ? Promise.resolve([]) : getMeineKinder(supabase),
@@ -56,6 +67,11 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
       <section className={KARTE}>
         <KarteKopf icon={EyeOff} titel="Privatsphäre" />
         <PrivatSchalter privat={!!profil?.konto_privat} />
+      </section>
+
+      <section className={KARTE} id="map">
+        <KarteKopf icon={MapIcon} titel="TanzRaum Map" untertitel="Zeig anderen, wo du tanzt – freiwillig und nur mit Ort." />
+        <MapEinstellungen stand={mapStand} />
       </section>
 
       <section className={KARTE}>

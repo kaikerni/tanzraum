@@ -1,5 +1,7 @@
 "use server";
 
+import { geocode } from "@/lib/geo/geocode";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -57,8 +59,24 @@ export async function vereinsdatenSpeichern(_prev: AktionsErgebnis, formData: Fo
   if (error) return { error: error.message };
   if (!data || data.length === 0) return { error: "Nur der Vereinsadmin darf die Vereinsdaten ändern." };
 
+  // Standort fuer die TanzRaum Map (Vereinsadresse -> Koordinaten)
+  const adresse = [
+    [text(formData, "strasse"), text(formData, "hausnummer")].filter(Boolean).join(" "),
+    [text(formData, "plz"), text(formData, "ort")].filter(Boolean).join(" "),
+  ]
+    .filter(Boolean)
+    .join(", ");
+  let mapHinweis = "";
+  if (text(formData, "ort") || text(formData, "plz")) {
+    const position = (await geocode(adresse)) ?? (await geocode([text(formData, "plz"), text(formData, "ort")].filter(Boolean).join(" ")));
+    if (position) await supabase.rpc("verein_standort_setzen", { p_verein_id: vereinId, p_lat: position.lat, p_lng: position.lng });
+    else mapHinweis = " Der Standort für die TanzRaum Map konnte gerade nicht ermittelt werden – bitte später noch einmal speichern.";
+  } else {
+    mapHinweis = " Tipp: Mit PLZ und Ort erscheint euer Verein auf der TanzRaum Map.";
+  }
+
   revalidatePath("/dashboard/verein");
-  return { error: null, ok: "Vereinsdaten gespeichert." };
+  return { error: null, ok: `Vereinsdaten gespeichert.${mapHinweis}` };
 }
 
 export async function logoSpeichern(vereinId: string, logoUrl: string): Promise<AktionsErgebnis> {

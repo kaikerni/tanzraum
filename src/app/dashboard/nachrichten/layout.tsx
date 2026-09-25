@@ -5,7 +5,7 @@ import { getChatListe, getKontaktanfragen } from "@/lib/chat/getChat";
 import { ChatRahmen } from "@/components/chat/ChatRahmen";
 import { getNetzwerkModus, NETZWERK_TITEL } from "@/lib/netzwerk/getNetzwerk";
 
-export const metadata: Metadata = { title: "TanzRaum-Messenger" };
+export const metadata: Metadata = { title: "Nachrichten – TanzRaum" };
 
 export default async function NachrichtenLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();

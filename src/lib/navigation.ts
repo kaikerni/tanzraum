@@ -11,7 +11,7 @@ import {
   Users,
   FileSignature,
   Handshake,
-  MessageSquare,
+  Globe,
   Folder,
   Car,
   Music,
@@ -39,7 +39,8 @@ export type Bereich =
 // Rollenmarker aus meine_bereiche() -- nur von der offiziellen Vereinsrolle abgeleitet.
 export type RollenMarker = "rolle_admin" | "rolle_trainer" | "rolle_betreuer" | "rolle_mitglied" | "rolle_eltern";
 
-export type NetzwerkModus = "trainer" | "tanzraum";
+// Trainer-Netzwerk: nur vom Verein als Trainer zugeordnete Mitglieder mit Vereinslizenz (DB: netzwerk_modus())
+export type NetzwerkModus = "trainer";
 
 export type Zugriff = {
   tarif: Tarif;
@@ -75,9 +76,9 @@ export const NAV: NavEintrag[] = [
   { href: "/dashboard/saisonplanung", label: "Saisonplanung", icon: CalendarRange, tarif: "verein", recht: "saison" },
   { href: "/dashboard/mitglieder", label: "Mitglieder", icon: Users, tarif: "verein", recht: "mitglieder" },
   { href: "/dashboard/mitgliedsantraege", label: "Mitgliedsanträge", icon: FileSignature, tarif: "verein", recht: "beitritt" },
+  // Sozialer Bereich: Map ist die Startansicht. Nachrichten haben keinen eigenen Menuepunkt (Kopfzeile, Profile, Kontakte).
+  { href: "/dashboard/netzwerk", label: "TanzRaum-Netzwerk", kurz: "Netzwerk", icon: Globe, tarif: "basic" },
   { href: "/dashboard/trainer-netzwerk", label: "Trainer-Netzwerk", icon: Handshake, tarif: "verein", netzwerk: "trainer" },
-  { href: "/dashboard/trainer-netzwerk", label: "TanzRaum-Netzwerk", icon: Handshake, tarif: "basic", netzwerk: "tanzraum" },
-  { href: "/dashboard/nachrichten", label: "TanzRaum-Messenger", kurz: "Chat", icon: MessageSquare, tarif: "free" },
   { href: "/dashboard/dateien", label: "Dateien", icon: Folder, tarif: "basic" },
   { href: "/dashboard/fahrgemeinschaften", label: "Fahrgemeinschaften", icon: Car, tarif: "basic", nichtNurFuer: ["rolle_betreuer"] },
   { href: "/dashboard/musik", label: "Musik", icon: Music, tarif: "basic", nichtNurFuer: ["rolle_betreuer", "rolle_eltern"] },
@@ -116,7 +117,7 @@ export function sichtbareNav(zugriff: Zugriff): NavEintrag[] {
 }
 
 // Nur fuer diese Seiten werden "Alle anzeigen"-Links gesetzt; waechst mit jedem fertigen Modul.
-export const FERTIGE_SEITEN = new Set<string>(["/dashboard", "/dashboard/verein", "/dashboard/mitglieder", "/dashboard/training", "/dashboard/anwesenheit", "/dashboard/kalender", "/dashboard/nachrichten", "/dashboard/einstellungen", "/dashboard/turniere", "/dashboard/saisonplanung", "/dashboard/trainer-netzwerk"]);
+export const FERTIGE_SEITEN = new Set<string>(["/dashboard", "/dashboard/verein", "/dashboard/mitglieder", "/dashboard/training", "/dashboard/anwesenheit", "/dashboard/kalender", "/dashboard/nachrichten", "/dashboard/einstellungen", "/dashboard/turniere", "/dashboard/saisonplanung", "/dashboard/trainer-netzwerk", "/dashboard/netzwerk"]);
 
 export function istFertig(href: string): boolean {
   return FERTIGE_SEITEN.has(href);

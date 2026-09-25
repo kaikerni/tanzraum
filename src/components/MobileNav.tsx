@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { MoreHorizontal, X, HelpCircle } from "lucide-react";
 import { sichtbareNav, type Zugriff } from "@/lib/navigation";
 
-const BEVORZUGT = ["/dashboard", "/dashboard/training", "/dashboard/kalender", "/dashboard/nachrichten"];
+const BEVORZUGT = ["/dashboard", "/dashboard/netzwerk", "/dashboard/training", "/dashboard/kalender"];
 
 export function MobileNav({
   zugriff,
