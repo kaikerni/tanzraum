@@ -43,8 +43,8 @@ Nicht umgesetzt (bewusst): Connect Match, Radar, Newsfeed, dauerhafte Beiträge,
   mit persönlichem Namen und Profilbild – nie Verein, Gruppe oder Rolle; kein „Posten als Verein/Gruppe“.
 - Foto, Video (auch ganze Tänze – im Browser verkleinert, max. 50 MB, Länge nicht künstlich begrenzt) oder Text mit
   Farbhintergrund, jeweils optional mit TanzRaum-Smiley; 24 Stunden sichtbar.
-- Sichtbarkeit: „Alle im TanzRaum-Netzwerk“ oder „Nur mein Verein & meine Kontakte“ (unter 15 Standard; Eltern können es
-  festlegen; private Konten immer nur Verein & Kontakte).
+- Sichtbarkeit: „Alle im TanzRaum-Netzwerk“ (Standard, auch unter 15) oder „Nur mein Verein & meine Kontakte“ (verknüpfte
+  Eltern können das festlegen; private Konten immer nur Verein & Kontakte).
 - Vollbild mit Fortschritt, ← →, Tippen/Pfeiltasten, Pause beim Halten, Profil öffnen, Melden, Reaktionen mit
   TanzRaum-Smileys; eigene: Ansichten, Reaktionen, Löschen.
 - Privater Bucket `spotlights` (Zugriff per signiertem Link nur bei Sichtbarkeit, `spotlight_medium_sichtbar`).

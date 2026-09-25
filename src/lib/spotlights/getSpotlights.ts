@@ -30,8 +30,8 @@ export async function getSpotlightIch(supabase: SupabaseClient, user: User): Pro
     name: [profil?.vorname, profil?.nachname].filter(Boolean).join(" ") || "Du",
     avatarUrl: profil?.avatar_url ?? null,
     darfErstellen: tarif === "basic" || tarif === "verein",
-    // unter 15 standardmaessig nur fuer Verein & Kontakte
-    standardSichtbarkeit: s?.unter_15 ? "kontakte" : "netzwerk",
+    // Jugendschutz betrifft nur Nachrichten – Spotlights fuer alle gleich (Eltern koennen "nur Kontakte" festlegen)
+    standardSichtbarkeit: "netzwerk",
     nurKontakte: !!(s?.hat_eltern && s?.spotlights_nur_kontakte),
   };
 }
