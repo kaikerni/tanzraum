@@ -2,17 +2,16 @@
 
 Vereinsübergreifendes Kontaktsystem – „LinkedIn für Karnevalstanz-Trainer“. Route: `/dashboard/trainer-netzwerk`.
 
-## Wer nutzt welches Netzwerk? (`netzwerk_modus()`)
+## Wer nutzt das Trainer-Netzwerk? (`netzwerk_modus()`)
 
-| Modus | Wer | Menüpunkt | Wer wird gefunden |
-|---|---|---|---|
-| `trainer` | Trainer/innen und Vereins-Admins in Vereinen mit **Vereinslizenz** (Bereich „netzwerk“), Plattform-Admin | **Trainer-Netzwerk** | nur Trainer/innen und Vereins-Admins aus Vereinen mit Vereinslizenz |
-| `tanzraum` | **Basic-Solo**: persönlicher Basic-Tarif, kein Verein | **TanzRaum-Netzwerk** | alle TanzRaum-Mitglieder |
+**Nur** Mitglieder, die der Verein als **Trainer/Trainerin** zugeordnet hat, in Vereinen mit **Vereinslizenz**
+(`ist_netzwerk_trainer`), sowie die Plattform-Administration. Vereins-Admins ohne Trainerrolle, Tänzer/innen, Eltern
+und Betreuer/innen sehen den Menüpunkt nicht. Gefunden werden ebenfalls nur solche Trainer.
 
-Tänzer/innen, Eltern und Betreuer/innen sehen den Menüpunkt nicht.
+Das frühere „TanzRaum-Netzwerk für Basic-Solo“ ist im neuen **TanzRaum-Netzwerk** (Map, Liste, Spotlights, ab Basic)
+aufgegangen – siehe `docs/soziale-struktur.md`.
 
-In beiden Fällen nie auffindbar: eigene Person, gesperrte Konten, Konten auf **„privat“** (Einstellungen → Privatsphäre),
-blockierte Personen (in beide Richtungen). Minderjährige nur über den exakten @Nutzernamen (wie im Messenger).
+Nie auffindbar: eigene Person, gesperrte und private Konten, blockierte Personen, unter 15-Jährige.
 
 ## Ablauf
 

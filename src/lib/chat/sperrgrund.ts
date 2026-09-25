@@ -2,8 +2,8 @@
 export const SPERRGRUND_TEXT: Record<string, string> = {
   blockiert: "Du kannst dieser Person nicht schreiben.",
   eltern_sperre_ich: "Deine Eltern haben Nachrichten für dein Konto deaktiviert. Du kannst nur noch mit ihnen schreiben.",
-  eltern_sperre_partner: "Für dieses Konto sind Nachrichten derzeit deaktiviert.",
-  jugendschutz: "Mit Mitgliedern unter 15 Jahren sind Nachrichten nur im gemeinsamen Verein möglich.",
+  // betrifft nur die eigene Person – Gruende der anderen Person (Alter, Elternsperre) werden nicht verraten
+  jugendschutz: "Unter 15 Jahren kannst du mit Mitgliedern deines Vereins und deinen Eltern schreiben.",
   kontakt_noetig: "Ihr seid nicht im selben Verein. Vernetzt euch zuerst – nach der Annahme könnt ihr schreiben.",
   tarif_ich: "Nachrichten gibt es ab dem Basic-Tarif. Mit Free kannst du Kontaktanfragen senden und annehmen.",
   tarif_partner: "Diese Person kann mit ihrem Tarif keine Nachrichten empfangen – eure Vernetzung bleibt bestehen.",

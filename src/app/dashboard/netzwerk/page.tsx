@@ -29,7 +29,7 @@ export default async function NetzwerkSeite({ searchParams }: { searchParams: Pr
             Map, Netzwerk und Spotlights gibt es ab dem <strong>Basic-Tarif</strong> – oder automatisch über einen Verein mit Vereinslizenz.
           </p>
           <p className="mt-2 text-[13.5px] text-brand-ink-soft">
-            Mit Free kannst du im TanzRaum-Messenger Kontaktanfragen senden und annehmen.
+            Mit Free kannst du Kontaktanfragen senden und annehmen (Nachrichten-Symbol oben).
           </p>
           <Link href="/dashboard/nachrichten" className="mt-3 inline-flex min-h-10 items-center rounded-xl bg-brand-red px-4 text-[13.5px] font-semibold text-white">
             Zu den Kontakten

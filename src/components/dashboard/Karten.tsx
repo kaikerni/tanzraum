@@ -230,7 +230,7 @@ function nachrichtZeit(iso: string): string {
 export function NachrichtenKarte({ nachrichten }: { nachrichten: AktuelleNachricht[] }) {
   return (
     <section className={`${KARTE} h-full`}>
-      <KarteKopf icon={Mail} titel="TanzRaum-Messenger" alleHref="/dashboard/nachrichten" />
+      <KarteKopf icon={Mail} titel="Nachrichten" alleHref="/dashboard/nachrichten" />
       {nachrichten.length === 0 ? (
         <Leer text="Keine neuen Nachrichten." />
       ) : (

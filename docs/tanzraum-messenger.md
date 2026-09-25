@@ -1,22 +1,24 @@
 # TanzRaum-Messenger
 
-Der **TanzRaum-Messenger** ist die komplette Kommunikationsplattform innerhalb von TanzRaum.
-In der Oberfläche darf er verkürzt „Messenger“ oder „Chat“ heißen, wenn eindeutig ist, was gemeint ist
-(z. B. „Chat“ in der unteren Navigationsleiste auf dem Handy).
+Der **TanzRaum-Messenger** („Nachrichten“) ist die Kommunikation innerhalb von TanzRaum. Er hat **keinen eigenen
+Menüpunkt**: Chats öffnen sich über das Nachrichten-Symbol in der Kopfzeile, aus Profilen („Nachricht senden“),
+Kontakten sowie Vereins- und Gruppenbeziehungen. Siehe auch `docs/soziale-struktur.md`.
 
-Route: `/dashboard/nachrichten` · Tarif: für alle (FREE, BASIC, VEREIN).
+Route: `/dashboard/nachrichten` · Nachrichten ab BASIC bzw. mit Vereinslizenz; FREE kann nur Kontaktanfragen senden
+und annehmen.
 
 ## Funktionen
 
 | | Funktion | Umsetzung |
 |---|---|---|
-| 💬 | Textnachrichten | inkl. Antworten, Kopieren, Löschen, Links, Lesebestätigung (Privatchat) |
-| 😊 | Emojis & Reaktionen | Emoji-Auswahl im Eingabefeld, 8 Schnellreaktionen pro Nachricht |
-| 🎭 | Sticker | 133 TanzRaum-Sticker in zwei Sätzen („Tänzerin“ 83, „Gardist“ 50) im Emoji-Menü, Antippen sendet sofort. Bilder in `public/sticker/`, Liste in `src/lib/chat/sticker.ts` und Tabelle `sticker` (Spalte `nachrichten.sticker`, nur gültige IDs, immer ohne Text/Anhang) |
-| 📸 | Bilder | werden im Browser verkleinert, privater Bucket `chat-bilder` (5 MB) |
-| 🎥 | Videos | privater Bucket `chat-dateien` (25 MB) |
+| 💬 | Textnachrichten | Enter = senden, Umschalt+Enter = neue Zeile (Handy: Senden-Knopf); Antworten, Kopieren, Löschen, Links, Lesebestätigung (Privatchat) |
+| ✏️ | Bearbeiten, Weiterleiten, Suchen | eigene Textnachrichten 24 h bearbeitbar („bearbeitet“); Text/Smiley/Standort weiterleiten („Weitergeleitet“); Suche im Verlauf mit Sprung; „Als ungelesen markieren“ |
+| 🩰 | TanzRaum-Smileys | **ausschließlich** die eigenen TanzRaum-Smileys – keine Unicode-Emoji-Auswahl. 133 Sticker („Tanzmariechen“ 83, „Gardist“ 50), Reiter Zuletzt / Tanzmariechen / Gardist / Gefühle / Tanz & Akrobatik / Turnier & Jubel / Team & Freunde / Musik & Party / Alltag & Training. Bilder `public/sticker/`, Liste `src/lib/chat/sticker.ts`, Tabelle `sticker` (mit `kategorie`). Neue Smileys: Bild ablegen, Eintrag in beiden ergänzen |
+| ❤️ | Reaktionen | nur TanzRaum-Smileys (8 Schnellreaktionen + alle über „+“); die DB lässt nur Sticker-IDs zu |
+| 📸 | Bilder | bis zu 10 Fotos/Videos auf einmal mit Vorschau (je eine Nachricht); werden im Browser verkleinert, privater Bucket `chat-bilder` (5 MB) |
+| 🎥 | Videos | werden im Browser verkleinert und direkt im Chat abgespielt, privater Bucket `chat-dateien` (25 MB) |
 | 📎 | Dateien | PDF, Office, OpenDocument, Text, ZIP – Bucket `chat-dateien` (25 MB) |
-| 🎤 | Sprachnachrichten | Aufnahme im Browser (max. 5 Min.), eigener Player |
+| 🎤 | Sprachnachrichten | Mikrofon gedrückt halten = aufnehmen, loslassen = senden, nach links wischen = abbrechen, nach oben = sperren (antippen = freihändig); Dauer + Pegel während der Aufnahme; Player mit Wellenform, Zeit und Abspielposition (max. 5 Min.) |
 | 📍 | Standortfreigabe | nur nach Bestätigung, Anzeige mit OpenStreetMap-Kachel |
 | 📊 | Umfragen | Einzel- oder Mehrfachauswahl, 2–12 Antworten |
 | 📞📹 | Sprach- & Videoanrufe | WebRTC im Privatchat, Klingeln überall im Dashboard + Push |
@@ -36,28 +38,26 @@ Es gibt **ausschließlich** diese drei Chatarten – keinen Teamchat:
 In Vereins- und Gruppenchats können Vorstand, Trainer und Betreuer den Modus „nur Leitung schreibt“
 (Ankündigungen) ein- und ausschalten und Nachrichten moderieren (löschen).
 
-## Privatchat-Regeln
+## Privatchat-Regeln (Jugendschutz)
 
-Direkt (ohne Kontaktanfrage) möglich, wenn **keine Blockierung** besteht und mindestens eines gilt:
+Direktnachrichten sind möglich, wenn **keine Blockierung** und **keine elterliche Nachrichtensperre** besteht und
+mindestens eines gilt (Prüfung ausschließlich serverseitig in `darf_direkt_schreiben`):
 
-- beide sind aktive Mitglieder desselben Vereins mit Vereinslizenz (z. B. Tänzer ↔ Trainer, Tänzer ↔ Tänzer),
-- Eltern ↔ eigenes Kind (Eltern-Kind-Zuordnung),
-- eine Kontaktanfrage wurde angenommen,
-- beide sind volljährig.
+- beide sind aktive Mitglieder **desselben Vereins mit Vereinslizenz** (gleiche oder andere Gruppe; Trainer/Betreuer
+  eingeschlossen) – das gilt auch für Kinder unter 15,
+- **Eltern ↔ eigenes Kind** (bestätigte Verknüpfung oder Eltern-Kind-Zuordnung des Vereins),
+- eine **Vernetzung wurde angenommen** – nur wenn **beide mindestens 15** sind und **beide Nachrichten** haben
+  (ab Basic bzw. über eine Vereinslizenz).
 
-Sonst – also bei **Fremdkontakten mit Minderjährigen** (auch Kind ↔ Kind aus verschiedenen Vereinen) – entsteht
-eine **Kontaktanfrage**. Erst nach „Annehmen“ ist der Privatchat möglich.
+Fremde Erwachsene (auch Trainer anderer Vereine) können Kinder unter 15 weder finden noch anfragen noch anschreiben.
 
-- Empfänger sieht: „Neue Kontaktanfrage – Diese Person gehört nicht zu deinem Verein oder deiner Gruppe.“
-  mit **Annehmen / Ablehnen / Blockieren**.
-- Minderjährige sehen vor dem Senden den altersgerechten Hinweis zum Schutz persönlicher Daten.
-- Status: `pending`, `accepted`, `rejected`, `blocked` (Tabelle `connections`).
-- Minderjährige sind in der Suche nur über den genauen @Nutzernamen auffindbar, nicht über den Namen.
+**Altersgrenze:** Maßgeblich ist das tatsächliche Geburtsdatum (Profil, bei der Registrierung Pflicht; zusätzlich die
+Mitgliederdaten des Vereins – das jüngste zählt). Bis zum Tag vor dem **15. Geburtstag** gilt der Jugendschutz, ab dem
+15. Geburtstag automatisch die normalen Regeln (`ist_unter_15`). Ohne Geburtsdatum gilt der Schutz; bestehende Konten
+tragen es einmalig nach (`/geburtsdatum`). Ändern kann es danach nur TanzRaum.
 
-**Minderjährig** ist, wer laut Geburtsdatum in den Mitgliederstammdaten unter 18 ist; ohne Geburtsdatum,
-wer im Verein als Kind mit Eltern verknüpft ist.
-
-Innerhalb des eigenen Vereins gibt es für Minderjährige **keine** zusätzlichen Warnungen und keine Elternfreigabe.
+Die Gründe, warum man nicht schreiben kann, zeigt der Chat verständlich an (`schreib_sperrgrund`); Gründe, die die
+andere Person betreffen (Alter, Elternsperre), werden dabei nicht verraten.
 
 ## Blockieren
 

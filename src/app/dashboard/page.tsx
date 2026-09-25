@@ -15,6 +15,9 @@ import {
 import { getAktuelleNachrichten } from "@/lib/dashboard/getNachrichten";
 import { ZEITRAEUME } from "@/components/dashboard/ZeitraumAuswahl";
 import { DashboardAnsicht } from "@/components/dashboard/DashboardAnsicht";
+import { KARTE } from "@/components/dashboard/Karten";
+import { SpotlightLeiste } from "@/components/spotlights/SpotlightLeiste";
+import { getSpotlightIch, getSpotlightLeiste } from "@/lib/spotlights/getSpotlights";
 
 export default async function DashboardPage({
   searchParams,
@@ -48,8 +51,17 @@ export default async function DashboardPage({
       getAktuelleNachrichten(supabase, user.id, 4),
       getMeineKinder(supabase),
     ]);
+  // Spotlights (ab Basic bzw. mit Vereinslizenz) prominent oben
+  const spotlightIch = await getSpotlightIch(supabase, user);
+  const spotlights = spotlightIch.darfErstellen ? await getSpotlightLeiste(supabase) : [];
 
   return (
+    <>
+      {spotlightIch.darfErstellen && (
+        <section className={`${KARTE} mx-auto mb-4 max-w-[1560px] py-3`} aria-label="Spotlights">
+          <SpotlightLeiste personen={spotlights} ich={spotlightIch} />
+        </section>
+      )}
     <DashboardAnsicht
       daten={daten}
       zugriff={zugriff}
@@ -64,5 +76,6 @@ export default async function DashboardPage({
       kinder={kinder}
       wochen={wochen}
     />
+    </>
   );
 }

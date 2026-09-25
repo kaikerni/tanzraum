@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, SwitchCamera } from "lucide-react";
+import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, SwitchCamera, Volume2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { farbeFuer, initialen } from "./ChatAvatar";
 
@@ -370,6 +370,28 @@ export function AnrufProvider({ userId, children }: { userId: string; children: 
     lokal.current?.getAudioTracks().forEach((t) => (t.enabled = !neu));
     setStumm(neu);
   }
+  // Lautsprecher/Ausgabegeraet wechseln – nur wo der Browser es erlaubt (setSinkId, z. B. Chrome, Edge, Android)
+  const [ausgaben, setAusgaben] = useState<{ id: string; name: string }[]>([]);
+  const [ausgabe, setAusgabe] = useState(0);
+  useEffect(() => {
+    if (!anruf || typeof HTMLMediaElement === "undefined" || !("setSinkId" in HTMLMediaElement.prototype)) return;
+    navigator.mediaDevices
+      ?.enumerateDevices()
+      .then((geraete) => setAusgaben(geraete.filter((g) => g.kind === "audiooutput").map((g) => ({ id: g.deviceId, name: g.label || "Lautsprecher" }))))
+      .catch(() => {});
+  }, [anruf]);
+  async function lautsprecher() {
+    if (ausgaben.length < 2 || !fernAudio.current) return;
+    const naechste = (ausgabe + 1) % ausgaben.length;
+    try {
+      // deno-lint-ignore no-explicit-any
+      await (fernAudio.current as any).setSinkId(ausgaben[naechste].id);
+      setAusgabe(naechste);
+    } catch {
+      // Geraet nicht verfuegbar
+    }
+  }
+
   function kamera() {
     const neu = !kameraAus;
     lokal.current?.getVideoTracks().forEach((t) => (t.enabled = !neu));
@@ -463,6 +485,17 @@ export function AnrufProvider({ userId, children }: { userId: string; children: 
                 <button type="button" onClick={mikrofon} aria-pressed={stumm} aria-label={stumm ? "Mikrofon an" : "Stummschalten"} className={`flex h-14 w-14 items-center justify-center rounded-full ${stumm ? "bg-white text-brand-navy" : "bg-white/15"}`}>
                   {stumm ? <MicOff size={24} /> : <Mic size={24} />}
                 </button>
+                {ausgaben.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={lautsprecher}
+                    aria-label={`Audioausgabe wechseln (aktuell: ${ausgaben[ausgabe]?.name ?? "Lautsprecher"})`}
+                    title={ausgaben[ausgabe]?.name}
+                    className="flex h-14 w-14 items-center justify-center rounded-full bg-white/15"
+                  >
+                    <Volume2 size={24} />
+                  </button>
+                )}
                 {video && (
                   <>
                     <button type="button" onClick={kamera} aria-pressed={kameraAus} aria-label={kameraAus ? "Kamera an" : "Kamera aus"} className={`flex h-14 w-14 items-center justify-center rounded-full ${kameraAus ? "bg-white text-brand-navy" : "bg-white/15"}`}>

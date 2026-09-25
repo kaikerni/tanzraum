@@ -6,7 +6,7 @@ export default function NachrichtenStart() {
     <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-[#f7f5f1] p-8 text-center">
       <Image src="/tanzraum-chat-hintergrund.webp" alt="" width={900} height={650} className="w-full max-w-[420px] select-none mix-blend-multiply" priority />
       <div>
-        <h2 className="text-[20px] font-bold text-brand-ink">TanzRaum-Messenger</h2>
+        <h2 className="text-[20px] font-bold text-brand-ink">Nachrichten</h2>
         <p className="mt-1 max-w-[380px] text-[13.5px] text-brand-ink-soft">
           Vereinschat, Gruppenchats und Privatchats – wähle links einen Chat oder starte einen neuen Privatchat.
         </p>
