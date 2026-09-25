@@ -20,7 +20,6 @@ import {
   Bell,
   BellOff,
   Ban,
-  Smile,
   FileText,
   MapPin,
   Film,
@@ -32,8 +31,8 @@ import { createClient } from "@/lib/supabase/client";
 import { alsNachricht, type ChatKopf, type ChatNachricht, type Umfrage } from "@/lib/chat/getChat";
 import { chatEinstellung, chatStummSetzen, nachrichtLoeschen, nutzerBlockieren, nutzerFreigeben, reagieren, umfrageAbstimmen } from "@/app/dashboard/nachrichten/actions";
 import { AnhangAnsicht, StandortAnsicht, groesseText } from "./NachrichtAnhang";
-import { EmojiAuswahl } from "./EmojiAuswahl";
-import { stickerInfo, stickerUrl } from "@/lib/chat/sticker";
+import { SmileyAuswahl } from "./SmileyAuswahl";
+import { SCHNELL_REAKTIONEN, stickerInfo, stickerUrl } from "@/lib/chat/sticker";
 import { sperrgrundText } from "@/lib/chat/sperrgrund";
 import { Sprachaufnahme } from "./Sprachaufnahme";
 import { useAnruf } from "./AnrufProvider";
@@ -41,7 +40,6 @@ import { ChatAvatar } from "./ChatAvatar";
 
 const NAMENSFARBEN = ["text-brand-red", "text-brand-blue", "text-brand-green", "text-brand-purple", "text-brand-gold", "text-brand-navy-soft"];
 const tagBerlin = (iso: string) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(new Date(iso));
-const REAKTIONEN = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🎉", "🔥"];
 const DOKUMENTE = ".pdf,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.zip";
 const uhrzeit = (iso: string) => new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" });
 
@@ -246,6 +244,7 @@ export function ChatFenster({
   const [anhangDatei, setAnhangDatei] = useState<{ datei: File; art: "datei" | "video" } | null>(null);
   const [plusOffen, setPlusOffen] = useState(false);
   const [emojiOffen, setEmojiOffen] = useState(false);
+  const [reaktionAuswahl, setReaktionAuswahl] = useState(false);
   const [aufnahme, setAufnahme] = useState(false);
   const [tippende, setTippende] = useState<Record<string, { name: string; bis: number }>>({});
   const tippKanal = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -464,6 +463,16 @@ export function ChatFenster({
 
   const tippNamen = Object.values(tippende).map((t) => t.name);
   const ausgewaehlt = nachrichten.find((n) => n.id === auswahl) ?? null;
+  const meineReaktion = ausgewaehlt?.reaktionen.find((r) => r.ich)?.emoji ?? null;
+
+  async function reaktionSetzen(id: string | null) {
+    if (!ausgewaehlt) return;
+    const e = await reagieren(ausgewaehlt.id, id);
+    if (e.error) setFehler(e.error);
+    setAuswahl(null);
+    setReaktionAuswahl(false);
+    laden();
+  }
   const istGruppe = kopf.typ !== "dm";
 
   return (
@@ -637,7 +646,10 @@ export function ChatFenster({
                     role="button"
                     tabIndex={0}
                     aria-pressed={gewaehlt}
-                    onClick={() => setAuswahl(gewaehlt ? null : n.id)}
+                    onClick={() => {
+                      setAuswahl(gewaehlt ? null : n.id);
+                      setReaktionAuswahl(false);
+                    }}
                     onKeyDown={(e) => e.key === "Enter" && setAuswahl(gewaehlt ? null : n.id)}
                     className={`relative max-w-[82%] cursor-pointer rounded-2xl text-[14.5px] leading-snug sm:max-w-[65%] ${
                       nurSticker
@@ -711,7 +723,8 @@ export function ChatFenster({
                     {n.reaktionen.length > 0 && (
                       <span className={`absolute -bottom-3 ${n.eigene ? "right-2" : "left-2"} flex items-center gap-0.5 rounded-full border border-brand-line bg-white px-1.5 py-0.5 text-[12px] shadow-sm`}>
                         {n.reaktionen.slice(0, 3).map((r) => (
-                          <span key={r.emoji}>{r.emoji}</span>
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img key={r.emoji} src={stickerUrl(r.emoji)} alt={stickerInfo(r.emoji)?.name ?? ""} className="h-5 w-5 object-contain" />
                         ))}
                         {n.reaktionen.reduce((a, r) => a + r.anzahl, 0) > 1 && (
                           <span className="ml-0.5 text-[11px] text-brand-ink-soft">{n.reaktionen.reduce((a, r) => a + r.anzahl, 0)}</span>
@@ -729,27 +742,36 @@ export function ChatFenster({
 
       {/* Aktionen fuer die angetippte Nachricht */}
       {ausgewaehlt && !ausgewaehlt.geloescht && (
-        <div className="flex justify-center gap-1 border-t border-brand-line bg-white px-2 pt-1.5" role="group" aria-label="Reagieren">
-          {REAKTIONEN.map((emoji) => {
-            const meine = ausgewaehlt.reaktionen.find((r) => r.ich)?.emoji === emoji;
-            return (
-              <button
-                key={emoji}
-                type="button"
-                aria-pressed={meine}
-                aria-label={`Mit ${emoji} reagieren`}
-                onClick={async () => {
-                  const e = await reagieren(ausgewaehlt.id, meine ? null : emoji);
-                  if (e.error) setFehler(e.error);
-                  setAuswahl(null);
-                  laden();
-                }}
-                className={`flex h-10 w-10 items-center justify-center rounded-full text-[22px] transition-transform hover:scale-110 ${meine ? "bg-brand-red-wash" : ""}`}
-              >
-                {emoji}
-              </button>
-            );
-          })}
+        <div className="border-t border-brand-line bg-white">
+          <div className="flex items-center justify-center gap-0.5 overflow-x-auto px-2 pt-1.5" role="group" aria-label="Mit TanzRaum-Smiley reagieren">
+            {[...SCHNELL_REAKTIONEN, ...(meineReaktion && !SCHNELL_REAKTIONEN.includes(meineReaktion) ? [meineReaktion] : [])].map((id) => {
+              const meine = meineReaktion === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={meine}
+                  aria-label={`Mit „${stickerInfo(id)?.name}“ reagieren`}
+                  title={stickerInfo(id)?.name}
+                  onClick={() => reaktionSetzen(meine ? null : id)}
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-110 ${meine ? "bg-brand-red-wash ring-1 ring-brand-red/40" : ""}`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={stickerUrl(id)} alt="" className="h-9 w-9 object-contain" />
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              aria-label="Weitere TanzRaum-Smileys"
+              aria-expanded={reaktionAuswahl}
+              onClick={() => setReaktionAuswahl(!reaktionAuswahl)}
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-brand-line text-brand-ink-soft hover:bg-brand-bg ${reaktionAuswahl ? "bg-brand-bg" : ""}`}
+            >
+              <Plus size={18} />
+            </button>
+          </div>
+          {reaktionAuswahl && <SmileyAuswahl hoehe="h-[200px]" onWahl={(id) => reaktionSetzen(id)} />}
         </div>
       )}
       {ausgewaehlt && !ausgewaehlt.geloescht && (
@@ -957,11 +979,12 @@ export function ChatFenster({
                     setEmojiOffen(!emojiOffen);
                     setPlusOffen(false);
                   }}
-                  aria-label="Emojis"
+                  aria-label="TanzRaum-Smileys"
                   aria-expanded={emojiOffen}
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-brand-bg ${emojiOffen ? "text-brand-red" : "text-brand-ink-soft"}`}
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-brand-bg ${emojiOffen ? "bg-brand-red-wash" : ""}`}
                 >
-                  <Smile size={21} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={stickerUrl("t01")} alt="" className={`h-8 w-8 object-contain ${emojiOffen ? "" : "opacity-80 grayscale-[35%]"}`} />
                 </button>
               </>
             )}
@@ -1005,19 +1028,7 @@ export function ChatFenster({
           </form>
           {emojiOffen && !aufnahme && (
             <div className="-mx-2 mt-2 sm:-mx-3">
-              <EmojiAuswahl
-                onSticker={(id) => senden({ sticker: id })}
-                stickerSperre={sendet}
-                onWahl={(emoji) => {
-                  const el = eingabe.current;
-                  const pos = el?.selectionStart ?? text.length;
-                  setText(text.slice(0, pos) + emoji + text.slice(el?.selectionEnd ?? pos));
-                  requestAnimationFrame(() => {
-                    el?.focus();
-                    el?.setSelectionRange(pos + emoji.length, pos + emoji.length);
-                  });
-                }}
-              />
+              <SmileyAuswahl gesperrt={sendet} onWahl={(id) => senden({ sticker: id })} />
             </div>
           )}
         </div>
