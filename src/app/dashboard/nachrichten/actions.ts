@@ -154,3 +154,51 @@ export async function reagieren(nachrichtId: string, emoji: string | null): Prom
   if (error) return { error: freundlicherFehler(error) };
   return { error: null };
 }
+
+export async function nachrichtBearbeiten(nachrichtId: string, inhalt: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(nachrichtId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { error } = await supabase.rpc("nachricht_bearbeiten", { p_nachricht_id: nachrichtId, p_inhalt: inhalt.slice(0, 4000) });
+  if (error) return { error: freundlicherFehler(error) };
+  return { error: null };
+}
+
+export type WeiterleitZiel = { id: string; name: string; untertitel: string | null; typ: string };
+
+// Chats, in die man gerade schreiben darf (Pruefung beim Weiterleiten erneut in der Datenbank)
+export async function weiterleitZiele(): Promise<WeiterleitZiel[]> {
+  const supabase = await sitzung();
+  const { data } = await supabase.rpc("chat_liste");
+  // deno-lint-ignore no-explicit-any
+  return ((data ?? []) as any[])
+    .filter((c) => c.darf_schreiben)
+    .map((c) => ({ id: c.id, name: c.name, untertitel: c.untertitel, typ: c.typ }));
+}
+
+export async function nachrichtWeiterleiten(nachrichtId: string, zielId: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(nachrichtId) || !UUID.test(zielId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { error } = await supabase.rpc("nachricht_weiterleiten", { p_nachricht_id: nachrichtId, p_ziel_gespraech_id: zielId });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath("/dashboard/nachrichten", "layout");
+  return { error: null, ok: "Weitergeleitet." };
+}
+
+export async function chatUngelesenMarkieren(gespraechId: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(gespraechId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { error } = await supabase.rpc("chat_ungelesen_markieren", { p_gespraech_id: gespraechId });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath("/dashboard/nachrichten", "layout");
+  redirect("/dashboard/nachrichten");
+}
+
+export type SuchErgebnis = { id: string; inhalt: string; senderName: string; eigene: boolean; gesendetAm: string };
+
+export async function chatSuchen(gespraechId: string, suche: string): Promise<SuchErgebnis[]> {
+  if (!UUID.test(gespraechId) || suche.trim().length < 2) return [];
+  const supabase = await sitzung();
+  const { data } = await supabase.rpc("chat_suchen", { p_gespraech_id: gespraechId, p_suche: suche.slice(0, 100) });
+  // deno-lint-ignore no-explicit-any
+  return ((data ?? []) as any[]).map((r) => ({ id: r.id, inhalt: r.inhalt, senderName: r.sender_name, eigene: r.eigene, gesendetAm: r.gesendet_am }));
+}

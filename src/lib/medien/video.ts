@@ -3,16 +3,17 @@
 // Aufloesung und Bitrate. Ohne WebCodecs wird das Original genutzt, sofern es klein genug ist.
 
 export const MAX_BYTES = 50 * 1024 * 1024;
-const ZIEL_BYTES = 46 * 1024 * 1024;
 
 export class VideoZuGross extends Error {}
 
-export async function videoVorbereiten(datei: File, fortschritt: (anteil: number) => void): Promise<Blob> {
+export async function videoVorbereiten(datei: File, fortschritt: (anteil: number) => void, maxBytes = MAX_BYTES): Promise<Blob> {
+  const ZIEL_BYTES = Math.floor(maxBytes * 0.92);
+  const grenzeMb = Math.round(maxBytes / 1024 / 1024);
   const mb = await import("mediabunny");
   const kannKodieren = typeof VideoEncoder !== "undefined" && (await mb.canEncodeVideo("avc").catch(() => false));
   if (!kannKodieren) {
-    if (datei.size <= MAX_BYTES) return datei;
-    throw new VideoZuGross("Dein Browser kann das Video nicht verkleinern und es ist größer als 50 MB. Bitte kürze es oder nutze einen aktuellen Browser (z. B. Chrome, Edge, Safari).");
+    if (datei.size <= maxBytes) return datei;
+    throw new VideoZuGross(`Dein Browser kann das Video nicht verkleinern und es ist größer als ${grenzeMb} MB.`+" Bitte kürze es oder nutze einen aktuellen Browser (z. B. Chrome, Edge, Safari).");
   }
 
   const input = new mb.Input({ source: new mb.BlobSource(datei), formats: mb.ALL_FORMATS });
@@ -22,7 +23,7 @@ export async function videoVorbereiten(datei: File, fortschritt: (anteil: number
 
   // Ziel-Bitrate aus der Laenge (Audio 96 kbit/s abziehen), Aufloesung passend dazu
   const bitrate = Math.min(2_500_000, Math.floor((ZIEL_BYTES * 8) / dauer - 96_000));
-  if (bitrate < 250_000) throw new VideoZuGross("Das Video ist zu lang für ein Spotlight. Bitte teile es in kürzere Abschnitte.");
+  if (bitrate < 250_000) throw new VideoZuGross("Das Video ist zu lang. Bitte teile es in kürzere Abschnitte.");
   const kurzeKante = bitrate >= 1_400_000 ? 720 : bitrate >= 700_000 ? 540 : 360;
   const b = spur.displayWidth;
   const h = spur.displayHeight;
@@ -41,14 +42,14 @@ export async function videoVorbereiten(datei: File, fortschritt: (anteil: number
     audio: { codec: "aac", bitrate: 96_000 },
   });
   if (!conversion.isValid) {
-    if (datei.size <= MAX_BYTES) return datei;
-    throw new VideoZuGross("Dieses Videoformat kann hier nicht verkleinert werden. Bitte nutze ein MP4-Video unter 50 MB.");
+    if (datei.size <= maxBytes) return datei;
+    throw new VideoZuGross(`Dieses Videoformat kann hier nicht verkleinert werden. Bitte nutze ein MP4-Video unter ${grenzeMb} MB.`);
   }
   conversion.onProgress = (anteil) => fortschritt(anteil);
   await conversion.execute();
   const puffer = output.target.buffer;
   if (!puffer) throw new Error("Das Video konnte nicht verarbeitet werden.");
   const blob = new Blob([puffer], { type: "video/mp4" });
-  if (blob.size > MAX_BYTES) throw new VideoZuGross("Das Video ist auch verkleinert noch zu groß. Bitte kürze es etwas.");
+  if (blob.size > maxBytes) throw new VideoZuGross("Das Video ist auch verkleinert noch zu groß. Bitte kürze es etwas.");
   return blob;
 }

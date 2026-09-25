@@ -26,13 +26,33 @@ import {
   Phone,
   Video,
   MoreVertical,
+  Pencil,
+  Forward,
+  Search,
+  Mail,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { alsNachricht, type ChatKopf, type ChatNachricht, type Umfrage } from "@/lib/chat/getChat";
-import { chatEinstellung, chatStummSetzen, nachrichtLoeschen, nutzerBlockieren, nutzerFreigeben, reagieren, umfrageAbstimmen } from "@/app/dashboard/nachrichten/actions";
+import {
+  chatEinstellung,
+  chatStummSetzen,
+  chatSuchen,
+  chatUngelesenMarkieren,
+  nachrichtBearbeiten,
+  nachrichtLoeschen,
+  nachrichtWeiterleiten,
+  nutzerBlockieren,
+  nutzerFreigeben,
+  reagieren,
+  umfrageAbstimmen,
+  weiterleitZiele,
+  type SuchErgebnis,
+  type WeiterleitZiel,
+} from "@/app/dashboard/nachrichten/actions";
 import { AnhangAnsicht, StandortAnsicht, groesseText } from "./NachrichtAnhang";
 import { SmileyAuswahl } from "./SmileyAuswahl";
 import { bildVerkleinern } from "@/lib/medien/bild";
+import { videoVorbereiten } from "@/lib/medien/video";
 import { SCHNELL_REAKTIONEN, stickerInfo, stickerUrl } from "@/lib/chat/sticker";
 import { sperrgrundText } from "@/lib/chat/sperrgrund";
 import { Sprachaufnahme } from "./Sprachaufnahme";
@@ -223,8 +243,17 @@ export function ChatFenster({
   const [bilder, setBilder] = useState(startBilder);
   const [text, setText] = useState("");
   const [antwort, setAntwort] = useState<ChatNachricht | null>(null);
+  const [bearbeiten, setBearbeiten] = useState<ChatNachricht | null>(null);
+  const [weiterleiten, setWeiterleiten] = useState<ChatNachricht | null>(null);
+  const [ziele, setZiele] = useState<WeiterleitZiel[] | null>(null);
+  const [suchOffen, setSuchOffen] = useState(false);
+  const [suche, setSuche] = useState("");
+  const [suchErgebnisse, setSuchErgebnisse] = useState<SuchErgebnis[] | null>(null);
+  const [markiert, setMarkiert] = useState<string | null>(null);
   const [auswahl, setAuswahl] = useState<string | null>(null);
-  const [bild, setBild] = useState<{ datei: File; vorschau: string } | null>(null);
+  // Mehrere Fotos/Videos auf einmal: jede Datei wird eine eigene Nachricht (Text kommt an die erste)
+  const [medien, setMedien] = useState<{ datei: File; vorschau: string; art: "bild" | "video" }[]>([]);
+  const [medienStatus, setMedienStatus] = useState<string | null>(null);
   const [umfrageOffen, setUmfrageOffen] = useState(false);
   const [sendet, setSendet] = useState(false);
   const [fehler, setFehler] = useState<string | null>(null);
@@ -390,40 +419,57 @@ export function ChatFenster({
   }) {
     const inhalt = text.trim();
     const sonder = extra?.umfrage || extra?.standort || extra?.audio || extra?.sticker;
-    if (sendet || (!inhalt && !bild && !anhangDatei && !sonder)) return;
+    if (sendet || (!inhalt && medien.length === 0 && !anhangDatei && !sonder)) return;
     setSendet(true);
     setFehler(null);
     try {
-      let bildPfad: string | null = null;
-      let anhang: Record<string, unknown> | null = null;
+      const einfuegen = async (felder: { inhalt: string; bild_pfad?: string | null; anhang?: Record<string, unknown> | null }, mitAntwort: boolean) => {
+        const { error } = await supabase.from("nachrichten").insert({
+          gespraech_id: kopf.id,
+          sender_id: userId,
+          inhalt: felder.inhalt,
+          bild_pfad: felder.bild_pfad ?? null,
+          umfrage: extra?.umfrage ?? null,
+          anhang: felder.anhang ?? null,
+          standort: extra?.standort ?? null,
+          sticker: extra?.sticker ?? null,
+          antwort_auf: mitAntwort ? (antwort?.id ?? null) : null,
+        });
+        if (error) throw new Error(error.code === "42501" ? "Du darfst in diesem Chat nicht schreiben." : "Die Nachricht konnte nicht gesendet werden.");
+      };
+
       if (extra?.audio) {
         const endung = extra.audio.blob.type.includes("mp4") ? "m4a" : extra.audio.blob.type.includes("ogg") ? "ogg" : "webm";
-        anhang = { art: "audio", pfad: await dateiHochladen(extra.audio.blob, `sprachnachricht.${endung}`), name: "Sprachnachricht", dauer: extra.audio.dauer };
-      } else if (anhangDatei && !sonder) {
-        anhang = { art: anhangDatei.art, pfad: await dateiHochladen(anhangDatei.datei, anhangDatei.datei.name), name: anhangDatei.datei.name };
+        const anhang = { art: "audio", pfad: await dateiHochladen(extra.audio.blob, `sprachnachricht.${endung}`), name: "Sprachnachricht", dauer: extra.audio.dauer };
+        await einfuegen({ inhalt: "", anhang }, true);
+      } else if (sonder) {
+        await einfuegen({ inhalt: "" }, true);
+      } else if (medien.length > 0) {
+        for (const [i, m] of medien.entries()) {
+          const nr = medien.length > 1 ? ` (${i + 1}/${medien.length})` : "";
+          if (m.art === "bild") {
+            setMedienStatus(`Foto wird gesendet …${nr}`);
+            const blob = await bildVerkleinern(m.datei);
+            const bildPfad = `${kopf.id}/${crypto.randomUUID()}.${blob.type === "image/gif" ? "gif" : "jpg"}`;
+            const { error } = await supabase.storage.from("chat-bilder").upload(bildPfad, blob, { contentType: blob.type || "image/jpeg" });
+            if (error) throw new Error("Das Bild konnte nicht hochgeladen werden (max. 5 MB).");
+            await einfuegen({ inhalt: i === 0 ? inhalt : "", bild_pfad: bildPfad }, i === 0);
+          } else {
+            setMedienStatus(`Video wird vorbereitet …${nr}`);
+            const blob = await videoVorbereiten(m.datei, (a) => setMedienStatus(`Video wird vorbereitet … ${Math.round(a * 100)} %${nr}`), 25 * 1024 * 1024);
+            setMedienStatus(`Video wird gesendet …${nr}`);
+            const name = m.datei.name.replace(/\.[^.]+$/, "") + (blob.type === "video/mp4" ? ".mp4" : "");
+            const anhang = { art: "video", pfad: await dateiHochladen(blob, name || "video.mp4"), name: name || "Video" };
+            await einfuegen({ inhalt: i === 0 ? inhalt : "", anhang }, i === 0);
+          }
+        }
+      } else {
+        const anhang = anhangDatei ? { art: anhangDatei.art, pfad: await dateiHochladen(anhangDatei.datei, anhangDatei.datei.name), name: anhangDatei.datei.name } : null;
+        await einfuegen({ inhalt, anhang }, true);
       }
-      if (bild && !sonder) {
-        const blob = await bildVerkleinern(bild.datei);
-        const endung = blob.type === "image/gif" ? "gif" : "jpg";
-        bildPfad = `${kopf.id}/${crypto.randomUUID()}.${endung}`;
-        const { error } = await supabase.storage.from("chat-bilder").upload(bildPfad, blob, { contentType: blob.type || "image/jpeg" });
-        if (error) throw new Error("Das Bild konnte nicht hochgeladen werden (max. 5 MB).");
-      }
-      const { error } = await supabase.from("nachrichten").insert({
-        gespraech_id: kopf.id,
-        sender_id: userId,
-        inhalt: sonder ? "" : inhalt,
-        bild_pfad: bildPfad,
-        umfrage: extra?.umfrage ?? null,
-        anhang,
-        standort: extra?.standort ?? null,
-        sticker: extra?.sticker ?? null,
-        antwort_auf: antwort?.id ?? null,
-      });
-      if (error) throw new Error(error.code === "42501" ? "Du darfst in diesem Chat nicht schreiben." : "Die Nachricht konnte nicht gesendet werden.");
       if (!sonder) {
         setText("");
-        setBild(null);
+        setMedien([]);
         setAnhangDatei(null);
       }
       setUmfrageOffen(false);
@@ -438,7 +484,41 @@ export function ChatFenster({
       setFehler(e instanceof Error ? e.message : "Die Nachricht konnte nicht gesendet werden.");
     } finally {
       setSendet(false);
+      setMedienStatus(null);
     }
+  }
+
+  async function absenden() {
+    if (!bearbeiten) return senden();
+    const neu = text.trim();
+    if (sendet) return;
+    setSendet(true);
+    const e = await nachrichtBearbeiten(bearbeiten.id, neu);
+    setSendet(false);
+    if (e.error) return setFehler(e.error);
+    setBearbeiten(null);
+    setText("");
+    laden();
+  }
+
+  // Zu einer (gesuchten) Nachricht springen – aeltere Seiten bei Bedarf nachladen
+  async function zuNachricht(id: string, gesendetAm: string) {
+    setSuchOffen(false);
+    let vorhanden = nachrichten.some((n) => n.id === id);
+    let aeltesteZeit = nachrichten[0]?.gesendetAm;
+    for (let i = 0; !vorhanden && aeltesteZeit && aeltesteZeit > gesendetAm && i < 15; i++) {
+      const { data } = await supabase.rpc("chat_nachrichten", { p_gespraech_id: kopf.id, p_vor: aeltesteZeit, p_anzahl: 200 });
+      // deno-lint-ignore no-explicit-any
+      const neu = ((data ?? []) as any[]).map(alsNachricht);
+      if (neu.length === 0) break;
+      setAeltere((alt) => [...neu, ...alt]);
+      setMehrVorhanden(neu.length >= 200);
+      vorhanden = neu.some((n) => n.id === id);
+      aeltesteZeit = neu[0].gesendetAm;
+    }
+    setMarkiert(id);
+    setTimeout(() => document.getElementById(`n-${id}`)?.scrollIntoView({ block: "center", behavior: "smooth" }), 80);
+    setTimeout(() => setMarkiert(null), 2500);
   }
 
   function standortSenden() {
@@ -530,6 +610,29 @@ export function ChatFenster({
                 <button
                   type="button"
                   role="menuitem"
+                  onClick={() => {
+                    setMenueOffen(false);
+                    setSuchOffen(true);
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[14px] text-brand-ink hover:bg-brand-bg"
+                >
+                  <Search size={17} /> Im Chat suchen
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={async () => {
+                    setMenueOffen(false);
+                    const e = await chatUngelesenMarkieren(kopf.id);
+                    if (e?.error) setFehler(e.error);
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[14px] text-brand-ink hover:bg-brand-bg"
+                >
+                  <Mail size={17} /> Als ungelesen markieren
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
                   onClick={async () => {
                     setMenueOffen(false);
                     const neu = !stumm;
@@ -589,6 +692,101 @@ export function ChatFenster({
         </div>
       </header>
 
+      {suchOffen && (
+        <div className="relative z-20 border-b border-brand-line bg-white px-3 py-2">
+          <div className="flex items-center gap-2">
+            <label className="flex min-h-10 flex-1 items-center gap-2 rounded-xl bg-brand-bg px-3 text-brand-ink-soft">
+              <Search size={16} />
+              <span className="sr-only">Nachrichten suchen</span>
+              <input
+                autoFocus
+                value={suche}
+                onChange={async (e) => {
+                  const q = e.target.value;
+                  setSuche(q);
+                  setSuchErgebnisse(q.trim().length >= 2 ? await chatSuchen(kopf.id, q) : null);
+                }}
+                placeholder="Nachrichten suchen …"
+                className="min-w-0 flex-1 bg-transparent text-[14px] text-brand-ink outline-none"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => {
+                setSuchOffen(false);
+                setSuche("");
+                setSuchErgebnisse(null);
+              }}
+              aria-label="Suche schließen"
+              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-brand-bg"
+            >
+              <X size={18} />
+            </button>
+          </div>
+          {suchErgebnisse && (
+            <ul className="absolute inset-x-0 top-full max-h-[50vh] overflow-y-auto border-b border-brand-line bg-white shadow-lg">
+              {suchErgebnisse.length === 0 ? (
+                <li className="px-4 py-3 text-[13px] text-brand-ink-soft">Keine Nachrichten gefunden.</li>
+              ) : (
+                suchErgebnisse.map((s) => (
+                  <li key={s.id}>
+                    <button type="button" onClick={() => zuNachricht(s.id, s.gesendetAm)} className="flex w-full flex-col px-4 py-2 text-left hover:bg-brand-bg">
+                      <span className="text-[12px] text-brand-ink-faint">
+                        {s.eigene ? "Du" : s.senderName} · {tagesTrenner(s.gesendetAm)} {uhrzeit(s.gesendetAm)}
+                      </span>
+                      <span className="line-clamp-2 text-[13.5px] text-brand-ink">{s.inhalt}</span>
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {weiterleiten && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-3 sm:items-center" role="dialog" aria-modal="true" aria-label="Weiterleiten">
+          <div className="flex max-h-[80vh] w-full max-w-[420px] flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center gap-2 border-b border-brand-line px-4 py-3">
+              <Forward size={18} className="text-brand-red" />
+              <h2 className="text-[16px] font-bold text-brand-ink">Weiterleiten an …</h2>
+              <button type="button" onClick={() => setWeiterleiten(null)} aria-label="Schließen" className="ml-auto flex h-9 w-9 items-center justify-center rounded-full hover:bg-brand-bg">
+                <X size={17} />
+              </button>
+            </div>
+            <ul className="flex-1 overflow-y-auto py-1">
+              {ziele === null ? (
+                <li className="px-4 py-4 text-[13px] text-brand-ink-soft">Lädt …</li>
+              ) : ziele.filter((z) => z.id !== kopf.id).length === 0 ? (
+                <li className="px-4 py-4 text-[13px] text-brand-ink-soft">Kein anderer Chat verfügbar.</li>
+              ) : (
+                ziele
+                  .filter((z) => z.id !== kopf.id)
+                  .map((z) => (
+                    <li key={z.id}>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const e = await nachrichtWeiterleiten(weiterleiten.id, z.id);
+                          setWeiterleiten(null);
+                          if (e.error) setFehler(e.error);
+                        }}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-brand-bg"
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[14px] font-semibold text-brand-ink">{z.name}</span>
+                          {z.untertitel && <span className="block truncate text-[12px] text-brand-ink-soft">{z.untertitel}</span>}
+                        </span>
+                        <Send size={15} className="text-brand-ink-faint" />
+                      </button>
+                    </li>
+                  ))
+              )}
+            </ul>
+          </div>
+        </div>
+      )}
+
       {/* Verlauf mit blasser Taenzer-Illustration im Hintergrund */}
       <div className="relative min-h-0 flex-1 bg-[#f7f5f1]">
         <div
@@ -632,7 +830,7 @@ export function ChatFenster({
                     <span className="rounded-lg bg-white/95 px-3 py-1 text-[11.5px] font-semibold text-brand-ink-soft shadow-sm">{tagesTrenner(n.gesendetAm)}</span>
                   </div>
                 )}
-                <div className={`flex ${n.eigene ? "justify-end" : "justify-start"} ${neuerAbsender ? "mt-2" : "mt-0.5"}`}>
+                <div id={`n-${n.id}`} className={`flex ${n.eigene ? "justify-end" : "justify-start"} ${neuerAbsender ? "mt-2" : "mt-0.5"}`}>
                   <div
                     role="button"
                     tabIndex={0}
@@ -646,8 +844,13 @@ export function ChatFenster({
                       nurSticker
                         ? "px-1 pb-1 pt-1 text-brand-ink"
                         : `px-3 pb-1.5 pt-2 shadow-[0_1px_1px_rgba(27,33,48,0.08)] ${n.eigene ? "bg-[#fde4e6] text-brand-ink" : "bg-white text-brand-ink"}`
-                    } ${neuerAbsender && !nurSticker ? (n.eigene ? "rounded-tr-md" : "rounded-tl-md") : ""} ${gewaehlt ? "ring-2 ring-brand-red/50" : ""}`}
+                    } ${neuerAbsender && !nurSticker ? (n.eigene ? "rounded-tr-md" : "rounded-tl-md") : ""} ${gewaehlt ? "ring-2 ring-brand-red/50" : ""} ${markiert === n.id ? "ring-4 ring-brand-gold/70" : ""}`}
                   >
+                    {n.weitergeleitet && (
+                      <div className="mb-0.5 flex items-center gap-1 text-[11.5px] italic text-brand-ink-faint">
+                        <Forward size={12} /> Weitergeleitet
+                      </div>
+                    )}
                     {istGruppe && !n.eigene && neuerAbsender && (
                       <div
                         className={`mb-0.5 text-[12.5px] font-bold ${namensFarbe(n.senderId)} ${nurSticker ? "inline-block rounded-md bg-white/90 px-1.5" : ""}`}
@@ -707,6 +910,7 @@ export function ChatFenster({
                         nurSticker ? "ml-auto w-fit rounded-full bg-white/90 px-1.5 py-0.5 shadow-sm" : "float-right ml-2 mt-1.5 translate-y-0.5"
                       }`}
                     >
+                      {n.bearbeitet && <span className="mr-0.5 italic">bearbeitet</span>}
                       {uhrzeit(n.gesendetAm)}
                       {n.eigene && kopf.typ === "dm" && !n.geloescht &&
                         (gelesenVonPartner ? <CheckCheck size={14} className="text-brand-blue" aria-label="gelesen" /> : <Check size={14} aria-label="gesendet" />)}
@@ -783,6 +987,45 @@ export function ChatFenster({
               <Reply size={16} /> Antworten
             </button>
           )}
+          {ausgewaehlt.eigene &&
+            kopf.darfSchreiben &&
+            !ausgewaehlt.umfrage &&
+            !ausgewaehlt.standort &&
+            !ausgewaehlt.sticker &&
+            ausgewaehlt.anhang?.art !== "audio" &&
+            Date.now() - new Date(ausgewaehlt.gesendetAm).getTime() < 24 * 3600 * 1000 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setBearbeiten(ausgewaehlt);
+                  setAntwort(null);
+                  setText(ausgewaehlt.inhalt);
+                  setAuswahl(null);
+                  requestAnimationFrame(() => eingabe.current?.focus());
+                }}
+                aria-label="Bearbeiten"
+                title="Bearbeiten"
+                className="flex h-10 w-10 items-center justify-center rounded-lg text-brand-ink hover:bg-brand-bg"
+              >
+                <Pencil size={16} />
+              </button>
+            )}
+          {!ausgewaehlt.bildPfad && !ausgewaehlt.anhang && !ausgewaehlt.umfrage && (
+            <button
+              type="button"
+              onClick={async () => {
+                setWeiterleiten(ausgewaehlt);
+                setAuswahl(null);
+                setZiele(null);
+                setZiele(await weiterleitZiele());
+              }}
+              aria-label="Weiterleiten"
+              title="Weiterleiten"
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-brand-ink hover:bg-brand-bg"
+            >
+              <Forward size={16} />
+            </button>
+          )}
           {ausgewaehlt.inhalt && (
             <button
               type="button"
@@ -836,6 +1079,27 @@ export function ChatFenster({
         <UmfrageFormular onSchliessen={() => setUmfrageOffen(false)} onSenden={(u) => senden({ umfrage: u })} />
       ) : (
         <div className="border-t border-brand-line bg-white px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 sm:px-3">
+          {bearbeiten && (
+            <div className="mb-2 flex items-start gap-2 rounded-lg border-l-4 border-brand-gold bg-brand-gold-wash px-2.5 py-1.5">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1 text-[12px] font-bold text-brand-gold">
+                  <Pencil size={12} /> Nachricht bearbeiten
+                </div>
+                <div className="truncate text-[12.5px] text-brand-ink-soft">{bearbeiten.inhalt || "📷 Foto"}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setBearbeiten(null);
+                  setText("");
+                }}
+                aria-label="Bearbeiten abbrechen"
+                className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-white"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          )}
           {antwort && (
             <div className="mb-2 flex items-start gap-2 rounded-lg border-l-4 border-brand-red bg-brand-bg px-2.5 py-1.5">
               <div className="min-w-0 flex-1">
@@ -859,14 +1123,36 @@ export function ChatFenster({
               </button>
             </div>
           )}
-          {bild && (
-            <div className="mb-2 flex items-center gap-3 rounded-lg bg-brand-bg p-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={bild.vorschau} alt="Ausgewähltes Foto" className="h-16 w-16 rounded-lg object-cover" />
-              <span className="flex-1 text-[12.5px] text-brand-ink-soft">Foto wird mit deiner Nachricht gesendet.</span>
-              <button type="button" onClick={() => setBild(null)} aria-label="Foto entfernen" className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-white">
-                <X size={16} />
-              </button>
+          {medien.length > 0 && (
+            <div className="mb-2 rounded-lg bg-brand-bg p-2">
+              <div className="flex gap-2 overflow-x-auto">
+                {medien.map((m, i) => (
+                  <div key={m.vorschau} className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-black">
+                    {m.art === "bild" ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={m.vorschau} alt={`Ausgewähltes Foto ${i + 1}`} className="h-full w-full object-cover" />
+                    ) : (
+                      <video src={m.vorschau} muted playsInline preload="metadata" className="h-full w-full object-cover" />
+                    )}
+                    {m.art === "video" && (
+                      <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 text-[10px] font-semibold text-white">
+                        <Film size={11} className="inline" /> Video
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setMedien(medien.filter((_, j) => j !== i))}
+                      aria-label="Entfernen"
+                      className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[12px] text-brand-ink-soft">
+                {medienStatus ?? (medien.length === 1 ? "Wird mit deiner Nachricht gesendet." : `${medien.length} Dateien – jede als eigene Nachricht, dein Text an der ersten.`)}
+              </p>
             </div>
           )}
           {anhangDatei && (
@@ -920,14 +1206,14 @@ export function ChatFenster({
               e.target.value = "";
               if (!datei) return;
               if (datei.size > 25 * 1024 * 1024) return setFehler("Die Datei ist zu groß (max. 25 MB).");
-              setBild(null);
+              setMedien([]);
               setAnhangDatei({ datei, art: "datei" });
             }}
           />
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              senden();
+              absenden();
             }}
             className="flex items-end gap-1.5"
           >
@@ -935,19 +1221,20 @@ export function ChatFenster({
               ref={dateiEingabe}
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
+              multiple
               className="hidden"
               onChange={(e) => {
-                const datei = e.target.files?.[0];
+                const dateien = Array.from(e.target.files ?? []);
                 e.target.value = "";
-                if (!datei) return;
-                if (datei.type.startsWith("video/")) {
-                  if (datei.size > 25 * 1024 * 1024) return setFehler("Das Video ist zu groß (max. 25 MB).");
-                  setBild(null);
-                  return setAnhangDatei({ datei, art: "video" });
-                }
-                if (datei.size > 15 * 1024 * 1024) return setFehler("Das Foto ist zu groß.");
+                if (dateien.length === 0) return;
+                const neu = dateien
+                  .filter((d) => d.type.startsWith("image/") || d.type.startsWith("video/"))
+                  .slice(0, 10)
+                  .map((d) => ({ datei: d, vorschau: URL.createObjectURL(d), art: (d.type.startsWith("video/") ? "video" : "bild") as "bild" | "video" }));
+                if (neu.some((m) => m.art === "bild" && m.datei.size > 25 * 1024 * 1024)) return setFehler("Ein Foto ist zu groß.");
+                if (dateien.length > 10) setFehler("Höchstens 10 Fotos/Videos auf einmal.");
                 setAnhangDatei(null);
-                setBild({ datei, vorschau: URL.createObjectURL(datei) });
+                setMedien((alt) => [...alt, ...neu].slice(0, 10));
               }}
             />
             {!aufnahme && (
@@ -998,13 +1285,13 @@ export function ChatFenster({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey && window.matchMedia("(pointer: fine)").matches) {
                   e.preventDefault();
-                  senden();
+                  absenden();
                 }
               }}
               placeholder="Nachricht"
               className="max-h-[132px] min-h-11 flex-1 resize-none rounded-3xl border border-brand-line bg-brand-bg px-4 py-2.5 text-[15px] text-brand-ink outline-none focus:border-brand-red"
             />
-            {text.trim() || bild || anhangDatei ? (
+            {text.trim() || medien.length > 0 || anhangDatei ? (
               <button type="submit" disabled={sendet} aria-label="Senden" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-red text-white hover:bg-brand-red-deep disabled:opacity-60">
                 <Send size={19} />
               </button>

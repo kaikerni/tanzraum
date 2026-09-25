@@ -15,12 +15,45 @@ function dauerText(sek: number) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
-// Sprachnachricht mit eigenem, WhatsApp-aehnlichem Player
+// Wellenform aus der Audiodatei (Fallback: gleichmaessiges Muster, falls der Browser das Format nicht dekodiert)
+function useWellenform(url: string | undefined, balken = 36): number[] {
+  const [werte, setWerte] = useState<number[]>(() => Array.from({ length: balken }, (_, i) => 0.3 + 0.25 * Math.abs(Math.sin(i * 1.7))));
+  useEffect(() => {
+    if (!url) return;
+    let aktiv = true;
+    (async () => {
+      try {
+        const puffer = await (await fetch(url)).arrayBuffer();
+        const ctx = new AudioContext();
+        const audio = await ctx.decodeAudioData(puffer);
+        ctx.close().catch(() => {});
+        const daten = audio.getChannelData(0);
+        const schritt = Math.max(1, Math.floor(daten.length / balken));
+        const spitzen = Array.from({ length: balken }, (_, i) => {
+          let max = 0;
+          for (let j = i * schritt; j < Math.min(daten.length, (i + 1) * schritt); j += 16) max = Math.max(max, Math.abs(daten[j]));
+          return max;
+        });
+        const hoechster = Math.max(...spitzen, 0.01);
+        if (aktiv) setWerte(spitzen.map((s) => Math.max(0.12, s / hoechster)));
+      } catch {
+        // Fallback-Muster bleibt
+      }
+    })();
+    return () => {
+      aktiv = false;
+    };
+  }, [url, balken]);
+  return werte;
+}
+
+// Sprachnachricht: Wiedergabe, Wellenform (antippen = springen), Zeit und Abspielposition
 function Sprachnachricht({ url, dauer, eigene }: { url: string | undefined; dauer: number | null; eigene: boolean }) {
   const audio = useRef<HTMLAudioElement>(null);
   const [laeuft, setLaeuft] = useState(false);
   const [position, setPosition] = useState(0);
   const [laenge, setLaenge] = useState(dauer ?? 0);
+  const welle = useWellenform(url);
 
   useEffect(() => {
     const a = audio.current;
@@ -41,8 +74,10 @@ function Sprachnachricht({ url, dauer, eigene }: { url: string | undefined; daue
     };
   }, [url]);
 
+  const anteil = laenge ? Math.min(1, position / laenge) : 0;
+
   return (
-    <div className="flex min-w-[220px] items-center gap-2.5 py-1" onClick={(e) => e.stopPropagation()}>
+    <div className="flex min-w-[230px] items-center gap-2.5 py-1" onClick={(e) => e.stopPropagation()}>
       <audio ref={audio} src={url} preload="metadata" />
       <button
         type="button"
@@ -60,18 +95,32 @@ function Sprachnachricht({ url, dauer, eigene }: { url: string | undefined; daue
         {laeuft ? <Pause size={18} /> : <Play size={18} className="translate-x-px" />}
       </button>
       <div className="flex flex-1 flex-col gap-1">
-        <input
-          type="range"
-          min={0}
-          max={laenge || 1}
-          step={0.1}
-          value={position}
-          aria-label="Position"
-          onChange={(e) => {
-            if (audio.current) audio.current.currentTime = Number(e.target.value);
+        <div
+          role="slider"
+          tabIndex={0}
+          aria-label="Abspielposition"
+          aria-valuemin={0}
+          aria-valuemax={Math.round(laenge)}
+          aria-valuenow={Math.round(position)}
+          onClick={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            if (audio.current && laenge) audio.current.currentTime = ((e.clientX - r.left) / r.width) * laenge;
           }}
-          className="h-1 w-full cursor-pointer accent-brand-red"
-        />
+          onKeyDown={(e) => {
+            if (!audio.current) return;
+            if (e.key === "ArrowRight") audio.current.currentTime = Math.min(laenge, position + 2);
+            if (e.key === "ArrowLeft") audio.current.currentTime = Math.max(0, position - 2);
+          }}
+          className="flex h-7 cursor-pointer items-center gap-[2px]"
+        >
+          {welle.map((w, i) => (
+            <span
+              key={i}
+              className={`flex-1 rounded-full ${i / welle.length < anteil ? (eigene ? "bg-brand-red" : "bg-brand-green") : "bg-brand-ink-faint/45"}`}
+              style={{ height: `${Math.round(w * 100)}%` }}
+            />
+          ))}
+        </div>
         <span className="flex items-center gap-1 text-[11px] text-brand-ink-soft">
           <Mic size={11} /> {dauerText(laeuft || position ? position : laenge)}
         </span>

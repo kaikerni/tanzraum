@@ -71,6 +71,8 @@ export type ChatNachricht = {
   gesendetAm: string;
   geloescht: boolean;
   darfLoeschen: boolean;
+  bearbeitet: boolean;
+  weitergeleitet: boolean;
 };
 
 export type Kontakt = { userId: string; anzeige: string; handle: string | null; avatarUrl: string | null; grund: string };
@@ -133,6 +135,8 @@ export function alsNachricht(n: any): ChatNachricht {
     gesendetAm: n.gesendet_am,
     geloescht: n.geloescht,
     darfLoeschen: n.darf_loeschen,
+    bearbeitet: !!n.bearbeitet,
+    weitergeleitet: !!n.weitergeleitet,
   };
 }
 
