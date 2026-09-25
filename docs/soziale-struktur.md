@@ -4,7 +4,7 @@
 |---|---|---|
 | 🗺️ TanzRaum Map | Wo ist TanzRaum? | `/dashboard/netzwerk` (Standardansicht) |
 | 🌐 Netzwerk (Liste) | Wer und welche Vereine gehören dazu? | `/dashboard/netzwerk?ansicht=liste` |
-| ✨ Spotlights | Was teilen die Menschen gerade? | Leiste im Netzwerk und auf dem Dashboard, `?ansicht=spotlights` |
+| ✨ Spotlights | Was teilen die Menschen gerade? | Leiste immer oben im Netzwerk (über Map und Liste) und auf dem Dashboard |
 | 👤 Profile | Wer ist diese Person / dieser Verein? | `/dashboard/netzwerk/person/[id]`, `/dashboard/netzwerk/verein/[id]` |
 | 💬 Nachrichten | Mit wem darf ich kommunizieren? | Kopfzeilen-Symbol, „Nachricht senden“ im Profil – kein Menüpunkt |
 

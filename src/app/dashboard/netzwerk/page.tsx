@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Map as MapIcon, Users, Sparkles, Globe } from "lucide-react";
+import { Map as MapIcon, Users, Globe } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { darfNetzwerk, getMapPunkte } from "@/lib/netzwerk/tanzraumNetzwerk";
 import { NetzwerkMap } from "@/components/netzwerk/NetzwerkMap";
@@ -11,7 +11,7 @@ import { getSpotlightIch, getSpotlightLeiste } from "@/lib/spotlights/getSpotlig
 
 export const metadata = { title: "TanzRaum-Netzwerk" };
 
-type Ansicht = "map" | "liste" | "spotlights";
+type Ansicht = "map" | "liste";
 
 export default async function NetzwerkSeite({ searchParams }: { searchParams: Promise<{ ansicht?: string; verein?: string }> }) {
   const supabase = await createClient();
@@ -40,8 +40,8 @@ export default async function NetzwerkSeite({ searchParams }: { searchParams: Pr
   }
 
   const { ansicht: roh, verein } = await searchParams;
-  // Die Map ist immer die Standardansicht
-  const ansicht: Ansicht = roh === "liste" || roh === "spotlights" ? roh : "map";
+  // Die Map ist immer die Standardansicht; Spotlights stehen immer oben
+  const ansicht: Ansicht = roh === "liste" ? "liste" : "map";
   const [spotlights, ich, punkte, { data: map }] = await Promise.all([
     getSpotlightLeiste(supabase),
     getSpotlightIch(supabase, user),
@@ -71,29 +71,22 @@ export default async function NetzwerkSeite({ searchParams }: { searchParams: Pr
             <Globe size={24} className="text-brand-red" /> TanzRaum-Netzwerk
           </h1>
           <p className="text-[14px] text-brand-ink-soft">
-            {ansicht === "map" ? "Wo ist TanzRaum?" : ansicht === "liste" ? "Wer und welche Vereine gehören zu TanzRaum?" : "Was teilen die Menschen bei TanzRaum gerade?"}
+            {ansicht === "map" ? "Wo ist TanzRaum?" : "Wer und welche Vereine gehören zu TanzRaum?"}
           </p>
         </div>
         <nav className="flex w-full gap-1 rounded-xl bg-brand-bg p-1 sm:w-auto" aria-label="Ansicht">
           {tab("map", "Map", MapIcon)}
           {tab("liste", "Liste", Users)}
-          {tab("spotlights", "Spotlights", Sparkles)}
         </nav>
       </div>
 
-      {/* Spotlights: persoenlich, 24 Stunden – prominent ueber jeder Ansicht */}
-      <section className={`${KARTE} ${ansicht === "spotlights" ? "py-5" : "py-3"}`} aria-label="Spotlights">
-        <SpotlightLeiste personen={spotlights} ich={ich} gross={ansicht === "spotlights"} />
+      {/* Spotlights: persoenlich, 24 Stunden – immer sichtbar ueber Map und Liste */}
+      <section className={`${KARTE} py-3`} aria-label="Spotlights">
+        <SpotlightLeiste personen={spotlights} ich={ich} />
       </section>
 
       {ansicht === "map" && <NetzwerkMap punkte={punkte} fokusVerein={verein} ichAufMap={ichAufMap} />}
       {ansicht === "liste" && <NetzwerkListe />}
-      {ansicht === "spotlights" && (
-        <p className="px-1 text-[13px] text-brand-ink-soft">
-          ✨ Spotlights sind persönliche Momente – Training, Auftritte, ganze Tänze, Kostüme oder Erfolge. Sie verschwinden nach 24 Stunden.
-          Antippen öffnet die Vollbildansicht, über den Namen kommst du zum Profil.
-        </p>
-      )}
     </div>
   );
 }
