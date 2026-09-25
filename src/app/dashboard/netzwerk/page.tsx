@@ -6,6 +6,8 @@ import { darfNetzwerk, getMapPunkte } from "@/lib/netzwerk/tanzraumNetzwerk";
 import { NetzwerkMap } from "@/components/netzwerk/NetzwerkMap";
 import { NetzwerkListe } from "@/components/netzwerk/NetzwerkListe";
 import { KARTE } from "@/components/dashboard/Karten";
+import { SpotlightLeiste } from "@/components/spotlights/SpotlightLeiste";
+import { getSpotlightIch, getSpotlightLeiste } from "@/lib/spotlights/getSpotlights";
 
 export const metadata = { title: "TanzRaum-Netzwerk" };
 
@@ -40,7 +42,9 @@ export default async function NetzwerkSeite({ searchParams }: { searchParams: Pr
   const { ansicht: roh, verein } = await searchParams;
   // Die Map ist immer die Standardansicht
   const ansicht: Ansicht = roh === "liste" || roh === "spotlights" ? roh : "map";
-  const [punkte, { data: map }] = await Promise.all([
+  const [spotlights, ich, punkte, { data: map }] = await Promise.all([
+    getSpotlightLeiste(supabase),
+    getSpotlightIch(supabase, user),
     ansicht === "map" ? getMapPunkte(supabase) : Promise.resolve([]),
     ansicht === "map" ? supabase.rpc("meine_map_einstellungen") : Promise.resolve({ data: null }),
   ]);
@@ -77,12 +81,18 @@ export default async function NetzwerkSeite({ searchParams }: { searchParams: Pr
         </nav>
       </div>
 
+      {/* Spotlights: persoenlich, 24 Stunden – prominent ueber jeder Ansicht */}
+      <section className={`${KARTE} ${ansicht === "spotlights" ? "py-5" : "py-3"}`} aria-label="Spotlights">
+        <SpotlightLeiste personen={spotlights} ich={ich} gross={ansicht === "spotlights"} />
+      </section>
+
       {ansicht === "map" && <NetzwerkMap punkte={punkte} fokusVerein={verein} ichAufMap={ichAufMap} />}
       {ansicht === "liste" && <NetzwerkListe />}
       {ansicht === "spotlights" && (
-        <section className={KARTE}>
-          <p className="text-[14px] text-brand-ink-soft">Spotlights folgen im nächsten Schritt.</p>
-        </section>
+        <p className="px-1 text-[13px] text-brand-ink-soft">
+          ✨ Spotlights sind persönliche Momente – Training, Auftritte, ganze Tänze, Kostüme oder Erfolge. Sie verschwinden nach 24 Stunden.
+          Antippen öffnet die Vollbildansicht, über den Namen kommst du zum Profil.
+        </p>
       )}
     </div>
   );

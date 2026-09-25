@@ -32,6 +32,7 @@ import { alsNachricht, type ChatKopf, type ChatNachricht, type Umfrage } from "@
 import { chatEinstellung, chatStummSetzen, nachrichtLoeschen, nutzerBlockieren, nutzerFreigeben, reagieren, umfrageAbstimmen } from "@/app/dashboard/nachrichten/actions";
 import { AnhangAnsicht, StandortAnsicht, groesseText } from "./NachrichtAnhang";
 import { SmileyAuswahl } from "./SmileyAuswahl";
+import { bildVerkleinern } from "@/lib/medien/bild";
 import { SCHNELL_REAKTIONEN, stickerInfo, stickerUrl } from "@/lib/chat/sticker";
 import { sperrgrundText } from "@/lib/chat/sperrgrund";
 import { Sprachaufnahme } from "./Sprachaufnahme";
@@ -74,16 +75,6 @@ function MitLinks({ text }: { text: string }) {
   );
 }
 
-async function bildVerkleinern(datei: File): Promise<Blob> {
-  if (datei.type === "image/gif") return datei;
-  const bild = await createImageBitmap(datei);
-  const faktor = Math.min(1, 1600 / Math.max(bild.width, bild.height));
-  const leinwand = document.createElement("canvas");
-  leinwand.width = Math.round(bild.width * faktor);
-  leinwand.height = Math.round(bild.height * faktor);
-  leinwand.getContext("2d")!.drawImage(bild, 0, 0, leinwand.width, leinwand.height);
-  return new Promise((ok, fehler) => leinwand.toBlob((b) => (b ? ok(b) : fehler(new Error("Bild"))), "image/jpeg", 0.82));
-}
 
 function UmfrageAnsicht({ n, onAbgestimmt }: { n: ChatNachricht & { umfrage: Umfrage }; onAbgestimmt: () => void }) {
   const [laeuft, starte] = useTransition();
