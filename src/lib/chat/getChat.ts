@@ -36,6 +36,7 @@ export type ChatKopf = {
   partnerRolle: string | null;
   ichHabeBlockiert: boolean;
   partnerBlockiert: boolean;
+  sperrgrund: string | null;
 };
 
 export type Umfrage = {
@@ -160,6 +161,7 @@ export async function getChatKopf(supabase: SupabaseClient, id: string): Promise
     partnerRolle: k.partner_rolle,
     ichHabeBlockiert: k.ich_habe_blockiert,
     partnerBlockiert: k.partner_blockiert,
+    sperrgrund: k.sperrgrund ?? null,
   };
 }
 

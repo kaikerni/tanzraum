@@ -1,5 +1,7 @@
 "use server";
 
+import { sperrgrundText } from "@/lib/chat/sperrgrund";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -90,6 +92,11 @@ export async function kontaktAufnehmen(userId: string): Promise<KontaktErgebnis>
     abgelehnt: "Diese Person hat deine Kontaktanfrage abgelehnt.",
     nicht_moeglich: "Eine Kontaktaufnahme mit dieser Person ist nicht möglich.",
   };
+  if (r?.ergebnis === "nicht_moeglich") {
+    // Genauer Grund (Jugendschutz, Tarif, Elternsperre …) aus der Datenbank
+    const { data: grund } = await supabase.rpc("schreib_sperrgrund", { p_user_id: userId });
+    return { error: sperrgrundText(grund as string | null), ergebnis: r.ergebnis, ichMinderjaehrig: r.ich_minderjaehrig };
+  }
   return { error: r?.ergebnis === "anfrage_noetig" ? null : (texte[r?.ergebnis] ?? "Nicht möglich."), ergebnis: r?.ergebnis, ichMinderjaehrig: r?.ich_minderjaehrig };
 }
 

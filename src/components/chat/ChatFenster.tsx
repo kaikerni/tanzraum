@@ -34,6 +34,7 @@ import { chatEinstellung, chatStummSetzen, nachrichtLoeschen, nutzerBlockieren, 
 import { AnhangAnsicht, StandortAnsicht, groesseText } from "./NachrichtAnhang";
 import { EmojiAuswahl } from "./EmojiAuswahl";
 import { stickerInfo, stickerUrl } from "@/lib/chat/sticker";
+import { sperrgrundText } from "@/lib/chat/sperrgrund";
 import { Sprachaufnahme } from "./Sprachaufnahme";
 import { useAnruf } from "./AnrufProvider";
 import { ChatAvatar } from "./ChatAvatar";
@@ -279,6 +280,7 @@ export function ChatFenster({
         nurLeitungSchreibt: k.nur_leitung_schreibt,
         ichHabeBlockiert: k.ich_habe_blockiert,
         partnerBlockiert: k.partner_blockiert,
+        sperrgrund: k.sperrgrund ?? null,
       }));
   }, [supabase, kopf.id]);
 
@@ -813,13 +815,9 @@ export function ChatFenster({
       {!kopf.darfSchreiben ? (
         <div className="flex min-h-14 items-center justify-center gap-2 border-t border-brand-line bg-white px-4 text-center text-[13px] text-brand-ink-soft">
           <Megaphone size={15} />
-          {kopf.typ === "dm"
-            ? kopf.ichHabeBlockiert
-              ? "Du hast diese Person blockiert. Hebe die Blockierung oben auf, um wieder zu schreiben."
-              : kopf.partnerBlockiert
-                ? "Du kannst dieser Person nicht mehr schreiben."
-                : "Ihr seid nicht mehr im selben Verein. Für neue Nachrichten ist eine Kontaktanfrage nötig."
-            : "Hier schreiben nur Vorstand, Trainer und Betreuer."}
+          {kopf.typ === "dm" && kopf.ichHabeBlockiert
+            ? "Du hast diese Person blockiert. Hebe die Blockierung oben auf, um wieder zu schreiben."
+            : sperrgrundText(kopf.sperrgrund ?? (kopf.typ === "dm" ? null : "nur_leitung"))}
         </div>
       ) : umfrageOffen ? (
         <UmfrageFormular onSchliessen={() => setUmfrageOffen(false)} onSenden={(u) => senden({ umfrage: u })} />

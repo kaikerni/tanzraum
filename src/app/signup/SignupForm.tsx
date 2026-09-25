@@ -44,6 +44,12 @@ export function SignupForm({ weiter }: { weiter: string }) {
       </div>
 
       <label className="field">
+        <span>Geburtsdatum</span>
+        <input type="date" name="geburtsdatum" autoComplete="bday" min="1900-01-01" max={new Date().toISOString().slice(0, 10)} required />
+        <small className="text-[12px] text-brand-ink-soft">Nur für den Jugendschutz – wird niemandem angezeigt und kann später nicht selbst geändert werden.</small>
+      </label>
+
+      <label className="field">
         <span>Handle (optional)</span>
         <input type="text" name="handle" placeholder="z. B. kai.kern" />
       </label>
