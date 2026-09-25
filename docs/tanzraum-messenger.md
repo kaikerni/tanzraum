@@ -12,6 +12,7 @@ Route: `/dashboard/nachrichten` · Tarif: für alle (FREE, BASIC, VEREIN).
 |---|---|---|
 | 💬 | Textnachrichten | inkl. Antworten, Kopieren, Löschen, Links, Lesebestätigung (Privatchat) |
 | 😊 | Emojis & Reaktionen | Emoji-Auswahl im Eingabefeld, 8 Schnellreaktionen pro Nachricht |
+| 🎭 | Sticker | 133 TanzRaum-Sticker in zwei Sätzen („Tänzerin“ 83, „Gardist“ 50) im Emoji-Menü, Antippen sendet sofort. Bilder in `public/sticker/`, Liste in `src/lib/chat/sticker.ts` und Tabelle `sticker` (Spalte `nachrichten.sticker`, nur gültige IDs, immer ohne Text/Anhang) |
 | 📸 | Bilder | werden im Browser verkleinert, privater Bucket `chat-bilder` (5 MB) |
 | 🎥 | Videos | privater Bucket `chat-dateien` (25 MB) |
 | 📎 | Dateien | PDF, Office, OpenDocument, Text, ZIP – Bucket `chat-dateien` (25 MB) |

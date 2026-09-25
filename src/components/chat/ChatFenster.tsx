@@ -33,6 +33,7 @@ import { alsNachricht, type ChatKopf, type ChatNachricht, type Umfrage } from "@
 import { chatEinstellung, chatStummSetzen, nachrichtLoeschen, nutzerBlockieren, nutzerFreigeben, reagieren, umfrageAbstimmen } from "@/app/dashboard/nachrichten/actions";
 import { AnhangAnsicht, StandortAnsicht, groesseText } from "./NachrichtAnhang";
 import { EmojiAuswahl } from "./EmojiAuswahl";
+import { stickerInfo, stickerUrl } from "@/lib/chat/sticker";
 import { Sprachaufnahme } from "./Sprachaufnahme";
 import { useAnruf } from "./AnrufProvider";
 import { ChatAvatar } from "./ChatAvatar";
@@ -393,9 +394,10 @@ export function ChatFenster({
     umfrage?: { frage: string; optionen: string[]; mehrfach: boolean };
     standort?: { lat: number; lng: number; genauigkeit: number };
     audio?: { blob: Blob; dauer: number };
+    sticker?: string;
   }) {
     const inhalt = text.trim();
-    const sonder = extra?.umfrage || extra?.standort || extra?.audio;
+    const sonder = extra?.umfrage || extra?.standort || extra?.audio || extra?.sticker;
     if (sendet || (!inhalt && !bild && !anhangDatei && !sonder)) return;
     setSendet(true);
     setFehler(null);
@@ -423,6 +425,7 @@ export function ChatFenster({
         umfrage: extra?.umfrage ?? null,
         anhang,
         standort: extra?.standort ?? null,
+        sticker: extra?.sticker ?? null,
         antwort_auf: antwort?.id ?? null,
       });
       if (error) throw new Error(error.code === "42501" ? "Du darfst in diesem Chat nicht schreiben." : "Die Nachricht konnte nicht gesendet werden.");
@@ -435,9 +438,10 @@ export function ChatFenster({
       setAntwort(null);
       amEnde.current = true;
       setPlusOffen(false);
-      setEmojiOffen(false);
+      // Nach einem Sticker bleibt die Auswahl offen (mehrere hintereinander senden)
+      if (!extra?.sticker) setEmojiOffen(false);
       await laden();
-      eingabe.current?.focus();
+      if (!extra?.sticker) eingabe.current?.focus();
     } catch (e) {
       setFehler(e instanceof Error ? e.message : "Die Nachricht konnte nicht gesendet werden.");
     } finally {
@@ -617,6 +621,8 @@ export function ChatFenster({
             const neuerAbsender = neuerTag || !vorher || vorher.senderId !== n.senderId;
             const gewaehlt = auswahl === n.id;
             const gelesenVonPartner = kopf.typ === "dm" && kopf.partnerGelesenBis && kopf.partnerGelesenBis >= n.gesendetAm;
+            // Sticker stehen ohne Sprechblase im Chat
+            const nurSticker = !n.geloescht && !!n.sticker;
             return (
               <Fragment key={n.id}>
                 {neuerTag && (
@@ -631,17 +637,29 @@ export function ChatFenster({
                     aria-pressed={gewaehlt}
                     onClick={() => setAuswahl(gewaehlt ? null : n.id)}
                     onKeyDown={(e) => e.key === "Enter" && setAuswahl(gewaehlt ? null : n.id)}
-                    className={`relative max-w-[82%] cursor-pointer rounded-2xl px-3 pb-1.5 pt-2 text-[14.5px] leading-snug shadow-[0_1px_1px_rgba(27,33,48,0.08)] sm:max-w-[65%] ${
-                      n.eigene ? "bg-[#fde4e6] text-brand-ink" : "bg-white text-brand-ink"
-                    } ${neuerAbsender ? (n.eigene ? "rounded-tr-md" : "rounded-tl-md") : ""} ${gewaehlt ? "ring-2 ring-brand-red/50" : ""}`}
+                    className={`relative max-w-[82%] cursor-pointer rounded-2xl text-[14.5px] leading-snug sm:max-w-[65%] ${
+                      nurSticker
+                        ? "px-1 pb-1 pt-1 text-brand-ink"
+                        : `px-3 pb-1.5 pt-2 shadow-[0_1px_1px_rgba(27,33,48,0.08)] ${n.eigene ? "bg-[#fde4e6] text-brand-ink" : "bg-white text-brand-ink"}`
+                    } ${neuerAbsender && !nurSticker ? (n.eigene ? "rounded-tr-md" : "rounded-tl-md") : ""} ${gewaehlt ? "ring-2 ring-brand-red/50" : ""}`}
                   >
                     {istGruppe && !n.eigene && neuerAbsender && (
-                      <div className={`mb-0.5 text-[12.5px] font-bold ${namensFarbe(n.senderId)}`}>{n.senderName}</div>
+                      <div
+                        className={`mb-0.5 text-[12.5px] font-bold ${namensFarbe(n.senderId)} ${nurSticker ? "inline-block rounded-md bg-white/90 px-1.5" : ""}`}
+                      >
+                        {n.senderName}
+                      </div>
                     )}
                     {n.antwortAuf && (
-                      <div className="mb-1.5 rounded-lg border-l-4 border-brand-red bg-black/[0.04] px-2 py-1">
-                        <div className="text-[12px] font-bold text-brand-red">{n.antwortSender ?? "Unbekannt"}</div>
-                        <div className="line-clamp-2 text-[12.5px] text-brand-ink-soft">{n.antwortText}</div>
+                      <div className={`mb-1.5 flex items-center gap-2 rounded-lg border-l-4 border-brand-red px-2 py-1 ${nurSticker ? "bg-white/95 shadow-sm" : "bg-black/[0.04]"}`}>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[12px] font-bold text-brand-red">{n.antwortSender ?? "Unbekannt"}</div>
+                          <div className="line-clamp-2 text-[12.5px] text-brand-ink-soft">{n.antwortText}</div>
+                        </div>
+                        {n.antwortSticker && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={stickerUrl(n.antwortSticker)} alt="" className="h-10 w-10 shrink-0 object-contain" />
+                        )}
                       </div>
                     )}
                     {n.geloescht ? (
@@ -660,6 +678,17 @@ export function ChatFenster({
                         )}
                         {n.anhang && <AnhangAnsicht anhang={n.anhang} url={dateiUrls[n.anhang.pfad]} eigene={n.eigene} />}
                         {n.standort && <StandortAnsicht standort={n.standort} />}
+                        {n.sticker && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={stickerUrl(n.sticker)}
+                            alt={`Sticker: ${stickerInfo(n.sticker)?.name ?? "Sticker"}`}
+                            width={140}
+                            height={140}
+                            loading="lazy"
+                            className="block h-[140px] w-[140px] object-contain"
+                          />
+                        )}
                         {n.umfrage && <UmfrageAnsicht n={n as ChatNachricht & { umfrage: Umfrage }} onAbgestimmt={laden} />}
                         {n.inhalt && (
                           <span className="whitespace-pre-wrap break-words">
@@ -668,7 +697,11 @@ export function ChatFenster({
                         )}
                       </>
                     )}
-                    <span className="float-right ml-2 mt-1.5 flex translate-y-0.5 items-center gap-0.5 text-[10.5px] text-brand-ink-faint">
+                    <span
+                      className={`flex items-center gap-0.5 text-[10.5px] text-brand-ink-faint ${
+                        nurSticker ? "ml-auto w-fit rounded-full bg-white/90 px-1.5 py-0.5 shadow-sm" : "float-right ml-2 mt-1.5 translate-y-0.5"
+                      }`}
+                    >
                       {uhrzeit(n.gesendetAm)}
                       {n.eigene && kopf.typ === "dm" && !n.geloescht &&
                         (gelesenVonPartner ? <CheckCheck size={14} className="text-brand-blue" aria-label="gelesen" /> : <Check size={14} aria-label="gesendet" />)}
@@ -797,7 +830,9 @@ export function ChatFenster({
               <div className="min-w-0 flex-1">
                 <div className="text-[12px] font-bold text-brand-red">{antwort.eigene ? "Du" : antwort.senderName}</div>
                 <div className="truncate text-[12.5px] text-brand-ink-soft">
-                  {antwort.umfrage
+                  {antwort.sticker
+                    ? `🎭 Sticker: ${stickerInfo(antwort.sticker)?.name ?? ""}`
+                    : antwort.umfrage
                     ? `📊 ${antwort.umfrage.frage}`
                     : antwort.standort
                       ? "📍 Standort"
@@ -973,6 +1008,8 @@ export function ChatFenster({
           {emojiOffen && !aufnahme && (
             <div className="-mx-2 mt-2 sm:-mx-3">
               <EmojiAuswahl
+                onSticker={(id) => senden({ sticker: id })}
+                stickerSperre={sendet}
                 onWahl={(emoji) => {
                   const el = eingabe.current;
                   const pos = el?.selectionStart ?? text.length;

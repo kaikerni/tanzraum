@@ -61,10 +61,12 @@ export type ChatNachricht = {
   umfrage: Umfrage | null;
   anhang: Anhang | null;
   standort: Standort | null;
+  sticker: string | null;
   reaktionen: Reaktion[];
   antwortAuf: string | null;
   antwortSender: string | null;
   antwortText: string | null;
+  antwortSticker: string | null;
   gesendetAm: string;
   geloescht: boolean;
   darfLoeschen: boolean;
@@ -121,10 +123,12 @@ export function alsNachricht(n: any): ChatNachricht {
     umfrage: n.umfrage,
     anhang: n.anhang,
     standort: n.standort,
+    sticker: n.sticker ?? null,
     reaktionen: n.reaktionen ?? [],
     antwortAuf: n.antwort_auf,
     antwortSender: n.antwort_sender,
     antwortText: n.antwort_text,
+    antwortSticker: n.antwort_sticker ?? null,
     gesendetAm: n.gesendet_am,
     geloescht: n.geloescht,
     darfLoeschen: n.darf_loeschen,
