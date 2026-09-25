@@ -66,3 +66,11 @@ export async function passwortAendern(_prev: AktionsErgebnis, formData: FormData
   await supabase.auth.signOut({ scope: "others" });
   return { error: null, ok: "Dein Passwort wurde geändert. Auf anderen Geräten wurdest du zur Sicherheit abgemeldet." };
 }
+
+// Privates Konto: nicht in Suchen (Messenger, Netzwerk) auffindbar; Vereinsmitglieder sehen das Profil weiterhin.
+export async function kontoPrivatSetzen(privat: boolean): Promise<AktionsErgebnis> {
+  const { supabase, user } = await sitzung();
+  const { error } = await supabase.from("profiles").update({ konto_privat: privat }).eq("id", user.id);
+  if (error) return { error: "Die Einstellung konnte nicht gespeichert werden." };
+  return { error: null, ok: privat ? "Dein Konto ist jetzt privat." : "Dein Konto ist jetzt öffentlich auffindbar." };
+}

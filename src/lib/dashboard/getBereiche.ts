@@ -6,16 +6,18 @@ import type { Tarif, Zugriff } from "@/lib/navigation";
  * Nur fuer die Anzeige -- abgesichert wird ueber RLS bzw. die dashboard_*-Funktionen.
  */
 export async function getZugriff(supabase: SupabaseClient, istPlattformAdmin: boolean): Promise<Zugriff> {
-  if (istPlattformAdmin) return { tarif: "verein", bereiche: [], istPlattformAdmin: true };
+  if (istPlattformAdmin) return { tarif: "verein", bereiche: [], istPlattformAdmin: true, netzwerk: "trainer" };
 
-  const [{ data: tarif }, { data: bereiche }] = await Promise.all([
+  const [{ data: tarif }, { data: bereiche }, { data: netzwerk }] = await Promise.all([
     supabase.rpc("mein_tarif"),
     supabase.rpc("meine_bereiche"),
+    supabase.rpc("netzwerk_modus"),
   ]);
 
   return {
     tarif: tarif === "basic" || tarif === "verein" ? (tarif as Tarif) : "free",
     bereiche: [...new Set(((bereiche ?? []) as { bereich: string }[]).map((r) => r.bereich))],
     istPlattformAdmin: false,
+    netzwerk: netzwerk === "trainer" || netzwerk === "tanzraum" ? netzwerk : null,
   };
 }

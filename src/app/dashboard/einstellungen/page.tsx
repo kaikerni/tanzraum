@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Mail, KeyRound } from "lucide-react";
+import { Mail, KeyRound, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
-import { EmailAendern, PasswortAendern } from "@/components/einstellungen/KontoSicherheit";
+import { EmailAendern, PasswortAendern, PrivatSchalter } from "@/components/einstellungen/KontoSicherheit";
 
 export const metadata = { title: "Einstellungen – TanzRaum" };
 
@@ -20,6 +20,7 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
   if (!user) redirect("/login?weiter=/dashboard/einstellungen");
 
   const { email } = await searchParams;
+  const { data: profil } = await supabase.from("profiles").select("konto_privat").eq("id", user.id).maybeSingle();
   const hinweis = email ? HINWEISE[email] : undefined;
 
   return (
@@ -38,6 +39,11 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
           untertitel="Zur Sicherheit bestätigst du die Änderung per Link – an deine bisherige und an deine neue Adresse."
         />
         <EmailAendern aktuell={user.email ?? "–"} ausstehend={user.new_email ?? null} />
+      </section>
+
+      <section className={KARTE}>
+        <KarteKopf icon={EyeOff} titel="Privatsphäre" />
+        <PrivatSchalter privat={!!profil?.konto_privat} />
       </section>
 
       <section className={KARTE}>

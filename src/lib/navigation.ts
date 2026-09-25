@@ -39,10 +39,14 @@ export type Bereich =
 // Rollenmarker aus meine_bereiche() -- nur von der offiziellen Vereinsrolle abgeleitet.
 export type RollenMarker = "rolle_admin" | "rolle_trainer" | "rolle_betreuer" | "rolle_mitglied" | "rolle_eltern";
 
+export type NetzwerkModus = "trainer" | "tanzraum";
+
 export type Zugriff = {
   tarif: Tarif;
   bereiche: string[];
   istPlattformAdmin: boolean;
+  // Trainer-Netzwerk (Vereinslizenz, Trainer/Admin) bzw. TanzRaum-Netzwerk (Basic ohne Verein) – DB: netzwerk_modus()
+  netzwerk?: NetzwerkModus | null;
 };
 
 export type NavEintrag = {
@@ -56,6 +60,8 @@ export type NavEintrag = {
   recht?: Bereich | RollenMarker | "plattform_admin";
   // Ausgeblendet, wenn jemand ausschliesslich diese Vereinsrollen hat (laut Navi-Vorgabe).
   nichtNurFuer?: RollenMarker[];
+  // Nur sichtbar, wenn der Nutzer genau dieses Netzwerk nutzen darf (ersetzt Tarif/Recht-Pruefung).
+  netzwerk?: NetzwerkModus;
 };
 
 export const NAV: NavEintrag[] = [
@@ -69,7 +75,8 @@ export const NAV: NavEintrag[] = [
   { href: "/dashboard/saisonplanung", label: "Saisonplanung", icon: CalendarRange, tarif: "verein", recht: "saison" },
   { href: "/dashboard/mitglieder", label: "Mitglieder", icon: Users, tarif: "verein", recht: "mitglieder" },
   { href: "/dashboard/mitgliedsantraege", label: "Mitgliedsanträge", icon: FileSignature, tarif: "verein", recht: "beitritt" },
-  { href: "/dashboard/trainer-netzwerk", label: "Trainer-Netzwerk", icon: Handshake, tarif: "verein", recht: "netzwerk" },
+  { href: "/dashboard/trainer-netzwerk", label: "Trainer-Netzwerk", icon: Handshake, tarif: "verein", netzwerk: "trainer" },
+  { href: "/dashboard/trainer-netzwerk", label: "TanzRaum-Netzwerk", icon: Handshake, tarif: "basic", netzwerk: "tanzraum" },
   { href: "/dashboard/nachrichten", label: "TanzRaum-Messenger", kurz: "Chat", icon: MessageSquare, tarif: "free" },
   { href: "/dashboard/dateien", label: "Dateien", icon: Folder, tarif: "basic" },
   { href: "/dashboard/fahrgemeinschaften", label: "Fahrgemeinschaften", icon: Car, tarif: "basic", nichtNurFuer: ["rolle_betreuer"] },
@@ -103,13 +110,13 @@ function nurAusgeschlosseneRollen(zugriff: Zugriff, ausgeschlossen: RollenMarker
 export function sichtbareNav(zugriff: Zugriff): NavEintrag[] {
   return NAV.filter(
     (n) =>
-      darf(zugriff, n.tarif, n.recht) &&
+      (n.netzwerk ? zugriff.netzwerk === n.netzwerk : darf(zugriff, n.tarif, n.recht)) &&
       (zugriff.istPlattformAdmin || !n.nichtNurFuer || !nurAusgeschlosseneRollen(zugriff, n.nichtNurFuer)),
   );
 }
 
 // Nur fuer diese Seiten werden "Alle anzeigen"-Links gesetzt; waechst mit jedem fertigen Modul.
-export const FERTIGE_SEITEN = new Set<string>(["/dashboard", "/dashboard/verein", "/dashboard/mitglieder", "/dashboard/training", "/dashboard/anwesenheit", "/dashboard/kalender", "/dashboard/nachrichten", "/dashboard/einstellungen", "/dashboard/turniere", "/dashboard/saisonplanung"]);
+export const FERTIGE_SEITEN = new Set<string>(["/dashboard", "/dashboard/verein", "/dashboard/mitglieder", "/dashboard/training", "/dashboard/anwesenheit", "/dashboard/kalender", "/dashboard/nachrichten", "/dashboard/einstellungen", "/dashboard/turniere", "/dashboard/saisonplanung", "/dashboard/trainer-netzwerk"]);
 
 export function istFertig(href: string): boolean {
   return FERTIGE_SEITEN.has(href);

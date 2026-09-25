@@ -8,7 +8,6 @@ import { KARTE } from "@/components/dashboard/Karten";
 const BESCHREIBUNG: Record<string, string> = {
   "/dashboard/trainingsplan": "Trainingsinhalte planen, Übungen sammeln und Einheiten für die Gruppen vorbereiten.",
   "/dashboard/mitgliedsantraege": "Online-Mitgliedsanträge mit Daten, SEPA-Mandat und Einwilligungen prüfen und annehmen.",
-  "/dashboard/trainer-netzwerk": "Trainerinnen und Trainer anderer Vereine finden und sich austauschen.",
   "/dashboard/dateien": "Dokumente, Satzung, Pläne und Fotos zentral im Verein ablegen.",
   "/dashboard/fahrgemeinschaften": "Fahrten zu Turnieren und Auftritten organisieren – wer fährt, wer hat noch Platz.",
   "/dashboard/musik": "Musikstücke und Schnitte für Tänze verwalten und mit der Gruppe teilen.",

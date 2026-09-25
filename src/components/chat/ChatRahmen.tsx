@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useSelectedLayoutSegment, useRouter } from "next/navigation";
-import { Search, SquarePen, ChevronDown, UserPlus, Check, X, Ban } from "lucide-react";
+import { Search, SquarePen, ChevronDown, UserPlus, Check, X, Ban, Handshake } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { alsChatEintrag, type ChatEintrag, type Kontaktanfrage } from "@/lib/chat/getChat";
 import { kontaktanfrageBeantworten } from "@/app/dashboard/nachrichten/actions";
@@ -55,18 +55,32 @@ function ChatZeile({ c, offen }: { c: ChatEintrag; offen: boolean }) {
   );
 }
 
-function Abschnitt({ titel, anzahl, ungelesen, children }: { titel: string; anzahl: number; ungelesen: number; children: React.ReactNode }) {
+function Abschnitt({
+  titel,
+  anzahl,
+  ungelesen,
+  hervorgehoben = false,
+  children,
+}: {
+  titel: string;
+  anzahl: number;
+  ungelesen: number;
+  hervorgehoben?: boolean;
+  children: React.ReactNode;
+}) {
   const [zu, setZu] = useState(false);
   if (anzahl === 0) return null;
   return (
-    <section>
+    <section className={hervorgehoben ? "mx-2 mb-2 overflow-hidden rounded-2xl border border-brand-gold/40 bg-brand-gold-wash/40" : ""}>
       <button
         type="button"
         onClick={() => setZu(!zu)}
         aria-expanded={!zu}
-        className="sticky top-0 z-10 flex min-h-9 w-full items-center gap-1.5 bg-white/95 px-4 text-left text-[12px] font-bold uppercase tracking-wide text-brand-ink-faint backdrop-blur"
+        className={`sticky top-0 z-10 flex min-h-9 w-full items-center gap-1.5 px-4 text-left text-[12px] font-bold uppercase tracking-wide backdrop-blur ${
+          hervorgehoben ? "bg-brand-gold-wash/95 text-brand-gold" : "bg-white/95 text-brand-ink-faint"
+        }`}
       >
-        <ChevronDown size={14} className={`transition-transform ${zu ? "-rotate-90" : ""}`} />
+        {hervorgehoben ? <Handshake size={14} /> : <ChevronDown size={14} className={`transition-transform ${zu ? "-rotate-90" : ""}`} />}
         <span className="flex-1">{titel}</span>
         {zu && ungelesen > 0 && <span className="h-2 w-2 rounded-full bg-brand-green" aria-label="ungelesen" />}
       </button>
@@ -110,7 +124,17 @@ function AnfrageKarte({ a }: { a: Kontaktanfrage }) {
   );
 }
 
-export function ChatRahmen({ start, anfragen, children }: { start: ChatEintrag[]; anfragen: Kontaktanfrage[]; children: React.ReactNode }) {
+export function ChatRahmen({
+  start,
+  anfragen,
+  netzwerkTitel,
+  children,
+}: {
+  start: ChatEintrag[];
+  anfragen: Kontaktanfrage[];
+  netzwerkTitel: string;
+  children: React.ReactNode;
+}) {
   const segment = useSelectedLayoutSegment();
   const router = useRouter();
   const [chats, setChats] = useState(start);
@@ -149,6 +173,7 @@ export function ChatRahmen({ start, anfragen, children }: { start: ChatEintrag[]
     return q ? chats.filter((c) => `${c.name} ${c.untertitel ?? ""}`.toLowerCase().includes(q)) : chats;
   }, [chats, suche]);
 
+  const netzwerk = gefiltert.filter((c) => c.bereich === "netzwerk");
   const vereine = gefiltert.filter((c) => c.bereich === "verein");
   const gruppen = gefiltert.filter((c) => c.bereich === "gruppe");
   const privat = gefiltert.filter((c) => c.bereich === "privat");
@@ -210,6 +235,13 @@ export function ChatRahmen({ start, anfragen, children }: { start: ChatEintrag[]
             </p>
           )}
 
+          <Abschnitt titel={netzwerkTitel} anzahl={netzwerk.length} ungelesen={summe(netzwerk)} hervorgehoben>
+            <ul>
+              {netzwerk.map((c) => (
+                <ChatZeile key={c.id} c={c} offen={offen === c.id} />
+              ))}
+            </ul>
+          </Abschnitt>
           <Abschnitt titel="Vereinschat" anzahl={vereine.length} ungelesen={summe(vereine)}>
             <ul>
               {vereine.map((c) => (

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type ChatTyp = "dm" | "verein" | "trainingsgruppe" | "juryraum";
-export type ChatBereich = "verein" | "gruppe" | "privat";
+export type ChatBereich = "netzwerk" | "verein" | "gruppe" | "privat";
 
 export type ChatEintrag = {
   id: string;
