@@ -37,10 +37,11 @@ export default async function TurnierSeite({ params }: { params: Promise<{ id: s
 
   const heute = heuteBerlin();
   const vorbei = turnier.letzterTag < heute;
-  const [meine, planung, stammdaten] = await Promise.all([
+  const [meine, planung, stammdaten, { data: istPlattformAdmin }] = await Promise.all([
     getMeineStarts(supabase, turnier.ersterTag),
     getPlanungsVereine(supabase),
     getStammdaten(supabase),
+    supabase.rpc("ist_plattform_admin_aktuell"),
   ]);
   const meineHier = meine.filter((s) => s.turnierId === turnier.id);
   // Vereinsturniere nur fuer den eigenen Verein planbar
@@ -52,7 +53,10 @@ export default async function TurnierSeite({ params }: { params: Promise<{ id: s
       return { verein: v, starts, teilnehmer };
     }),
   );
-  const eigenesBearbeitbar = turnier.vereinId && planung.some((v) => v.vereinId === turnier.vereinId);
+  // Vereinsturnier: der eigene Verein; Katalogturnier (z. B. Beginn aus der Ausschreibung): Plattform-Administration
+  const eigenesBearbeitbar = !!turnier.vereinId && planung.some((v) => v.vereinId === turnier.vereinId);
+  const bearbeitbar = eigenesBearbeitbar || istPlattformAdmin === true;
+  const ohneBeginn = !vorbei && turnier.tage.every((t) => !t.beginn) && !turnier.beginnSamstag && !turnier.beginnSonntag;
   const frist = turnier.meldeschluss ? tageBis(turnier.meldeschluss, heute) : null;
   const karte = `https://www.openstreetmap.org/search?query=${encodeURIComponent(turnier.adresse ?? turnier.ort)}`;
 
@@ -85,14 +89,15 @@ export default async function TurnierSeite({ params }: { params: Promise<{ id: s
           <CalendarDays size={18} className="mt-0.5 shrink-0 text-brand-ink" />
           <div className="text-[13.5px] text-brand-ink">
             {turnier.tage.map((t) => {
-              const beginn = t.wochentag === "Samstag" ? turnier.beginnSamstag : t.wochentag === "Sonntag" ? turnier.beginnSonntag : null;
+              const beginn = t.beginn ?? (t.wochentag === "Samstag" ? turnier.beginnSamstag : t.wochentag === "Sonntag" ? turnier.beginnSonntag : null);
               return (
                 <p key={t.datum}>
                   {datumLang(t.datum)}
-                  {beginn ? <span className="text-brand-ink-soft"> · Beginn {beginn}</span> : null}
+                  {beginn ? <span className="text-brand-ink-soft"> · Beginn {beginn} Uhr</span> : null}
                 </p>
               );
             })}
+            {ohneBeginn && <p className="text-[12.5px] text-brand-ink-faint">Beginn laut Ausschreibung folgt.</p>}
           </div>
         </div>
         <div className="flex gap-2.5">
@@ -163,15 +168,15 @@ export default async function TurnierSeite({ params }: { params: Promise<{ id: s
         </section>
       ))}
 
-      {eigenesBearbeitbar && (
+      {bearbeitbar && (
         <section className={`${KARTE} flex flex-col gap-3`}>
           <details>
             <summary className="flex cursor-pointer list-none items-center gap-2 text-[15px] font-bold text-brand-ink">
-              <Pencil size={17} /> Vereinsturnier bearbeiten
+              <Pencil size={17} /> {turnier.vereinId ? "Vereinsturnier bearbeiten" : "Turnierdaten bearbeiten (Beginn, Ausschreibung, Meldeschluss …)"}
             </summary>
             <div className="mt-3 flex flex-col gap-3">
               <VereinsturnierFormular vereine={[]} turnier={turnier} />
-              <VereinsturnierLoeschen turnierId={turnier.id} />
+              {eigenesBearbeitbar && <VereinsturnierLoeschen turnierId={turnier.id} />}
             </div>
           </details>
         </section>

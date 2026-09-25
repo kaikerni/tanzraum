@@ -6,7 +6,7 @@ export type StartRueckmeldung = "dabei" | "nicht_dabei" | "unsicher";
 export const STATUS_LABEL: Record<StartStatus, string> = { geplant: "Geplant", gemeldet: "Gemeldet", abgesagt: "Abgesagt" };
 export const RUECKMELDUNG_LABEL: Record<StartRueckmeldung, string> = { dabei: "Dabei", unsicher: "Unsicher", nicht_dabei: "Nicht dabei" };
 
-export type TurnierTag = { datum: string; wochentag: string | null };
+export type TurnierTag = { datum: string; wochentag: string | null; beginn?: string | null };
 
 export type Turnier = {
   id: string;

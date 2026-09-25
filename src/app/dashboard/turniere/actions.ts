@@ -144,17 +144,22 @@ export async function startLoeschen(startId: string): Promise<AktionsErgebnis> {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Vereinseigene Turniere (nur fuer den eigenen Verein sichtbar)
+// Turnierdaten: Vereinsturniere (nur fuer den eigenen Verein sichtbar) anlegen/bearbeiten,
+// Katalogturniere bearbeiten (nur Plattform-Administration, z. B. Beginn und Link, sobald die Ausschreibung da ist)
 // ---------------------------------------------------------------------------------------------
 export async function vereinsturnierSpeichern(_prev: AktionsErgebnis, formData: FormData): Promise<AktionsErgebnis> {
   const turnierId = uuid(formData, "turnier_id");
   const vereinId = uuid(formData, "verein_id");
   const name = text(formData, "name");
   const ort = text(formData, "ort");
-  const tage = formData
+  // Tage und Beginnzeiten kommen als parallele Listen (je Zeile Datum + optionaler Beginn laut Ausschreibung)
+  const beginne = formData.getAll("beginn").map(String);
+  const tageMitBeginn = formData
     .getAll("tage")
-    .map(String)
-    .filter((d) => DATUM.test(d));
+    .map((d, i) => ({ datum: String(d), beginn: (beginne[i] ?? "").trim() }))
+    .filter((t) => DATUM.test(t.datum));
+  if (tageMitBeginn.some((t) => t.beginn && !/^([01]\d|2[0-3]):[0-5]\d$/.test(t.beginn))) return { error: "Ungültige Beginnzeit." };
+  const tage = tageMitBeginn.map((t) => t.datum);
   const meldeschluss = text(formData, "meldeschluss");
   const url = text(formData, "ausschreibung_url");
 
@@ -172,15 +177,17 @@ export async function vereinsturnierSpeichern(_prev: AktionsErgebnis, formData: 
     ausrichter: text(formData, "ausrichter"),
     ausschreibung_url: url,
     kategorie: text(formData, "kategorie") ?? "Turnier",
-    typ: "Vereinsturnier",
     meldeschluss,
-    tage: [...new Set(tage)].sort().map((datum) => ({ datum })),
+    tage: tageMitBeginn
+      .sort((a, b) => a.datum.localeCompare(b.datum))
+      .map((t) => (t.beginn ? { datum: t.datum, beginn: t.beginn } : { datum: t.datum })),
   };
 
   const { supabase } = await sitzung();
   const { data, error } = turnierId
-    ? await supabase.from("turniere").update(werte).eq("id", turnierId).not("verein_id", "is", null).select("id")
-    : await supabase.from("turniere").insert({ ...werte, verein_id: vereinId }).select("id");
+    ? // Katalogturniere darf nur die Plattform-Administration aendern, Vereinsturniere nur der Verein (RLS)
+      await supabase.from("turniere").update(werte).eq("id", turnierId).select("id")
+    : await supabase.from("turniere").insert({ ...werte, typ: "Vereinsturnier", verein_id: vereinId }).select("id");
   if (error) return { error: fehlerText(error, "Das Turnier konnte nicht gespeichert werden.") };
   if (!data || data.length === 0) return { error: "Dafür fehlt dir die Berechtigung." };
 

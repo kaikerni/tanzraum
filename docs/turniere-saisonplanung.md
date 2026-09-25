@@ -25,6 +25,18 @@ Berechtigt: Vereinsadmin und alle mit Bereich **„saison“** (standardmäßig 
 - **Vereinsturniere** (`/dashboard/turniere/neu`): Turniere, die nicht im Katalog stehen (z. B. Freundschaftsturnier) –
   **nur für den eigenen Verein sichtbar**.
 
+## Turnierbeginn
+
+Feste Startzeiten gibt es auf Turnieren nicht – nur den **Beginn je Turniertag** laut Ausschreibung. Er wird
+eingetragen, sobald die Ausschreibung vorliegt (Feld „Beginn“ je Tag, gespeichert in `turniere.tage[].beginn`):
+
+- Katalogturniere: TanzRaum-Plattform-Administration über „Turnierdaten bearbeiten“ auf der Turnierseite
+  (dort auch Link zur Ausschreibung und Meldeschluss).
+- Vereinsturniere: Vereinsadmin/Saisonplanung des Vereins.
+
+Ohne Eintrag zeigt die Turnierseite „Beginn laut Ausschreibung folgt“. Die alten Spalten `beginn_samstag`/`beginn_sonntag`
+sind veraltet (leer, nur noch als Rückfall gelesen).
+
 ## Kalender & Dashboard
 
 - Turniere im Kalender führen auf die Detailseite und zeigen „Wir starten“ bzw. „Vereinsturnier“.

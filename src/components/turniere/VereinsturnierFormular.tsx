@@ -18,7 +18,11 @@ export function VereinsturnierFormular({
   turnier?: Turnier;
 }) {
   const [ergebnis, aktion] = useActionState(vereinsturnierSpeichern, LEERES_ERGEBNIS);
-  const [tage, setTage] = useState<string[]>(turnier ? turnier.tage.map((t) => t.datum) : [""]);
+  const [tage, setTage] = useState<{ datum: string; beginn: string }[]>(
+    turnier ? turnier.tage.map((t) => ({ datum: t.datum, beginn: t.beginn ?? "" })) : [{ datum: "", beginn: "" }],
+  );
+  const katalog = !!turnier && !turnier.vereinId;
+  const kategorien = turnier?.kategorie && !KATEGORIEN.includes(turnier.kategorie) ? [turnier.kategorie, ...KATEGORIEN] : KATEGORIEN;
 
   return (
     <form action={aktion} className="flex flex-col gap-3">
@@ -59,7 +63,7 @@ export function VereinsturnierFormular({
         <label className="field">
           <span>Art</span>
           <select name="kategorie" defaultValue={turnier?.kategorie ?? "Turnier"}>
-            {KATEGORIEN.map((k) => (
+            {kategorien.map((k) => (
               <option key={k}>{k}</option>
             ))}
           </select>
@@ -67,34 +71,45 @@ export function VereinsturnierFormular({
       </div>
 
       <fieldset className="field">
-        <span>Tage</span>
+        <span>Tage und Beginn</span>
         <div className="flex flex-col gap-2">
           {tage.map((t, i) => (
             <div key={i} className="flex gap-2">
               <input
                 type="date"
                 name="tage"
-                value={t}
+                value={t.datum}
                 required={i === 0}
-                onChange={(e) => setTage(tage.map((x, j) => (j === i ? e.target.value : x)))}
-                className="min-h-10 flex-1 rounded-xl border border-brand-line px-3 text-[13.5px]"
+                aria-label={`Tag ${i + 1}`}
+                onChange={(e) => setTage(tage.map((x, j) => (j === i ? { ...x, datum: e.target.value } : x)))}
+                className="min-h-10 min-w-0 flex-1 rounded-xl border border-brand-line px-3 text-[13.5px]"
+              />
+              <input
+                type="time"
+                name="beginn"
+                value={t.beginn}
+                aria-label={`Beginn Tag ${i + 1} (optional)`}
+                title="Beginn laut Ausschreibung (optional)"
+                onChange={(e) => setTage(tage.map((x, j) => (j === i ? { ...x, beginn: e.target.value } : x)))}
+                className="min-h-10 w-28 rounded-xl border border-brand-line px-2 text-[13.5px]"
               />
               {tage.length > 1 && (
                 <button
                   type="button"
                   aria-label="Tag entfernen"
                   onClick={() => setTage(tage.filter((_, j) => j !== i))}
-                  className="inline-flex min-h-10 w-10 items-center justify-center rounded-xl border border-brand-line text-brand-ink-soft hover:text-brand-red"
+                  className="inline-flex min-h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-brand-line text-brand-ink-soft hover:text-brand-red"
                 >
                   <X size={15} />
                 </button>
               )}
             </div>
           ))}
+          <p className="text-[12px] font-normal text-brand-ink-faint">Beginn optional – eintragen, sobald die Ausschreibung vorliegt.</p>
           {tage.length < 7 && (
             <button
               type="button"
-              onClick={() => setTage([...tage, ""])}
+              onClick={() => setTage([...tage, { datum: "", beginn: "" }])}
               className="inline-flex items-center gap-1.5 self-start text-[13px] font-semibold text-brand-red"
             >
               <Plus size={14} /> Weiteren Tag hinzufügen
@@ -113,7 +128,11 @@ export function VereinsturnierFormular({
           <input type="url" name="ausschreibung_url" defaultValue={turnier?.ausschreibungUrl ?? ""} placeholder="https://…" />
         </label>
       </div>
-      <p className="text-[12.5px] text-brand-ink-soft">Vereinsturniere sieht nur dein Verein – nicht die übrigen TanzRaum-Nutzer.</p>
+      <p className="text-[12.5px] text-brand-ink-soft">
+        {katalog
+          ? "Änderungen am Turnierkalender sehen alle TanzRaum-Nutzer."
+          : "Vereinsturniere sieht nur dein Verein – nicht die übrigen TanzRaum-Nutzer."}
+      </p>
       <Meldung ergebnis={ergebnis} />
       <SendenButton laedtText="Wird gespeichert …" className="self-start">
         {turnier ? "Änderungen speichern" : "Turnier anlegen"}
