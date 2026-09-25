@@ -8,8 +8,9 @@
 | 👤 Profile | Wer ist diese Person / dieser Verein? | `/dashboard/netzwerk/person/[id]`, `/dashboard/netzwerk/verein/[id]` |
 | 💬 Nachrichten | Mit wem darf ich kommunizieren? | Kopfzeilen-Symbol, „Nachricht senden“ im Profil – kein Menüpunkt |
 
-**Zugang:** Netzwerk, Map und Spotlights ab **Basic** (oder automatisch über einen Verein mit Vereinslizenz). **Free**:
-nur Kontaktanfragen senden/annehmen, keine Nachrichten. Das **Trainer-Netzwerk** bleibt separat (nur vom Verein
+**Zugang:** Map, Liste, Nachrichten und eigene Spotlights ab **Basic** (oder automatisch über einen Verein mit
+Vereinslizenz). **Free**: Spotlights nur **ansehen** (die für alle freigegebenen), Profile daraus öffnen, Kontaktanfragen
+senden/annehmen – keine Nachrichten, keine eigenen Spotlights, keine Map/Liste. Das **Trainer-Netzwerk** bleibt separat (nur vom Verein
 zugeordnete Trainer mit Vereinslizenz, `docs/trainer-netzwerk.md`).
 
 Nicht umgesetzt (bewusst): Connect Match, Radar, Newsfeed, dauerhafte Beiträge, Follower, Likes-Zähler,

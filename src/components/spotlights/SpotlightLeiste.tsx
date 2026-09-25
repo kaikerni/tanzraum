@@ -67,7 +67,9 @@ export function SpotlightLeiste({ personen, ich, gross = false }: { personen: Sp
           </div>
         ))}
         {andere.length === 0 && (
-          <p className="self-center text-[13px] text-brand-ink-soft">Gerade teilt niemand ein Spotlight. Sei die/der Erste!</p>
+          <p className="self-center text-[13px] text-brand-ink-soft">
+            {ich.darfErstellen ? "Gerade teilt niemand ein Spotlight. Sei die/der Erste!" : "Gerade teilt niemand ein Spotlight."}
+          </p>
         )}
       </div>
 

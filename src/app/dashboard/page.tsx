@@ -51,13 +51,12 @@ export default async function DashboardPage({
       getAktuelleNachrichten(supabase, user.id, 4),
       getMeineKinder(supabase),
     ]);
-  // Spotlights (ab Basic bzw. mit Vereinslizenz) prominent oben
-  const spotlightIch = await getSpotlightIch(supabase, user);
-  const spotlights = spotlightIch.darfErstellen ? await getSpotlightLeiste(supabase) : [];
+  // Spotlights prominent oben (ansehen: alle, erstellen: ab Basic bzw. mit Vereinslizenz)
+  const [spotlightIch, spotlights] = await Promise.all([getSpotlightIch(supabase, user), getSpotlightLeiste(supabase)]);
 
   return (
     <>
-      {spotlightIch.darfErstellen && (
+      {(spotlightIch.darfErstellen || spotlights.length > 0) && (
         <section className={`${KARTE} mx-auto mb-4 max-w-[1560px] py-3`} aria-label="Spotlights">
           <SpotlightLeiste personen={spotlights} ich={spotlightIch} />
         </section>

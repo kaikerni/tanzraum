@@ -20,20 +20,25 @@ export default async function NetzwerkSeite({ searchParams }: { searchParams: Pr
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?weiter=/dashboard/netzwerk");
 
+  // Free: Spotlights ansehen (und Profile daraus oeffnen), Map und Liste ab Basic
   if (!(await darfNetzwerk(supabase))) {
+    const [spotlights, ich] = await Promise.all([getSpotlightLeiste(supabase), getSpotlightIch(supabase, user)]);
     return (
-      <div className="mx-auto flex max-w-[720px] flex-col gap-4">
-        <h1 className="text-[26px] font-extrabold tracking-tight text-brand-ink">TanzRaum-Netzwerk</h1>
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-3">
+        <h1 className="flex items-center gap-2 text-[26px] font-extrabold tracking-tight text-brand-ink">
+          <Globe size={24} className="text-brand-red" /> TanzRaum-Netzwerk
+        </h1>
+        <section className={`${KARTE} py-3`} aria-label="Spotlights">
+          <SpotlightLeiste personen={spotlights} ich={ich} />
+        </section>
         <section className={KARTE}>
           <p className="text-[14px] text-brand-ink">
-            Map, Netzwerk und Spotlights gibt es ab dem <strong>Basic-Tarif</strong> – oder automatisch über einen Verein mit Vereinslizenz.
+            🗺️ Map, Mitglieder- und Vereinssuche, Nachrichten und eigene Spotlights gibt es ab dem <strong>Basic-Tarif</strong> – oder
+            automatisch über einen Verein mit Vereinslizenz.
           </p>
           <p className="mt-2 text-[13.5px] text-brand-ink-soft">
-            Mit Free kannst du Kontaktanfragen senden und annehmen (Nachrichten-Symbol oben).
+            Mit Free siehst du Spotlights, kannst Profile ansehen und Kontaktanfragen senden und annehmen.
           </p>
-          <Link href="/dashboard/nachrichten" className="mt-3 inline-flex min-h-10 items-center rounded-xl bg-brand-red px-4 text-[13.5px] font-semibold text-white">
-            Zu den Kontakten
-          </Link>
         </section>
       </div>
     );
