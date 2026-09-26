@@ -8,6 +8,8 @@ import { geburtsdatumFehler } from "@/lib/auth/geburtsdatum";
 
 export type SignupState = { error: string | null; emailBestaetigenNoetig: boolean };
 
+const GESCHLECHTER = ["weiblich", "männlich", "divers"];
+
 const initialState: SignupState = { error: null, emailBestaetigenNoetig: false };
 
 export async function signUp(
@@ -23,8 +25,12 @@ export async function signUp(
   const password = String(formData.get("password") ?? "");
   const weiter = internerPfad(String(formData.get("weiter") ?? "/dashboard"));
 
-  if (!vorname || !nachname || !email || !password || !geburtsdatum) {
+  if (!vorname || !nachname || !email || !password || !geburtsdatum || !gender) {
     return { ...initialState, error: "Bitte alle Pflichtfelder ausfüllen." };
+  }
+  // Fuer die persoenliche Anrede (z. B. Taenzerin/Taenzer); "divers" wird neutral angesprochen
+  if (!GESCHLECHTER.includes(gender)) {
+    return { ...initialState, error: "Bitte wähle ein Geschlecht aus." };
   }
   const gebFehler = geburtsdatumFehler(geburtsdatum);
   if (gebFehler) return { ...initialState, error: gebFehler };
@@ -43,7 +49,7 @@ export async function signUp(
         vorname,
         nachname,
         handle: handle || null,
-        gender: gender || null,
+        gender,
         geburtsdatum,
       },
     },

@@ -55,9 +55,9 @@ export function SignupForm({ weiter }: { weiter: string }) {
       </label>
 
       <label className="field">
-        <span>Geschlecht (optional)</span>
-        <select name="gender" defaultValue="">
-          <option value="">Keine Angabe</option>
+        <span>Geschlecht</span>
+        <select name="gender" defaultValue="" required>
+          <option value="" disabled>Bitte auswählen</option>
           <option value="weiblich">weiblich</option>
           <option value="männlich">männlich</option>
           <option value="divers">divers</option>
