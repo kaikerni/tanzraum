@@ -5,9 +5,9 @@ import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { EhrungenKopf, EHRUNGEN_PFAD, KeinZugriff, mitVerein } from "@/components/ehrungen/EhrungenKopf";
 import { StatusBadge, TypBadge } from "@/components/ehrungen/Badges";
-import { ZeitraumFormular, ZeitraumLoeschen } from "@/components/ehrungen/EhrungenFormulare";
+import { FunktionsListe, ZeitraumFormular, ZeitraumLoeschen } from "@/components/ehrungen/EhrungenFormulare";
 import { ehrungsKontext } from "@/lib/ehrungen/kontext";
-import { getVorgaenge, getZeitraeume } from "@/lib/ehrungen/daten";
+import { getFunktionsnamen, getVorgaenge, getZeitraeume } from "@/lib/ehrungen/daten";
 import { getMitgliederListe } from "@/lib/mitglieder/getMitglieder";
 import { ZEITRAUM_ART, datum } from "@/lib/ehrungen/typen";
 
@@ -20,10 +20,11 @@ export default async function EhrungenMitglied({ params, searchParams }: { param
   if (!UUID.test(vmId)) notFound();
   const { supabase, verein, vereine, ohneLizenz } = await ehrungsKontext(gewaehlt);
   if (!verein) return <KeinZugriff ohneLizenz={ohneLizenz} />;
-  const [mitglieder, zeitraeume, vorgaenge] = await Promise.all([
+  const [mitglieder, zeitraeume, vorgaenge, funktionen] = await Promise.all([
     getMitgliederListe(supabase, verein.vereinId),
     getZeitraeume(supabase, verein.vereinId, vmId),
     getVorgaenge(supabase, verein.vereinId),
+    getFunktionsnamen(supabase, verein.vereinId),
   ]);
   const mitglied = (mitglieder ?? []).find((m) => m.vmId === vmId);
   if (!mitglied) return <KeinZugriff ohneLizenz={false} />;
@@ -34,6 +35,7 @@ export default async function EhrungenMitglied({ params, searchParams }: { param
   return (
     <div className="mx-auto flex max-w-[1000px] flex-col gap-4">
       <EhrungenKopf verein={verein} vereine={[]} titel={mitglied.name} />
+      <FunktionsListe namen={funktionen} />
 
       <section className={KARTE}>
         <KarteKopf icon={Clock} titel="Mitglieds- und Tätigkeitszeiten" untertitel="Stammdaten für die Berechnung. Mehrere Zeiträume (z. B. mit Pause) sind möglich." />

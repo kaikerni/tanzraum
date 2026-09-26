@@ -6,13 +6,17 @@ import { EhrungenKopf, EHRUNGEN_PFAD, KeinZugriff, mitVerein } from "@/component
 import { PruefBadge } from "@/components/ehrungen/Badges";
 import { OrganisationenFormular } from "@/components/ehrungen/EhrungenFormulare";
 import { ehrungsKontext } from "@/lib/ehrungen/kontext";
-import { getAuszeichnungen, getOrganisationen } from "@/lib/ehrungen/daten";
-import { regelText, type Auszeichnung } from "@/lib/ehrungen/typen";
+import { getAnpassungen, getAuszeichnungen, getOrganisationen } from "@/lib/ehrungen/daten";
+import { regelKurz, wirksameRegel, type Anpassung, type Auszeichnung } from "@/lib/ehrungen/typen";
 
 export const metadata = { title: "Auszeichnungen – TanzRaum" };
 
-function Zeile({ a, href }: { a: Auszeichnung; href: string }) {
-  const regeln = a.regeln.map((r) => (r.berechnung === "manuell" ? "manuelle Vergabe" : regelText({ ...r, punkte_min: r.punkteMin, punkte_gewichte: r.punkteGewichte })));
+function Zeile({ a, href, anpassungen }: { a: Auszeichnung; href: string; anpassungen?: Map<string, Anpassung> }) {
+  const regeln = a.regeln.flatMap((r) => {
+    const ap = anpassungen?.get(r.id);
+    if (ap && !ap.aktiv) return [];
+    return [regelKurz(wirksameRegel(r, ap)) + (ap ? " (angepasst)" : "")];
+  });
   return (
     <li>
       <Link href={href} className="grid grid-cols-1 gap-1 px-3.5 py-3 hover:bg-brand-bg md:grid-cols-[1.4fr_1.6fr_auto] md:items-center md:gap-3">
@@ -41,6 +45,11 @@ export default async function EhrungenAuszeichnungen({ searchParams }: { searchP
   const { supabase, verein, vereine, ohneLizenz } = await ehrungsKontext(gewaehlt);
   if (!verein) return <KeinZugriff ohneLizenz={ohneLizenz} />;
   const [arten, organisationen] = await Promise.all([getAuszeichnungen(supabase, verein.vereinId), getOrganisationen(supabase, verein.vereinId)]);
+  const anpassungen = await getAnpassungen(
+    supabase,
+    verein.vereinId,
+    arten.verband.flatMap((a) => a.regeln.map((r) => r.id)),
+  );
   const detail = (a: Auszeichnung) => mitVerein(`${EHRUNGEN_PFAD}/auszeichnung/${a.id}`, verein.vereinId);
 
   return (
@@ -88,7 +97,7 @@ export default async function EhrungenAuszeichnungen({ searchParams }: { searchP
         ) : (
           <ul className="divide-y divide-brand-line overflow-hidden rounded-xl border border-brand-line">
             {arten.verband.map((a) => (
-              <Zeile key={a.id} a={{ ...a, name: `${a.name}${a.organisation ? ` · ${a.organisation}` : ""}` }} href={detail(a)} />
+              <Zeile key={a.id} a={{ ...a, name: `${a.name}${a.organisation ? ` · ${a.organisation}` : ""}` }} href={detail(a)} anpassungen={anpassungen} />
             ))}
           </ul>
         )}

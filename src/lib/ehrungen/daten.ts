@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { VereinsMitgliedschaft } from "@/lib/dashboard/getDashboardData";
-import type { Auszeichnung, Grundlage, Regel, Vorgang } from "./typen";
+import type { Anpassung, Auszeichnung, Grundlage, Regel, Vorgang } from "./typen";
 
 // Nur Vereine, in denen die angemeldete Person Vereinsadmin ist (Datenbank prueft zusaetzlich per RLS).
 export function adminVereine(vereine: VereinsMitgliedschaft[]): VereinsMitgliedschaft[] {
@@ -91,6 +91,50 @@ export async function getAuszeichnungen(supabase: SupabaseClient, vereinId: stri
 export async function getAuszeichnung(supabase: SupabaseClient, id: string): Promise<Auszeichnung | null> {
   const { data } = await supabase.from("ehrungsarten").select(ART_FELDER).eq("id", id).maybeSingle();
   return data ? alsAuszeichnung(data) : null;
+}
+
+// Anpassungen des Vereins an Verbandsregeln (nur Vereinsadmins; RLS)
+export async function getAnpassungen(supabase: SupabaseClient, vereinId: string, regelIds: string[]): Promise<Map<string, Anpassung>> {
+  const karte = new Map<string, Anpassung>();
+  if (regelIds.length === 0) return karte;
+  const { data } = await supabase.from("verein_ehrungs_regel_anpassungen").select("*").eq("verein_id", vereinId).in("regel_id", regelIds);
+  for (const a of data ?? []) {
+    karte.set(a.regel_id, {
+      id: a.id,
+      regelId: a.regel_id,
+      aktiv: a.aktiv,
+      jahre: a.jahre === null ? null : Number(a.jahre),
+      funktion: a.funktion,
+      punkteMin: a.punkte_min === null ? null : Number(a.punkte_min),
+      punkteGewichte: a.punkte_gewichte,
+      ununterbrochen: a.ununterbrochen,
+      bemerkung: a.bemerkung,
+      updatedAt: a.updated_at,
+    });
+  }
+  return karte;
+}
+
+// Bekannte Funktionsbezeichnungen (Taetigkeitszeiten des Vereins + Regeln) – als Eingabehilfe, damit Regeln und
+// Zeiten dieselbe Bezeichnung verwenden
+export async function getFunktionsnamen(supabase: SupabaseClient, vereinId: string | null): Promise<string[]> {
+  const namen = new Set<string>();
+  const regelNamen = (funktion: string | null, gewichte: Record<string, number> | null) => {
+    if (funktion) namen.add(funktion.trim());
+    for (const k of Object.keys(gewichte ?? {})) if (k.startsWith("funktion:")) namen.add(k.slice(9).trim());
+  };
+  const [{ data: regeln }, zeiten, anpassungen] = await Promise.all([
+    supabase.from("ehrungs_regeln").select("funktion, punkte_gewichte"),
+    vereinId ? supabase.from("mitglied_zeitraeume").select("funktion").eq("verein_id", vereinId).not("funktion", "is", null) : Promise.resolve({ data: [] }),
+    vereinId
+      ? supabase.from("verein_ehrungs_regel_anpassungen").select("funktion, punkte_gewichte").eq("verein_id", vereinId)
+      : Promise.resolve({ data: [] }),
+  ]);
+  for (const r of regeln ?? []) regelNamen(r.funktion, r.punkte_gewichte);
+  for (const r of (anpassungen.data ?? []) as { funktion: string | null; punkte_gewichte: Record<string, number> | null }[]) regelNamen(r.funktion, r.punkte_gewichte);
+  for (const z of (zeiten.data ?? []) as { funktion: string | null }[]) if (z.funktion) namen.add(z.funktion.trim());
+  namen.delete("");
+  return [...namen].sort((a, b) => a.localeCompare(b, "de"));
 }
 
 export type Organisation = {

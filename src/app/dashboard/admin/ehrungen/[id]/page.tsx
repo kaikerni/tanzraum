@@ -5,10 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { PruefBadge, TypBadge } from "@/components/ehrungen/Badges";
-import { RegelFormular, RegelLoeschen } from "@/components/ehrungen/EhrungenFormulare";
+import { FunktionsListe, RegelFormular, RegelLoeschen } from "@/components/ehrungen/EhrungenFormulare";
 import { PruefungFormular, VerbandAuszeichnungFormular } from "@/components/ehrungen/KatalogFormulare";
-import { getAuszeichnung } from "@/lib/ehrungen/daten";
-import { regelText } from "@/lib/ehrungen/typen";
+import { getAuszeichnung, getFunktionsnamen } from "@/lib/ehrungen/daten";
+import { regelKurz } from "@/lib/ehrungen/typen";
 
 export const metadata = { title: "Verbandsauszeichnung – TanzRaum-Administration" };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -25,13 +25,17 @@ export default async function KatalogAuszeichnung({ params }: { params: Promise<
   if (istAdmin !== true) redirect("/dashboard");
   const art = await getAuszeichnung(supabase, id);
   if (!art || art.typ !== "verband") notFound();
-  const { data: bemerkung } = await supabase.from("ehrungsarten").select("pruef_bemerkung").eq("id", id).maybeSingle();
+  const [{ data: bemerkung }, funktionen] = await Promise.all([
+    supabase.from("ehrungsarten").select("pruef_bemerkung").eq("id", id).maybeSingle(),
+    getFunktionsnamen(supabase, null),
+  ]);
 
   return (
     <div className="mx-auto flex max-w-[900px] flex-col gap-4">
       <Link href="/dashboard/admin/ehrungen" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-brand-ink-soft hover:text-brand-ink">
         <ArrowLeft size={15} /> Ehrungskatalog
       </Link>
+      <FunktionsListe namen={funktionen} />
       <h1 className="text-[24px] font-extrabold tracking-tight text-brand-ink">{art.name}</h1>
       <div className="flex flex-wrap items-center gap-1.5">
         <TypBadge typ="verband" />
@@ -58,16 +62,24 @@ export default async function KatalogAuszeichnung({ params }: { params: Promise<
       </section>
 
       <section className={KARTE}>
-        <KarteKopf icon={ListChecks} titel="Regeln" untertitel="Nur belegte Kriterien hinterlegen – nichts ergänzen, was nicht in der Quelle steht." />
+        <KarteKopf icon={ListChecks} titel="Regeln" untertitel="Voreinstellung für alle Vereine – jeder Verein kann sie für sich anpassen. Nur belegte Kriterien hinterlegen." />
         {art.regeln.length > 0 && (
-          <ul className="mb-3 flex flex-col gap-1.5">
+          <ul className="mb-3 flex flex-col gap-2">
             {art.regeln.map((r) => (
-              <li key={r.id} className="flex items-center justify-between gap-2 rounded-xl border border-brand-line px-3 py-2 text-[13.5px]">
-                <span>
-                  {r.berechnung === "manuell" ? "Manuelle Vergabe" : regelText({ ...r, punkte_min: r.punkteMin, punkte_gewichte: r.punkteGewichte })}
-                  {r.bemerkung ? <span className="text-brand-ink-soft"> · {r.bemerkung}</span> : null}
-                </span>
-                <RegelLoeschen regelId={r.id} />
+              <li key={r.id} className="rounded-xl border border-brand-line px-3 py-2 text-[13.5px]">
+                <div className="flex items-center justify-between gap-2">
+                  <span>
+                    {regelKurz(r)}
+                    {r.bemerkung ? <span className="text-brand-ink-soft"> · {r.bemerkung}</span> : null}
+                  </span>
+                  <RegelLoeschen regelId={r.id} />
+                </div>
+                <details className="pt-1">
+                  <summary className="cursor-pointer text-[12.5px] font-semibold text-brand-red">Bearbeiten</summary>
+                  <div className="pt-2">
+                    <RegelFormular artId={art.id} regel={r} />
+                  </div>
+                </details>
               </li>
             ))}
           </ul>

@@ -2,7 +2,7 @@
 
 import { useActionState, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { RefreshCw, Trash2, RotateCcw, AlertTriangle } from "lucide-react";
+import { RefreshCw, Trash2, RotateCcw, AlertTriangle, Plus } from "lucide-react";
 import { SendenButton, Meldung, LEERES_ERGEBNIS, type AktionsErgebnis } from "@/components/ui/SendenButton";
 import {
   vorschlaegeAktualisieren,
@@ -17,6 +17,8 @@ import {
   auszeichnungSpeichern,
   regelSpeichern,
   regelLoeschen,
+  regelAnpassen,
+  regelAnpassungZuruecksetzen,
   organisationenSpeichern,
 } from "@/app/dashboard/vereinsverwaltung/ehrungen/actions";
 import {
@@ -26,7 +28,11 @@ import {
   STATUS,
   TYP,
   ZEITRAUM_ART,
+  regelKurz,
+  wirksameRegel,
+  type Anpassung,
   type Auszeichnung,
+  type Regel,
   type Status,
   type Vorgang,
 } from "@/lib/ehrungen/typen";
@@ -402,7 +408,7 @@ export function ZeitraumFormular({ vereinId, vmId, zeitraum }: { vereinId: strin
       </label>
       <label className="field">
         <span>Funktion</span>
-        <input name="funktion" defaultValue={zeitraum?.funktion ?? ""} disabled={art !== "funktion"} placeholder={art === "funktion" ? "z. B. Trainer" : "–"} />
+        <input name="funktion" list="ehrungs-funktionen" defaultValue={zeitraum?.funktion ?? ""} disabled={art !== "funktion"} placeholder={art === "funktion" ? "z. B. Trainer" : "–"} />
       </label>
       <label className="field">
         <span>Von</span>
@@ -536,12 +542,115 @@ export function AuszeichnungFormular({ vereinId, art, vorlage }: { vereinId: str
   );
 }
 
-export function RegelFormular({ artId }: { artId: string }) {
+const MIT_JAHREN = ["mitgliedschaft", "aktiv", "ehrenamt", "funktion"];
+const alsText = (n: number | null | undefined) => (n === null || n === undefined ? "" : String(n).replace(".", ","));
+let zeilenZaehler = 0;
+
+// Punkte je Jahr: feste Kriterien + beliebig viele Aemter/Funktionen
+function GewichteFelder({ gewichte }: { gewichte: Record<string, number> | null }) {
+  const [aemter, setAemter] = useState(() => {
+    const start = Object.entries(gewichte ?? {})
+      .filter(([k]) => k.startsWith("funktion:"))
+      .map(([k, v]) => ({ nr: ++zeilenZaehler, name: k.slice(9), wert: alsText(v) }));
+    return start.length ? start : [{ nr: ++zeilenZaehler, name: "", wert: "" }];
+  });
+  return (
+    <>
+      <p className="text-[12.5px] font-semibold text-brand-ink-soft">Punkte je vollendetem Jahr</p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {(
+          [
+            ["mitgliedschaft", "Mitgliedschaft", "0"],
+            ["aktiv", "Aktive Tätigkeit", "z. B. 0,5"],
+            ["ehrenamt", "Ehrenamt", "0"],
+          ] as const
+        ).map(([k, label, platzhalter]) => (
+          <label key={k} className="field">
+            <span>{label}</span>
+            <input name={`gewicht_${k}`} inputMode="decimal" defaultValue={alsText(gewichte?.[k])} placeholder={platzhalter} />
+          </label>
+        ))}
+      </div>
+      <p className="text-[12.5px] font-semibold text-brand-ink-soft">Ämter / Funktionen</p>
+      <div className="flex flex-col gap-2">
+        {aemter.map((z) => (
+          <div key={z.nr} className="flex items-end gap-2">
+            <label className="field flex-1">
+              <span>Bezeichnung</span>
+              <input name="funktion_name" defaultValue={z.name} list="ehrungs-funktionen" placeholder="z. B. Vorstand" />
+            </label>
+            <label className="field w-[110px]">
+              <span>Punkte/Jahr</span>
+              <input name="funktion_punkte" inputMode="decimal" defaultValue={z.wert} placeholder="z. B. 1" />
+            </label>
+            <button
+              type="button"
+              aria-label="Amt entfernen"
+              onClick={() => setAemter((a) => a.filter((x) => x.nr !== z.nr))}
+              className="mb-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-brand-ink-soft hover:bg-brand-red-wash hover:text-brand-red"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        ))}
+        <button type="button" onClick={() => setAemter((a) => [...a, { nr: ++zeilenZaehler, name: "", wert: "" }])} className={`${KNOPF_KLEIN} self-start`}>
+          <Plus size={14} /> Amt hinzufügen
+        </button>
+      </div>
+      <Hinweis>
+        Punkte aus mehreren Kriterien werden addiert. Die Bezeichnung muss mit der Funktion in den Tätigkeitszeiten übereinstimmen (Groß-/Kleinschreibung egal).
+      </Hinweis>
+    </>
+  );
+}
+
+// Eingabefelder einer Regel (Werte vorbelegt)
+function RegelFelder({ berechnung, regel }: { berechnung: string; regel?: Regel | null }) {
+  return (
+    <>
+      {MIT_JAHREN.includes(berechnung) && (
+        <div className="field-row flex-wrap">
+          <label className="field sm:max-w-[160px]">
+            <span>Erforderliche Jahre</span>
+            <input name="jahre" inputMode="decimal" required defaultValue={alsText(regel?.jahre)} placeholder="z. B. 10" />
+          </label>
+          {berechnung === "funktion" && (
+            <label className="field">
+              <span>Funktion</span>
+              <input name="funktion" required defaultValue={regel?.funktion ?? ""} list="ehrungs-funktionen" placeholder="z. B. Trainer, Vorstand" />
+            </label>
+          )}
+          <label className="flex items-center gap-2 self-end pb-2 text-[13px] text-brand-ink">
+            <input type="checkbox" name="ununterbrochen" value="ja" defaultChecked={regel?.ununterbrochen ?? false} className="h-4 w-4 accent-brand-red" />{" "}
+            ununterbrochen
+          </label>
+        </div>
+      )}
+      {berechnung === "punkte" && (
+        <>
+          <label className="field sm:max-w-[200px]">
+            <span>Mindestpunkte</span>
+            <input name="punkte_min" inputMode="decimal" required defaultValue={alsText(regel?.punkteMin)} placeholder="z. B. 11" />
+          </label>
+          <GewichteFelder gewichte={regel?.punkteGewichte ?? null} />
+        </>
+      )}
+      <label className="field">
+        <span>Bemerkung (optional)</span>
+        <input name="bemerkung" defaultValue={regel?.bemerkung ?? ""} />
+      </label>
+    </>
+  );
+}
+
+// Regel anlegen oder (mit regel) bearbeiten
+export function RegelFormular({ artId, regel }: { artId: string; regel?: Regel }) {
   const [ergebnis, aktion] = useActionState(regelSpeichern, LEERES_ERGEBNIS);
-  const [berechnung, setBerechnung] = useState("mitgliedschaft");
+  const [berechnung, setBerechnung] = useState<string>(regel?.berechnung ?? "mitgliedschaft");
   return (
     <form action={aktion} className="auth-form rounded-xl border border-dashed border-brand-line p-3">
       <input type="hidden" name="ehrungsart_id" value={artId} />
+      {regel && <input type="hidden" name="id" value={regel.id} />}
       <label className="field">
         <span>Berechnungsart</span>
         <select name="berechnung" value={berechnung} onChange={(e) => setBerechnung(e.target.value)}>
@@ -552,61 +661,69 @@ export function RegelFormular({ artId }: { artId: string }) {
           ))}
         </select>
       </label>
-      {["mitgliedschaft", "aktiv", "ehrenamt", "funktion"].includes(berechnung) && (
-        <div className="field-row flex-wrap">
-          <label className="field sm:max-w-[160px]">
-            <span>Erforderliche Jahre</span>
-            <input name="jahre" inputMode="decimal" required placeholder="z. B. 10" />
-          </label>
-          {berechnung === "funktion" && (
-            <label className="field">
-              <span>Funktion</span>
-              <input name="funktion" required placeholder="z. B. Trainer, Vorstand" />
-            </label>
-          )}
-          <label className="flex items-center gap-2 self-end pb-2 text-[13px] text-brand-ink">
-            <input type="checkbox" name="ununterbrochen" value="ja" className="h-4 w-4 accent-brand-red" /> ununterbrochen
-          </label>
-        </div>
-      )}
-      {berechnung === "punkte" && (
-        <>
-          <label className="field sm:max-w-[200px]">
-            <span>Mindestpunkte</span>
-            <input name="punkte_min" inputMode="decimal" required placeholder="z. B. 11" />
-          </label>
-          <p className="text-[12.5px] font-semibold text-brand-ink-soft">Punkte je vollendetem Jahr</p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <label className="field">
-              <span>Mitgliedschaft</span>
-              <input name="gewicht_mitgliedschaft" inputMode="decimal" placeholder="0" />
-            </label>
-            <label className="field">
-              <span>Aktive Tätigkeit</span>
-              <input name="gewicht_aktiv" inputMode="decimal" placeholder="z. B. 0,5" />
-            </label>
-            <label className="field">
-              <span>Ehrenamt</span>
-              <input name="gewicht_ehrenamt" inputMode="decimal" placeholder="0" />
-            </label>
-            <label className="field">
-              <span>Funktion</span>
-              <input name="gewicht_funktion" inputMode="decimal" placeholder="z. B. 1" />
-            </label>
-          </div>
-          <label className="field">
-            <span>Name der Funktion für Punkte</span>
-            <input name="gewicht_funktion_name" placeholder="z. B. Vorstand" />
-          </label>
-        </>
-      )}
-      <label className="field">
-        <span>Bemerkung (optional)</span>
-        <input name="bemerkung" />
-      </label>
+      <RegelFelder key={berechnung} berechnung={berechnung} regel={regel?.berechnung === berechnung ? regel : null} />
       <Meldung ergebnis={ergebnis} />
-      <SendenButton variante="sekundaer">Regel hinzufügen</SendenButton>
+      <SendenButton variante="sekundaer">{regel ? "Regel speichern" : "Regel hinzufügen"}</SendenButton>
     </form>
+  );
+}
+
+// Verbandsregel fuer den eigenen Verein anpassen (vorbelegt mit den aktuell wirksamen Werten)
+export function RegelAnpassung({ vereinId, basis, anpassung }: { vereinId: string; basis: Regel; anpassung: Anpassung | null }) {
+  const [ergebnis, aktion] = useActionState(regelAnpassen, LEERES_ERGEBNIS);
+  const wirksam = wirksameRegel(basis, anpassung);
+  return (
+    <form action={aktion} className="auth-form rounded-xl border border-dashed border-brand-line p-3">
+      <input type="hidden" name="verein_id" value={vereinId} />
+      <input type="hidden" name="regel_id" value={basis.id} />
+      <p className="text-[12.5px] text-brand-ink-soft">
+        Berechnungsart: <strong className="text-brand-ink">{BERECHNUNG[basis.berechnung]}</strong> · Voreinstellung: {regelKurz(basis)}
+      </p>
+      <label className="flex items-center gap-2 text-[13px] font-semibold text-brand-ink">
+        <input type="checkbox" name="anwenden" value="ja" defaultChecked={anpassung?.aktiv ?? true} className="h-4 w-4 accent-brand-red" />
+        Regel für unseren Verein anwenden
+      </label>
+      {basis.berechnung !== "manuell" && <RegelFelder berechnung={basis.berechnung} regel={wirksam} />}
+      <Meldung ergebnis={ergebnis} />
+      <SendenButton variante="sekundaer">Für unseren Verein speichern</SendenButton>
+    </form>
+  );
+}
+
+export function AnpassungZuruecksetzen({ vereinId, regelId }: { vereinId: string; regelId: string }) {
+  const [laeuft, starten] = useTransition();
+  const [ergebnis, setErgebnis] = useState<AktionsErgebnis>(LEERES_ERGEBNIS);
+  const router = useRouter();
+  return (
+    <div className="flex flex-col gap-1">
+      <button
+        type="button"
+        disabled={laeuft}
+        className={`${KNOPF_KLEIN} self-start`}
+        onClick={() => {
+          if (!confirm("Anpassung verwerfen und die Voreinstellung aus dem Katalog verwenden?")) return;
+          starten(async () => {
+            const e = await regelAnpassungZuruecksetzen(vereinId, regelId);
+            setErgebnis(e);
+            if (!e.error) router.refresh();
+          });
+        }}
+      >
+        <RotateCcw size={14} /> Auf Voreinstellung zurücksetzen
+      </button>
+      <Meldung ergebnis={ergebnis} />
+    </div>
+  );
+}
+
+// Vorschlagsliste fuer Funktionsbezeichnungen (einmal je Seite einbinden)
+export function FunktionsListe({ namen }: { namen: string[] }) {
+  return (
+    <datalist id="ehrungs-funktionen">
+      {namen.map((n) => (
+        <option key={n} value={n} />
+      ))}
+    </datalist>
   );
 }
 

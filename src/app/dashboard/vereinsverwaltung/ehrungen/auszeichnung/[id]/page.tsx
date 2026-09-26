@@ -5,10 +5,17 @@ import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { EhrungenKopf, EHRUNGEN_PFAD, KeinZugriff, mitVerein } from "@/components/ehrungen/EhrungenKopf";
 import { PruefBadge, TypBadge } from "@/components/ehrungen/Badges";
-import { AuszeichnungFormular, RegelFormular, RegelLoeschen } from "@/components/ehrungen/EhrungenFormulare";
+import {
+  AnpassungZuruecksetzen,
+  AuszeichnungFormular,
+  FunktionsListe,
+  RegelAnpassung,
+  RegelFormular,
+  RegelLoeschen,
+} from "@/components/ehrungen/EhrungenFormulare";
 import { ehrungsKontext } from "@/lib/ehrungen/kontext";
-import { getAuszeichnung } from "@/lib/ehrungen/daten";
-import { PRUEFSTATUS, datum, regelText } from "@/lib/ehrungen/typen";
+import { getAnpassungen, getAuszeichnung, getFunktionsnamen } from "@/lib/ehrungen/daten";
+import { PRUEFSTATUS, datum, regelKurz, wirksameRegel, type Anpassung } from "@/lib/ehrungen/typen";
 
 export const metadata = { title: "Auszeichnung – TanzRaum" };
 
@@ -46,6 +53,10 @@ export default async function AuszeichnungSeite({
   const art = await getAuszeichnung(supabase, id);
   if (!art || (art.typ === "verein" && art.vereinId !== verein.vereinId)) return <KeinZugriff ohneLizenz={false} />;
   const eigene = art.typ === "verein";
+  const [anpassungen, funktionen] = await Promise.all([
+    eigene ? Promise.resolve(new Map<string, Anpassung>()) : getAnpassungen(supabase, verein.vereinId, art.regeln.map((r) => r.id)),
+    getFunktionsnamen(supabase, verein.vereinId),
+  ]);
 
   return (
     <div className="mx-auto flex max-w-[900px] flex-col gap-4">
@@ -56,21 +67,55 @@ export default async function AuszeichnungSeite({
         {art.organisation && <span className="text-[13px] text-brand-ink-soft">{art.organisation}</span>}
       </div>
 
+      <FunktionsListe namen={funktionen} />
       <section className={KARTE}>
-        <KarteKopf icon={ListChecks} titel="Regeln für automatische Vorschläge" untertitel={art.regelVerknuepfung === "alle" ? "Alle Regeln müssen erfüllt sein" : "Eine Regel genügt"} />
+        <KarteKopf
+          icon={ListChecks}
+          titel="Regeln für automatische Vorschläge"
+          untertitel={
+            (art.regelVerknuepfung === "alle" ? "Alle Regeln müssen erfüllt sein" : "Eine Regel genügt") +
+            (eigene ? "" : " · Voreinstellung aus dem TanzRaum-Katalog, für Ihren Verein anpassbar")
+          }
+        />
         {art.regeln.length === 0 ? (
           <p className="mb-3 text-[13.5px] text-brand-ink-soft">Keine Regel hinterlegt – die Auszeichnung kann manuell vergeben werden.</p>
         ) : (
-          <ul className="mb-3 flex flex-col gap-1.5">
-            {art.regeln.map((r) => (
-              <li key={r.id} className="flex items-center justify-between gap-2 rounded-xl border border-brand-line px-3 py-2 text-[13.5px] text-brand-ink">
-                <span>
-                  {r.berechnung === "manuell" ? "Manuelle Vergabe" : regelText({ ...r, punkte_min: r.punkteMin, punkte_gewichte: r.punkteGewichte })}
-                  {r.bemerkung ? <span className="text-brand-ink-soft"> · {r.bemerkung}</span> : null}
-                </span>
-                {eigene && <RegelLoeschen regelId={r.id} />}
-              </li>
-            ))}
+          <ul className="mb-3 flex flex-col gap-2">
+            {art.regeln.map((r) => {
+              const anpassung = anpassungen.get(r.id) ?? null;
+              const wirksam = wirksameRegel(r, anpassung);
+              return (
+                <li key={r.id} className="rounded-xl border border-brand-line px-3 py-2 text-[13.5px] text-brand-ink">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={anpassung && !anpassung.aktiv ? "text-brand-ink-faint line-through" : ""}>
+                      {regelKurz(wirksam)}
+                      {wirksam.bemerkung ? <span className="text-brand-ink-soft"> · {wirksam.bemerkung}</span> : null}
+                    </span>
+                    {eigene && <RegelLoeschen regelId={r.id} />}
+                  </div>
+                  {anpassung && (
+                    <p className="pt-1 text-[12.5px] text-brand-ink-soft">
+                      {anpassung.aktiv ? "✏️ Für Ihren Verein angepasst" : "⏸️ Für Ihren Verein ausgeschaltet"} · Voreinstellung: {regelKurz(r)}
+                    </p>
+                  )}
+                  <details className="pt-1">
+                    <summary className="cursor-pointer text-[12.5px] font-semibold text-brand-red">
+                      {eigene ? "Bearbeiten" : "Für unseren Verein anpassen"}
+                    </summary>
+                    <div className="flex flex-col gap-2 pt-2">
+                      {eigene ? (
+                        <RegelFormular artId={art.id} regel={r} />
+                      ) : (
+                        <>
+                          <RegelAnpassung vereinId={verein.vereinId} basis={r} anpassung={anpassung} />
+                          {anpassung && <AnpassungZuruecksetzen vereinId={verein.vereinId} regelId={r.id} />}
+                        </>
+                      )}
+                    </div>
+                  </details>
+                </li>
+              );
+            })}
           </ul>
         )}
         {eigene && <RegelFormular artId={art.id} />}

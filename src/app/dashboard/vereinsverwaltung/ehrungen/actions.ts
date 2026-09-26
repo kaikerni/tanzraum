@@ -299,46 +299,136 @@ export async function auszeichnungSpeichern(_prev: AktionsErgebnis, fd: FormData
   redirect(`${PFAD}/auszeichnung/${data.id}?verein=${vereinId}`);
 }
 
-export async function regelSpeichern(_prev: AktionsErgebnis, fd: FormData): Promise<AktionsErgebnis> {
-  const artId = id(fd, "ehrungsart_id");
-  const berechnung = String(fd.get("berechnung") ?? "");
+type RegelWerte = {
+  jahre: number | null;
+  funktion: string | null;
+  punkte_min: number | null;
+  punkte_gewichte: Record<string, number> | null;
+  ununterbrochen: boolean;
+  bemerkung: string | null;
+};
+const MIT_JAHREN = ["mitgliedschaft", "aktiv", "ehrenamt", "funktion"];
+
+// Werte einer Regel aus dem Formular (gemeinsam fuer Katalog, vereinseigene Auszeichnungen und Vereinsanpassung)
+function regelWerte(fd: FormData, berechnung: string): RegelWerte | string {
   const jahre = zahlFeld(fd, "jahre");
   const punkteMin = zahlFeld(fd, "punkte_min");
-  if (!artId) return { error: "Ungültige Auszeichnung." };
-  if (!(berechnung in BERECHNUNG)) return { error: "Bitte die Berechnungsart auswählen." };
-  if (jahre === false || punkteMin === false) return { error: "Bitte gültige Zahlen angeben." };
+  if (jahre === false || punkteMin === false) return "Bitte gültige Zahlen angeben.";
   const funktion = text(fd, "funktion", 100);
   let gewichte: Record<string, number> | null = null;
   if (berechnung === "punkte") {
     gewichte = {};
     for (const k of ["mitgliedschaft", "aktiv", "ehrenamt"]) {
       const g = zahlFeld(fd, `gewicht_${k}`);
-      if (g === false) return { error: "Bitte gültige Punktwerte angeben." };
+      if (g === false || (g !== null && g < 0)) return "Bitte gültige Punktwerte angeben.";
       if (g) gewichte[k] = g;
     }
-    const gf = zahlFeld(fd, "gewicht_funktion");
-    const fname = text(fd, "gewicht_funktion_name", 100);
-    if (gf === false) return { error: "Bitte gültige Punktwerte angeben." };
-    if (gf && fname) gewichte[`funktion:${fname}`] = gf;
-    if (!Object.keys(gewichte).length || !punkteMin) return { error: "Bitte Mindestpunkte und mindestens einen Punktwert je Jahr angeben." };
+    const namen = fd.getAll("funktion_name").map((x) => String(x).trim().slice(0, 100));
+    const werte = fd.getAll("funktion_punkte").map((x) => String(x).trim().replace(",", "."));
+    for (let i = 0; i < namen.length; i++) {
+      if (!namen[i] && !werte[i]) continue;
+      const g = Number(werte[i]);
+      if (!namen[i] || !werte[i] || !Number.isFinite(g) || g < 0) return "Bitte für jedes Amt eine Bezeichnung und einen Punktwert angeben.";
+      if (g) gewichte[`funktion:${namen[i]}`] = g;
+    }
+    if (!Object.keys(gewichte).length || !punkteMin || punkteMin <= 0) return "Bitte Mindestpunkte und mindestens einen Punktwert je Jahr angeben.";
   } else if (berechnung !== "manuell") {
-    if (!jahre || jahre <= 0) return { error: "Bitte die erforderlichen Jahre angeben." };
-    if (berechnung === "funktion" && !funktion) return { error: "Bitte die Funktion angeben (z. B. Trainer, Vorstand)." };
+    if (!jahre || jahre <= 0) return "Bitte die erforderlichen Jahre angeben.";
+    if (berechnung === "funktion" && !funktion) return "Bitte die Funktion angeben (z. B. Trainer, Vorstand).";
   }
-  const { supabase } = await sitzung();
-  const { error } = await supabase.from("ehrungs_regeln").insert({
-    ehrungsart_id: artId,
-    berechnung,
-    jahre: ["mitgliedschaft", "aktiv", "ehrenamt", "funktion"].includes(berechnung) ? jahre : null,
+  return {
+    jahre: MIT_JAHREN.includes(berechnung) ? jahre : null,
     funktion: berechnung === "funktion" ? funktion : null,
     punkte_min: berechnung === "punkte" ? punkteMin : null,
     punkte_gewichte: gewichte,
-    ununterbrochen: fd.get("ununterbrochen") === "ja",
+    ununterbrochen: MIT_JAHREN.includes(berechnung) && fd.get("ununterbrochen") === "ja",
     bemerkung: text(fd, "bemerkung", 500),
-  });
+  };
+}
+
+// Regel anlegen oder bearbeiten (Katalog: nur TanzRaum-Admins; vereinseigene Auszeichnungen: Vereinsadmins – RLS)
+export async function regelSpeichern(_prev: AktionsErgebnis, fd: FormData): Promise<AktionsErgebnis> {
+  const regelId = id(fd, "id");
+  const artId = id(fd, "ehrungsart_id");
+  const berechnung = String(fd.get("berechnung") ?? "");
+  if (!artId) return { error: "Ungültige Auszeichnung." };
+  if (!(berechnung in BERECHNUNG)) return { error: "Bitte die Berechnungsart auswählen." };
+  const werte = regelWerte(fd, berechnung);
+  if (typeof werte === "string") return { error: werte };
+  const { supabase } = await sitzung();
+  if (regelId) {
+    const { data, error } = await supabase
+      .from("ehrungs_regeln")
+      .update({ berechnung, ...werte })
+      .eq("id", regelId)
+      .eq("ehrungsart_id", artId)
+      .select("id");
+    if (error) return { error: fehler(error, "Die Regel konnte nicht gespeichert werden.") };
+    if (!data?.length) return { error: "Dafür fehlt die Berechtigung." };
+    neuLaden();
+    return { error: null, ok: "Regel gespeichert. Offene Vorschläge werden neu berechnet; verliehene Ehrungen bleiben unverändert." };
+  }
+  const { error } = await supabase.from("ehrungs_regeln").insert({ ehrungsart_id: artId, berechnung, ...werte });
   if (error) return { error: fehler(error, "Die Regel konnte nicht gespeichert werden.") };
   neuLaden();
   return { error: null, ok: "Regel hinzugefügt." };
+}
+
+// Verbandsregel fuer den eigenen Verein anpassen. Gespeichert werden nur Werte, die von der Voreinstellung abweichen –
+// spaetere Aenderungen am Katalog wirken fuer alle uebrigen Werte weiter.
+export async function regelAnpassen(_prev: AktionsErgebnis, fd: FormData): Promise<AktionsErgebnis> {
+  const vereinId = id(fd, "verein_id");
+  const regelId = id(fd, "regel_id");
+  if (!vereinId || !regelId) return { error: "Ungültige Angaben." };
+  const { supabase } = await sitzung();
+  const { data: basis } = await supabase.from("ehrungs_regeln").select("*").eq("id", regelId).maybeSingle();
+  if (!basis) return { error: "Die Regel wurde nicht gefunden." };
+  const werte = regelWerte(fd, basis.berechnung);
+  if (typeof werte === "string") return { error: werte };
+  const gleich = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+  const zahl = (x: unknown) => (x === null || x === undefined ? null : Number(x));
+  const gewichteGleich = (a: Record<string, number> | null, b: Record<string, number> | null) => {
+    const norm = (g: Record<string, number> | null) =>
+      Object.entries(g ?? {})
+        .map(([k, v]) => [k.toLowerCase(), Number(v)] as const)
+        .sort(([x], [y]) => x.localeCompare(y));
+    return gleich(norm(a), norm(b));
+  };
+  const abweichung = {
+    aktiv: fd.get("anwenden") === "ja",
+    jahre: werte.jahre !== null && werte.jahre !== zahl(basis.jahre) ? werte.jahre : null,
+    funktion: werte.funktion && werte.funktion !== basis.funktion ? werte.funktion : null,
+    punkte_min: werte.punkte_min !== null && werte.punkte_min !== zahl(basis.punkte_min) ? werte.punkte_min : null,
+    punkte_gewichte: basis.berechnung === "punkte" && !gewichteGleich(werte.punkte_gewichte, basis.punkte_gewichte) ? werte.punkte_gewichte : null,
+    ununterbrochen: MIT_JAHREN.includes(basis.berechnung) && werte.ununterbrochen !== basis.ununterbrochen ? werte.ununterbrochen : null,
+    bemerkung: werte.bemerkung && werte.bemerkung !== basis.bemerkung ? werte.bemerkung : null,
+  };
+  const keine = abweichung.aktiv && Object.entries(abweichung).every(([k, v]) => k === "aktiv" || v === null);
+  if (keine) {
+    const { error } = await supabase.from("verein_ehrungs_regel_anpassungen").delete().eq("verein_id", vereinId).eq("regel_id", regelId);
+    if (error) return { error: fehler(error, "Die Anpassung konnte nicht gespeichert werden.") };
+  } else {
+    const { error } = await supabase
+      .from("verein_ehrungs_regel_anpassungen")
+      .upsert({ verein_id: vereinId, regel_id: regelId, ...abweichung }, { onConflict: "verein_id,regel_id" });
+    if (error) return { error: fehler(error, "Die Anpassung konnte nicht gespeichert werden.") };
+  }
+  await supabase.rpc("ehrungen_aktualisieren", { p_verein_id: vereinId });
+  neuLaden();
+  return {
+    error: null,
+    ok: keine ? "Entspricht der Voreinstellung – keine Anpassung gespeichert." : "Für Ihren Verein gespeichert. Offene Vorschläge wurden neu berechnet.",
+  };
+}
+
+export async function regelAnpassungZuruecksetzen(vereinId: string, regelId: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(vereinId) || !UUID.test(regelId)) return { error: "Ungültige Angaben." };
+  const { supabase } = await sitzung();
+  const { error } = await supabase.from("verein_ehrungs_regel_anpassungen").delete().eq("verein_id", vereinId).eq("regel_id", regelId);
+  if (error) return { error: fehler(error, "Die Voreinstellung konnte nicht wiederhergestellt werden.") };
+  await supabase.rpc("ehrungen_aktualisieren", { p_verein_id: vereinId });
+  neuLaden();
+  return { error: null, ok: "Voreinstellung wiederhergestellt." };
 }
 
 export async function regelLoeschen(regelId: string): Promise<AktionsErgebnis> {

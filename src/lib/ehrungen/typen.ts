@@ -73,6 +73,37 @@ export type Regel = {
   bemerkung: string | null;
 };
 
+// Abweichende Werte einer Verbandsregel fuer einen Verein (null = Voreinstellung aus dem Katalog)
+export type Anpassung = {
+  id: string;
+  regelId: string;
+  aktiv: boolean;
+  jahre: number | null;
+  funktion: string | null;
+  punkteMin: number | null;
+  punkteGewichte: Record<string, number> | null;
+  ununterbrochen: boolean | null;
+  bemerkung: string | null;
+  updatedAt: string;
+};
+
+export function wirksameRegel(r: Regel, a?: Anpassung | null): Regel {
+  if (!a) return r;
+  return {
+    ...r,
+    jahre: a.jahre ?? r.jahre,
+    funktion: a.funktion ?? r.funktion,
+    punkteMin: a.punkteMin ?? r.punkteMin,
+    punkteGewichte: a.punkteGewichte ?? r.punkteGewichte,
+    ununterbrochen: a.ununterbrochen ?? r.ununterbrochen,
+    bemerkung: a.bemerkung ?? r.bemerkung,
+  };
+}
+
+export function regelKurz(r: Regel): string {
+  return r.berechnung === "manuell" ? "Manuelle Vergabe" : regelText({ ...r, punkte_min: r.punkteMin, punkte_gewichte: r.punkteGewichte });
+}
+
 export type Auszeichnung = {
   id: string;
   typ: Typ;
@@ -114,6 +145,7 @@ export type GrundlageRegel = {
   korrektur_von: string | null;
   faellig_am: string | null;
   bemerkung?: string | null;
+  vereinsanpassung?: boolean;
 };
 export type Grundlage = { verknuepfung: "eine" | "alle"; regeln: GrundlageRegel[]; faellig_am: string | null; berechnet_am?: string };
 
@@ -201,6 +233,7 @@ export function grundlageZeilen(g: Grundlage | null): string[] {
     if (r.berechnung === "manuell") return "Manuelle Entscheidung durch den Vereinsadmin";
     const teile = [`Erforderlich: ${regelText(r)}`];
     if (r.beginn) teile.push(`${r.berechnung === "punkte" ? "Erster Zeitraum ab" : "Beginn"} ${datum(r.beginn)}`);
+    if (r.vereinsanpassung) teile.push("für diesen Verein angepasst");
     if (r.korrektur_von) teile.push(`Korrektur für diesen Vorgang: Beginn ${datum(r.korrektur_von)}`);
     teile.push(r.faellig_am ? `voraussichtlich ${datum(r.faellig_am)}` : "mit den hinterlegten Zeiten nicht erreichbar");
     return teile.join(" · ");
