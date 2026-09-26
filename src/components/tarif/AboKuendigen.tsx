@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { zahlungAufruf } from "./zahlungAufruf";
 
-export function AboKuendigen({ aboId, text = "Abo kündigen", frage }: { aboId: string; text?: string; frage: string }) {
+export function AboKuendigen({ aboId, text = "Lizenz kündigen", frage }: { aboId: string; text?: string; frage: string }) {
   const router = useRouter();
   const [laedt, setLaedt] = useState(false);
   const [fehler, setFehler] = useState<string | null>(null);

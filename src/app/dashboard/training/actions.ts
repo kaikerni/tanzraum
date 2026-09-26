@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { freundlicherFehler } from "@/lib/fehler";
 import type { AktionsErgebnis } from "@/components/ui/SendenButton";
+import { istAbmeldegrund } from "@/lib/training/abmeldegruende";
 
 // Rechte erzwingt die Datenbank (RLS + Konsistenz-Trigger): abmelden nur sich selbst/eigene Kinder
 // bzw. als Gruppentrainer, Termine nur Vereinsadmin/Gruppentrainer, Anwesenheit nur mit Bereich "anwesenheit".
@@ -32,22 +33,26 @@ export async function abmelden(
   gruppeId: string,
   datum: string,
   vmId: string,
-  grund: string,
+  kategorie: string,
+  hinweis: string,
 ): Promise<AktionsErgebnis> {
   if (!DATUM.test(datum)) return { error: "Ungültiges Datum." };
+  if (!istAbmeldegrund(kategorie)) return { error: "Bitte einen Grund auswählen." };
   const { supabase } = await sitzung();
+  // Anzeigetext (grund), Quelle und eintragende Person setzt der Trigger trainings_abmeldung_vorbereiten
   const { error } = await supabase.from("trainings_abmeldungen").insert({
     verein_id: vereinId,
     gruppe_id: gruppeId,
     datum,
     vereins_mitglied_id: vmId,
-    grund: grund.trim().slice(0, 300) || null,
+    grund_kategorie: kategorie,
+    hinweis: hinweis.trim().slice(0, 200) || null,
   });
   if (error) {
     return {
       error:
         error.code === "42501"
-          ? "Abmelden geht nur für heute oder später – und nur für dich selbst oder deine Kinder."
+          ? "Abmelden geht nur für heute oder später – und nur für dich selbst, deine Kinder oder als Trainer deiner Gruppe."
           : freundlicherFehler(error),
     };
   }

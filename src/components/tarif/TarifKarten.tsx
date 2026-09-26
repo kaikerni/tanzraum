@@ -176,7 +176,7 @@ export function TarifKarten({
           <Liste tarif="basic" />
           <div className="mt-auto">
             {persoenlich === "basic" ? (
-              <div className={hinweis}>Dein BASIC-Abo ist eingerichtet (siehe oben)</div>
+              <div className={hinweis}>Deine BASIC-Lizenz ist eingerichtet (siehe oben)</div>
             ) : vereinszugang ? (
               <div className={hinweis}>Über {vereinName ?? "deinen Verein"} hast du bereits VEREIN-Zugang – BASIC brauchst du nicht.</div>
             ) : (
@@ -192,7 +192,7 @@ export function TarifKarten({
           <Liste tarif="verein" />
           <p className="text-[12px] text-brand-ink-soft">
             Unbegrenzt viele Mitglieder. Wer aktiv im Verein ist, ist automatisch abgedeckt; wer aus dem Verein entfernt wird,
-            verliert die Abdeckung. Ein eigenes BASIC-Abo wird währenddessen pausiert – keine doppelte Zahlung.
+            verliert die Abdeckung. Eine eigene BASIC-Lizenz wird währenddessen pausiert – keine doppelte Zahlung.
           </p>
           <div className="mt-auto flex flex-col gap-3">
             {kaufbar.length > 0 ? (

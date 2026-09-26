@@ -37,7 +37,7 @@ function AboZeile({ abo, titel }: { abo: AboInfo; titel: string }) {
           <span className="flex items-center gap-1.5 text-brand-ink-soft">
             <PauseCircle size={14} /> Pausiert seit {datum(abo.pausiert_am)}
             {abo.pause_verein ? `, weil ${abo.pause_verein} eine Vereinslizenz hat` : ""}. Es wird nichts abgebucht; nach
-            dem Ende der Vereinsabdeckung läuft dein Abo automatisch weiter.
+            dem Ende der Vereinsabdeckung läuft deine Lizenz automatisch weiter.
           </span>
         )}
         {abo.status === "cancelled" && bis && <span className="text-brand-ink-soft">Gekündigt – der Tarif bleibt bis {bis} aktiv.</span>}
@@ -120,11 +120,11 @@ export default async function MeinTarifSeite({
         {status.abos.length > 0 ? (
           <div className="flex flex-col gap-2">
             {status.abos.map((a) => (
-              <AboZeile key={a.id} abo={a} titel={`${TARIF_LABEL[a.tarif] ?? a.tarif}-Abo`} />
+              <AboZeile key={a.id} abo={a} titel={`${TARIF_LABEL[a.tarif] ?? a.tarif}-Lizenz`} />
             ))}
           </div>
         ) : (
-          <p className="text-[13px] text-brand-ink-soft">Du hast kein persönliches Abo.</p>
+          <p className="text-[13px] text-brand-ink-soft">Du hast keine persönliche Lizenz.</p>
         )}
       </section>
 

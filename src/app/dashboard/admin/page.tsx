@@ -37,7 +37,7 @@ export default async function AdminSeite() {
           <CreditCard size={22} />
         </span>
         <span className="flex-1">
-          <span className="block text-[16px] font-bold text-brand-ink">Tarife & Abos</span>
+          <span className="block text-[16px] font-bold text-brand-ink">Tarife & Lizenzen</span>
           <span className="block text-[13px] text-brand-ink-soft">Wer hat FREE, BASIC oder VEREIN – Vereinslizenzen und Mitglieder</span>
         </span>
       </Link>

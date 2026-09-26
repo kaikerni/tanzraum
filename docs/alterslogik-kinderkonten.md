@@ -23,12 +23,15 @@ Die Prüfung erfolgt immer in der Datenbank; das Frontend nutzt `src/lib/auth/al
    Verantwortung“, stimmt dem Kinderkonto zu und willigt optional in Push ein – oder lehnt ab.
    `eltern_zustimmung_entscheiden` dokumentiert Zeitpunkt, Erklärungen, Umfang (`umfang`), Textversion
    (`zustimmung_textversion()`), Freischaltung und hebt die Sperre auf. Der Link ist danach verbraucht.
-   Ablehnung bei Neuregistrierung: Konto wird sofort gelöscht.
+   Ablehnung bei Neuregistrierung: Konto wird sofort gelöscht – außer das Kind ist bereits einem Verein zugeordnet
+   (dann bleibt es gesperrt bestehen und im Verein sichtbar).
 5. Danach erhält das Kind die Bestätigungs-Mail (Supabase `resend`), das Elternteil eine Bestätigung mit einem einmaligen
    Link (30 Tage) zum optionalen Verknüpfen eines eigenen Elternkontos (`/eltern/verknuepfen`, Anmelde-Adresse muss der
    Eltern-Adresse entsprechen, Konto muss volljährig sein).
 6. Ohne Zustimmung löscht `kinderkonten_aufraeumen()` (Cron `kinderkonten-aufraeumen`, täglich 03:40 UTC) neu registrierte
    Kinderkonten nach 14 Tagen; protokolliert wird nur die Anzahl (`kinderkonto_loeschungen`).
+   Konten mit Vereinszuordnung (`vereins_mitglieder`) werden nie automatisch gelöscht: Login bleibt gesperrt,
+   das Mitglied bleibt in den Vereinslisten sichtbar und verwaltbar.
 
 Eine Zuordnung Eltern ↔ Kind durch den Verein zählt nicht als Zustimmung.
 

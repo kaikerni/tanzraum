@@ -99,7 +99,6 @@ export async function gruppeSpeichern(_prev: AktionsErgebnis, formData: FormData
     name,
     altersklasse_id: text(formData, "altersklasse_id"),
     disziplin_id: text(formData, "disziplin_id"),
-    thema: text(formData, "thema"),
   };
 
   const { supabase } = await sitzung();

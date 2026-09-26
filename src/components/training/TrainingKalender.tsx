@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Clock, MapPin, ClipboardCheck, UserMinus, Undo2 } from "lucide-react";
-import { abmelden, abmeldungZuruecknehmen } from "@/app/dashboard/training/actions";
+import { abmeldungZuruecknehmen } from "@/app/dashboard/training/actions";
+import { AbmeldeFormular } from "./AbmeldeFormular";
 import type { AktionsErgebnis } from "@/components/ui/SendenButton";
 import type { TrainingsTag, TrainingPerson } from "@/lib/training/getTraining";
 
@@ -21,7 +22,6 @@ function tagesTitel(iso: string, heute: string, morgen: string) {
 function PersonZeile({ t, p, heute }: { t: TrainingsTag; p: TrainingPerson; heute: string }) {
   const [laeuft, starte] = useTransition();
   const [grundOffen, setGrundOffen] = useState(false);
-  const [grund, setGrund] = useState("");
   const [meldung, setMeldung] = useState<AktionsErgebnis | null>(null);
   const vergangen = t.datum < heute;
 
@@ -60,37 +60,18 @@ function PersonZeile({ t, p, heute }: { t: TrainingsTag; p: TrainingPerson; heut
       </div>
       {p.abgemeldet && p.grund && <p className="text-[12.5px] text-brand-ink-soft">Grund: {p.grund}</p>}
       {grundOffen && !p.abgemeldet && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            starte(async () => {
-              const ergebnis = await abmelden(t.vereinId, t.gruppeId, t.datum, p.vmId, grund);
-              setMeldung(ergebnis);
-              if (!ergebnis.error) setGrundOffen(false);
-            });
+        <AbmeldeFormular
+          vereinId={t.vereinId}
+          gruppeId={t.gruppeId}
+          datum={t.datum}
+          vmId={p.vmId}
+          idPraefix={`abm-${t.terminId}-${t.datum}-${p.vmId}`}
+          onFertig={(ergebnis) => {
+            setMeldung(ergebnis);
+            setGrundOffen(false);
           }}
-          className="flex flex-col gap-2 sm:flex-row"
-        >
-          <label className="sr-only" htmlFor={`grund-${t.terminId}-${t.datum}-${p.vmId}`}>
-            Grund (optional)
-          </label>
-          <input
-            id={`grund-${t.terminId}-${t.datum}-${p.vmId}`}
-            value={grund}
-            onChange={(e) => setGrund(e.target.value)}
-            maxLength={300}
-            placeholder="Grund (optional), z. B. krank"
-            className="min-h-10 flex-1 rounded-xl border border-brand-line bg-white px-3 text-[13.5px] outline-none focus:border-brand-red"
-          />
-          <div className="flex gap-2">
-            <button type="submit" disabled={laeuft} className={`${KNOPF} border-brand-red bg-brand-red text-white hover:bg-brand-red-deep`}>
-              Abmelden
-            </button>
-            <button type="button" onClick={() => setGrundOffen(false)} className={`${KNOPF} border-brand-line bg-white text-brand-ink-soft`}>
-              Abbrechen
-            </button>
-          </div>
-        </form>
+          onAbbrechen={() => setGrundOffen(false)}
+        />
       )}
       {meldung?.error && <p className="form-error">{meldung.error}</p>}
     </div>

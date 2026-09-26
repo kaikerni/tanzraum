@@ -30,11 +30,7 @@ function GruppenFormular({
           <input name="name" defaultValue={gruppe?.name ?? ""} required placeholder="z. B. Jugendgarde" />
         </label>
         <label className="field">
-          <span>Thema (Pflicht bei Schautanz)</span>
-          <input name="thema" defaultValue={gruppe?.thema ?? ""} />
-        </label>
-        <label className="field">
-          <span>Altersklasse</span>
+          <span>Altersklasse (optional)</span>
           <select name="altersklasse_id" defaultValue={gruppe?.altersklasseId ?? ""}>
             <option value="">– keine –</option>
             {altersklassen.map((a) => (
@@ -45,7 +41,7 @@ function GruppenFormular({
           </select>
         </label>
         <label className="field">
-          <span>Disziplin</span>
+          <span>Schwerpunkt-Disziplin (optional)</span>
           <select name="disziplin_id" defaultValue={gruppe?.disziplinId ?? ""}>
             <option value="">– keine –</option>
             {disziplinen.map((d) => (
@@ -108,7 +104,7 @@ export function GruppenVerwaltung({
                 <div className="min-w-0">
                   <div className="truncate text-[14px] font-bold text-brand-ink">{g.name ?? "Ohne Namen"}</div>
                   <div className="text-[12.5px] text-brand-ink-soft">
-                    {[g.altersklasse, g.disziplin, g.thema].filter(Boolean).join(" · ") || "Keine Angaben"}
+                    {[g.altersklasse, g.disziplin].filter(Boolean).join(" · ") || "Keine Angaben"}
                   </div>
                 </div>
                 <span className="flex shrink-0 items-center gap-1 text-[12.5px] font-medium text-brand-ink">

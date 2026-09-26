@@ -26,6 +26,7 @@ export function StartKarte({
   tage,
   stammdaten,
   vorbei,
+  bdk,
 }: {
   start: Start;
   teilnehmer: StartTeilnehmer[];
@@ -33,6 +34,7 @@ export function StartKarte({
   tage: TurnierTag[];
   stammdaten: Stammdaten;
   vorbei: boolean;
+  bdk?: boolean;
 }) {
   const [modus, setModus] = useState<"ansicht" | "bearbeiten">("ansicht");
   const [liste, setListe] = useState(false);
@@ -44,7 +46,7 @@ export function StartKarte({
   if (modus === "bearbeiten" && verein) {
     return (
       <li className="rounded-2xl border border-brand-red/30 bg-white p-3">
-        <StartFormular verein={verein} turnierId={start.turnierId} tage={tage} stammdaten={stammdaten} start={start} onFertig={() => setModus("ansicht")} />
+        <StartFormular verein={verein} turnierId={start.turnierId} tage={tage} stammdaten={stammdaten} start={start} bdk={bdk} onFertig={() => setModus("ansicht")} />
         <button type="button" onClick={() => setModus("ansicht")} className="mt-2 text-[13px] font-semibold text-brand-ink-soft hover:text-brand-ink">
           Abbrechen
         </button>

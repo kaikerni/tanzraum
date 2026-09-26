@@ -11,6 +11,7 @@ export function StartFormular({
   tage,
   stammdaten,
   start,
+  bdk,
   onFertig,
 }: {
   verein: PlanungsVerein;
@@ -18,6 +19,8 @@ export function StartFormular({
   tage: TurnierTag[];
   stammdaten: Stammdaten;
   start?: Start;
+  // BDK-Turnier: Hinweis zur Tanzpaar-Besetzung anzeigen (nur Hinweis, keine Sperre)
+  bdk?: boolean;
   onFertig?: () => void;
 }) {
   const [ergebnis, aktion] = useActionState(async (prev: typeof LEERES_ERGEBNIS, fd: FormData) => {
@@ -25,7 +28,11 @@ export function StartFormular({
     if (!r.error && onFertig) onFertig();
     return r;
   }, LEERES_ERGEBNIS);
-  const [art, setArt] = useState<"gruppe" | "solo">(start && !start.gruppeId ? "solo" : verein.gruppen.length ? "gruppe" : "solo");
+  const [art, setArt] = useState<"formation" | "gruppe" | "solo">(
+    start?.formationId ? "formation" : start && !start.gruppeId ? "solo" : verein.formationen.length ? "formation" : verein.gruppen.length ? "gruppe" : "solo",
+  );
+  const [formationId, setFormationId] = useState(start?.formationId ?? "");
+  const gewaehlteFormation = verein.formationen.find((f) => f.id === formationId);
 
   return (
     <form action={aktion} className="flex flex-col gap-3">
@@ -34,7 +41,9 @@ export function StartFormular({
       <input type="hidden" name="verein_id" value={verein.vereinId} />
 
       <div className="flex gap-1.5" role="radiogroup" aria-label="Art des Starts">
-        {(["gruppe", "solo"] as const).map((a) => (
+        {(["formation", "gruppe", "solo"] as const)
+          .filter((a) => a !== "formation" || verein.formationen.length > 0)
+          .map((a) => (
           <button
             key={a}
             type="button"
@@ -43,12 +52,31 @@ export function StartFormular({
             onClick={() => setArt(a)}
             className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold ${art === a ? "bg-brand-ink text-white" : "bg-brand-bg text-brand-ink-soft"}`}
           >
-            {a === "gruppe" ? "Gruppe" : "Solo / Paar"}
+            {a === "formation" ? "Formation" : a === "gruppe" ? "Gruppe" : "Solo / Paar"}
           </button>
         ))}
       </div>
 
-      {art === "gruppe" ? (
+      {art === "formation" ? (
+        <>
+          <label className="field">
+            <span>Formation</span>
+            <select name="formation_id" value={formationId} onChange={(e) => setFormationId(e.target.value)} required>
+              <option value="" disabled>
+                Formation wählen
+              </option>
+              {verein.formationen.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          {bdk && gewaehlteFormation?.bdkHinweis && (
+            <p className="rounded-lg bg-brand-amber-wash px-3 py-2 text-[12.5px] text-brand-ink">⚠️ {gewaehlteFormation.bdkHinweis}</p>
+          )}
+        </>
+      ) : art === "gruppe" ? (
         <label className="field">
           <span>Gruppe</span>
           <select name="gruppe_id" defaultValue={start?.gruppeId ?? ""} required>
@@ -66,7 +94,7 @@ export function StartFormular({
         <>
           <label className="field">
             <span>Bezeichnung</span>
-            <input name="bezeichnung" defaultValue={start?.bezeichnung ?? ""} placeholder="z. B. Tanzmariechen, Tanzpaar" maxLength={120} />
+            <input name="bezeichnung" defaultValue={start?.bezeichnung ?? ""} placeholder="z. B. Solist weiblich, Tanzpaar" maxLength={120} />
           </label>
           <fieldset className="field">
             <span>Solisten</span>

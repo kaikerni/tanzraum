@@ -7,7 +7,7 @@ import { TarifZaehler, type TarifZaehlerDaten } from "@/components/admin/TarifZa
 import { SortierteListe, type ListenEintrag } from "@/components/admin/SortierteListe";
 import { ABO_STATUS_LABEL, ANBIETER_LABEL, PERIODE_LABEL, datum } from "@/lib/tarife";
 
-export const metadata = { title: "Tarife & Abos" };
+export const metadata = { title: "Tarife & Lizenzen" };
 
 type Person = {
   user_id: string;
@@ -153,7 +153,7 @@ export default async function AdminTarifeSeite({ searchParams }: { searchParams:
         <Link href="/dashboard/admin" className="inline-flex items-center gap-1 text-[13px] font-semibold text-brand-ink-soft hover:text-brand-ink">
           <ArrowLeft size={14} /> TanzRaum-Administration
         </Link>
-        <h1 className="text-[26px] font-extrabold tracking-tight text-brand-ink">Tarife & Abos</h1>
+        <h1 className="text-[26px] font-extrabold tracking-tight text-brand-ink">Tarife & Lizenzen</h1>
       </div>
 
       <TarifZaehler z={z} aktiv={stufe} />
@@ -200,7 +200,7 @@ export default async function AdminTarifeSeite({ searchParams }: { searchParams:
           <SortierteListe eintraege={personenEintraege} leer="Keine Mitglieder in diesem Tarif." />
         )}
         <p className="text-[12px] text-brand-ink-soft">
-          „Neueste zuerst“ sortiert nach Beginn des aktuellen Tarifs (Abo-Beginn, Vereinsbeitritt bzw. Registrierung). Plattform-Admins
+          „Neueste zuerst“ sortiert nach Beginn des aktuellen Tarifs (Lizenzbeginn, Vereinsbeitritt bzw. Registrierung). Plattform-Admins
           werden nicht mitgezählt.
         </p>
       </section>

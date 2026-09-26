@@ -37,6 +37,8 @@ export default async function TurnierSeite({ params }: { params: Promise<{ id: s
 
   const heute = heuteBerlin();
   const vorbei = turnier.letzterTag < heute;
+  // BDK-Regel (Tanzpaar-Besetzung) gilt nur im Turnierkontext von BDK-Turnieren
+  const bdk = /^(BDK|Bund Deutscher Karneval)$/i.test(turnier.verband ?? "");
   const [meine, planung, stammdaten, { data: istPlattformAdmin }] = await Promise.all([
     getMeineStarts(supabase, turnier.ersterTag),
     getPlanungsVereine(supabase),
@@ -158,13 +160,13 @@ export default async function TurnierSeite({ params }: { params: Promise<{ id: s
           {starts.length > 0 ? (
             <ul className="flex flex-col gap-2">
               {starts.map((s, i) => (
-                <StartKarte key={s.id} start={s} teilnehmer={teilnehmer[i]} verein={verein} tage={turnier.tage} stammdaten={stammdaten} vorbei={vorbei} />
+                <StartKarte key={s.id} start={s} teilnehmer={teilnehmer[i]} verein={verein} tage={turnier.tage} stammdaten={stammdaten} vorbei={vorbei} bdk={bdk} />
               ))}
             </ul>
           ) : (
             <p className="text-[13.5px] text-brand-ink-soft">Noch keine Starts geplant.</p>
           )}
-          {!vorbei && <NeuerStart verein={verein} turnierId={turnier.id} tage={turnier.tage} stammdaten={stammdaten} />}
+          {!vorbei && <NeuerStart verein={verein} turnierId={turnier.id} tage={turnier.tage} stammdaten={stammdaten} bdk={bdk} />}
         </section>
       ))}
 

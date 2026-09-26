@@ -42,6 +42,8 @@ export type Start = {
   eigenesTurnier: boolean;
   gruppeId: string | null;
   gruppeName: string | null;
+  formationId: string | null;
+  formationName: string | null;
   bezeichnung: string | null;
   solisten: string[];
   solistenNamen: string | null;
@@ -163,6 +165,8 @@ export async function getVereinsStarts(
     eigenesTurnier: !!s.eigenes_turnier,
     gruppeId: s.gruppe_id,
     gruppeName: s.gruppe_name,
+    formationId: s.formation_id ?? null,
+    formationName: s.formation_name ?? null,
     bezeichnung: s.bezeichnung,
     solisten: s.solisten ?? [],
     solistenNamen: s.solisten_namen,
@@ -223,6 +227,8 @@ export type PlanungsVerein = {
   vereinName: string;
   gruppen: { id: string; name: string }[];
   mitglieder: { vmId: string; name: string }[];
+  // Formationen (konkrete Besetzung einer Disziplin); BDK-Hinweis z. B. fuer Tanzpaare
+  formationen: { id: string; name: string; disziplinId: string; altersklasseId: string | null; bdkHinweis: string | null }[];
 };
 
 export type Stammdaten = { disziplinen: { id: string; name: string }[]; altersklassen: { id: string; name: string }[] };
@@ -236,11 +242,27 @@ export async function getPlanungsVereine(supabase: SupabaseClient): Promise<Plan
     ),
   ];
   if (ids.length === 0) return [];
-  const [{ data: vereine }, { data: gruppen }, { data: vms }] = await Promise.all([
+  const [{ data: vereine }, { data: gruppen }, { data: vms }, { data: formationen }] = await Promise.all([
     supabase.from("vereine").select("id, name").in("id", ids).order("name"),
     supabase.from("gruppen").select("id, name, verein_id").in("verein_id", ids).order("name"),
     supabase.from("vereins_mitglieder").select("id, user_id, verein_id").in("verein_id", ids),
+    supabase
+      .from("formationen")
+      .select("id, name, verein_id, disziplin_id, altersklasse_id, disziplinen(besetzung)")
+      .in("verein_id", ids)
+      .eq("aktiv", true)
+      .order("name"),
   ]);
+  const hinweise = new Map<string, string | null>();
+  await Promise.all(
+    // deno-lint-ignore no-explicit-any
+    ((formationen ?? []) as any[])
+      .filter((f) => f.disziplinen?.besetzung === "paar")
+      .map(async (f) => {
+        const { data: h } = await supabase.rpc("formation_bdk_hinweis", { p_formation: f.id });
+        hinweise.set(f.id, (h as string | null) ?? null);
+      }),
+  );
   const userIds = [...new Set((vms ?? []).map((v) => v.user_id))];
   const { data: namen } = userIds.length ? await supabase.rpc("anzeige_namen", { p_user_ids: userIds }) : { data: [] };
   // deno-lint-ignore no-explicit-any
@@ -249,6 +271,9 @@ export async function getPlanungsVereine(supabase: SupabaseClient): Promise<Plan
     vereinId: v.id,
     vereinName: v.name,
     gruppen: (gruppen ?? []).filter((g) => g.verein_id === v.id).map((g) => ({ id: g.id, name: g.name ?? "Gruppe" })),
+    formationen: (formationen ?? [])
+      .filter((f) => f.verein_id === v.id)
+      .map((f) => ({ id: f.id, name: f.name, disziplinId: f.disziplin_id, altersklasseId: f.altersklasse_id, bdkHinweis: hinweise.get(f.id) ?? null })),
     mitglieder: (vms ?? [])
       .filter((m) => m.verein_id === v.id)
       .map((m) => ({ vmId: m.id, name: nameVon.get(m.user_id) ?? "Mitglied" }))
@@ -318,6 +343,6 @@ export function tageBis(iso: string, heute: string): number {
   return Math.round((datumAus(iso).getTime() - datumAus(heute).getTime()) / 86400000);
 }
 
-export function startTitel(s: Pick<Start, "gruppeName" | "bezeichnung" | "solistenNamen">): string {
-  return s.gruppeName ?? s.bezeichnung ?? s.solistenNamen ?? "Start";
+export function startTitel(s: Pick<Start, "gruppeName" | "bezeichnung" | "solistenNamen"> & { formationName?: string | null }): string {
+  return s.formationName ?? s.gruppeName ?? s.bezeichnung ?? s.solistenNamen ?? "Start";
 }

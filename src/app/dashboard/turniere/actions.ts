@@ -86,8 +86,10 @@ export async function startSpeichern(_prev: AktionsErgebnis, formData: FormData)
   if (tag && !DATUM.test(tag)) return { error: "Ungültiger Tag." };
   if (!["geplant", "gemeldet", "abgesagt"].includes(status)) return { error: "Ungültiger Status." };
 
+  const formationId = uuid(formData, "formation_id");
   const werte = {
-    gruppe_id: uuid(formData, "gruppe_id"),
+    formation_id: formationId,
+    gruppe_id: formationId ? null : uuid(formData, "gruppe_id"),
     bezeichnung: text(formData, "bezeichnung"),
     solisten,
     disziplin_id: uuid(formData, "disziplin_id"),
@@ -97,11 +99,26 @@ export async function startSpeichern(_prev: AktionsErgebnis, formData: FormData)
     status,
     notiz: text(formData, "notiz"),
   };
-  if (!werte.gruppe_id && !werte.bezeichnung && solisten.length === 0) {
-    return { error: "Bitte eine Gruppe wählen oder Solisten/Bezeichnung angeben." };
+  const { supabase } = await sitzung();
+  // Formation: Bezeichnung, Personen, Disziplin und Altersklasse aus der Formation uebernehmen (sofern nicht angegeben)
+  if (formationId) {
+    const { data: f } = await supabase
+      .from("formationen")
+      .select("name, disziplin_id, altersklasse_id, gruppe_id, formation_mitglieder(vereins_mitglied_id)")
+      .eq("id", formationId)
+      .maybeSingle();
+    if (!f) return { error: "Die Formation wurde nicht gefunden." };
+    werte.bezeichnung = werte.bezeichnung ?? f.name;
+    werte.disziplin_id = werte.disziplin_id ?? f.disziplin_id;
+    werte.altersklasse_id = werte.altersklasse_id ?? f.altersklasse_id;
+    werte.gruppe_id = f.gruppe_id;
+    // deno-lint-ignore no-explicit-any
+    werte.solisten = ((f.formation_mitglieder ?? []) as any[]).map((m) => m.vereins_mitglied_id);
+  }
+  if (!werte.formation_id && !werte.gruppe_id && !werte.bezeichnung && werte.solisten.length === 0) {
+    return { error: "Bitte eine Formation oder Gruppe wählen oder Solisten/Bezeichnung angeben." };
   }
 
-  const { supabase } = await sitzung();
   const { data, error } = startId
     ? await supabase.from("turnier_starts").update(werte).eq("id", startId).select("turnier_id")
     : await supabase.from("turnier_starts").insert({ ...werte, turnier_id: turnierId, verein_id: vereinId }).select("turnier_id");

@@ -70,7 +70,7 @@ export function VereinslizenzKarte({
             {status.basic_pausiert > 0 && (
               <div className="flex items-center gap-2">
                 <PauseCircle size={15} className="text-brand-ink-soft" />{" "}
-                {status.basic_pausiert} persönliche BASIC-Abos pausiert
+                {status.basic_pausiert} persönliche BASIC-Lizenzen pausiert
               </div>
             )}
             {a && (
@@ -100,7 +100,7 @@ export function VereinslizenzKarte({
           <p className="text-[12.5px] text-brand-ink-soft">
             Alle aktiven Mitglieder haben VEREIN-Zugang. Wer in „Mitglieder“
             deaktiviert bzw. aus dem Verein entfernt wird, verliert die
-            Abdeckung sofort; ein pausiertes eigenes BASIC-Abo läuft dann
+            Abdeckung sofort; eine pausierte eigene BASIC-Lizenz läuft dann
             automatisch weiter.
           </p>
         </>

@@ -11,11 +11,13 @@ export function NeuerStart({
   turnierId,
   tage,
   stammdaten,
+  bdk,
 }: {
   verein: PlanungsVerein;
   turnierId: string;
   tage: TurnierTag[];
   stammdaten: Stammdaten;
+  bdk?: boolean;
 }) {
   const [offen, setOffen] = useState(false);
   const [runde, setRunde] = useState(0);
@@ -39,6 +41,7 @@ export function NeuerStart({
         turnierId={turnierId}
         tage={tage}
         stammdaten={stammdaten}
+        bdk={bdk}
         onFertig={() => {
           setRunde(runde + 1);
           setOffen(false);

@@ -53,3 +53,22 @@ sind veraltet (leer, nur noch als Rückfall gelesen).
 | `turnier_merkliste` | persönliche Merkliste |
 | `turniere_uebersicht`, `vereins_starts`, `meine_turnierstarts`, `turnier_start_teilnehmer` | Lesefunktionen |
 | Trigger `pruefe_turnier`, `pruefe_turnier_start` | Validierung (Tage, Links, Gruppe/Solisten im Verein, Tag im Turnier, Längen) |
+| `turnier_starts.formation_id`, Trigger `turnier_start_formation_pruefen` | optionaler Bezug eines Starts zu einer Formation des Vereins |
+
+## Disziplinen, Altersklassen, Formationen
+
+TanzRaum plant Starts – die offizielle Turnieranmeldung läuft weiter über den Verband.
+
+- Disziplinen (`disziplinen.besetzung` solo/paar/gruppe, `mit_thema`): Tanzgarden, Gemischte Garde, Tanzpaare,
+  Solist weiblich, Solist männlich, Schautanz (Thema optional).
+- Altersklassen Jugend, Junioren, Ü15; `altersklasse_disziplinen` legt fest, welche Disziplin es wo gibt
+  (Gemischte Garde nur Ü15).
+- Gruppe ≠ Disziplin ≠ Formation: Eine **Gruppe** ist eine Trainingsgruppe im Verein. Eine **Formation** (`formationen`,
+  `formation_mitglieder`) ist die konkrete Besetzung einer Disziplin, z. B. „Tanzpaar Anna & Max“, „Solist weiblich Lena“
+  oder ein Schautanz mit Thema. Solo höchstens 1, Paar höchstens 2 Personen, nur Mitglieder desselben Vereins.
+- Auftrittsname (`formation_mitglieder.auftrittsname`) ist optional; der Mitgliedsname bleibt unverändert.
+- BDK-Regel (Tanzpaar = eine weibliche und eine männliche Person) gilt nur im Turnierkontext: `formation_bdk_hinweis`
+  liefert einen Hinweis, der nur bei BDK-Turnieren in der Startplanung angezeigt wird. Keine Sperre, keine
+  Geschlechtsvorgabe in der Datenbank.
+- Verwaltung: Verein → Formationen (Vereinsadmin/Trainer). In der Startplanung kann statt Gruppe/Solo eine Formation
+  gewählt werden; Bezeichnung, Personen, Disziplin und Altersklasse werden übernommen.

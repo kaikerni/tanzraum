@@ -70,7 +70,7 @@ export default async function NutzungsbedingungenSeite() {
             Mitglieder des Vereins. Wer aus dem Verein entfernt oder deaktiviert wird, ist nicht mehr abgedeckt.
           </li>
           <li>
-            Hast du ein eigenes BASIC-Abo und bist über eine Vereinslizenz abgedeckt, wird dein BASIC-Abo pausiert (keine Abbuchung) und
+            Hast du eine eigene BASIC-Lizenz und bist über eine Vereinslizenz abgedeckt, wird deine BASIC-Lizenz pausiert (keine Abbuchung) und
             läuft nach dem Ende der Vereinsabdeckung automatisch weiter. Es wird dabei weder gelöscht noch neu abgeschlossen.
           </li>
           <li>
@@ -89,7 +89,7 @@ export default async function NutzungsbedingungenSeite() {
             Tarif nicht aktiviert bzw. als „Zahlung offen“ geführt.
           </li>
           <li>
-            Abos verlängern sich automatisch um die gewählte Laufzeit (Monat bzw. Jahr). Du kannst jederzeit unter{" "}
+            Lizenzen verlängern sich automatisch um die gewählte Laufzeit (Monat bzw. Jahr). Du kannst jederzeit unter{" "}
             <Link href="/dashboard/tarif" className="text-brand-red underline">
               Mein Tarif
             </Link>{" "}
@@ -97,7 +97,7 @@ export default async function NutzungsbedingungenSeite() {
             bleiben erhalten.
           </li>
           <li>
-            Preisänderungen für laufende Abos teilen wir mindestens sechs Wochen vorher per E-Mail mit. Sie gelten erst ab der nächsten
+            Preisänderungen für laufende Lizenzen teilen wir mindestens sechs Wochen vorher per E-Mail mit. Sie gelten erst ab der nächsten
             Verlängerung; bis dahin kannst du jederzeit kündigen.
           </li>
         </ul>

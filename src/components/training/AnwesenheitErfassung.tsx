@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, X, CheckCheck, Save } from "lucide-react";
+import { Check, X, CheckCheck, Save, UserMinus } from "lucide-react";
 import { anwesenheitSpeichern } from "@/app/dashboard/training/actions";
 import type { AktionsErgebnis } from "@/components/ui/SendenButton";
 import type { AnwesenheitsEintrag } from "@/lib/training/getTraining";
+import { AbmeldeFormular } from "./AbmeldeFormular";
 
 // Grosse Tippflaechen fuers Handy: pro Person "Da" / "Fehlt"; Abgemeldete sind vorbelegt mit "Fehlt".
+// Abmeldung (vorher, mit Grund) und Anwesenheit (tatsaechlich da) sind getrennte Datensaetze;
+// Trainer koennen eine Abmeldung manuell nachtragen (z. B. per WhatsApp/Telefon erhalten).
 export function AnwesenheitErfassung({
   vereinId,
   gruppeId,
@@ -23,6 +26,7 @@ export function AnwesenheitErfassung({
   );
   const [laeuft, starte] = useTransition();
   const [meldung, setMeldung] = useState<AktionsErgebnis | null>(null);
+  const [abmeldungFuer, setAbmeldungFuer] = useState<string | null>(null);
 
   const da = Object.values(status).filter((s) => s === true).length;
   const offen = Object.values(status).filter((s) => s === null).length;
@@ -59,39 +63,66 @@ export function AnwesenheitErfassung({
         {eintraege.map((e) => {
           const s = status[e.vmId];
           return (
-            <li key={e.vmId} className="flex items-center gap-3 rounded-xl border border-brand-line bg-white px-3 py-2.5">
-              <span
-                className={`h-3 w-3 shrink-0 rounded-full ${s === true ? "bg-brand-green" : s === false ? "bg-brand-red" : "bg-brand-amber"}`}
-                aria-hidden="true"
-              />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[14px] font-semibold text-brand-ink">{e.name}</div>
-                <div className="text-[12px] text-brand-ink-soft">
-                  {e.abgemeldet ? `Abgemeldet${e.grund ? `: ${e.grund}` : ""}` : s === null ? "Keine Rückmeldung" : s ? "Anwesend" : "Fehlt"}
+            <li key={e.vmId} className="flex flex-col gap-2 rounded-xl border border-brand-line bg-white px-3 py-2.5">
+              <div className="flex items-center gap-3">
+                <span
+                  className={`h-3 w-3 shrink-0 rounded-full ${s === true ? "bg-brand-green" : s === false ? "bg-brand-red" : "bg-brand-amber"}`}
+                  aria-hidden="true"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[14px] font-semibold text-brand-ink">{e.name}</div>
+                  <div className="text-[12px] text-brand-ink-soft">
+                    {e.abgemeldet ? `Abgemeldet${e.grund ? `: ${e.grund}` : ""}` : s === null ? "Keine Rückmeldung" : s ? "Anwesend" : "Fehlt"}
+                  </div>
+                </div>
+                <div className="flex shrink-0 gap-1.5" role="group" aria-label={`Anwesenheit ${e.name}`}>
+                  <button
+                    type="button"
+                    onClick={() => setze(e.vmId, true)}
+                    aria-pressed={s === true}
+                    className={`flex h-11 min-w-[52px] items-center justify-center gap-1 rounded-xl border px-2 text-[13px] font-semibold ${
+                      s === true ? "border-brand-green bg-brand-green text-white" : "border-brand-line bg-white text-brand-ink"
+                    }`}
+                  >
+                    <Check size={16} /> Da
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setze(e.vmId, false)}
+                    aria-pressed={s === false}
+                    className={`flex h-11 min-w-[52px] items-center justify-center gap-1 rounded-xl border px-2 text-[13px] font-semibold ${
+                      s === false ? "border-brand-red bg-brand-red text-white" : "border-brand-line bg-white text-brand-ink"
+                    }`}
+                  >
+                    <X size={16} /> Fehlt
+                  </button>
                 </div>
               </div>
-              <div className="flex shrink-0 gap-1.5" role="group" aria-label={`Anwesenheit ${e.name}`}>
+              {!e.abgemeldet && abmeldungFuer !== e.vmId && (
                 <button
                   type="button"
-                  onClick={() => setze(e.vmId, true)}
-                  aria-pressed={s === true}
-                  className={`flex h-11 min-w-[52px] items-center justify-center gap-1 rounded-xl border px-2 text-[13px] font-semibold ${
-                    s === true ? "border-brand-green bg-brand-green text-white" : "border-brand-line bg-white text-brand-ink"
-                  }`}
+                  onClick={() => setAbmeldungFuer(e.vmId)}
+                  className="inline-flex items-center gap-1.5 self-start text-[12.5px] font-semibold text-brand-ink-soft hover:text-brand-red"
                 >
-                  <Check size={16} /> Da
+                  <UserMinus size={14} /> Abmeldung eintragen
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setze(e.vmId, false)}
-                  aria-pressed={s === false}
-                  className={`flex h-11 min-w-[52px] items-center justify-center gap-1 rounded-xl border px-2 text-[13px] font-semibold ${
-                    s === false ? "border-brand-red bg-brand-red text-white" : "border-brand-line bg-white text-brand-ink"
-                  }`}
-                >
-                  <X size={16} /> Fehlt
-                </button>
-              </div>
+              )}
+              {!e.abgemeldet && abmeldungFuer === e.vmId && (
+                <AbmeldeFormular
+                  vereinId={vereinId}
+                  gruppeId={gruppeId}
+                  datum={datum}
+                  vmId={e.vmId}
+                  idPraefix={`anw-abm-${e.vmId}`}
+                  manuell
+                  onFertig={(ergebnis) => {
+                    setAbmeldungFuer(null);
+                    setMeldung(ergebnis);
+                    setze(e.vmId, false);
+                  }}
+                  onAbbrechen={() => setAbmeldungFuer(null)}
+                />
+              )}
             </li>
           );
         })}

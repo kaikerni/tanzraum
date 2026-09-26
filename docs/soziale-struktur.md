@@ -91,3 +91,17 @@ Siehe `docs/tanzraum-messenger.md` (Privatchat-Regeln). Zusätzlich:
 - TanzRaum-Administration → **Meldungen** (`/dashboard/admin/meldungen`): gemeldetes Spotlight ansehen, entfernen,
   Konto sperren, erledigen. Private Chats sind dort bewusst nicht einsehbar.
 - Blockieren hat Vorrang – auch im selben Verein: keine Nachrichten, Anfragen oder Kontaktaufnahme.
+
+## Vereinsfunktionen
+
+Zusätzlich zu den festen Systemrollen (Admin, Trainer, Betreuer, Mitglied …) kann jeder Verein freie Funktionen anlegen
+(z. B. Vorstand, Hästräger, Musiker): `verein_funktionen`, Zuordnung über `mitglied_funktionen`. Funktionen vergeben
+**keine Rechte**; sie dienen nur der Anzeige und Organisation. Pflegen darf, wer den Vereinsbereich „mitglieder“ hat.
+
+## Trainingsabmeldung
+
+Abmeldungen (`trainings_abmeldungen`) haben einen festen Grund (`grund_kategorie`: Krankheit, Verletzung, Urlaub,
+Schule/Ausbildung, Arbeit, Familie/privater Termin, Sonstiges) und optional einen Hinweis. Der Trigger
+`trainings_abmeldung_vorbereiten` setzt `eingetragen_von` und `quelle` (selbst / eltern / manuell) und erzeugt den
+Anzeigetext. Trainer können Abmeldungen auf der Anwesenheitsseite manuell nachtragen (z. B. per WhatsApp erhalten).
+Abmeldung und tatsächliche Anwesenheit (`trainings_anwesenheit`) bleiben getrennte Datensätze.

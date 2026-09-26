@@ -165,7 +165,7 @@ export default function DatenschutzSeite() {
         <p>
           Kostenpflichtige Tarife (BASIC, VEREIN) bezahlst du über Stripe (Stripe Payments Europe, Ltd., Irland; Karte oder
           Lastschrift) oder PayPal (PayPal (Europe) S.à r.l. et Cie, S.C.A., Luxemburg). Deine Zahlungsdaten gibst du direkt beim
-          jeweiligen Anbieter ein; TanzRaum erhält keine Karten- oder Kontodaten, sondern nur die Abo-Kennung, den Zahlungsstatus,
+          jeweiligen Anbieter ein; TanzRaum erhält keine Karten- oder Kontodaten, sondern nur die Lizenz- bzw. Zahlungskennung, den Zahlungsstatus,
           die Laufzeit und die Kunden-Kennung des Anbieters. Bei Zahlung per Banküberweisung verarbeiten wir die Angaben aus dem
           Zahlungseingang (Name, IBAN, Betrag, Verwendungszweck), um die Zahlung zuzuordnen. Für Rechnungen speichern wir Name, Tarif,
           Betrag und Zahlungsweg.

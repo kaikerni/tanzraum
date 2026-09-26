@@ -249,6 +249,26 @@ export function VereinAnsicht({
         />
       </section>
 
+      <section className={KARTE}>
+        <KarteKopf icon={Users} titel="Formationen & Vereinsfunktionen" />
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Link
+            href={`/dashboard/verein/formationen?verein=${vereinId}`}
+            className="rounded-xl border border-brand-line p-3 hover:border-brand-red/40 hover:bg-brand-bg"
+          >
+            <span className="block text-[14px] font-semibold text-brand-ink">Formationen</span>
+            <span className="text-[12.5px] text-brand-ink-soft">Tanzpaare, Solisten, Garden, Schautanz – Besetzung je Disziplin</span>
+          </Link>
+          <Link
+            href={`/dashboard/verein/funktionen?verein=${vereinId}`}
+            className="rounded-xl border border-brand-line p-3 hover:border-brand-red/40 hover:bg-brand-bg"
+          >
+            <span className="block text-[14px] font-semibold text-brand-ink">Vereinsfunktionen</span>
+            <span className="text-[12.5px] text-brand-ink-soft">Vorstand, Hästräger, Musiker, Helfer …</span>
+          </Link>
+        </div>
+      </section>
+
       {istAdmin && (
         <section className={KARTE}>
           <KarteKopf
