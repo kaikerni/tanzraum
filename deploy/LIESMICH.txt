@@ -1,0 +1,42 @@
+TanzRaum – App-Paket
+====================
+
+Die App braucht einen Server mit Node.js. Ein normaler IONOS-Webspace (HTML/PHP) reicht NICHT.
+Empfohlen: IONOS VPS mit Ubuntu 24.04 (mind. 1 GB RAM, besser 2 GB).
+
+Erstinstallation auf dem VPS
+----------------------------
+1. Paket hochladen (Windows: PowerShell, Mac: Terminal; IP und root-Passwort stehen im IONOS Cloud Panel):
+     scp tanzraum-app.zip root@DEINE-SERVER-IP:/root/
+2. Auf dem Server anmelden:
+     ssh root@DEINE-SERVER-IP
+3. Entpacken und installieren:
+     apt update && apt install -y unzip
+     unzip -o tanzraum-app.zip -d tanzraum-app
+     cd tanzraum-app && bash installieren.sh
+   Das Skript richtet Node.js, nginx, Firewall und den Dienst "tanzraum" ein.
+4. DNS bei IONOS auf den Server umstellen (A-Einträge für @ und www = Server-IP; MX/TXT NICHT ändern),
+   warten bis es wirkt, dann nochmals:  cd /root/tanzraum-app && bash installieren.sh
+   -> jetzt wird das HTTPS-Zertifikat geholt (erneuert sich automatisch).
+
+Update auf eine neue Version
+----------------------------
+     scp tanzraum-app.zip root@DEINE-SERVER-IP:/root/
+     ssh root@DEINE-SERVER-IP
+     rm -rf tanzraum-app && unzip -o tanzraum-app.zip -d tanzraum-app && cd tanzraum-app && bash installieren.sh
+Die Einstellungen in /opt/tanzraum/.env bleiben erhalten.
+
+Nützliche Befehle
+-----------------
+     systemctl status tanzraum        Läuft die App?
+     journalctl -u tanzraum -f        Protokoll live ansehen
+     systemctl restart tanzraum       Neu starten
+
+Supabase-Einstellungen für die Adresse
+--------------------------------------
+Supabase → Authentication → URL Configuration
+    Site URL:       https://tanzraum.app
+    Redirect URLs:  https://tanzraum.app/**
+Edge-Function-Secret TANZRAUM_APP_URL = https://tanzraum.app
+
+Die Datei .env enthält nur öffentliche Werte (Supabase-URL und Publishable Key) – keine Geheimnisse.
