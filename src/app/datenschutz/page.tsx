@@ -14,22 +14,25 @@ export default function DatenschutzSeite() {
 
       <Abschnitt titel="1. Verantwortlicher">
         <p>
-          <Todo>Name/Firma und Anschrift des Verantwortlichen (wie im Impressum)</Todo>
+          Kai Kern, Taktmanufaktur, Jahnstraße 15, 67378 Zeiskam
+          <br />
+          Telefon: 0176 55101261
           <br />
           E-Mail: <a href="mailto:info@tanzraum.app" className="text-brand-red underline">info@tanzraum.app</a>
         </p>
         <p>
-          Datenschutzbeauftragter: <Todo>Kontakt angeben, falls ein Datenschutzbeauftragter benannt ist oder benannt werden muss</Todo>
+          Ein Datenschutzbeauftragter ist nicht benannt, da hierfür keine gesetzliche Pflicht besteht.
         </p>
         <p>
           Vereine, die TanzRaum für ihre Vereinsverwaltung nutzen, verarbeiten die Daten ihrer Mitglieder in eigener
-          Verantwortung. <Todo>Rollenverteilung (Auftragsverarbeitung nach Art. 28 DSGVO mit den Vereinen) rechtlich prüfen und hier beschreiben</Todo>
+          Verantwortung. Für diese Vereinsdaten ist der jeweilige Verein Verantwortlicher; TanzRaum verarbeitet sie in seinem Auftrag
+          (Art. 28 DSGVO). Anfragen zu diesen Daten richtest du am besten direkt an deinen Verein.
         </p>
       </Abschnitt>
 
       <Abschnitt titel="2. Hosting der Web-App">
         <p>
-          Die Web-App wird bei <Todo>Hosting-Anbieter, Sitz und Serverstandort</Todo> betrieben. Beim Aufruf werden technisch notwendige
+          Die Web-App wird auf einem Server der netcup GmbH (Daimlerstraße 25, 76185 Karlsruhe) mit Standort in der EU betrieben. Beim Aufruf werden technisch notwendige
           Daten verarbeitet (IP-Adresse, Zeitpunkt, aufgerufene Seite, Browserangaben), um die Seite auszuliefern und abzusichern.
           Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO.
         </p>
@@ -39,8 +42,8 @@ export default function DatenschutzSeite() {
         <p>
           Konto, Anmeldung, Datenbank, Dateiablage und Serverfunktionen laufen über Supabase (Supabase Inc., USA) mit Datenstandort in
           der EU (Frankfurt am Main). Passwörter werden ausschließlich von Supabase Auth verarbeitet und nur als Hash gespeichert –
-          TanzRaum verschickt niemals Passwörter per E-Mail.{" "}
-          <Todo>Auftragsverarbeitungsvertrag mit Supabase abschließen/prüfen; Übermittlungsgrundlage für mögliche Zugriffe aus den USA angeben</Todo>
+          TanzRaum verschickt niemals Passwörter per E-Mail. Mit Supabase besteht ein Vertrag zur Auftragsverarbeitung. Für mögliche
+          Zugriffe aus den USA gelten die EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO).
         </p>
       </Abschnitt>
 
@@ -115,12 +118,14 @@ export default function DatenschutzSeite() {
         </p>
       </Abschnitt>
 
-      <Abschnitt titel="10. Zahlungen (Stripe und PayPal)">
+      <Abschnitt titel="10. Zahlungen (Stripe, PayPal, Banküberweisung)">
         <p>
           Kostenpflichtige Tarife (BASIC, VEREIN) bezahlst du über Stripe (Stripe Payments Europe, Ltd., Irland; Karte oder
           Lastschrift) oder PayPal (PayPal (Europe) S.à r.l. et Cie, S.C.A., Luxemburg). Deine Zahlungsdaten gibst du direkt beim
           jeweiligen Anbieter ein; TanzRaum erhält keine Karten- oder Kontodaten, sondern nur die Abo-Kennung, den Zahlungsstatus,
-          die Laufzeit und die Kunden-Kennung des Anbieters. Für Rechnungen speichern wir Name, Tarif, Betrag und Zahlungsweg.
+          die Laufzeit und die Kunden-Kennung des Anbieters. Bei Zahlung per Banküberweisung verarbeiten wir die Angaben aus dem
+          Zahlungseingang (Name, IBAN, Betrag, Verwendungszweck), um die Zahlung zuzuordnen. Für Rechnungen speichern wir Name, Tarif,
+          Betrag und Zahlungsweg.
         </p>
         <p>Rechtsgrundlage: Art. 6 Abs. 1 lit. b und c DSGVO (Vertrag, steuerliche Aufbewahrungspflichten).</p>
       </Abschnitt>
@@ -150,11 +155,13 @@ export default function DatenschutzSeite() {
       </Abschnitt>
 
       <Abschnitt titel="14. Speicherdauer">
-        <p>
-          Wir speichern Daten, solange dein Konto besteht oder es für den jeweiligen Zweck nötig ist. Rechnungs- und Buchungsdaten
-          bewahren wir so lange auf, wie es gesetzlich vorgeschrieben ist (bis zu 10 Jahre).{" "}
-          <Todo>konkrete Löschfristen je Datenart ergänzen</Todo>
-        </p>
+        <p>Wir speichern Daten, solange dein Konto besteht oder es für den jeweiligen Zweck nötig ist:</p>
+        <ul>
+          <li>Konto-, Profil- und Nachrichtendaten: bis zur Löschung deines Kontos (bzw. bis du einzelne Inhalte löschst).</li>
+          <li>Vereinsdaten: solange der Verein sie benötigt bzw. bis der Verein sie entfernt.</li>
+          <li>Rechnungen und Buchungsbelege: 8 Jahre (§ 147 Abgabenordnung).</li>
+          <li>E-Mail-Versandprotokolle: 90 Tage.</li>
+        </ul>
       </Abschnitt>
 
       <Abschnitt titel="15. Deine Rechte">
@@ -165,7 +172,8 @@ export default function DatenschutzSeite() {
           <a href="mailto:info@tanzraum.app" className="text-brand-red underline">info@tanzraum.app</a>.
         </p>
         <p>
-          Du kannst dich bei einer Datenschutz-Aufsichtsbehörde beschweren, z. B. bei <Todo>zuständige Aufsichtsbehörde am Sitz des Verantwortlichen</Todo>.
+          Du kannst dich bei einer Datenschutz-Aufsichtsbehörde beschweren, z. B. bei der für uns zuständigen Behörde: Der
+          Landesbeauftragte für den Datenschutz und die Informationsfreiheit Rheinland-Pfalz, Hintere Bleiche 34, 55116 Mainz.
         </p>
         <p>
           Siehe auch die <Link href="/nutzungsbedingungen" className="text-brand-red underline">Nutzungsbedingungen</Link>.

@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { RechtsLinks } from "./RechtsLinks";
 
-export const STAND = "25.09.2026";
+export const STAND = "26.09.2026";
 
 // Platzhalter fuer Angaben, die der Betreiber noch eintragen bzw. rechtlich pruefen lassen muss
 export function Todo({ children }: { children: React.ReactNode }) {
