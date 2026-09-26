@@ -11,6 +11,22 @@ function istOeffentlich(pathname: string) {
   );
 }
 
+// Next.js laeuft hinter nginx auf 127.0.0.1:3000; request.nextUrl zeigt dort auf
+// http://localhost:3000. Weiterleitungen muessen die oeffentliche Adresse verwenden,
+// die nginx per X-Forwarded-Host/-Proto mitgibt (lokal ohne nginx: Host-Header).
+function oeffentlicheUrl(request: NextRequest) {
+  const url = request.nextUrl.clone();
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  const proto = request.headers.get("x-forwarded-proto");
+  if (proto === "http" || proto === "https") url.protocol = `${proto}:`;
+  if (host) {
+    url.host = host;
+    // Der interne Port (3000) darf nicht erhalten bleiben, wenn der Host keinen eigenen hat.
+    if (!/:\d+$/.test(host)) url.port = "";
+  }
+  return url;
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -44,14 +60,14 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (!user && !istOeffentlich(pathname)) {
-    const url = request.nextUrl.clone();
+    const url = oeffentlicheUrl(request);
     url.pathname = "/login";
     url.searchParams.set("weiter", pathname);
     return NextResponse.redirect(url);
   }
 
   if (user && (pathname === "/login" || pathname === "/signup")) {
-    const url = request.nextUrl.clone();
+    const url = oeffentlicheUrl(request);
     url.pathname = "/dashboard";
     url.search = "";
     return NextResponse.redirect(url);
