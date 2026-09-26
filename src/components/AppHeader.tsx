@@ -84,14 +84,15 @@ export function AppHeader({
       </div>
 
       <div className="ml-auto flex items-center gap-2 sm:gap-3 md:ml-0">
-        <button
-          type="button"
+        <Link
+          href="/dashboard/benachrichtigungen"
           className="relative flex h-10 w-10 items-center justify-center rounded-xl text-brand-ink transition-colors hover:bg-brand-bg"
           aria-label={`Benachrichtigungen${ungeleseneBenachrichtigungen > 0 ? ` (${ungeleseneBenachrichtigungen} ungelesen)` : ""}`}
+          title="Benachrichtigungen"
         >
           <Bell size={20} />
           <Zaehler anzahl={ungeleseneBenachrichtigungen} />
-        </button>
+        </Link>
         <Link
           href="/dashboard/nachrichten"
           className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-brand-line text-brand-ink transition-colors hover:bg-brand-bg"
