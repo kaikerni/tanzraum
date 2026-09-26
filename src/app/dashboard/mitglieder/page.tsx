@@ -46,12 +46,18 @@ export default async function MitgliederSeite({
   const istAdmin = rolle.includes("admin");
   const darfGruppen = istAdmin || rolle.includes("trainer");
 
-  const [mitglieder, auswahl, listen, { data: gruppen }] = await Promise.all([
+  const [mitglieder, auswahl, listen, { data: gruppen }, { data: funktionen }, { data: funktionsZuordnung }, { data: darfFunktionen }] = await Promise.all([
     getMitgliederListe(supabase, vereinId),
     darfGruppen ? getMitgliederAuswahl(supabase, vereinId) : Promise.resolve([]),
     getAuswahllisten(supabase),
     supabase.from("gruppen").select("id, name").eq("verein_id", vereinId).order("name"),
+    supabase.from("verein_funktionen").select("id, name").eq("verein_id", vereinId).order("sortierung").order("name"),
+    supabase.from("mitglied_funktionen").select("vereins_mitglied_id, funktion_id, verein_funktionen!inner(verein_id)").eq("verein_funktionen.verein_id", vereinId),
+    supabase.rpc("hat_vereinsbereich", { p_verein_id: vereinId, p_bereich: "mitglieder" }),
   ]);
+  // Freie Vereinsfunktionen je Mitglied (vergeben keine Rechte)
+  const funktionenJeMitglied: Record<string, string[]> = {};
+  for (const z of funktionsZuordnung ?? []) (funktionenJeMitglied[z.vereins_mitglied_id] ??= []).push(z.funktion_id);
   const { data: offeneEltern } = istAdmin ? await supabase.rpc("offene_eltern_bestaetigungen", { p_verein_id: vereinId }) : { data: [] };
   if (mitglieder === null) redirect("/dashboard");
 
@@ -105,6 +111,9 @@ export default async function MitgliederSeite({
         auswahl={auswahl}
         istAdmin={istAdmin}
         darfGruppen={darfGruppen}
+        funktionen={(funktionen ?? []) as { id: string; name: string }[]}
+        funktionenJeMitglied={funktionenJeMitglied}
+        darfFunktionen={darfFunktionen === true}
       />
     </div>
   );

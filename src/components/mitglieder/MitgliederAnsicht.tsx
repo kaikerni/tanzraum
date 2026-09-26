@@ -12,6 +12,7 @@ import {
   elternKindLoesen,
   mitgliedEntfernen,
 } from "@/app/dashboard/mitglieder/actions";
+import { mitgliedFunktionGeben, funktionEntfernen } from "@/app/dashboard/verein/funktionen/actions";
 import type { AktionsErgebnis } from "@/components/ui/SendenButton";
 import type { Mitglied, Person } from "@/lib/mitglieder/getMitglieder";
 import { funktionsBezeichnung, rollenBezeichnung } from "@/lib/geschlecht";
@@ -51,6 +52,9 @@ function Detail({
   auswahl,
   istAdmin,
   darfGruppen,
+  funktionen,
+  meineFunktionen,
+  darfFunktionen,
 }: {
   m: Mitglied;
   vereinId: string;
@@ -59,8 +63,12 @@ function Detail({
   auswahl: Person[];
   istAdmin: boolean;
   darfGruppen: boolean;
+  funktionen: Auswahl[];
+  meineFunktionen: string[];
+  darfFunktionen: boolean;
 }) {
   const [laeuft, starte] = useTransition();
+  const [vereinsfunktion, setVereinsfunktion] = useState("");
   const [meldung, setMeldung] = useState<AktionsErgebnis | null>(null);
   const [rolle, setRolle] = useState(m.rolleId ?? "");
   const [bereiche, setBereiche] = useState<string[]>(m.bereiche ?? []);
@@ -154,6 +162,65 @@ function Detail({
           </div>
         )}
       </div>
+
+      {/* Vereinsfunktionen (frei, vergeben keine Rechte) */}
+      {(meineFunktionen.length > 0 || (darfFunktionen && funktionen.length > 0)) && (
+        <div>
+          <div className="mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-brand-ink-soft">Vereinsfunktionen</div>
+          <div className="flex flex-wrap gap-2">
+            {meineFunktionen.length === 0 && <span className="text-[13px] text-brand-ink-soft">keine Vereinsfunktion</span>}
+            {funktionen
+              .filter((f) => meineFunktionen.includes(f.id))
+              .map((f) => (
+                <span key={f.id} className="inline-flex items-center gap-1.5 rounded-full border border-brand-line bg-white py-1 pl-3 pr-1.5 text-[12.5px]">
+                  {f.name}
+                  {darfFunktionen && (
+                    <button
+                      type="button"
+                      disabled={laeuft}
+                      onClick={() => ausfuehren(() => funktionEntfernen(f.id, m.vmId))}
+                      aria-label={`Funktion ${f.name} entfernen`}
+                      className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-brand-red-wash hover:text-brand-red"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </span>
+              ))}
+          </div>
+          {darfFunktionen && funktionen.some((f) => !meineFunktionen.includes(f.id)) && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <select
+                value={vereinsfunktion}
+                onChange={(e) => setVereinsfunktion(e.target.value)}
+                aria-label="Vereinsfunktion wählen"
+                className="min-h-9 rounded-lg border border-brand-line bg-white px-2 text-[13px]"
+              >
+                <option value="">Funktion wählen …</option>
+                {funktionen
+                  .filter((f) => !meineFunktionen.includes(f.id))
+                  .map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+              </select>
+              <button
+                type="button"
+                disabled={!vereinsfunktion || laeuft}
+                onClick={() => {
+                  const id = vereinsfunktion;
+                  setVereinsfunktion("");
+                  ausfuehren(() => mitgliedFunktionGeben(id, m.vmId));
+                }}
+                className={KNOPF}
+              >
+                Hinzufügen
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Familie */}
       {(m.eltern.length > 0 || m.kinder.length > 0 || istAdmin) && (
@@ -296,6 +363,9 @@ export function MitgliederAnsicht({
   auswahl,
   istAdmin,
   darfGruppen,
+  funktionen,
+  funktionenJeMitglied,
+  darfFunktionen,
 }: {
   vereinId: string;
   mitglieder: Mitglied[];
@@ -304,6 +374,9 @@ export function MitgliederAnsicht({
   auswahl: Person[];
   istAdmin: boolean;
   darfGruppen: boolean;
+  funktionen: Auswahl[];
+  funktionenJeMitglied: Record<string, string[]>;
+  darfFunktionen: boolean;
 }) {
   const [suche, setSuche] = useState("");
   const [gruppe, setGruppe] = useState("");
@@ -404,7 +477,18 @@ export function MitgliederAnsicht({
                     <ChevronDown size={18} className={`shrink-0 text-brand-ink-soft transition-transform ${istOffen ? "rotate-180" : ""}`} />
                   </button>
                   {istOffen && (
-                    <Detail m={m} vereinId={vereinId} rollen={rollen} gruppen={gruppen} auswahl={auswahl} istAdmin={istAdmin} darfGruppen={darfGruppen} />
+                    <Detail
+                      m={m}
+                      vereinId={vereinId}
+                      rollen={rollen}
+                      gruppen={gruppen}
+                      auswahl={auswahl}
+                      istAdmin={istAdmin}
+                      darfGruppen={darfGruppen}
+                      funktionen={funktionen}
+                      meineFunktionen={funktionenJeMitglied[m.vmId] ?? []}
+                      darfFunktionen={darfFunktionen}
+                    />
                   )}
                 </li>
               );

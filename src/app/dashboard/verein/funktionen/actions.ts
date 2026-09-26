@@ -9,6 +9,12 @@ import type { AktionsErgebnis } from "@/components/ui/SendenButton";
 // Pflege nur mit Bereich "Mitglieder" (Datenbank prueft per RLS).
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PFAD = "/dashboard/verein/funktionen";
+
+function neuLaden() {
+  revalidatePath(PFAD);
+  revalidatePath("/dashboard/mitglieder");
+}
+
 const KEIN_RECHT = "Dafür fehlt dir die Berechtigung (Mitgliederverwaltung).";
 
 function fehler(e: { code?: string; message?: string }): string {
@@ -26,7 +32,7 @@ export async function funktionAnlegen(_prev: AktionsErgebnis, fd: FormData): Pro
   const { data, error } = await supabase.from("verein_funktionen").insert({ verein_id: vereinId, name }).select("id");
   if (error) return { error: fehler(error) };
   if (!data?.length) return { error: KEIN_RECHT };
-  revalidatePath(PFAD);
+  neuLaden();
   return { error: null, ok: "Funktion angelegt." };
 }
 
@@ -36,18 +42,21 @@ export async function funktionLoeschen(funktionId: string): Promise<AktionsErgeb
   const { data, error } = await supabase.from("verein_funktionen").delete().eq("id", funktionId).select("id");
   if (error) return { error: fehler(error) };
   if (!data?.length) return { error: KEIN_RECHT };
-  revalidatePath(PFAD);
+  neuLaden();
   return { error: null, ok: "Funktion gelöscht." };
 }
 
 export async function funktionZuordnen(_prev: AktionsErgebnis, fd: FormData): Promise<AktionsErgebnis> {
-  const funktionId = String(fd.get("funktion_id") ?? "");
-  const vmId = String(fd.get("vm_id") ?? "");
+  return mitgliedFunktionGeben(String(fd.get("funktion_id") ?? ""), String(fd.get("vm_id") ?? ""));
+}
+
+// Direkt aus den Mitgliederdetails
+export async function mitgliedFunktionGeben(funktionId: string, vmId: string): Promise<AktionsErgebnis> {
   if (!UUID.test(funktionId) || !UUID.test(vmId)) return { error: "Bitte ein Mitglied auswählen." };
   const supabase = await createClient();
   const { error } = await supabase.from("mitglied_funktionen").insert({ funktion_id: funktionId, vereins_mitglied_id: vmId });
   if (error) return { error: error.code === "23505" ? "Diese Person hat die Funktion schon." : fehler(error) };
-  revalidatePath(PFAD);
+  neuLaden();
   return { error: null, ok: "Zugeordnet." };
 }
 
@@ -62,6 +71,6 @@ export async function funktionEntfernen(funktionId: string, vmId: string): Promi
     .select("funktion_id");
   if (error) return { error: fehler(error) };
   if (!data?.length) return { error: KEIN_RECHT };
-  revalidatePath(PFAD);
+  neuLaden();
   return { error: null, ok: "Entfernt." };
 }
