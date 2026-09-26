@@ -14,6 +14,7 @@ import {
 } from "@/app/dashboard/mitglieder/actions";
 import type { AktionsErgebnis } from "@/components/ui/SendenButton";
 import type { Mitglied, Person } from "@/lib/mitglieder/getMitglieder";
+import { funktionsBezeichnung, rollenBezeichnung } from "@/lib/geschlecht";
 
 type Auswahl = { id: string; name: string };
 
@@ -28,7 +29,6 @@ const BEREICHE: { key: string; label: string }[] = [
   { key: "beitritt", label: "Mitgliedsanträge" },
 ];
 
-const FUNKTION_LABEL: Record<string, string> = { trainer: "Trainer", betreuer: "Betreuer" };
 
 const KNOPF =
   "inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-brand-line bg-white px-3 text-[12.5px] font-medium text-brand-ink hover:bg-brand-bg disabled:opacity-50";
@@ -118,7 +118,7 @@ function Detail({
           {m.gruppen.map((g) => (
             <span key={g.id} className="inline-flex items-center gap-1.5 rounded-full border border-brand-line bg-white py-1 pl-3 pr-1.5 text-[12.5px]">
               {g.name}
-              {g.funktion && FUNKTION_LABEL[g.funktion] && <span className="text-brand-ink-soft">· {FUNKTION_LABEL[g.funktion]}</span>}
+              {(g.funktion === "trainer" || g.funktion === "betreuer") && <span className="text-brand-ink-soft">· {funktionsBezeichnung(g.funktion, m.geschlecht)}</span>}
               {darfGruppen && (
                 <button
                   type="button"
@@ -400,7 +400,7 @@ export function MitgliederAnsicht({
                         {m.gruppen.length > 0 ? m.gruppen.map((g) => g.name).join(", ") : "keine Gruppe"}
                       </span>
                     </span>
-                    <span className="hidden shrink-0 rounded-full bg-brand-bg px-2.5 py-1 text-[12px] font-medium text-brand-ink sm:inline">{m.rolle ?? "–"}</span>
+                    <span className="hidden shrink-0 rounded-full bg-brand-bg px-2.5 py-1 text-[12px] font-medium text-brand-ink sm:inline">{rollenBezeichnung(m.rolle, m.geschlecht) ?? "–"}</span>
                     <ChevronDown size={18} className={`shrink-0 text-brand-ink-soft transition-transform ${istOffen ? "rotate-180" : ""}`} />
                   </button>
                   {istOffen && (

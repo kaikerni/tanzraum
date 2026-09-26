@@ -29,9 +29,14 @@ export default async function DashboardLayout({
     .maybeSingle();
   if (!onboarding || !onboarding.completed) redirect("/onboarding");
 
-  // Jugendschutz: ohne Geburtsdatum geht es erst nach der einmaligen Angabe weiter
-  const { data: geburtsdatum } = await supabase.rpc("mein_geburtsdatum");
+  // Jugendschutz: ohne Geburtsdatum geht es erst nach der einmaligen Angabe weiter;
+  // ebenso ohne Geschlecht (Pflichtangabe fuer die Bezeichnung in Profil und Mitgliederliste)
+  const [{ data: geburtsdatum }, { data: geschlecht }] = await Promise.all([
+    supabase.rpc("mein_geburtsdatum"),
+    supabase.rpc("mein_geschlecht"),
+  ]);
   if (!geburtsdatum) redirect("/geburtsdatum");
+  if (!geschlecht) redirect("/geschlecht");
 
   const [{ data: ungelesen }, { count: benachrichtigungen }, zugriff] = await Promise.all([
     supabase.rpc("eigene_ungelesene_nachrichten_anzahl"),

@@ -10,9 +10,9 @@ import { farbeFuer, initialen } from "@/components/chat/ChatAvatar";
 import { PersonSpotlights } from "@/components/spotlights/PersonSpotlights";
 import { getSpotlightLeiste } from "@/lib/spotlights/getSpotlights";
 import { SPOTLIGHTS_AKTIV } from "@/lib/spotlights/typen";
+import { funktionsBezeichnung, rollenBezeichnung, type Funktion } from "@/lib/geschlecht";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const FUNKTION: Record<string, string> = { trainer: "Trainer/in", betreuer: "Betreuer/in", mitglied: "Tänzer/in" };
 
 export default async function PersonSeite({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -24,7 +24,7 @@ export default async function PersonSeite({ params }: { params: Promise<{ id: st
   if (!user) redirect(`/login?weiter=/dashboard/netzwerk/person/${id}`);
   const person = await getPerson(supabase, id);
   if (!person) notFound();
-  const rollen = [...new Set(person.vereine.map((v) => v.rolle))].join(" · ");
+  const rollen = [...new Set(person.vereine.map((v) => rollenBezeichnung(v.rolle, person.geschlecht)))].join(" · ");
   const spotlight = SPOTLIGHTS_AKTIV ? ((await getSpotlightLeiste(supabase)).find((p) => p.userId === person.id) ?? null) : null;
 
   return (
@@ -78,7 +78,7 @@ export default async function PersonSeite({ params }: { params: Promise<{ id: st
                 <Link href={`/dashboard/netzwerk/verein/${v.id}`} className="flex items-center justify-between gap-2 rounded-xl bg-brand-bg px-3 py-2.5 hover:bg-brand-line">
                   <span className="text-[14px] font-semibold text-brand-ink">🏠 {v.name}</span>
                   <span className="text-[12.5px] text-brand-ink-soft">
-                    {v.rolle}
+                    {rollenBezeichnung(v.rolle, person.geschlecht)}
                     {v.ort ? ` · ${v.ort}` : ""}
                   </span>
                 </Link>
@@ -96,7 +96,7 @@ export default async function PersonSeite({ params }: { params: Promise<{ id: st
               <li key={g.id} className="rounded-xl border border-brand-line px-3 py-2 text-[13px]">
                 <p className="font-semibold text-brand-ink">🩰 {g.name}</p>
                 <p className="text-brand-ink-soft">
-                  {[g.verein, g.disziplin, g.altersklasse, g.funktion && g.funktion !== "mitglied" ? FUNKTION[g.funktion] : null].filter(Boolean).join(" · ")}
+                  {[g.verein, g.disziplin, g.altersklasse, g.funktion === "trainer" || g.funktion === "betreuer" ? funktionsBezeichnung(g.funktion as Funktion, person.geschlecht) : null].filter(Boolean).join(" · ")}
                 </p>
               </li>
             ))}

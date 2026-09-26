@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { RechtsLinks } from "@/components/recht/RechtsLinks";
 import { redirect } from "next/navigation";
-import { Mail, KeyRound, EyeOff, Users, Map as MapIcon } from "lucide-react";
+import { Mail, KeyRound, EyeOff, Users, Map as MapIcon, UserRound } from "lucide-react";
 import { MapEinstellungen } from "@/components/einstellungen/MapEinstellungen";
 import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { EmailAendern, PasswortAendern, PrivatSchalter } from "@/components/einstellungen/KontoSicherheit";
+import { GeschlechtAuswahl } from "@/components/einstellungen/GeschlechtAuswahl";
 import { ElternCode, KindVerknuepfen, MeineKinder } from "@/components/familie/Familie";
 import { alterAm, getMeineEltern, getMeineKinder, getMeineSchutzEinstellungen } from "@/lib/familie/getFamilie";
 import { heuteBerlin } from "@/lib/training/getTraining";
@@ -25,9 +26,10 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
   if (!user) redirect("/login?weiter=/dashboard/einstellungen");
 
   const { email } = await searchParams;
-  const [{ data: profil }, { data: geburtsdatum }] = await Promise.all([
+  const [{ data: profil }, { data: geburtsdatum }, { data: geschlecht }] = await Promise.all([
     supabase.from("profiles").select("konto_privat").eq("id", user.id).maybeSingle(),
     supabase.rpc("mein_geburtsdatum"),
+    supabase.rpc("mein_geschlecht"),
   ]);
   const { data: mapDaten } = await supabase.rpc("meine_map_einstellungen");
   // deno-lint-ignore no-explicit-any
@@ -63,6 +65,11 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
           untertitel="Zur Sicherheit bestätigst du die Änderung per Link – an deine bisherige und an deine neue Adresse."
         />
         <EmailAendern aktuell={user.email ?? "–"} ausstehend={user.new_email ?? null} />
+      </section>
+
+      <section className={KARTE}>
+        <KarteKopf icon={UserRound} titel="Geschlecht" untertitel="Für die Bezeichnung in deinem Profil und in Mitgliederlisten, z. B. Tänzerin oder Tänzer." />
+        <GeschlechtAuswahl modus="aendern" aktuell={(geschlecht as string | null) ?? null} />
       </section>
 
       <section className={KARTE}>

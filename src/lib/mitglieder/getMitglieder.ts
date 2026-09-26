@@ -19,6 +19,7 @@ export type Mitglied = {
   eltern: Person[];
   kinder: Person[];
   istIch: boolean;
+  geschlecht: string | null;
 };
 
 export async function getMitgliederListe(supabase: SupabaseClient, vereinId: string): Promise<Mitglied[] | null> {
@@ -43,6 +44,7 @@ export async function getMitgliederListe(supabase: SupabaseClient, vereinId: str
     // deno-lint-ignore no-explicit-any
     kinder: (m.kinder ?? []).map((p: any) => ({ vmId: p.vm_id, name: p.name })),
     istIch: m.ist_ich,
+    geschlecht: m.geschlecht ?? null,
   }));
 }
 

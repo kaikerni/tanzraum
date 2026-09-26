@@ -5,10 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { authFehlerText } from "@/lib/auth/fehler";
 import { basisUrl, internerPfad } from "@/lib/url";
 import { geburtsdatumFehler } from "@/lib/auth/geburtsdatum";
+import { istGeschlecht } from "@/lib/geschlecht";
 
 export type SignupState = { error: string | null; emailBestaetigenNoetig: boolean };
-
-const GESCHLECHTER = ["weiblich", "männlich", "divers"];
 
 const initialState: SignupState = { error: null, emailBestaetigenNoetig: false };
 
@@ -28,8 +27,8 @@ export async function signUp(
   if (!vorname || !nachname || !email || !password || !geburtsdatum || !gender) {
     return { ...initialState, error: "Bitte alle Pflichtfelder ausfüllen." };
   }
-  // Fuer die persoenliche Anrede (z. B. Taenzerin/Taenzer); "divers" wird neutral angesprochen
-  if (!GESCHLECHTER.includes(gender)) {
+  // Fuer die persoenliche Bezeichnung (z. B. Taenzerin/Taenzer); "divers" wird neutral bezeichnet
+  if (!istGeschlecht(gender)) {
     return { ...initialState, error: "Bitte wähle ein Geschlecht aus." };
   }
   const gebFehler = geburtsdatumFehler(geburtsdatum);
