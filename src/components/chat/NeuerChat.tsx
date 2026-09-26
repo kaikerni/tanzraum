@@ -35,8 +35,8 @@ function Person({ name, zeile, avatarUrl, children, onClick }: { name: string; z
   );
 }
 
-// Dialog vor einer Kontaktanfrage. Minderjaehrige bekommen den altersgerechten Hinweis.
-function AnfrageDialog({ name, minderjaehrig, laeuft, onSenden, onAbbrechen }: { name: string; minderjaehrig: boolean; laeuft: boolean; onSenden: () => void; onAbbrechen: () => void }) {
+// Dialog vor einer Kontaktanfrage. Kinderkonten (unter 16) bekommen den altersgerechten Hinweis.
+function AnfrageDialog({ name, unter16, laeuft, onSenden, onAbbrechen }: { name: string; unter16: boolean; laeuft: boolean; onSenden: () => void; onAbbrechen: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-brand-navy/40 p-3 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="anfrage-titel">
       <div className="w-full max-w-[420px] rounded-2xl bg-white p-5 shadow-xl">
@@ -47,7 +47,7 @@ function AnfrageDialog({ name, minderjaehrig, laeuft, onSenden, onAbbrechen }: {
           </h3>
         </div>
         <p className="text-[13.5px] leading-relaxed text-brand-ink-soft">
-          {minderjaehrig
+          {unter16
             ? "Du möchtest Kontakt mit einer Person außerhalb deines Vereins oder deiner Gruppe aufnehmen. Bitte achte darauf, keine persönlichen Daten wie deine Adresse, Telefonnummer oder Passwörter weiterzugeben."
             : `${name} gehört nicht zu deinem Verein oder deiner Gruppe. Ihr könnt chatten, sobald die Kontaktanfrage angenommen wurde.`}
         </p>
@@ -70,7 +70,7 @@ export function NeuerChat({ kontakte, anfragen }: { kontakte: Kontakt[]; anfrage
   const [suche, setSuche] = useState("");
   const [treffer, setTreffer] = useState<SuchTreffer[] | null>(null);
   const [meldung, setMeldung] = useState<AktionsErgebnis | null>(null);
-  const [dialog, setDialog] = useState<{ userId: string; name: string; minderjaehrig: boolean } | null>(null);
+  const [dialog, setDialog] = useState<{ userId: string; name: string; unter16: boolean } | null>(null);
   const [laeuft, starte] = useTransition();
 
   const gefiltert = useMemo(() => {
@@ -84,7 +84,7 @@ export function NeuerChat({ kontakte, anfragen }: { kontakte: Kontakt[]; anfrage
   function oeffnen(userId: string, name: string) {
     starte(async () => {
       const e: KontaktErgebnis = await kontaktAufnehmen(userId);
-      if (e.ergebnis === "anfrage_noetig") setDialog({ userId, name, minderjaehrig: Boolean(e.ichMinderjaehrig) });
+      if (e.ergebnis === "anfrage_noetig") setDialog({ userId, name, unter16: Boolean(e.ichUnter16) });
       else setMeldung(e);
     });
   }
@@ -186,7 +186,7 @@ export function NeuerChat({ kontakte, anfragen }: { kontakte: Kontakt[]; anfrage
                 )}
               </Person>
             ))}
-            <p className="mx-2 mt-3 text-[12px] text-brand-ink-faint">Minderjährige findest du nur über ihren genauen @Nutzernamen.</p>
+            <p className="mx-2 mt-3 text-[12px] text-brand-ink-faint">Kinder unter 16 findest du nur über ihren genauen @Nutzernamen.</p>
           </>
         )}
 
@@ -231,7 +231,7 @@ export function NeuerChat({ kontakte, anfragen }: { kontakte: Kontakt[]; anfrage
       {dialog && (
         <AnfrageDialog
           name={dialog.name}
-          minderjaehrig={dialog.minderjaehrig}
+          unter16={dialog.unter16}
           laeuft={laeuft}
           onAbbrechen={() => setDialog(null)}
           onSenden={() =>

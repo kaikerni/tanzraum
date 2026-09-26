@@ -36,6 +36,9 @@ export default async function DashboardLayout({
     supabase.rpc("mein_geschlecht"),
   ]);
   if (!geburtsdatum) redirect("/geburtsdatum");
+  // Kinderkonto unter 16 ohne dokumentierte Zustimmung eines Elternteils (das Login ist zusaetzlich gesperrt)
+  const { data: kinderkonto } = await supabase.rpc("mein_kinderkonto_status");
+  if (kinderkonto === "zustimmung_noetig" || kinderkonto === "wartet") redirect("/kinderkonto");
   if (!geschlecht) redirect("/geschlecht");
 
   const [{ data: ungelesen }, { count: benachrichtigungen }, zugriff] = await Promise.all([

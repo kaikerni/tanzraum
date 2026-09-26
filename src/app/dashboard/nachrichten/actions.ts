@@ -74,7 +74,7 @@ export async function chatStummSetzen(gespraechId: string, stumm: boolean): Prom
 
 export type KontaktErgebnis = AktionsErgebnis & {
   ergebnis?: "chat" | "anfrage_noetig" | "angefragt" | "eingehend" | "abgelehnt" | "nicht_moeglich";
-  ichMinderjaehrig?: boolean;
+  ichUnter16?: boolean;
 };
 
 // Privatchat oeffnen, wenn erlaubt; sonst sagt die Datenbank, ob eine Kontaktanfrage noetig ist.
@@ -95,9 +95,9 @@ export async function kontaktAufnehmen(userId: string): Promise<KontaktErgebnis>
   if (r?.ergebnis === "nicht_moeglich") {
     // Genauer Grund (Jugendschutz, Tarif, Elternsperre …) aus der Datenbank
     const { data: grund } = await supabase.rpc("schreib_sperrgrund", { p_user_id: userId });
-    return { error: sperrgrundText(grund as string | null), ergebnis: r.ergebnis, ichMinderjaehrig: r.ich_minderjaehrig };
+    return { error: sperrgrundText(grund as string | null), ergebnis: r.ergebnis, ichUnter16: r.ich_unter_16 };
   }
-  return { error: r?.ergebnis === "anfrage_noetig" ? null : (texte[r?.ergebnis] ?? "Nicht möglich."), ergebnis: r?.ergebnis, ichMinderjaehrig: r?.ich_minderjaehrig };
+  return { error: r?.ergebnis === "anfrage_noetig" ? null : (texte[r?.ergebnis] ?? "Nicht möglich."), ergebnis: r?.ergebnis, ichUnter16: r?.ich_unter_16 };
 }
 
 export async function kontaktanfrageSenden(userId: string): Promise<AktionsErgebnis> {

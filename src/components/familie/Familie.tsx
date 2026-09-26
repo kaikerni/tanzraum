@@ -57,16 +57,16 @@ export function ElternCode({ eltern, schutz }: { eltern: Elternteil[]; schutz: M
         </button>
       )}
       {meldung && <Meldung ergebnis={meldung} />}
-      {schutz.hatEltern && (
-        <div className="rounded-xl bg-brand-bg px-3 py-2.5 text-[13px] text-brand-ink-soft">
-          <p className="mb-1 flex items-center gap-1.5 font-semibold text-brand-ink">
-            <ShieldCheck size={15} /> Von deinen Eltern festgelegt
-          </p>
-          <p>Nachrichten: {schutz.nachrichtenErlaubt ? "erlaubt" : "deaktiviert"}</p>
-          <p>TanzRaum Map: {schutz.mapErlaubt ? "erlaubt (wenn du es einschaltest)" : "ausgeschaltet"}</p>
-          <p>Spotlights: {schutz.spotlightsNurKontakte ? "nur Verein & Kontakte" : "wie du es beim Erstellen wählst"}</p>
-        </div>
-      )}
+      <div className="rounded-xl bg-brand-bg px-3 py-2.5 text-[13px] text-brand-ink-soft">
+        <p className="mb-1 flex items-center gap-1.5 font-semibold text-brand-ink">
+          <ShieldCheck size={15} /> {schutz.hatEltern ? "Von deinen Eltern festgelegt" : "Schutzeinstellungen für Kinderkonten unter 16"}
+        </p>
+        <p>Nachrichten: {schutz.nachrichtenErlaubt ? "mit deinem Verein und deinen Eltern" : "deaktiviert"}</p>
+        <p>TanzRaum Map: {schutz.mapErlaubt ? "erlaubt (wenn du es einschaltest)" : "ausgeschaltet"}</p>
+        <p>Spotlights: {schutz.spotlightsNurKontakte ? "nur Verein & Kontakte" : "wie du es beim Erstellen wählst"}</p>
+        <p>Push-Benachrichtigungen: {schutz.pushErlaubt ? "erlaubt" : "nicht erlaubt"}</p>
+        {!schutz.hatEltern && <p className="mt-1">Mit einem verknüpften Elternkonto können deine Eltern diese Einstellungen ändern.</p>}
+      </div>
     </div>
   );
 }
@@ -141,7 +141,9 @@ export function MeineKinder({ kinder }: { kinder: Kind[] }) {
               {k.status === "bestaetigt" ? (k.quelle === "verein" ? "Vom Verein zugeordnet" : "Verknüpft") : "Wartet auf den Verein"}
             </span>
           </div>
-          {k.status === "bestaetigt" ? (
+          {k.status === "bestaetigt" && !k.unter16 ? (
+            <p className="text-[13px] text-brand-ink-soft">Ab 16 Jahren verwaltet dein Kind sein Konto selbst – die Schutzeinstellungen gelten nicht mehr.</p>
+          ) : k.status === "bestaetigt" ? (
             <div className="divide-y divide-brand-line">
               <Schalter
                 kind={k}
@@ -155,14 +157,21 @@ export function MeineKinder({ kinder }: { kinder: Kind[] }) {
                 feld="map_erlaubt"
                 wert={k.mapErlaubt}
                 titel="🗺️ Mein Kind darf auf der TanzRaum Map erscheinen"
-                text="Nur wenn dein Kind es selbst einschaltet – immer nur mit Ort, nie mit Straße oder Adresse. Aus: wird nicht angezeigt."
+                text="Standard: aus. Nur wenn dein Kind es zusätzlich selbst einschaltet – immer nur mit Ort, nie mit Straße oder Adresse."
               />
               <Schalter
                 kind={k}
                 feld="spotlights_nur_kontakte"
                 wert={k.spotlightsNurKontakte}
                 titel="✨ Spotlights nur für Verein & Kontakte"
-                text="An: Spotlights deines Kindes sehen nur Mitglieder seines Vereins und seine Kontakte."
+                text="An (Standard): Spotlights deines Kindes sehen nur Mitglieder seines Vereins und seine Kontakte."
+              />
+              <Schalter
+                kind={k}
+                feld="push_erlaubt"
+                wert={k.pushErlaubt}
+                titel="🔔 Push-Benachrichtigungen erlauben"
+                text="Deine Einwilligung, dass dein Kind Push-Benachrichtigungen auf seinen Geräten einschalten darf. Aus: keine Push-Benachrichtigungen."
               />
             </div>
           ) : (

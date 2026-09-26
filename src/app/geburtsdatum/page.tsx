@@ -20,7 +20,7 @@ export default async function GeburtsdatumSeite() {
         <h1 className="brand-font">Noch eine Angabe</h1>
         <p className="subtitle">
           Für den Jugendschutz bei Nachrichten, im Netzwerk und auf der TanzRaum Map brauchen wir einmalig dein Geburtsdatum. Es wird
-          niemandem angezeigt.
+          niemandem angezeigt. Unter 16 Jahren ist zusätzlich die Zustimmung eines Elternteils nötig.
         </p>
         <GeburtsdatumFormular />
       </div>

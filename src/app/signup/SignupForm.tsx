@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
-import { signUp, type SignupState } from "./actions";
+import { elternMailErneut, signUp, type SignupState } from "./actions";
+import { istKinderkontoAlter } from "@/lib/auth/alter";
 
 const initialState: SignupState = { error: null, emailBestaetigenNoetig: false };
 
@@ -15,8 +16,40 @@ function SubmitButton() {
   );
 }
 
+function ElternWarten({ kindId, mailFehler }: { kindId?: string; mailFehler?: string | null }) {
+  const [meldung, setMeldung] = useState<{ error: string | null; ok?: string } | null>(mailFehler ? { error: mailFehler } : null);
+  const [laeuft, starte] = useTransition();
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="form-success">
+        Fast geschafft! Weil du unter 16 bist, haben wir deinen Eltern eine E-Mail von TanzRaum (noreply@tanzraum.app)
+        geschickt. Sobald ein Elternteil zugestimmt hat, bekommst du eine E-Mail zum Bestätigen deiner Adresse – danach kannst
+        du dich anmelden.
+      </p>
+      <p className="text-[13px] text-brand-ink-soft">
+        Bis dahin ist dein Konto gesperrt. Stimmt niemand innerhalb von 14 Tagen zu, wird es automatisch gelöscht.
+      </p>
+      {kindId && (
+        <button
+          type="button"
+          disabled={laeuft}
+          onClick={() => starte(async () => setMeldung(await elternMailErneut(kindId)))}
+          className="btn-secondary self-start"
+        >
+          E-Mail an meine Eltern erneut senden
+        </button>
+      )}
+      {meldung?.error && <p className="form-error">{meldung.error}</p>}
+      {meldung?.ok && <p className="form-success">{meldung.ok}</p>}
+    </div>
+  );
+}
+
 export function SignupForm({ weiter }: { weiter: string }) {
   const [state, formAction] = useActionState(signUp, initialState);
+  const [kind, setKind] = useState(false);
+
+  if (state.wartetAufEltern) return <ElternWarten kindId={state.kindId} mailFehler={state.mailFehler} />;
 
   if (state.emailBestaetigenNoetig) {
     return (
@@ -45,9 +78,30 @@ export function SignupForm({ weiter }: { weiter: string }) {
 
       <label className="field">
         <span>Geburtsdatum</span>
-        <input type="date" name="geburtsdatum" autoComplete="bday" min="1900-01-01" max={new Date().toISOString().slice(0, 10)} required />
+        <input
+          type="date"
+          name="geburtsdatum"
+          autoComplete="bday"
+          min="1900-01-01"
+          max={new Date().toISOString().slice(0, 10)}
+          required
+          onChange={(e) => setKind(istKinderkontoAlter(e.target.value))}
+        />
         <small className="text-[12px] text-brand-ink-soft">Nur für den Jugendschutz – wird niemandem angezeigt und kann später nicht selbst geändert werden.</small>
       </label>
+
+      {kind && (
+        <div className="flex flex-col gap-2 rounded-xl border border-brand-line bg-brand-bg p-3">
+          <p className="text-[13px] text-brand-ink">
+            <strong>Du bist unter 16.</strong> Dann braucht dein Konto die Zustimmung eines Elternteils. Deine Eltern bekommen dafür
+            eine E-Mail – ein eigenes TanzRaum-Konto brauchen sie nicht. Bis zur Zustimmung ist dein Konto gesperrt.
+          </p>
+          <label className="field">
+            <span>E-Mail-Adresse eines Elternteils</span>
+            <input type="email" name="eltern_email" autoComplete="off" required />
+          </label>
+        </div>
+      )}
 
       <label className="field">
         <span>Handle (optional)</span>

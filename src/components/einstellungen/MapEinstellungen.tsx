@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { mapEinstellungenSpeichern } from "@/app/dashboard/netzwerk/actions";
 import { SendenButton, Meldung, LEERES_ERGEBNIS } from "@/components/ui/SendenButton";
 
-export type MapStand = { mapSichtbar: boolean; ort: string | null; unter15: boolean; elternErlauben: boolean; wirdAngezeigt: boolean };
+export type MapStand = { mapSichtbar: boolean; ort: string | null; unter16: boolean; elternErlauben: boolean; wirdAngezeigt: boolean };
 
 export function MapEinstellungen({ stand }: { stand: MapStand }) {
   const [ergebnis, aktion] = useActionState(mapEinstellungenSpeichern, LEERES_ERGEBNIS);
@@ -36,7 +36,9 @@ export function MapEinstellungen({ stand }: { stand: MapStand }) {
           </div>
         </fieldset>
       {!stand.elternErlauben && (
-        <p className="rounded-xl bg-brand-bg px-3 py-2.5 text-[13px] text-brand-ink-soft">🗺️ Deine Eltern haben die Anzeige auf der Map ausgeschaltet.</p>
+        <p className="rounded-xl bg-brand-bg px-3 py-2.5 text-[13px] text-brand-ink-soft">
+          🗺️ Kinderkonten unter 16 erscheinen nur auf der Map, wenn ein verknüpftes Elternteil das erlaubt hat.
+        </p>
       )}
       <p className="text-[12.5px] text-brand-ink-soft">
         Status: {stand.wirdAngezeigt ? "Du bist auf der Map zu sehen." : "Du bist nicht auf der Map zu sehen."} Private Konten erscheinen nie auf der Map.

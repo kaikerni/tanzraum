@@ -61,7 +61,15 @@ export function PushSchalter() {
         auth: b64url(abo.getKey("auth")),
         user_agent: navigator.userAgent.slice(0, 300),
       });
-      if (error) throw new Error("Das Gerät konnte nicht gespeichert werden.");
+      if (error) {
+        await abo.unsubscribe();
+        // RLS: Kinderkonten unter 16 nur mit Einwilligung der Eltern (Datenbank prueft)
+        throw new Error(
+          error.code === "42501"
+            ? "Push-Benachrichtigungen gibt es für Kinderkonten unter 16 nur mit Einwilligung deiner Eltern."
+            : "Das Gerät konnte nicht gespeichert werden.",
+        );
+      }
       setZustand("an");
     } catch (e) {
       setFehler(e instanceof Error ? e.message : "Push konnte nicht aktiviert werden.");

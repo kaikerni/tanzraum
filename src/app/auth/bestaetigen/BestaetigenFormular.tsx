@@ -66,6 +66,14 @@ export function BestaetigenFormular({
 }) {
   const [state, formAction] = useActionState(linkEinloesen, initialState);
 
+  if (state.wartetAufEltern) {
+    return (
+      <p className="form-success">
+        Dein Konto wartet noch auf die Zustimmung deiner Eltern. Sobald ein Elternteil zugestimmt hat, bekommst du eine neue E-Mail
+        zum Bestätigen deiner Adresse – danach kannst du dich anmelden.
+      </p>
+    );
+  }
   if (state.fehler) return <Fehler typ={typ} />;
   if (state.teilweise) {
     return (

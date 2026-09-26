@@ -7,11 +7,16 @@ export function SendenButton({
   laedtText = "Wird gespeichert …",
   variante = "primaer",
   className = "",
+  name,
+  value,
 }: {
   children: React.ReactNode;
   laedtText?: string;
   variante?: "primaer" | "sekundaer" | "gefahr";
   className?: string;
+  // optional: welcher Knopf gedrueckt wurde (z. B. Zustimmen/Ablehnen)
+  name?: string;
+  value?: string;
 }) {
   const { pending } = useFormStatus();
   const stil =
@@ -23,6 +28,8 @@ export function SendenButton({
   return (
     <button
       type="submit"
+      name={name}
+      value={value}
       disabled={pending}
       className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 py-2 text-[13.5px] font-semibold transition-colors disabled:opacity-60 ${stil} ${className}`}
     >

@@ -7,20 +7,22 @@ export type Kind = {
   status: "bestaetigt" | "wartet_verein";
   // "code" = selbst verknuepft, "verein" = vom Verein zugeordnet (dort verwaltet)
   quelle: "code" | "verein";
-  unter15: boolean;
+  unter16: boolean;
   nachrichtenErlaubt: boolean;
   mapErlaubt: boolean;
   spotlightsNurKontakte: boolean;
+  pushErlaubt: boolean;
 };
 
 export type Elternteil = { verknuepfungId: string; elternId: string; anzeige: string; status: "bestaetigt" | "wartet_verein" };
 
 export type MeineSchutzEinstellungen = {
   hatEltern: boolean;
-  unter15: boolean;
+  unter16: boolean;
   nachrichtenErlaubt: boolean;
   mapErlaubt: boolean;
   spotlightsNurKontakte: boolean;
+  pushErlaubt: boolean;
 };
 
 export async function getMeineKinder(supabase: SupabaseClient): Promise<Kind[]> {
@@ -32,10 +34,11 @@ export async function getMeineKinder(supabase: SupabaseClient): Promise<Kind[]> 
     verknuepfungId: k.verknuepfung_id,
     status: k.status,
     quelle: k.quelle,
-    unter15: k.unter_15,
+    unter16: k.unter_16,
     nachrichtenErlaubt: k.nachrichten_erlaubt,
     mapErlaubt: k.map_erlaubt,
     spotlightsNurKontakte: k.spotlights_nur_kontakte,
+    pushErlaubt: k.push_erlaubt,
   }));
 }
 
@@ -51,16 +54,13 @@ export async function getMeineSchutzEinstellungen(supabase: SupabaseClient): Pro
   const e = ((data ?? []) as any[])[0];
   return {
     hatEltern: !!e?.hat_eltern,
-    unter15: e?.unter_15 ?? true,
+    unter16: e?.unter_16 ?? true,
     nachrichtenErlaubt: e?.nachrichten_erlaubt ?? true,
     mapErlaubt: !!e?.map_erlaubt,
-    spotlightsNurKontakte: !!e?.spotlights_nur_kontakte,
+    spotlightsNurKontakte: e?.spotlights_nur_kontakte ?? true,
+    pushErlaubt: !!e?.push_erlaubt,
   };
 }
 
 // Alter in ganzen Jahren (Europe/Berlin), Grundlage fuer die Anzeige – die Regeln prueft die Datenbank.
-export function alterAm(geburtsdatum: string, heute: string): number {
-  const [gj, gm, gt] = geburtsdatum.split("-").map(Number);
-  const [hj, hm, ht] = heute.split("-").map(Number);
-  return hj - gj - (hm < gm || (hm === gm && ht < gt) ? 1 : 0);
-}
+export { alterAm } from "@/lib/auth/alter";

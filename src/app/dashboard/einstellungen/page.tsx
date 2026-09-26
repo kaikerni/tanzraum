@@ -11,6 +11,7 @@ import { GeschlechtAuswahl } from "@/components/einstellungen/GeschlechtAuswahl"
 import { ElternCode, KindVerknuepfen, MeineKinder } from "@/components/familie/Familie";
 import { alterAm, getMeineEltern, getMeineKinder, getMeineSchutzEinstellungen } from "@/lib/familie/getFamilie";
 import { heuteBerlin } from "@/lib/training/getTraining";
+import { KINDERKONTO_BIS, VOLLJAEHRIG_AB } from "@/lib/auth/alter";
 
 export const metadata = { title: "Einstellungen – TanzRaum" };
 
@@ -37,15 +38,18 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
   const mapStand = {
     mapSichtbar: !!m?.map_sichtbar,
     ort: m?.ort ?? null,
-    unter15: m?.unter_15 ?? true,
+    unter16: m?.unter_16 ?? true,
     elternErlauben: !!m?.eltern_erlauben,
     wirdAngezeigt: !!m?.wird_angezeigt,
   };
-  const minderjaehrig = !geburtsdatum || alterAm(String(geburtsdatum), heuteBerlin()) < 18;
+  // Kinderkonto unter 16: Eltern verknuepfen; volljaehrig (18): Elternfunktionen; 16/17: eigenes Konto ohne Elternfunktionen
+  const alter = geburtsdatum ? alterAm(String(geburtsdatum), heuteBerlin()) : null;
+  const kinderkonto = alter === null || alter < KINDERKONTO_BIS;
+  const volljaehrig = alter !== null && alter >= VOLLJAEHRIG_AB;
   const [kinder, eltern, schutz] = await Promise.all([
-    minderjaehrig ? Promise.resolve([]) : getMeineKinder(supabase),
-    minderjaehrig ? getMeineEltern(supabase) : Promise.resolve([]),
-    minderjaehrig ? getMeineSchutzEinstellungen(supabase) : Promise.resolve(null),
+    volljaehrig ? getMeineKinder(supabase) : Promise.resolve([]),
+    kinderkonto ? getMeineEltern(supabase) : Promise.resolve([]),
+    kinderkonto ? getMeineSchutzEinstellungen(supabase) : Promise.resolve(null),
   ]);
   const hinweis = email ? HINWEISE[email] : undefined;
 
@@ -83,10 +87,17 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
       </section>
 
       <section className={KARTE}>
-        {minderjaehrig && schutz ? (
+        {kinderkonto && schutz ? (
           <>
             <KarteKopf icon={Users} titel="Familie" untertitel="Eltern mit deinem Konto verknüpfen" />
             <ElternCode eltern={eltern} schutz={schutz} />
+          </>
+        ) : !volljaehrig ? (
+          <>
+            <KarteKopf icon={Users} titel="Familie" />
+            <p className="text-[13.5px] text-brand-ink-soft">
+              Ab 16 Jahren verwaltest du dein TanzRaum-Konto selbst. Elternfunktionen (Kinderkonten verknüpfen) gibt es ab 18 Jahren.
+            </p>
           </>
         ) : (
           <>

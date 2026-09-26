@@ -49,23 +49,64 @@ export default function DatenschutzSeite() {
 
       <Abschnitt titel="4. Konto und Profil">
         <ul>
-          <li>Pflichtangaben: Name, E-Mail-Adresse, Passwort, Geburtsdatum.</li>
+          <li>Pflichtangaben: Name, E-Mail-Adresse, Passwort, Geburtsdatum, Geschlecht; unter 16 Jahren zusätzlich die E-Mail-Adresse eines Elternteils.</li>
           <li>
-            Das Geburtsdatum wird nie öffentlich angezeigt. Es dient dazu, Schutzregeln für Kinder und Jugendliche anzuwenden
-            (z. B. wer Minderjährigen Nachrichten schreiben darf) und Eltern mit ihren Kindern zu verknüpfen.
+            Das Geburtsdatum wird nie öffentlich angezeigt. Aus ihm berechnet unser Server das Alter, um zu entscheiden, ob ein
+            eigenständiges Konto (ab 16 Jahren) oder ein Kinderkonto mit Zustimmung der Eltern (unter 16 Jahren) vorliegt, und um
+            die Schutzregeln für Kinderkonten anzuwenden.
           </li>
           <li>Freiwillige Angaben: Profilbild, Beschreibung, Vereins- und Tanzangaben, Kontaktdaten.</li>
         </ul>
         <p>Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Nutzungsvertrag).</p>
       </Abschnitt>
 
-      <Abschnitt titel="5. Kinder und Jugendliche">
+      <Abschnitt titel="5. Kinder unter 16 Jahren (Kinderkonto)">
         <p>
-          Für Minderjährige gelten in TanzRaum eigene Schutzregeln (eingeschränkte Kontaktaufnahme durch Fremde, Eltern-Verknüpfung,
-          Meldefunktion). Diese Schutzregeln sind unabhängig davon, ab welchem Alter jemand nach Datenschutzrecht selbst einwilligen kann.
+          Ein eigenständiges TanzRaum-Konto ist ab 16 Jahren möglich. Für Personen unter 16 Jahren gibt es ein Kinderkonto, das erst
+          genutzt werden kann, wenn ein Elternteil bzw. Träger der elterlichen Verantwortung zugestimmt hat.
+        </p>
+        <ul>
+          <li>
+            <strong>Ablauf:</strong> Das Kind registriert sich und gibt die E-Mail-Adresse eines Elternteils an. Das Konto wird angelegt,
+            die Anmeldung bleibt aber gesperrt. Das Elternteil erhält einen einmaligen, zeitlich begrenzten Link und kann darüber –
+            auch ohne eigenes TanzRaum-Konto – zustimmen oder ablehnen.
+          </li>
+          <li>
+            <strong>Keine Identitätsprüfung:</strong> Es findet keine Ausweis- oder Identitätsprüfung statt. Grundlage ist die
+            Erklärung des Elternteils über den an seine Adresse gesendeten Link, dass es volljährig und Träger der elterlichen
+            Verantwortung ist. Zur Kontrolle erhält das Elternteil anschließend eine Bestätigung per E-Mail.
+          </li>
+          <li>
+            <strong>Was wir zur Zustimmung speichern:</strong> Bezug zum Kinderkonto, die E-Mail-Adresse, an die der Link ging,
+            Zeitpunkt der Anfrage und der Entscheidung, die abgegebenen Erklärungen, den Umfang der Zustimmung, die Version der
+            Zustimmungstexte und den Zeitpunkt der Freischaltung. Keine Ausweiskopien oder weiteren Identitätsdaten. Die Angaben dienen
+            dem Nachweis der Zustimmung (Art. 7 Abs. 1, Art. 8 Abs. 2 DSGVO) und werden mit dem Kinderkonto gelöscht.
+          </li>
+          <li>
+            <strong>Ohne Zustimmung:</strong> Lehnt das Elternteil ab, wird ein neu angelegtes Kinderkonto sofort gelöscht. Erfolgt
+            innerhalb von 14 Tagen keine Zustimmung, wird es automatisch mit allen zugehörigen Daten gelöscht. Bereits bestehende
+            Konten werden nicht automatisch gelöscht, bleiben aber bis zur Zustimmung gesperrt.
+          </li>
+          <li>
+            <strong>Schutzvoreinstellungen:</strong> Kinderkonten erscheinen nicht auf der TanzRaum Map, Spotlights sind nur für den
+            eigenen Verein und Kontakte sichtbar, Nachrichten sind nur mit dem eigenen Verein und den Eltern möglich, und Kinder sind
+            nur über ihren genauen Nutzernamen auffindbar. Ein verknüpftes Elternkonto kann Map und Spotlights freigeben oder
+            Nachrichten abschalten.
+          </li>
+          <li>
+            Die Zuordnung eines Kindes zu einem Elternteil durch einen Verein ersetzt die Zustimmung des Elternteils nicht.
+          </li>
+        </ul>
+        <p>
+          <strong>Rechtsgrundlagen:</strong> Die für das Kinderkonto erforderliche Verarbeitung (Konto, Verein, Nachrichten) beruht auf
+          dem Nutzungsvertrag (Art. 6 Abs. 1 lit. b DSGVO), der mit Zustimmung des Elternteils geschlossen wird. Verarbeitungen, die
+          auf einer Einwilligung beruhen (Push-Benachrichtigungen, Anzeige auf der Map), erfolgen bei Kindern unter 16 Jahren nur mit
+          Einwilligung des Elternteils (Art. 6 Abs. 1 lit. a i. V. m. Art. 8 DSGVO). Ab 16 Jahren erteilen Nutzer erforderliche
+          Einwilligungen selbst. Die Dokumentation der Zustimmung beruht auf Art. 6 Abs. 1 lit. c DSGVO i. V. m. Art. 7 Abs. 1 DSGVO.
         </p>
         <p>
-          <Todo>Rechtsgrundlage und ggf. Zustimmung der Eltern für Nutzer unter 16 Jahren (Art. 8 DSGVO) rechtlich prüfen und hier beschreiben</Todo>
+          Eine Zustimmung oder Einwilligung kann jederzeit für die Zukunft widerrufen werden – über ein verknüpftes Elternkonto oder
+          per E-Mail an <a href="mailto:info@tanzraum.app" className="text-brand-red underline">info@tanzraum.app</a>.
         </p>
       </Abschnitt>
 
@@ -73,7 +114,8 @@ export default function DatenschutzSeite() {
         <ul>
           <li>
             Auf der Karte erscheinst du nur, wenn du das selbst einschaltest. Angezeigt werden höchstens PLZ und Ort (Mittelpunkt des
-            Ortes) – niemals Straße oder Hausnummer.
+            Ortes) – niemals Straße oder Hausnummer. Kinderkonten unter 16 erscheinen nur, wenn zusätzlich ein verknüpftes Elternteil
+            das erlaubt hat.
           </li>
           <li>
             Orte und Adressen werden über den Dienst Nominatim der OpenStreetMap Foundation (Vereinigtes Königreich) in Koordinaten
@@ -106,7 +148,8 @@ export default function DatenschutzSeite() {
           Wenn du Benachrichtigungen erlaubst, speichern wir die Push-Adresse deines Browsers. Die Benachrichtigung wird über den
           Push-Dienst deines Browser-Herstellers zugestellt (z. B. Google, Apple, Mozilla, Microsoft). Die Push-Nachricht selbst
           enthält keinen Inhalt – dein Gerät holt Titel und Vorschau danach direkt bei TanzRaum ab. Du kannst Push jederzeit in
-          den Browser-Einstellungen abschalten. Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO.
+          den Browser-Einstellungen abschalten. Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO; bei Kinderkonten unter 16 nur mit
+          Einwilligung eines Elternteils (Art. 8 DSGVO).
         </p>
       </Abschnitt>
 
@@ -161,6 +204,8 @@ export default function DatenschutzSeite() {
           <li>Vereinsdaten: solange der Verein sie benötigt bzw. bis der Verein sie entfernt.</li>
           <li>Rechnungen und Buchungsbelege: 8 Jahre (§ 147 Abgabenordnung).</li>
           <li>E-Mail-Versandprotokolle: 90 Tage.</li>
+          <li>Nicht bestätigte neue Kinderkonten: 14 Tage ab Registrierung, danach automatische Löschung.</li>
+          <li>Nachweis der Elternzustimmung: solange das Kinderkonto besteht.</li>
         </ul>
       </Abschnitt>
 

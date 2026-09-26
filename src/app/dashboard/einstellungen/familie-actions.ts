@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { AktionsErgebnis } from "@/components/ui/SendenButton";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const FELDER = new Set(["nachrichten_erlaubt", "map_erlaubt", "spotlights_nur_kontakte"]);
+const FELDER = new Set(["nachrichten_erlaubt", "map_erlaubt", "spotlights_nur_kontakte", "push_erlaubt"]);
 
 // deno-lint-ignore no-explicit-any
 function fehlerText(error: any, standard: string): string {

@@ -29,7 +29,18 @@ export default async function NutzungsbedingungenSeite() {
           <li>Für die Nutzung brauchst du ein Konto mit wahren Angaben, insbesondere einem korrekten Geburtsdatum.</li>
           <li>Halte deine Zugangsdaten geheim. Dein Passwort verwaltet ausschließlich die Anmeldung (Supabase Auth).</li>
           <li>
-            <Todo>Mindestalter und Regeln für Minderjährige (Zustimmung der Eltern) festlegen</Todo>
+            Für die eigenständige Registrierung und Nutzung eines eigenen TanzRaum-Kontos gilt ein Mindestalter von 16 Jahren. Für
+            Personen unter 16 Jahren ist die Nutzung nur über ein von einem Elternteil bzw. Träger der elterlichen Verantwortung
+            eingerichtetes und verwaltetes Eltern-/Kinderkonto möglich.
+          </li>
+          <li>
+            Kinderkonten werden erst nach der Zustimmung eines Elternteils bzw. Trägers der elterlichen Verantwortung freigeschaltet;
+            dafür genügt ein einmaliger Bestätigungslink per E-Mail, ein eigenes Konto der Eltern ist nicht nötig. Für Kinderkonten
+            gelten Schutzvoreinstellungen (siehe{" "}
+            <Link href="/datenschutz" className="text-brand-red underline">
+              Datenschutzerklärung
+            </Link>
+            ). Ohne Zustimmung wird ein neu angelegtes Kinderkonto nach 14 Tagen gelöscht.
           </li>
         </ul>
       </Abschnitt>
