@@ -165,6 +165,7 @@ function alsVorgang(v: any): Vorgang {
     wunschDatum: v.wunsch_datum,
     anlass: v.anlass,
     veranstaltung: v.veranstaltung,
+    bestellungId: v.bestellung_id,
     bestelltAm: v.bestellt_am,
     erhaltenAm: v.erhalten_am,
     eingeplantAm: v.eingeplant_am,
@@ -239,5 +240,77 @@ export async function getZeitraeume(supabase: SupabaseClient, vereinId: string, 
     von: z.von,
     bis: z.bis,
     bemerkung: z.bemerkung,
+  }));
+}
+
+export type Bestellung = {
+  id: string;
+  bezeichnung: string;
+  status: "vorbereitet" | "bestellt" | "erhalten" | "storniert";
+  bestelltAm: string | null;
+  geliefertAm: string | null;
+  bestellnummer: string | null;
+  anbieter: string | null;
+  bemerkung: string | null;
+  createdAt: string;
+};
+
+// deno-lint-ignore no-explicit-any
+function alsBestellung(b: any): Bestellung {
+  return {
+    id: b.id,
+    bezeichnung: b.bezeichnung,
+    status: b.status,
+    bestelltAm: b.bestellt_am,
+    geliefertAm: b.geliefert_am,
+    bestellnummer: b.bestellnummer,
+    anbieter: b.anbieter,
+    bemerkung: b.bemerkung,
+    createdAt: b.created_at,
+  };
+}
+
+export async function getBestellungen(supabase: SupabaseClient, vereinId: string): Promise<Bestellung[]> {
+  const { data } = await supabase.from("ehrungs_bestellungen").select("*").eq("verein_id", vereinId).order("created_at", { ascending: false });
+  return (data ?? []).map(alsBestellung);
+}
+
+export async function getBestellung(supabase: SupabaseClient, id: string): Promise<(Bestellung & { vereinId: string }) | null> {
+  const { data } = await supabase.from("ehrungs_bestellungen").select("*").eq("id", id).maybeSingle();
+  return data ? { ...alsBestellung(data), vereinId: data.verein_id } : null;
+}
+
+// Mengenuebersicht: Auszeichnung -> Stueckzahl
+export function mengen(vorgaenge: Vorgang[]): { auszeichnung: string; organisation: string | null; typ: Vorgang["typ"]; anzahl: number }[] {
+  const m = new Map<string, { auszeichnung: string; organisation: string | null; typ: Vorgang["typ"]; anzahl: number }>();
+  for (const v of vorgaenge) {
+    const k = v.ehrungsartId;
+    const e = m.get(k) ?? { auszeichnung: v.auszeichnung, organisation: v.organisation, typ: v.typ, anzahl: 0 };
+    e.anzahl += 1;
+    m.set(k, e);
+  }
+  return [...m.values()].sort((a, b) => b.anzahl - a.anzahl || a.auszeichnung.localeCompare(b.auszeichnung, "de"));
+}
+
+export type Dokument = { id: string; art: "urkunde" | "foto" | "dokument"; name: string; mimeType: string | null; groesse: number; url: string | null; hochgeladenAm: string };
+
+export async function getDokumente(supabase: SupabaseClient, vorgangId: string): Promise<Dokument[]> {
+  const { data } = await supabase
+    .from("mitglied_ehrung_dokumente")
+    .select("id, art, name, storage_path, mime_type, groesse_bytes, hochgeladen_am")
+    .eq("mitglied_ehrung_id", vorgangId)
+    .order("hochgeladen_am");
+  const liste = data ?? [];
+  const pfade = liste.map((d) => d.storage_path as string);
+  const { data: signiert } = pfade.length ? await supabase.storage.from("ehrungs-dokumente").createSignedUrls(pfade, 600) : { data: [] };
+  const urls = new Map((signiert ?? []).map((s) => [s.path, s.signedUrl]));
+  return liste.map((d) => ({
+    id: d.id,
+    art: d.art,
+    name: d.name,
+    mimeType: d.mime_type,
+    groesse: Number(d.groesse_bytes ?? 0),
+    url: urls.get(d.storage_path) ?? null,
+    hochgeladenAm: d.hochgeladen_am,
   }));
 }

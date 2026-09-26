@@ -6,6 +6,8 @@ export const EHRUNGEN_PFAD = "/dashboard/vereinsverwaltung/ehrungen";
 const REITER = [
   { key: "uebersicht", label: "🏅 Übersicht", href: "" },
   { key: "liste", label: "📋 Alle Ehrungen", href: "/liste" },
+  { key: "bestellungen", label: "📦 Bestellungen", href: "/bestellungen" },
+  { key: "jahr", label: "📅 Jahresübersicht", href: "/jahr" },
   { key: "mitglieder", label: "👥 Mitgliedszeiten", href: "/mitglieder" },
   { key: "auszeichnungen", label: "🏛️ Auszeichnungen", href: "/auszeichnungen" },
 ] as const;

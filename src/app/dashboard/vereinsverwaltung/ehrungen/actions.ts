@@ -50,6 +50,7 @@ function fehler(e: { code?: string; message?: string } | null, standard: string)
 }
 function neuLaden() {
   revalidatePath(PFAD, "layout");
+  revalidatePath("/dashboard/admin/ehrungen", "layout");
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -373,4 +374,106 @@ export async function organisationenSpeichern(_prev: AktionsErgebnis, fd: FormDa
   }
   neuLaden();
   return { error: null, ok: "Gespeichert." };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Bestellungen
+// ---------------------------------------------------------------------------------------------
+export async function bestellungVorbereiten(_prev: AktionsErgebnis, fd: FormData): Promise<AktionsErgebnis> {
+  const vereinId = id(fd, "verein_id");
+  const ids = fd.getAll("vorgang").map(String).filter((x) => UUID.test(x));
+  if (!vereinId) return { error: "Ungültiger Verein." };
+  if (ids.length === 0) return { error: "Bitte mindestens eine Ehrung auswählen." };
+  const { supabase } = await sitzung();
+  const { data, error } = await supabase.rpc("ehrungen_bestellung_vorbereiten", {
+    p_verein_id: vereinId,
+    p_vorgaenge: ids,
+    p_bezeichnung: text(fd, "bezeichnung", 200),
+  });
+  if (error) return { error: fehler(error, "Die Bestellung konnte nicht vorbereitet werden.") };
+  neuLaden();
+  redirect(`${PFAD}/bestellung/${data}?verein=${vereinId}`);
+}
+
+export async function bestellungStatus(_prev: AktionsErgebnis, fd: FormData): Promise<AktionsErgebnis> {
+  const bestellungId = id(fd, "id");
+  const status = String(fd.get("status") ?? "");
+  const d = datumFeld(fd, "datum");
+  if (!bestellungId || !["bestellt", "erhalten", "storniert"].includes(status)) return { error: "Ungültige Aktion." };
+  if (d === false) return { error: "Bitte ein gültiges Datum angeben." };
+  if (status === "bestellt" && fd.get("geprueft") !== "ja") return { error: "Bitte bestätigen Sie, dass Sie die Angaben vor der Bestellung geprüft haben." };
+  const { supabase } = await sitzung();
+  const { error } = await supabase.rpc("ehrungen_bestellung_status", {
+    p_bestellung_id: bestellungId,
+    p_status: status,
+    p_datum: d,
+    p_bestellnummer: text(fd, "bestellnummer", 100),
+    p_anbieter: text(fd, "anbieter", 200),
+    p_bemerkung: text(fd, "bemerkung", 1000),
+    p_geprueft: fd.get("geprueft") === "ja",
+  });
+  if (error) return { error: fehler(error, "Die Bestellung konnte nicht aktualisiert werden.") };
+  neuLaden();
+  return { error: null, ok: status === "bestellt" ? "Als bestellt markiert." : status === "erhalten" ? "Als erhalten markiert." : "Bestellung storniert." };
+}
+
+// Einzelne Ehrung aus einer noch nicht bestellten Bestellung herausnehmen
+export async function ausBestellungEntfernen(vorgangId: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(vorgangId)) return { error: "Ungültiger Vorgang." };
+  const { supabase } = await sitzung();
+  const { data: v } = await supabase.from("mitglied_ehrungen").select("status, bestellung_id, ehrungs_bestellungen(status)").eq("id", vorgangId).maybeSingle();
+  // deno-lint-ignore no-explicit-any
+  if (!v?.bestellung_id || (v as any).ehrungs_bestellungen?.status !== "vorbereitet") return { error: "Nur aus Bestellungen in Vorbereitung möglich." };
+  const { error } = await supabase
+    .from("mitglied_ehrungen")
+    .update({ bestellung_id: null, aenderungs_begruendung: "Aus Bestellung entfernt" })
+    .eq("id", vorgangId);
+  if (error) return { error: fehler(error, "Die Ehrung konnte nicht entfernt werden.") };
+  neuLaden();
+  return { error: null, ok: "Entfernt." };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Dokumente (Datei wird im Browser direkt in den privaten Bucket geladen, hier nur registriert)
+// ---------------------------------------------------------------------------------------------
+export async function dokumentRegistrieren(eingabe: {
+  vereinId: string;
+  vorgangId: string;
+  art: string;
+  name: string;
+  pfad: string;
+  mime: string;
+  groesse: number;
+}): Promise<AktionsErgebnis> {
+  if (!UUID.test(eingabe.vereinId) || !UUID.test(eingabe.vorgangId)) return { error: "Ungültige Angaben." };
+  if (!["urkunde", "foto", "dokument"].includes(eingabe.art)) return { error: "Ungültige Dokumentart." };
+  if (!eingabe.pfad.startsWith(`${eingabe.vereinId}/${eingabe.vorgangId}/`)) return { error: "Ungültiger Speicherort." };
+  const { supabase } = await sitzung();
+  const { error } = await supabase.from("mitglied_ehrung_dokumente").insert({
+    verein_id: eingabe.vereinId,
+    mitglied_ehrung_id: eingabe.vorgangId,
+    art: eingabe.art,
+    name: eingabe.name.slice(0, 200),
+    storage_path: eingabe.pfad,
+    mime_type: eingabe.mime,
+    groesse_bytes: Math.max(0, Math.round(eingabe.groesse)),
+  });
+  if (error) {
+    await supabase.storage.from("ehrungs-dokumente").remove([eingabe.pfad]);
+    return { error: fehler(error, "Das Dokument konnte nicht gespeichert werden.") };
+  }
+  neuLaden();
+  return { error: null, ok: "Dokument gespeichert." };
+}
+
+export async function dokumentLoeschen(dokumentId: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(dokumentId)) return { error: "Ungültiges Dokument." };
+  const { supabase } = await sitzung();
+  const { data: d } = await supabase.from("mitglied_ehrung_dokumente").select("storage_path").eq("id", dokumentId).maybeSingle();
+  if (!d) return { error: "Das Dokument wurde nicht gefunden." };
+  const { error } = await supabase.from("mitglied_ehrung_dokumente").delete().eq("id", dokumentId);
+  if (error) return { error: fehler(error, "Das Dokument konnte nicht gelöscht werden.") };
+  await supabase.storage.from("ehrungs-dokumente").remove([d.storage_path]);
+  neuLaden();
+  return { error: null, ok: "Gelöscht." };
 }

@@ -147,6 +147,7 @@ export type Vorgang = {
   wunschDatum: string | null;
   anlass: string | null;
   veranstaltung: string | null;
+  bestellungId: string | null;
   bestelltAm: string | null;
   erhaltenAm: string | null;
   eingeplantAm: string | null;
@@ -208,4 +209,23 @@ export function grundlageZeilen(g: Grundlage | null): string[] {
     zeilen.push(g.verknuepfung === "alle" ? "Alle Kriterien müssen erfüllt sein." : "Eines der Kriterien genügt.");
   }
   return zeilen;
+}
+
+export const MONATE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+
+// Massgeblicher Termin einer Ehrung: Verleihung > geplanter Termin > Wunschtermin > voraussichtliche Faelligkeit
+export function stichtagVon(v: Vorgang): string | null {
+  if (v.status === "verliehen") return v.verliehenAm;
+  return v.eingeplantAm ?? v.wunschDatum ?? v.faelligAm;
+}
+
+export function jahresEintraege(vorgaenge: Vorgang[], jahr: number): Vorgang[] {
+  return vorgaenge
+    .filter((v) => !["nicht_vorgesehen", "abgelehnt"].includes(v.status))
+    .filter((v) => stichtagVon(v)?.startsWith(String(jahr)))
+    .sort((a, b) => (stichtagVon(a) ?? "").localeCompare(stichtagVon(b) ?? "") || a.personName.localeCompare(b.personName, "de"));
+}
+
+export function grundKurz(v: Vorgang): string {
+  return v.grundlageText ?? (v.herkunft === "manuell_angelegt" ? (v.begruendung ?? "–") : grundlageZeilen(v.grundlage)[0]);
 }

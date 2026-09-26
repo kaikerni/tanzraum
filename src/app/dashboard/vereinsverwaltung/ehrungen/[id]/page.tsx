@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Calculator, History, Pencil, Workflow, Award, UserRound } from "lucide-react";
+import { Calculator, History, Pencil, Workflow, Award, UserRound, Paperclip, FileText, Image as Bild } from "lucide-react";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { EhrungenKopf, EHRUNGEN_PFAD, KeinZugriff, mitVerein } from "@/components/ehrungen/EhrungenKopf";
 import { HerkunftBadge, PruefBadge, StatusBadge, TypBadge } from "@/components/ehrungen/Badges";
 import { KorrekturFormular, StatusWechsel, VorgangBearbeiten, VorgangLoeschen, ZuruecksetzenFormular } from "@/components/ehrungen/EhrungenFormulare";
+import { DokumentLoeschen, DokumentUpload } from "@/components/ehrungen/EhrungenAblauf";
 import { ehrungsKontext } from "@/lib/ehrungen/kontext";
-import { getAuszeichnungen, getHistorie, getVorgang, type HistorieEintrag } from "@/lib/ehrungen/daten";
+import { getAuszeichnungen, getDokumente, getHistorie, getVorgang, type HistorieEintrag } from "@/lib/ehrungen/daten";
 import { HERKUNFT, HINWEIS_VORSCHLAG, STATUS, datum, grundlageZeilen, type Herkunft, type Status } from "@/lib/ehrungen/typen";
 
 export const metadata = { title: "Ehrung – TanzRaum" };
@@ -20,6 +21,8 @@ const AKTION: Record<string, string> = {
   status: "Status geändert",
   geaendert: "Geändert",
   bearbeitet: "Bearbeitet",
+  dokument: "Dokument hinzugefügt",
+  dokument_entfernt: "Dokument entfernt",
 };
 const FELD: Record<string, string> = {
   ehrungsart: "Auszeichnung",
@@ -40,6 +43,8 @@ const FELD: Record<string, string> = {
   interne_notiz: "Interne Notiz",
   begruendung: "Bemerkung",
   bestellung_id: "Bestellung",
+  dokument: "Dokument",
+  art: "Art",
 };
 
 function wert(feld: string, w: unknown): string {
@@ -52,7 +57,7 @@ function wert(feld: string, w: unknown): string {
 }
 
 function HistorieZeile({ e }: { e: HistorieEintrag }) {
-  const felder = Object.keys(e.neu ?? {}).filter((k) => !["ehrungsart_id", "faellig_jahr"].includes(k));
+  const felder = Object.keys(e.neu ?? e.alt ?? {}).filter((k) => !["ehrungsart_id", "faellig_jahr", "bestellung_id"].includes(k));
   return (
     <li className="flex flex-col gap-1 border-l-2 border-brand-line pb-3 pl-3">
       <p className="text-[12.5px] text-brand-ink-soft">
@@ -64,8 +69,8 @@ function HistorieZeile({ e }: { e: HistorieEintrag }) {
           {felder.map((f) => (
             <li key={f}>
               {FELD[f] ?? f}: {e.alt && f in e.alt ? <span className="text-brand-ink-soft line-through">{wert(f, e.alt[f])}</span> : null}
-              {e.alt && f in e.alt ? " → " : ""}
-              <span className="font-medium">{wert(f, e.neu?.[f])}</span>
+              {e.alt && f in e.alt && e.neu ? " → " : ""}
+              {e.neu && <span className="font-medium">{wert(f, e.neu[f])}</span>}
             </li>
           ))}
         </ul>
@@ -83,7 +88,11 @@ export default async function EhrungDetail({ params }: { params: Promise<{ id: s
   const vorgang = await getVorgang(supabase, id);
   const verein = vorgang ? vereine.find((v) => v.vereinId === vorgang.vereinId) : null;
   if (!vorgang || !verein) return <KeinZugriff ohneLizenz={ohneLizenz} />;
-  const [arten, historie] = await Promise.all([getAuszeichnungen(supabase, verein.vereinId), getHistorie(supabase, id)]);
+  const [arten, historie, dokumente] = await Promise.all([
+    getAuszeichnungen(supabase, verein.vereinId),
+    getHistorie(supabase, id),
+    getDokumente(supabase, id),
+  ]);
   const alleArten = [...arten.verband, ...arten.verein];
   if (!alleArten.some((a) => a.id === vorgang.ehrungsartId)) {
     // aktuelle Auszeichnung auch dann auswaehlbar halten, wenn der Verband inzwischen abgewaehlt wurde
@@ -186,6 +195,36 @@ export default async function EhrungDetail({ params }: { params: Promise<{ id: s
           )}
         </section>
       </div>
+
+      {vorgang.bestellungId && (
+        <p className="text-[13px] text-brand-ink-soft">
+          📦 Teil einer{" "}
+          <Link href={mitVerein(`${EHRUNGEN_PFAD}/bestellung/${vorgang.bestellungId}`, verein.vereinId)} className="font-semibold text-brand-red">
+            Bestellung
+          </Link>
+        </p>
+      )}
+
+      <section className={KARTE}>
+        <KarteKopf icon={Paperclip} titel="Urkunde, Fotos und Dokumente" untertitel="Privat gespeichert – nur für Vereinsadmins sichtbar" />
+        {dokumente.length > 0 && (
+          <ul className="mb-3 flex flex-col gap-1.5">
+            {dokumente.map((d) => (
+              <li key={d.id} className="flex items-center justify-between gap-2 rounded-xl border border-brand-line px-3 py-2 text-[13.5px]">
+                <a href={d.url ?? "#"} target="_blank" rel="noopener noreferrer" className="flex min-w-0 items-center gap-2 font-medium text-brand-ink hover:text-brand-red">
+                  {d.mimeType?.startsWith("image/") ? <Bild size={15} /> : <FileText size={15} />}
+                  <span className="truncate">{d.name}</span>
+                  <span className="shrink-0 text-[12px] text-brand-ink-soft">
+                    {d.art === "urkunde" ? "Urkunde" : d.art === "foto" ? "Foto" : "Dokument"} · {Math.max(1, Math.round(d.groesse / 1024))} KB
+                  </span>
+                </a>
+                <DokumentLoeschen dokumentId={d.id} />
+              </li>
+            ))}
+          </ul>
+        )}
+        <DokumentUpload vereinId={verein.vereinId} vorgangId={vorgang.id} />
+      </section>
 
       <section className={KARTE}>
         <KarteKopf icon={Pencil} titel="Bearbeiten" untertitel="Änderungen betreffen nur diesen Vorgang – nicht den Auszeichnungskatalog und nicht die Mitgliedsstammdaten." />

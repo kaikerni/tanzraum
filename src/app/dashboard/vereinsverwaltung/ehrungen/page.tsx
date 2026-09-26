@@ -28,6 +28,8 @@ export default async function EhrungenUebersicht({ searchParams }: { searchParam
   const vorgaenge = await getVorgaenge(supabase, verein.vereinId);
 
   const anzahl = (s: Status) => vorgaenge.filter((v) => v.status === s).length;
+  const zurBestellung = vorgaenge.filter((v) => ["vorgemerkt", "geprueft"].includes(v.status) && !v.bestellungId && v.bestellungErforderlich).length;
+  const vorbereitet = vorgaenge.filter((v) => v.bestellungId && v.status === "vorgemerkt").length;
   const kandidaten = vorgaenge.filter((v) => v.status === "moeglich");
   const heute = new Date().toISOString().slice(0, 10);
   const inEinemJahr = new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10);
@@ -77,6 +79,19 @@ export default async function EhrungenUebersicht({ searchParams }: { searchParam
           </Link>
         ))}
       </section>
+
+      {(zurBestellung > 0 || vorbereitet > 0) && (
+        <Link
+          href={mitVerein(`${basis}/bestellungen`, verein.vereinId)}
+          className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-l)] border border-brand-gold/40 bg-brand-gold-wash px-4 py-3 text-[13.5px] text-brand-ink"
+        >
+          <span>
+            📦 <strong>{zurBestellung}</strong> vorgemerkte Ehrung{zurBestellung === 1 ? "" : "en"} noch ohne Bestellung · <strong>{vorbereitet}</strong> für Bestellung
+            vorbereitet
+          </span>
+          <span className="font-semibold text-brand-red">Bestellungen ›</span>
+        </Link>
+      )}
 
       <section className={KARTE}>
         <KarteKopf

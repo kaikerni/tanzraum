@@ -1,6 +1,6 @@
 -- Ehrungen & Orden – Grundlage (Datenmodell, Rechte, Historie, Berechnung)
 --
--- Zugriff ausschliesslich fuer Vereinsadmins des jeweiligen Vereins (is_verein_admin). Kein Zugriff fuer Mitglieder,
+-- Zugriff ausschliesslich fuer Vereinsadmins des jeweiligen Vereins mit Vereinslizenz (ehrungen_berechtigt). Kein Zugriff fuer Mitglieder,
 -- Trainer, Betreuer oder Eltern ohne Admin-Rolle. Der zentrale Verbandskatalog wird nur vom TanzRaum-Admin gepflegt
 -- und ist fuer Vereinsadmins lesbar. Bestehende Tabellen werden nicht veraendert.
 --
@@ -19,6 +19,16 @@ as $function$
   select exists (
     select 1 from vereins_mitglieder vm join rollen r on r.id = vm.rolle_id
     where vm.user_id = auth.uid() and lower(r.name) like '%admin%');
+$function$;
+
+-- Ehrungen nur fuer Vereinsadmins von Vereinen mit Vereinslizenz (Mitglieder mit TanzRaum-Konto)
+create or replace function public.ehrungen_berechtigt(p_verein_id uuid)
+ returns boolean
+ language sql
+ stable security definer
+ set search_path to 'public'
+as $function$
+  select is_verein_admin(p_verein_id) and verein_hat_lizenz(p_verein_id);
 $function$;
 
 -- ---------------------------------------------------------------------------------------------
@@ -530,7 +540,7 @@ as $function$
 declare
   v_heute date := (now() at time zone 'Europe/Berlin')::date;
 begin
-  if not is_verein_admin(p_verein_id) then
+  if not ehrungen_berechtigt(p_verein_id) then
     raise exception 'Keine Berechtigung' using errcode = '42501';
   end if;
   return query
@@ -587,7 +597,7 @@ declare
   v_neu integer := 0;
   v record;
 begin
-  if not is_verein_admin(p_verein_id) then
+  if not ehrungen_berechtigt(p_verein_id) then
     raise exception 'Keine Berechtigung' using errcode = '42501';
   end if;
   -- unveraenderte automatische Vorschlaege an geaenderte Stammdaten anpassen
@@ -623,7 +633,7 @@ declare
   v_g jsonb;
 begin
   select * into me from mitglied_ehrungen where id = p_id;
-  if me.id is null or not is_verein_admin(me.verein_id) then
+  if me.id is null or not ehrungen_berechtigt(me.verein_id) then
     raise exception 'Keine Berechtigung' using errcode = '42501';
   end if;
   if me.vereins_mitglied_id is null then
@@ -650,7 +660,7 @@ declare
   me mitglied_ehrungen%rowtype;
 begin
   select * into me from mitglied_ehrungen where id = p_id;
-  if me.id is null or not is_verein_admin(me.verein_id) then
+  if me.id is null or not ehrungen_berechtigt(me.verein_id) then
     raise exception 'Keine Berechtigung' using errcode = '42501';
   end if;
   if me.auto_ehrungsart_id is null then
@@ -682,31 +692,31 @@ create policy "Ehrungen: Organisationen pflegen (TanzRaum-Admin)" on public.ehru
   using (ist_plattform_admin_aktuell()) with check (ist_plattform_admin_aktuell());
 
 create policy "Ehrungen: Vereinsorganisationen (Vereinsadmin)" on public.verein_ehrungs_organisationen for all to authenticated
-  using (is_verein_admin(verein_id)) with check (is_verein_admin(verein_id));
+  using (ehrungen_berechtigt(verein_id)) with check (ehrungen_berechtigt(verein_id));
 
 create policy "Ehrungen: Auszeichnungen lesen" on public.ehrungsarten for select to authenticated
   using ((typ = 'verband' and (ist_plattform_admin_aktuell() or ist_irgendein_vereinsadmin()))
-      or (typ = 'verein' and is_verein_admin(verein_id)));
+      or (typ = 'verein' and ehrungen_berechtigt(verein_id)));
 create policy "Ehrungen: Auszeichnungen pflegen" on public.ehrungsarten for all to authenticated
-  using ((typ = 'verband' and ist_plattform_admin_aktuell()) or (typ = 'verein' and is_verein_admin(verein_id)))
-  with check ((typ = 'verband' and ist_plattform_admin_aktuell()) or (typ = 'verein' and is_verein_admin(verein_id)));
+  using ((typ = 'verband' and ist_plattform_admin_aktuell()) or (typ = 'verein' and ehrungen_berechtigt(verein_id)))
+  with check ((typ = 'verband' and ist_plattform_admin_aktuell()) or (typ = 'verein' and ehrungen_berechtigt(verein_id)));
 
 create policy "Ehrungen: Regeln lesen" on public.ehrungs_regeln for select to authenticated
   using (exists (select 1 from ehrungsarten a where a.id = ehrungs_regeln.ehrungsart_id));
 create policy "Ehrungen: Regeln pflegen" on public.ehrungs_regeln for all to authenticated
   using (exists (select 1 from ehrungsarten a where a.id = ehrungs_regeln.ehrungsart_id
-                 and ((a.typ = 'verband' and ist_plattform_admin_aktuell()) or (a.typ = 'verein' and is_verein_admin(a.verein_id)))))
+                 and ((a.typ = 'verband' and ist_plattform_admin_aktuell()) or (a.typ = 'verein' and ehrungen_berechtigt(a.verein_id)))))
   with check (exists (select 1 from ehrungsarten a where a.id = ehrungs_regeln.ehrungsart_id
-                 and ((a.typ = 'verband' and ist_plattform_admin_aktuell()) or (a.typ = 'verein' and is_verein_admin(a.verein_id)))));
+                 and ((a.typ = 'verband' and ist_plattform_admin_aktuell()) or (a.typ = 'verein' and ehrungen_berechtigt(a.verein_id)))));
 
 create policy "Ehrungen: Zeitraeume (Vereinsadmin)" on public.mitglied_zeitraeume for all to authenticated
-  using (is_verein_admin(verein_id)) with check (is_verein_admin(verein_id));
+  using (ehrungen_berechtigt(verein_id)) with check (ehrungen_berechtigt(verein_id));
 create policy "Ehrungen: Bestellungen (Vereinsadmin)" on public.ehrungs_bestellungen for all to authenticated
-  using (is_verein_admin(verein_id)) with check (is_verein_admin(verein_id));
+  using (ehrungen_berechtigt(verein_id)) with check (ehrungen_berechtigt(verein_id));
 create policy "Ehrungen: Vorgaenge (Vereinsadmin)" on public.mitglied_ehrungen for all to authenticated
-  using (is_verein_admin(verein_id)) with check (is_verein_admin(verein_id));
+  using (ehrungen_berechtigt(verein_id)) with check (ehrungen_berechtigt(verein_id));
 create policy "Ehrungen: Historie lesen (Vereinsadmin)" on public.ehrungs_historie for select to authenticated
-  using (is_verein_admin(verein_id));
+  using (ehrungen_berechtigt(verein_id));
 
 -- ---------------------------------------------------------------------------------------------
 -- Rechte
@@ -723,6 +733,8 @@ grant all on table public.ehrungs_organisationen, public.verein_ehrungs_organisa
   public.ehrungs_historie to service_role;
 
 revoke all on function public.ist_irgendein_vereinsadmin() from public, anon;
+revoke all on function public.ehrungen_berechtigt(uuid) from public, anon;
+grant execute on function public.ehrungen_berechtigt(uuid) to authenticated, service_role;
 grant execute on function public.ist_irgendein_vereinsadmin() to authenticated, service_role;
 revoke all on function public.ehrungen_zeitstempel() from public, anon, authenticated;
 revoke all on function public.mitglied_zeitraeume_pruefen() from public, anon, authenticated;

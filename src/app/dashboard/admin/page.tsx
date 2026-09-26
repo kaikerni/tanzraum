@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Flag, ShieldCheck, Hammer, CreditCard } from "lucide-react";
+import { Flag, ShieldCheck, Hammer, CreditCard, Medal } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 
@@ -39,6 +39,15 @@ export default async function AdminSeite() {
         <span className="flex-1">
           <span className="block text-[16px] font-bold text-brand-ink">Tarife & Abos</span>
           <span className="block text-[13px] text-brand-ink-soft">Wer hat FREE, BASIC oder VEREIN – Vereinslizenzen und Mitglieder</span>
+        </span>
+      </Link>
+      <Link href="/dashboard/admin/ehrungen" className={`${KARTE} flex items-center gap-4 hover:border-brand-red`}>
+        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-gold-wash text-brand-gold">
+          <Medal size={22} />
+        </span>
+        <span className="flex-1">
+          <span className="block text-[16px] font-bold text-brand-ink">Ehrungskatalog</span>
+          <span className="block text-[13px] text-brand-ink-soft">Verbände und Verbandsauszeichnungen pflegen und prüfen</span>
         </span>
       </Link>
       <section className={`${KARTE} flex items-center gap-3 text-[13.5px] text-brand-ink-soft`}>
