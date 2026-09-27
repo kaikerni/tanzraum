@@ -2,8 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown } from "lucide-react";
-
-export const ZEITRAEUME = [4, 8, 12] as const;
+import { ZEITRAEUME } from "@/lib/dashboard/zeitraeume";
 
 export function ZeitraumAuswahl({ wochen }: { wochen: number }) {
   const router = useRouter();

@@ -13,7 +13,7 @@ import {
   getMeineKinder,
 } from "@/lib/dashboard/getDashboardUebersicht";
 import { getAktuelleNachrichten } from "@/lib/dashboard/getNachrichten";
-import { ZEITRAEUME } from "@/components/dashboard/ZeitraumAuswahl";
+import { ZEITRAEUME } from "@/lib/dashboard/zeitraeume";
 import { DashboardAnsicht } from "@/components/dashboard/DashboardAnsicht";
 import { KARTE } from "@/components/dashboard/Karten";
 import { SpotlightLeiste } from "@/components/spotlights/SpotlightLeiste";
