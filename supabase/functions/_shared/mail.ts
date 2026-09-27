@@ -88,7 +88,7 @@ export function layout(opts: {
   <table role="presentation" class="karte" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 6px 24px rgba(27,33,48,0.08);">
     <tr><td style="height:6px;background:#e11d2e;background-image:linear-gradient(90deg,#e11d2e,#c9921f);font-size:0;line-height:0;">&nbsp;</td></tr>
     <tr><td align="center" style="padding:28px 24px 8px;">
-      <img src="${LOGO_URL}" width="280" height="72" alt="TanzRaum" style="display:block;width:280px;max-width:90%;height:auto;border:0;font-family:Arial,Helvetica,sans-serif;font-size:28px;font-weight:bold;line-height:72px;color:#e11d2e;text-align:center;">
+      <img src="${LOGO_URL}" width="280" height="72" alt="TanzRaum" style="display:block;width:280px;max-width:90%;height:auto;max-height:80px;border:0;font-family:Arial,Helvetica,sans-serif;font-size:28px;font-weight:bold;line-height:72px;color:#e11d2e;text-align:center;">
     </td></tr>
     <tr><td class="innen" style="padding:24px 40px 36px;font-family:Arial,Helvetica,sans-serif;">
       <h1 style="margin:0 0 18px;font-size:24px;line-height:1.3;color:#1b2130;font-weight:bold;">${esc(opts.titel)}</h1>
