@@ -13,7 +13,7 @@ import type { AktionsErgebnis } from "@/components/ui/SendenButton";
 const DATUM = /^\d{4}-\d{2}-\d{2}$/;
 const ZEIT = /^\d{2}:\d{2}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-const ARTEN = ["veranstaltung", "auftritt", "sitzung", "sonstiges"];
+const ARTEN = ["veranstaltung", "auftritt", "turnier", "umzug", "fest", "sitzung", "sonstiges"];
 const ZIELGRUPPEN = ["verein", "gruppen", "leitung"];
 
 async function sitzung() {
@@ -27,6 +27,7 @@ async function sitzung() {
 
 function neuLaden() {
   revalidatePath("/dashboard/kalender", "layout");
+  revalidatePath("/dashboard/saisonplanung");
   revalidatePath("/dashboard");
 }
 
@@ -48,6 +49,8 @@ export async function terminSpeichern(_prev: AktionsErgebnis, formData: FormData
   const art = privat ? "privat" : text(formData, "art", 20);
   const zielgruppe = privat ? "verein" : text(formData, "zielgruppe", 10);
   const gruppen = privat || zielgruppe !== "gruppen" ? [] : formData.getAll("gruppen").map(String).filter((g) => UUID.test(g));
+  const treffzeit = privat ? "" : text(formData, "treffzeit", 5);
+  const turnierId = privat ? "" : text(formData, "turnier_id", 36);
 
   if (!id && !privat && !UUID.test(wo)) return { error: "Bitte wählen, wo der Termin eingetragen wird." };
   if (!titel) return { error: "Bitte einen Titel angeben." };
@@ -59,6 +62,7 @@ export async function terminSpeichern(_prev: AktionsErgebnis, formData: FormData
   if (!privat && !ARTEN.includes(art)) return { error: "Bitte eine Terminart wählen." };
   if (!privat && !ZIELGRUPPEN.includes(zielgruppe)) return { error: "Bitte wählen, für wen der Termin ist." };
   if (zielgruppe === "gruppen" && gruppen.length === 0) return { error: "Bitte mindestens eine Gruppe wählen." };
+  if (treffzeit && !ZEIT.test(treffzeit)) return { error: "Ungültige Treffzeit." };
 
   const felder = {
     art,
@@ -72,6 +76,11 @@ export async function terminSpeichern(_prev: AktionsErgebnis, formData: FormData
     zielgruppe,
     gruppe_ids: gruppen,
     rueckmeldung: !privat && formData.get("rueckmeldung") === "on",
+    treffpunkt: privat ? null : text(formData, "treffpunkt", 200) || null,
+    treffzeit: treffzeit || null,
+    verantwortlich: privat ? null : text(formData, "verantwortlich", 120) || null,
+    mitbringen: privat ? null : text(formData, "mitbringen", 500) || null,
+    turnier_id: UUID.test(turnierId) ? turnierId : null,
   };
 
   const { supabase } = await sitzung();

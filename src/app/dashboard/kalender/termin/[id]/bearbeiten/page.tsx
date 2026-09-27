@@ -54,6 +54,11 @@ export default async function TerminBearbeitenSeite({ params }: { params: Promis
             zielgruppe: termin.zielgruppe,
             gruppeIds: (roh.gruppe_ids as string[]) ?? [],
             rueckmeldung: termin.rueckmeldung,
+            treffpunkt: termin.treffpunkt,
+            treffzeit: termin.treffzeit,
+            verantwortlich: termin.verantwortlich,
+            mitbringen: termin.mitbringen,
+            turnierId: termin.turnierId,
           }}
         />
       </section>

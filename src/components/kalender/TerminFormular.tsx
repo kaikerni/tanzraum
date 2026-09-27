@@ -21,11 +21,20 @@ export type TerminVorgabe = {
   zielgruppe: Zielgruppe;
   gruppeIds: string[];
   rueckmeldung: boolean;
+  treffpunkt?: string | null;
+  treffzeit?: string | null;
+  verantwortlich?: string | null;
+  mitbringen?: string | null;
+  turnierId?: string | null;
+  turnierName?: string | null;
 };
 
 const ARTEN: [TerminArt, string][] = [
-  ["veranstaltung", "Veranstaltung"],
+  ["turnier", "Turnier"],
   ["auftritt", "Auftritt"],
+  ["umzug", "Umzug"],
+  ["fest", "Fest / Feier"],
+  ["veranstaltung", "Veranstaltung"],
   ["sitzung", "Sitzung"],
   ["sonstiges", "Sonstiges"],
 ];
@@ -78,7 +87,8 @@ export function TerminFormular({
   startDatum: string;
 }) {
   const [ergebnis, aktion] = useActionState(terminSpeichern, LEERES_ERGEBNIS);
-  const bearbeiten = Boolean(vorgabe);
+  // Vorgabe ohne id = Vorlage fuer einen neuen Termin (z. B. aus dem Turnierbereich uebernommen)
+  const bearbeiten = Boolean(vorgabe?.id);
   const [wo, setWo] = useState<string>(vorgabe ? (vorgabe.vereinId ?? "privat") : privatErlaubt ? "privat" : (ziele[0]?.vereinId ?? ""));
   const [art, setArt] = useState<TerminArt>(vorgabe && vorgabe.art !== "privat" ? vorgabe.art : "veranstaltung");
   const [zielgruppe, setZielgruppe] = useState<Zielgruppe>(vorgabe?.zielgruppe ?? "verein");
@@ -90,8 +100,14 @@ export function TerminFormular({
 
   return (
     <form action={aktion} className="flex flex-col gap-5">
-      {vorgabe && <input type="hidden" name="id" value={vorgabe.id} />}
+      {bearbeiten && vorgabe && <input type="hidden" name="id" value={vorgabe.id} />}
       <input type="hidden" name="wo" value={wo} />
+      {vorgabe?.turnierId && <input type="hidden" name="turnier_id" value={vorgabe.turnierId} />}
+      {vorgabe?.turnierId && vorgabe.turnierName && (
+        <p className="rounded-xl bg-brand-gold-wash px-3.5 py-2.5 text-[13px] text-brand-ink">
+          Übernommen aus dem Turnierbereich: <strong>{vorgabe.turnierName}</strong>
+        </p>
+      )}
 
       <fieldset className="flex flex-col gap-2" disabled={bearbeiten}>
         <legend className="mb-1 text-[12.5px] font-semibold text-brand-ink-soft">Wo eintragen?</legend>
@@ -136,7 +152,7 @@ export function TerminFormular({
 
       <label className="field">
         <span>Titel</span>
-        <input name="titel" required maxLength={120} defaultValue={vorgabe?.titel} placeholder={privat ? "z. B. Zahnarzt" : "z. B. Prunksitzung"} />
+        <input name="titel" required maxLength={120} defaultValue={vorgabe?.titel} placeholder={privat ? "z. B. Zahnarzt" : "z. B. Fastnachtsumzug Landau"} />
       </label>
 
       <div className="flex flex-col gap-3">
@@ -181,6 +197,37 @@ export function TerminFormular({
         <input name="ort" maxLength={200} defaultValue={vorgabe?.ort ?? ""} placeholder="z. B. Festhalle Zeiskam" />
       </label>
 
+      {!privat && (
+        <div className="flex flex-col gap-4 rounded-xl bg-brand-bg p-3.5">
+          <p className="text-[12.5px] font-semibold text-brand-ink-soft">Treffpunkt & Organisation (optional)</p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_140px]">
+            <label className="field">
+              <span>Treffpunkt</span>
+              <input name="treffpunkt" maxLength={200} defaultValue={vorgabe?.treffpunkt ?? ""} placeholder="z. B. Parkplatz Turnhalle, Abfahrt Bus" />
+            </label>
+            <label className="field">
+              <span>Treffzeit</span>
+              <input type="time" name="treffzeit" defaultValue={vorgabe?.treffzeit ?? ""} />
+            </label>
+          </div>
+          <label className="field">
+            <span>Ansprechpartner / verantwortlich</span>
+            <input name="verantwortlich" maxLength={120} defaultValue={vorgabe?.verantwortlich ?? ""} placeholder="z. B. Sabine (Trainerin), 0171 …" />
+          </label>
+          <label className="field">
+            <span>Mitbringen / Kostüm</span>
+            <textarea
+              name="mitbringen"
+              rows={2}
+              maxLength={500}
+              defaultValue={vorgabe?.mitbringen ?? ""}
+              className="rounded-lg border border-brand-line bg-white px-3 py-2.5 text-[13.5px] font-normal text-brand-ink outline-none focus:border-brand-red"
+              placeholder="z. B. Gardeuniform, Stiefel, Getränk"
+            />
+          </label>
+        </div>
+      )}
+
       <label className="field">
         <span>Beschreibung (optional)</span>
         <textarea
@@ -189,7 +236,7 @@ export function TerminFormular({
           maxLength={2000}
           defaultValue={vorgabe?.beschreibung ?? ""}
           className="rounded-lg border border-brand-line px-3 py-2.5 text-[13.5px] font-normal text-brand-ink outline-none focus:border-brand-red"
-          placeholder={privat ? "" : "z. B. Treffpunkt, Kostüm, Mitbringen …"}
+          placeholder={privat ? "" : "z. B. Ablauf, Programm, Hinweise …"}
         />
       </label>
 

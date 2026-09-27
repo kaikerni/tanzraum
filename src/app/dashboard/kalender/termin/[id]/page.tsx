@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Clock, MapPin, Users, Pencil, Building2, CalendarDays } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, Users, Pencil, Building2, CalendarDays, Flag, UserRound, Backpack, Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { heuteBerlin } from "@/lib/training/getTraining";
 import { ART_LABEL, getTermin, getTeilnehmer, type Termin } from "@/lib/kalender/getKalender";
@@ -45,12 +45,19 @@ export default async function TerminSeite({ params }: { params: Promise<{ id: st
 
   return (
     <div className="mx-auto flex max-w-[860px] flex-col gap-4">
-      <Link
-        href={`/dashboard/kalender?tag=${termin.datum}`}
-        className="inline-flex items-center gap-1.5 text-[13px] font-medium text-brand-ink-soft hover:text-brand-ink"
-      >
-        <ArrowLeft size={15} /> Zurück zum Kalender
-      </Link>
+      <div className="flex flex-wrap gap-x-5 gap-y-1">
+        <Link
+          href={`/dashboard/kalender?tag=${termin.datum}`}
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-brand-ink-soft hover:text-brand-ink"
+        >
+          <ArrowLeft size={15} /> Zurück zum Kalender
+        </Link>
+        {termin.vereinId && termin.darfBearbeiten && (
+          <Link href="/dashboard/saisonplanung" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-brand-ink-soft hover:text-brand-ink">
+            Zur Saisonplanung
+          </Link>
+        )}
+      </div>
 
       <section className={KARTE}>
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -90,6 +97,47 @@ export default async function TerminSeite({ params }: { params: Promise<{ id: st
                 >
                   {termin.ort}
                 </a>
+              </dd>
+            </div>
+          )}
+          {(termin.treffpunkt || termin.treffzeit) && (
+            <div className="flex items-start gap-2.5">
+              <Flag size={17} className="mt-0.5 shrink-0 text-brand-ink-soft" />
+              <dt className="sr-only">Treffpunkt</dt>
+              <dd>
+                <span className="font-semibold">Treffpunkt: </span>
+                {[termin.treffzeit ? `${termin.treffzeit} Uhr` : null, termin.treffpunkt].filter(Boolean).join(" · ")}
+              </dd>
+            </div>
+          )}
+          {termin.verantwortlich && (
+            <div className="flex items-start gap-2.5">
+              <UserRound size={17} className="mt-0.5 shrink-0 text-brand-ink-soft" />
+              <dt className="sr-only">Ansprechpartner</dt>
+              <dd>
+                <span className="font-semibold">Ansprechpartner: </span>
+                {termin.verantwortlich}
+              </dd>
+            </div>
+          )}
+          {termin.mitbringen && (
+            <div className="flex items-start gap-2.5">
+              <Backpack size={17} className="mt-0.5 shrink-0 text-brand-ink-soft" />
+              <dt className="sr-only">Mitbringen</dt>
+              <dd className="whitespace-pre-line">
+                <span className="font-semibold">Mitbringen: </span>
+                {termin.mitbringen}
+              </dd>
+            </div>
+          )}
+          {termin.turnierId && (
+            <div className="flex items-start gap-2.5">
+              <Trophy size={17} className="mt-0.5 shrink-0 text-brand-ink-soft" />
+              <dt className="sr-only">Turnier</dt>
+              <dd>
+                <Link href={`/dashboard/turniere/${termin.turnierId}`} className="font-semibold text-brand-red">
+                  Turnierdetails und Starts ansehen →
+                </Link>
               </dd>
             </div>
           )}

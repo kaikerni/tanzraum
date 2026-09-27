@@ -85,6 +85,19 @@ export default async function TurnierSeite({ params }: { params: Promise<{ id: s
         </div>
         <MerkenKnopf turnierId={turnier.id} gemerkt={turnier.gemerkt} mitText />
       </div>
+      {!vorbei && planbar.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {planbar.map((v) => (
+            <Link
+              key={v.vereinId}
+              href={`/dashboard/kalender/neu?${new URLSearchParams({ verein: v.vereinId, turnier: turnier.id })}`}
+              className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-brand-line bg-white px-3.5 text-[13.5px] font-semibold text-brand-ink hover:bg-brand-bg"
+            >
+              <CalendarDays size={16} /> In Saisonplanung übernehmen{planbar.length > 1 ? ` (${v.vereinName})` : ""}
+            </Link>
+          ))}
+        </div>
+      )}
 
       <section className={`${KARTE} grid grid-cols-1 gap-4 sm:grid-cols-2`}>
         <div className="flex gap-2.5">

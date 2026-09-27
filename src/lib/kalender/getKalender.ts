@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getTrainingKalender, plusTage } from "@/lib/training/getTraining";
 
-export type TerminArt = "privat" | "veranstaltung" | "auftritt" | "sitzung" | "sonstiges";
+export type TerminArt = "privat" | "veranstaltung" | "auftritt" | "turnier" | "umzug" | "fest" | "sitzung" | "sonstiges";
 export type Rueckmeldung = "zugesagt" | "abgesagt" | "vielleicht";
 export type Zielgruppe = "verein" | "gruppen" | "leitung";
 export type EintragTyp = "training" | "termin" | "sitzung" | "turnier" | "privat";
@@ -10,6 +10,9 @@ export const ART_LABEL: Record<TerminArt, string> = {
   privat: "Privat",
   veranstaltung: "Veranstaltung",
   auftritt: "Auftritt",
+  turnier: "Turnier",
+  umzug: "Umzug",
+  fest: "Fest / Feier",
   sitzung: "Sitzung",
   sonstiges: "Sonstiges",
 };
@@ -36,6 +39,12 @@ export type Termin = {
   zusagen: number;
   absagen: number;
   vielleicht: number;
+  // Saisonplanung (nur Vereinstermine)
+  treffpunkt: string | null;
+  treffzeit: string | null;
+  verantwortlich: string | null;
+  mitbringen: string | null;
+  turnierId: string | null;
 };
 
 // Einheitlicher Kalendereintrag fuer Monatsraster und Tagesliste.
@@ -93,6 +102,11 @@ function termin(t: any): Termin {
     zusagen: t.zusagen,
     absagen: t.absagen,
     vielleicht: t.vielleicht,
+    treffpunkt: null,
+    treffzeit: null,
+    verantwortlich: null,
+    mitbringen: null,
+    turnierId: null,
   };
 }
 
@@ -100,7 +114,26 @@ export async function getTermine(supabase: SupabaseClient, von: string, bis: str
   const { data, error } = await supabase.rpc("kalender_termine", { p_von: von, p_bis: bis });
   if (error || !data) return [];
   // deno-lint-ignore no-explicit-any
-  return (data as any[]).map(termin);
+  const liste = (data as any[]).map(termin);
+  // Saisonplanungs-Angaben der Vereinstermine (Sichtbarkeit wie der Termin selbst, per RLS)
+  const vereinsIds = liste.filter((t) => t.vereinId).map((t) => t.id);
+  if (vereinsIds.length > 0) {
+    const { data: extra } = await supabase
+      .from("termine")
+      .select("id, treffpunkt, treffzeit, verantwortlich, mitbringen, turnier_id")
+      .in("id", vereinsIds);
+    const nachId = new Map((extra ?? []).map((e) => [e.id as string, e]));
+    for (const t of liste) {
+      const e = nachId.get(t.id);
+      if (!e) continue;
+      t.treffpunkt = e.treffpunkt;
+      t.treffzeit = zeit(e.treffzeit);
+      t.verantwortlich = e.verantwortlich;
+      t.mitbringen = e.mitbringen;
+      t.turnierId = e.turnier_id;
+    }
+  }
+  return liste;
 }
 
 export async function getTermin(supabase: SupabaseClient, id: string): Promise<Termin | null> {
