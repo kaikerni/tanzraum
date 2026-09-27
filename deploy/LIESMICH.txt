@@ -46,6 +46,22 @@ Die App liefert unter dieser Adresse einen Abschalt-Worker aus und meldet fremde
 jemand den Browser-Cache löschen muss. TanzRaums eigener Worker ist /sw.js (Push). www.tanzraum.app leitet auf
 tanzraum.app um.
 
+Google Maps (Karte im Netzwerk, Ortssuche)
+------------------------------------------
+TanzRaum nutzt Google Maps. Dafür braucht es zwei Schlüssel aus der Google Cloud Console
+(console.cloud.google.com → Projekt → "APIs & Dienste"; ein Rechnungskonto muss hinterlegt sein):
+  1. Browser-Schlüssel: API "Maps JavaScript API" aktivieren, Schlüssel anlegen,
+     Einschränkung "Websites" = https://tanzraum.app/*  und API-Einschränkung = Maps JavaScript API.
+  2. Server-Schlüssel: API "Geocoding API" aktivieren, zweiten Schlüssel anlegen,
+     Einschränkung "IP-Adressen" = Server-IP  und API-Einschränkung = Geocoding API.
+Beide direkt auf dem Server eintragen (nicht per Chat/E-Mail weitergeben):
+     nano /opt/tanzraum/.env
+       GOOGLE_MAPS_BROWSER_KEY=...
+       GOOGLE_MAPS_SERVER_KEY=...
+     systemctl restart tanzraum
+Ohne Schlüssel zeigt die Netzwerk-Seite "Karte wird eingerichtet" (Listenansicht geht), die Ortssuche meldet
+"gerade nicht verfügbar". Links wie "Auf der Karte zeigen" funktionieren auch ohne Schlüssel.
+
 Nützliche Befehle
 -----------------
      systemctl status tanzraum        Läuft die App?

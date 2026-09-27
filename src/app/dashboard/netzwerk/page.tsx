@@ -4,6 +4,7 @@ import { Map as MapIcon, Users, Globe } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { darfNetzwerk, getMapPunkte } from "@/lib/netzwerk/tanzraumNetzwerk";
 import { NetzwerkMap } from "@/components/netzwerk/NetzwerkMap";
+import { googleMapsBrowserSchluessel } from "@/lib/geo/geocode";
 import { NetzwerkListe } from "@/components/netzwerk/NetzwerkListe";
 import { KARTE } from "@/components/dashboard/Karten";
 import { SpotlightLeiste } from "@/components/spotlights/SpotlightLeiste";
@@ -97,7 +98,7 @@ export default async function NetzwerkSeite({ searchParams }: { searchParams: Pr
         </section>
       )}
 
-      {ansicht === "map" && <NetzwerkMap punkte={punkte} fokusVerein={verein} ichAufMap={ichAufMap} />}
+      {ansicht === "map" && <NetzwerkMap punkte={punkte} fokusVerein={verein} ichAufMap={ichAufMap} schluessel={googleMapsBrowserSchluessel()} />}
       {ansicht === "liste" && <NetzwerkListe />}
     </div>
   );

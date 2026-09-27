@@ -24,7 +24,6 @@ const BEREICHE: { key: string; label: string }[] = [
   { key: "anwesenheit", label: "Anwesenheit" },
   { key: "beitraege", label: "Beiträge & Finanzen" },
   { key: "material", label: "Kostüme & Material" },
-  { key: "trainingsplan", label: "Trainingsplan" },
   { key: "saison", label: "Saisonplanung" },
   { key: "netzwerk", label: "Trainer-Netzwerk" },
   { key: "beitritt", label: "Mitgliedsanträge" },

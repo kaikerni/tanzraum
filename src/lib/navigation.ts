@@ -4,7 +4,6 @@ import {
   Calendar,
   Activity,
   ClipboardCheck,
-  ClipboardList,
   ShieldCheck,
   Trophy,
   CalendarRange,
@@ -33,7 +32,6 @@ export type Bereich =
   | "anwesenheit"
   | "beitraege"
   | "material"
-  | "trainingsplan"
   | "saison"
   | "netzwerk"
   | "beitritt";
@@ -74,7 +72,6 @@ export const NAV: NavEintrag[] = [
   { href: "/dashboard/kalender", label: "Kalender", icon: Calendar, tarif: "basic" },
   { href: "/dashboard/training", label: "Training", icon: Activity, tarif: "basic" },
   { href: "/dashboard/anwesenheit", label: "Anwesenheit", icon: ClipboardCheck, tarif: "verein", recht: "anwesenheit" },
-  { href: "/dashboard/trainingsplan", label: "Trainingsplan", icon: ClipboardList, tarif: "verein", recht: "trainingsplan" },
   { href: "/dashboard/turniere", label: "Turniere", icon: Trophy, tarif: "free" },
   { href: "/dashboard/saisonplanung", label: "Saisonplanung", icon: CalendarRange, tarif: "verein", recht: "saison" },
   { href: "/dashboard/mitglieder", label: "Mitglieder", icon: Users, tarif: "verein", recht: "mitglieder" },

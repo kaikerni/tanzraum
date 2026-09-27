@@ -60,7 +60,7 @@ export default async function TurnierSeite({ params }: { params: Promise<{ id: s
   const bearbeitbar = eigenesBearbeitbar || istPlattformAdmin === true;
   const ohneBeginn = !vorbei && turnier.tage.every((t) => !t.beginn) && !turnier.beginnSamstag && !turnier.beginnSonntag;
   const frist = turnier.meldeschluss ? tageBis(turnier.meldeschluss, heute) : null;
-  const karte = `https://www.openstreetmap.org/search?query=${encodeURIComponent(turnier.adresse ?? turnier.ort)}`;
+  const karte = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(turnier.adresse ?? turnier.ort)}`;
 
   return (
     <div className="mx-auto flex max-w-[900px] flex-col gap-4">

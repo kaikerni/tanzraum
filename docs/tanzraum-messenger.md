@@ -19,7 +19,7 @@ und annehmen.
 | 🎥 | Videos | werden im Browser verkleinert und direkt im Chat abgespielt, privater Bucket `chat-dateien` (25 MB) |
 | 📎 | Dateien | PDF, Office, OpenDocument, Text, ZIP – Bucket `chat-dateien` (25 MB) |
 | 🎤 | Sprachnachrichten | Mikrofon gedrückt halten = aufnehmen, loslassen = senden, nach links wischen = abbrechen, nach oben = sperren (antippen = freihändig); Dauer + Pegel während der Aufnahme; Player mit Wellenform, Zeit und Abspielposition (max. 5 Min.) |
-| 📍 | Standortfreigabe | nur nach Bestätigung, Anzeige mit OpenStreetMap-Kachel |
+| 📍 | Standortfreigabe | nur nach Bestätigung, Karte mit Stecknadel, öffnet Google Maps beim Antippen |
 | 📊 | Umfragen | Einzel- oder Mehrfachauswahl, 2–12 Antworten |
 | 📞📹 | Sprach- & Videoanrufe | WebRTC im Privatchat, Klingeln überall im Dashboard + Push |
 | 🔔 | Push-Benachrichtigungen | pro Gerät aktivierbar, Chats einzeln stummschaltbar |

@@ -150,6 +150,14 @@ if nginx -T 2>/dev/null | awk '$1 == "proxy_buffer_size" { v = $2; sub(";", "", 
 else
   echo "!!  nginx-Puffer fuer Anmelde-Cookies: NICHT aktiv – Anmelden/Passwort-Reset koennen mit 502 scheitern."
 fi
+# Google Maps: nur pruefen, ob die Schluessel eingetragen sind (Werte werden nie ausgegeben)
+for SCHLUESSEL in GOOGLE_MAPS_BROWSER_KEY GOOGLE_MAPS_SERVER_KEY; do
+  if grep -Eq "^${SCHLUESSEL}=.+" "$APP_DIR/.env"; then
+    echo "    ${SCHLUESSEL}: eingetragen"
+  else
+    echo "!!  ${SCHLUESSEL}: fehlt in $APP_DIR/.env – Google-Karte bzw. Ortssuche sind bis dahin aus (siehe LIESMICH)."
+  fi
+done
 
 # ---------- Firewall ----------
 if ! ufw status | grep -q "Status: active"; then

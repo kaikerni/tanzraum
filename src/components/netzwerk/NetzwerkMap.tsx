@@ -2,15 +2,80 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Building2, User, X, MapPin } from "lucide-react";
-import "maplibre-gl/dist/maplibre-gl.css";
-import type { Map as MLMap, Marker } from "maplibre-gl";
+import { Building2, User, X, MapPin, Map as MapIcon } from "lucide-react";
 import type { MapPunkt } from "@/lib/netzwerk/tanzraumNetzwerk";
 import { farbeFuer, initialen } from "@/components/chat/ChatAvatar";
 
-// Kartenstil: OpenFreeMap (OpenStreetMap-Daten, ohne Schluessel), farblich an TanzRaum angepasst
-const STIL = "https://tiles.openfreemap.org/styles/positron";
-const DEUTSCHLAND: [number, number] = [10.45, 51.16];
+// Karte: Google Maps (Maps JavaScript API). Geladen wird erst nach Klick auf "Karte laden" (Daten gehen an Google),
+// auf Wunsch fuer dieses Geraet gemerkt. Der Browser-Schluessel kommt zur Laufzeit vom Server (GOOGLE_MAPS_BROWSER_KEY).
+const MERKEN = "tanzraum-google-maps";
+const DEUTSCHLAND = { lat: 51.16, lng: 10.45 };
+
+// TanzRaum-Farbwelt: warmer Hintergrund, zartes Wasser, ohne Geschaefte/OePNV-Symbole
+const STIL: google.maps.MapTypeStyle[] = [
+  { elementType: "geometry", stylers: [{ color: "#faf7f4" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#5b6272" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#ffffff" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#dde8f3" }] },
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ visibility: "on" }, { color: "#eef3ea" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#f3e6dc" }] },
+  { featureType: "administrative.country", elementType: "geometry.stroke", stylers: [{ color: "#e8b7bc" }] },
+];
+
+type Bibliothek = { Map: typeof google.maps.Map; OverlayView: typeof google.maps.OverlayView; LatLngBounds: typeof google.maps.LatLngBounds };
+let ladevorgang: Promise<Bibliothek> | null = null;
+
+function googleMapsLaden(schluessel: string): Promise<Bibliothek> {
+  if (ladevorgang) return ladevorgang;
+  ladevorgang = new Promise<Bibliothek>((resolve, reject) => {
+    const w = window as unknown as Record<string, unknown>;
+    w.__tanzraumKarteBereit = async () => {
+      try {
+        const { Map, OverlayView } = (await google.maps.importLibrary("maps")) as google.maps.MapsLibrary;
+        const { LatLngBounds } = (await google.maps.importLibrary("core")) as google.maps.CoreLibrary;
+        resolve({ Map, OverlayView, LatLngBounds });
+      } catch (e) {
+        reject(e);
+      }
+    };
+    const skript = document.createElement("script");
+    skript.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(schluessel)}&v=weekly&language=de&region=DE&loading=async&callback=__tanzraumKarteBereit`;
+    skript.async = true;
+    skript.onerror = () => {
+      ladevorgang = null;
+      skript.remove();
+      reject(new Error("Google Maps nicht erreichbar"));
+    };
+    document.head.appendChild(skript);
+  });
+  return ladevorgang;
+}
+
+// Eigene HTML-Marker (TanzRaum-Optik) als OverlayView – braucht keine Map-ID
+type HtmlMarker = google.maps.OverlayView;
+function htmlMarker(bib: Bibliothek, position: google.maps.LatLngLiteral, el: HTMLElement, unten: boolean): HtmlMarker {
+  class Marker extends bib.OverlayView {
+    onAdd() {
+      el.style.position = "absolute";
+      bib.OverlayView.preventMapHitsAndGesturesFrom(el);
+      this.getPanes()?.overlayMouseTarget.appendChild(el);
+    }
+    draw() {
+      const p = this.getProjection()?.fromLatLngToDivPixel(position);
+      if (!p) return;
+      el.style.left = `${p.x}px`;
+      el.style.top = `${p.y}px`;
+      el.style.transform = unten ? "translate(-50%, -100%)" : "translate(-50%, -50%)";
+    }
+    onRemove() {
+      el.remove();
+    }
+  }
+  return new Marker();
+}
 
 // Gleiche Orte leicht versetzen, damit Mitglieder aus einem Ort nicht exakt uebereinander liegen
 function versatz(id: string): [number, number] {
@@ -57,12 +122,26 @@ function markerElement(p: MapPunkt, aktiv: boolean): HTMLElement {
   return el;
 }
 
-export function NetzwerkMap({ punkte, fokusVerein, ichAufMap }: { punkte: MapPunkt[]; fokusVerein?: string; ichAufMap: boolean }) {
+export function NetzwerkMap({
+  punkte,
+  fokusVerein,
+  ichAufMap,
+  schluessel,
+}: {
+  punkte: MapPunkt[];
+  fokusVerein?: string;
+  ichAufMap: boolean;
+  schluessel: string;
+}) {
   const behaelter = useRef<HTMLDivElement>(null);
-  const karte = useRef<MLMap | null>(null);
-  const marker = useRef<Marker[]>([]);
+  const karte = useRef<google.maps.Map | null>(null);
+  const bibliothek = useRef<Bibliothek | null>(null);
+  const marker = useRef<HtmlMarker[]>([]);
+  const [erlaubt, setErlaubt] = useState(false);
+  const [gemerkt, setGemerkt] = useState(false);
+  const [merken, setMerken] = useState(false);
   const [bereit, setBereit] = useState(false);
-  const [fehler, setFehler] = useState(false);
+  const [fehler, setFehler] = useState<"" | "laden" | "schluessel">("");
   const [zeigeVereine, setZeigeVereine] = useState(true);
   const [zeigePersonen, setZeigePersonen] = useState(true);
   const [auswahl, setAuswahl] = useState<MapPunkt | null>(() => punkte.find((p) => p.art === "verein" && p.id === fokusVerein) ?? null);
@@ -73,98 +152,117 @@ export function NetzwerkMap({ punkte, fokusVerein, ichAufMap }: { punkte: MapPun
   );
   const anzahl = { vereine: punkte.filter((p) => p.art === "verein").length, personen: punkte.filter((p) => p.art === "person").length };
 
-  // Karte einmalig erzeugen
+  // Gemerkte Zustimmung (nur auf diesem Geraet)
   useEffect(() => {
-    let abbruch = false;
-    (async () => {
-      try {
-        const maplibre = (await import("maplibre-gl")).default;
-        if (abbruch || !behaelter.current) return;
-        const m = new maplibre.Map({
-          container: behaelter.current,
-          style: STIL,
-          center: DEUTSCHLAND,
-          zoom: 5.2,
-          attributionControl: { compact: true },
-          cooperativeGestures: false,
-        });
-        m.addControl(new maplibre.NavigationControl({ showCompass: false }), "top-right");
-        m.on("load", () => {
-          // TanzRaum-Farbwelt: warmer Hintergrund, zartes Wasser
-          for (const layer of m.getStyle().layers ?? []) {
-            try {
-              if (layer.type === "background") m.setPaintProperty(layer.id, "background-color", "#faf7f4");
-              else if (layer.type === "fill" && /water/.test(layer.id)) m.setPaintProperty(layer.id, "fill-color", "#dde8f3");
-              else if (layer.type === "fill" && /(park|wood|grass|landcover)/.test(layer.id)) m.setPaintProperty(layer.id, "fill-color", "#eef3ea");
-              else if (layer.type === "line" && /boundary/.test(layer.id)) m.setPaintProperty(layer.id, "line-color", "#e8b7bc");
-            } catch {
-              // einzelne Ebenen ohne diese Eigenschaft ignorieren
-            }
-          }
-          setBereit(true);
-        });
-        m.on("error", (e) => {
-          if (!m.loaded() && String(e.error?.message ?? "").includes("Failed to fetch")) setFehler(true);
-        });
-        karte.current = m;
-      } catch {
-        setFehler(true);
+    try {
+      if (localStorage.getItem(MERKEN) === "ja") {
+        setGemerkt(true);
+        setErlaubt(true);
       }
-    })();
+    } catch {
+      // ohne Speicher: jedes Mal fragen
+    }
+  }, []);
+
+  function kartenLadenErlauben() {
+    if (merken) {
+      try {
+        localStorage.setItem(MERKEN, "ja");
+        setGemerkt(true);
+      } catch {
+        // nicht merkbar – laedt trotzdem fuer diesen Besuch
+      }
+    }
+    setErlaubt(true);
+  }
+
+  function nichtMehrMerken() {
+    try {
+      localStorage.removeItem(MERKEN);
+    } catch {
+      // nichts gespeichert
+    }
+    setGemerkt(false);
+  }
+
+  // Karte erzeugen, sobald erlaubt
+  useEffect(() => {
+    if (!erlaubt || !schluessel) return;
+    let abbruch = false;
+    // Google meldet einen ungueltigen/gesperrten Schluessel ueber diese globale Funktion
+    (window as unknown as Record<string, unknown>).gm_authFailure = () => setFehler("schluessel");
+    googleMapsLaden(schluessel)
+      .then((bib) => {
+        if (abbruch || !behaelter.current) return;
+        bibliothek.current = bib;
+        const m = new bib.Map(behaelter.current, {
+          center: DEUTSCHLAND,
+          zoom: 6,
+          styles: STIL,
+          disableDefaultUI: true,
+          zoomControl: true,
+          clickableIcons: false,
+          gestureHandling: "greedy",
+          backgroundColor: "#faf7f4",
+        });
+        m.addListener("click", () => setAuswahl(null));
+        karte.current = m;
+        setBereit(true);
+      })
+      .catch(() => {
+        if (!abbruch) setFehler("laden");
+      });
     return () => {
       abbruch = true;
-      karte.current?.remove();
+      marker.current.forEach((mk) => mk.setMap(null));
+      marker.current = [];
       karte.current = null;
+      setBereit(false);
     };
-  }, []);
+  }, [erlaubt, schluessel]);
 
   // Marker setzen
   useEffect(() => {
     const m = karte.current;
-    if (!m || !bereit) return;
-    let aktiv = true;
-    (async () => {
-      const maplibre = (await import("maplibre-gl")).default;
-      if (!aktiv) return;
-      marker.current.forEach((mk) => mk.remove());
-      marker.current = sichtbar.map((p) => {
-        const [dx, dy] = p.art === "person" ? versatz(p.id) : [0, 0];
-        const el = markerElement(p, auswahl?.id === p.id);
-        el.addEventListener("click", (e) => {
-          e.stopPropagation();
-          setAuswahl(p);
-        });
-        return new maplibre.Marker({ element: el, anchor: p.art === "verein" ? "bottom" : "center" })
-          .setLngLat([p.lng + dx, p.lat + dy])
-          .addTo(m);
+    const bib = bibliothek.current;
+    if (!m || !bib || !bereit) return;
+    marker.current.forEach((mk) => mk.setMap(null));
+    marker.current = sichtbar.map((p) => {
+      const [dx, dy] = p.art === "person" ? versatz(p.id) : [0, 0];
+      const el = markerElement(p, auswahl?.id === p.id);
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setAuswahl(p);
       });
-    })();
-    return () => {
-      aktiv = false;
-    };
+      const mk = htmlMarker(bib, { lat: p.lat + dy, lng: p.lng + dx }, el, p.art === "verein");
+      mk.setMap(m);
+      return mk;
+    });
   }, [sichtbar, bereit, auswahl]);
 
   // Ausschnitt: Fokus-Verein oder alle Punkte
   useEffect(() => {
     const m = karte.current;
-    if (!m || !bereit) return;
+    const bib = bibliothek.current;
+    if (!m || !bib || !bereit) return;
     const fokus = punkte.find((p) => p.art === "verein" && p.id === fokusVerein);
     if (fokus) {
-      m.jumpTo({ center: [fokus.lng, fokus.lat], zoom: 11 });
+      m.setCenter({ lat: fokus.lat, lng: fokus.lng });
+      m.setZoom(12);
       return;
     }
     if (punkte.length === 0) return;
-    const lngs = punkte.map((p) => p.lng);
-    const lats = punkte.map((p) => p.lat);
-    if (punkte.length === 1) m.jumpTo({ center: [lngs[0], lats[0]], zoom: 9 });
-    else
-      m.fitBounds(
-        [
-          [Math.min(...lngs), Math.min(...lats)],
-          [Math.max(...lngs), Math.max(...lats)],
-        ],
-        { padding: 60, maxZoom: 11, duration: 0 },
-      );
+    if (punkte.length === 1) {
+      m.setCenter({ lat: punkte[0].lat, lng: punkte[0].lng });
+      m.setZoom(10);
+      return;
+    }
+    const grenzen = new bib.LatLngBounds();
+    punkte.forEach((p) => grenzen.extend({ lat: p.lat, lng: p.lng }));
+    m.fitBounds(grenzen, 60);
+    google.maps.event.addListenerOnce(m, "idle", () => {
+      if ((m.getZoom() ?? 0) > 12) m.setZoom(12);
+    });
   }, [bereit, punkte, fokusVerein]);
 
   const chip = (an: boolean) =>
@@ -173,9 +271,45 @@ export function NetzwerkMap({ punkte, fokusVerein, ichAufMap }: { punkte: MapPun
     }`;
 
   return (
+    <div>
     <div className="relative overflow-hidden rounded-[var(--radius-l)] border border-brand-line bg-[#faf7f4] shadow-[var(--shadow)]">
-      <div ref={behaelter} className="h-[calc(100dvh-260px)] min-h-[420px] w-full" onClick={() => setAuswahl(null)} />
+      <div ref={behaelter} className="h-[calc(100dvh-260px)] min-h-[420px] w-full" />
 
+      {!erlaubt && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#faf7f4] p-6">
+          <div className="flex max-w-sm flex-col items-center gap-3 text-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-brand-red shadow-sm">
+              <MapIcon size={24} />
+            </span>
+            {schluessel ? (
+              <>
+                <p className="text-[13.5px] text-brand-ink-soft">
+                  Die Karte wird von Google Maps bereitgestellt. Beim Laden überträgt dein Browser Daten, u. a. deine IP-Adresse, an
+                  Google. Mehr dazu in der{" "}
+                  <Link href="/datenschutz" className="font-semibold text-brand-red">
+                    Datenschutzerklärung
+                  </Link>
+                  .
+                </p>
+                <button type="button" onClick={kartenLadenErlauben} className="btn-primary min-h-10 px-5 text-[14px]">
+                  Karte laden
+                </button>
+                <label className="flex items-center gap-2 text-[12.5px] text-brand-ink-soft">
+                  <input type="checkbox" checked={merken} onChange={(e) => setMerken(e.target.checked)} className="h-4 w-4 accent-[#e11d2e]" />
+                  Auf diesem Gerät merken
+                </label>
+              </>
+            ) : (
+              <p className="text-[13.5px] text-brand-ink-soft">Die Karte wird gerade eingerichtet. Bis dahin findest du alle Einträge in der Listenansicht.</p>
+            )}
+            <Link href="/dashboard/netzwerk?ansicht=liste" className="text-[13px] font-semibold text-brand-red">
+              Zur Listenansicht
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {bereit && (
       <div className="pointer-events-none absolute left-3 top-3 flex flex-wrap gap-2">
         <button type="button" onClick={() => setZeigeVereine(!zeigeVereine)} className={`pointer-events-auto ${chip(zeigeVereine)}`} aria-pressed={zeigeVereine}>
           <span className="flex h-4 w-4 items-center justify-center rounded-full bg-brand-red text-white">
@@ -190,14 +324,17 @@ export function NetzwerkMap({ punkte, fokusVerein, ichAufMap }: { punkte: MapPun
           Mitglieder · {anzahl.personen}
         </button>
       </div>
+      )}
 
       {fehler && (
         <div className="absolute inset-0 flex items-center justify-center bg-[#faf7f4] p-6 text-center text-[13.5px] text-brand-ink-soft">
-          Die Karte konnte gerade nicht geladen werden. Bitte prüfe deine Internetverbindung oder nutze die Listenansicht.
+          {fehler === "schluessel"
+            ? "Die Karte ist gerade nicht verfügbar. Bitte nutze die Listenansicht."
+            : "Die Karte konnte gerade nicht geladen werden. Bitte prüfe deine Internetverbindung oder nutze die Listenansicht."}
         </div>
       )}
 
-      {!ichAufMap && !auswahl && (
+      {bereit && !ichAufMap && !auswahl && (
         <Link
           href="/dashboard/einstellungen#map"
           className="absolute bottom-3 left-3 right-3 flex items-center gap-2 rounded-xl bg-white/95 px-3 py-2 text-[12.5px] text-brand-ink-soft shadow-md sm:right-auto"
@@ -234,6 +371,12 @@ export function NetzwerkMap({ punkte, fokusVerein, ichAufMap }: { punkte: MapPun
           </button>
         </div>
       )}
+    </div>
+    {gemerkt && (
+      <button type="button" onClick={nichtMehrMerken} className="mt-2 text-[12px] text-brand-ink-faint underline-offset-2 hover:underline">
+        Google Maps auf diesem Gerät nicht mehr automatisch laden
+      </button>
+    )}
     </div>
   );
 }

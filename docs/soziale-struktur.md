@@ -18,10 +18,13 @@ Nicht umgesetzt (bewusst): Connect Match, Radar, Newsfeed, dauerhafte Beiträge,
 
 ## Map
 
-- MapLibre GL mit OpenFreeMap-Kacheln (OpenStreetMap, kein Schlüssel), Farben an TanzRaum angepasst, eigene Marker
+- Google Maps (Maps JavaScript API), Farben an TanzRaum angepasst, eigene HTML-Marker per OverlayView, keine Map-ID nötig
   (Vereine rot mit Haus/Logo, Mitglieder als Profilbild mit Goldrand), Infokarte statt Popup, Filter Vereine/Mitglieder.
+  Geladen erst nach Klick auf „Karte laden“ (optional pro Gerät gemerkt). Browser-Schlüssel `GOOGLE_MAPS_BROWSER_KEY`
+  wird zur Laufzeit vom Server gelesen (in Google Cloud auf `https://tanzraum.app/*` beschränken).
 - **Vereine** erscheinen, sobald PLZ/Ort in den Vereinsdaten stehen – beim Speichern wird die Adresse serverseitig
-  über Nominatim in Koordinaten umgewandelt (`verein_standort_setzen`).
+  über die Google Geocoding API in Koordinaten umgewandelt
+  (Server-Schlüssel `GOOGLE_MAPS_SERVER_KEY`, in Google Cloud auf die Server-IP beschränken) (`verein_standort_setzen`).
 - **Mitglieder** (jedes Alter) nur freiwillig: Einstellungen → „TanzRaum Map“ (Standard **Nein**). **Niemals Straße oder
   Adresse:** gespeichert werden nur PLZ und Ort aus dem Suchergebnis und die **Ortsmitte** (zusätzlich auf ca. 1 km
   gerundet); die Datenbank lehnt Hausnummern und „Straße“ ab. Private Konten nie.

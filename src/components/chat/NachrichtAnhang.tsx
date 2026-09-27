@@ -161,38 +161,32 @@ export function AnhangAnsicht({ anhang, url, eigene }: { anhang: Anhang; url: st
   );
 }
 
-// Standort mit OpenStreetMap-Kachel (keine Drittanbieter-Einbettung, nur ein Kachelbild)
+// Standort: Karte mit Stecknadel, Tippen oeffnet Google Maps. Es wird nichts von Google nachgeladen,
+// solange niemand den Standort oeffnet.
 export function StandortAnsicht({ standort }: { standort: Standort }) {
-  const zoom = 16;
-  const n = 2 ** zoom;
-  const xf = ((standort.lng + 180) / 360) * n;
-  const breite = (standort.lat * Math.PI) / 180;
-  const yf = ((1 - Math.log(Math.tan(breite) + 1 / Math.cos(breite)) / Math.PI) / 2) * n;
-  const x = Math.floor(xf);
-  const y = Math.floor(yf);
-  const px = (xf - x) * 100;
-  const py = (yf - y) * 100;
-  const karte = `https://www.openstreetmap.org/?mlat=${standort.lat}&mlon=${standort.lng}#map=17/${standort.lat}/${standort.lng}`;
   const google = `https://www.google.com/maps/search/?api=1&query=${standort.lat},${standort.lng}`;
 
   return (
     <div className="-mx-1.5 mb-1 w-[240px] overflow-hidden rounded-xl" onClick={(e) => e.stopPropagation()}>
-      <a href={google} target="_blank" rel="noopener noreferrer" className="relative block h-[150px] overflow-hidden bg-brand-bg" aria-label="Standort in Karten öffnen">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={`https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`}
-          alt=""
-          className="absolute h-[256px] w-[256px] max-w-none"
-          style={{ left: `calc(50% - ${(px / 100) * 256}px)`, top: `calc(50% - ${(py / 100) * 256}px)` }}
+      <a
+        href={google}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="relative flex h-[120px] flex-col items-center justify-center gap-1 overflow-hidden bg-[linear-gradient(135deg,#eef3ea_0%,#faf7f4_45%,#dde8f3_100%)]"
+        aria-label="Standort in Google Maps öffnen"
+      >
+        <span
+          aria-hidden
+          className="absolute inset-0 opacity-60 [background-image:linear-gradient(#ffffff_2px,transparent_2px),linear-gradient(90deg,#ffffff_2px,transparent_2px)] [background-size:38px_30px]"
         />
-        <MapPin size={34} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full fill-brand-red text-white drop-shadow" />
+        <MapPin size={34} className="relative fill-brand-red text-white drop-shadow" />
+        <span className="relative text-[11px] tabular-nums text-brand-ink-soft">
+          {standort.lat.toFixed(5)}, {standort.lng.toFixed(5)}
+        </span>
       </a>
-      <div className="flex items-center justify-between gap-2 bg-black/[0.04] px-2.5 py-1.5 text-[12px]">
+      <div className="bg-black/[0.04] px-2.5 py-1.5 text-[12px]">
         <a href={google} target="_blank" rel="noopener noreferrer" className="font-semibold text-brand-blue">
-          📍 Standort öffnen
-        </a>
-        <a href={karte} target="_blank" rel="noopener noreferrer" className="text-[10px] text-brand-ink-faint">
-          © OpenStreetMap
+          📍 In Google Maps öffnen
         </a>
       </div>
     </div>

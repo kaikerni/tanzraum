@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { freundlicherFehler } from "@/lib/fehler";
-import { ortFinden } from "@/lib/geo/geocode";
+import { ortFinden, ortssucheEingerichtet } from "@/lib/geo/geocode";
 import { sperrgrundText } from "@/lib/chat/sperrgrund";
 import { alsTreffer, type ListenTreffer, type NetzwerkKategorie } from "@/lib/netzwerk/tanzraumNetzwerk";
 import type { AktionsErgebnis } from "@/components/ui/SendenButton";
@@ -106,6 +106,7 @@ export async function mapEinstellungenSpeichern(_prev: AktionsErgebnis, formData
   let lng: number | null = null;
   if (eingabe) {
     // nur Ort/PLZ und Ortsmitte – eine eingetippte Strasse wird nie gespeichert
+    if (!ortssucheEingerichtet()) return { error: "Die Ortssuche ist gerade nicht verfügbar. Bitte versuche es später noch einmal." };
     const treffer = await ortFinden(eingabe);
     if (!treffer) return { error: "Diesen Ort haben wir nicht gefunden. Versuche es mit PLZ und Ort, z. B. „68159 Mannheim“." };
     ({ ort, lat, lng } = treffer);

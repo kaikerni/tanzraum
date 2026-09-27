@@ -138,15 +138,24 @@ export default async function DatenschutzSeite() {
             das erlaubt hat.
           </li>
           <li>
-            Orte und Adressen werden über den Dienst Nominatim der OpenStreetMap Foundation (Vereinigtes Königreich) in Koordinaten
-            umgerechnet. Die Anfrage stellt unser Server, nicht dein Browser.
+            Karten, Ortssuche und Kartenlinks nutzen Google Maps der Google Ireland Limited (Gordon House, Barrow Street, Dublin 4,
+            Irland). Orte und Adressen rechnet unser Server über die Google Geocoding API in Koordinaten um; dabei wird nur der
+            eingegebene Ort bzw. die Vereinsadresse übermittelt, nicht deine IP-Adresse.
           </li>
           <li>
-            Kartenbilder lädt dein Browser von OpenFreeMap (tiles.openfreemap.org); geteilte Standorte in Nachrichten zeigen ein
-            Kartenbild von OpenStreetMap (tile.openstreetmap.org). Dabei wird deine IP-Adresse an diese Anbieter übertragen.
+            Die Karte im TanzRaum-Netzwerk lädt dein Browser erst, wenn du auf „Karte laden“ tippst (auf Wunsch für dein Gerät
+            gemerkt, jederzeit abschaltbar unter der Karte). Dabei werden u. a. deine IP-Adresse und technische Gerätedaten an Google
+            übertragen. Geteilte Standorte in Nachrichten und „Auf der Karte zeigen“ öffnen Google Maps erst beim Antippen.
+          </li>
+          <li>
+            Google kann Daten auch in den USA verarbeiten. Google LLC ist unter dem EU-US Data Privacy Framework zertifiziert
+            (Angemessenheitsbeschluss, Art. 45 DSGVO). Datenschutzhinweise von Google: https://policies.google.com/privacy
           </li>
         </ul>
-        <p>Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO (Sichtbarkeit auf der Karte) bzw. lit. f (Kartendarstellung).</p>
+        <p>
+          Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO (Sichtbarkeit auf der Karte, Laden der Google-Karte) bzw. lit. f (Umrechnung
+          von Orten in Koordinaten).
+        </p>
       </Abschnitt>
 
       <Abschnitt titel="7. Nachrichten und Anrufe">

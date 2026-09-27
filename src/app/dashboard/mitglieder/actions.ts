@@ -9,7 +9,7 @@ import type { AktionsErgebnis } from "@/components/ui/SendenButton";
 // Schreibrechte erzwingt die Datenbank: Rollen/Status/Bereiche/Eltern nur Vereinsadmin,
 // Gruppenzuordnung Vereinsadmin + Trainer, Trigger pruefen Vereinstrennung und letzten Admin.
 
-const BEREICHE = ["mitglieder", "anwesenheit", "beitraege", "material", "trainingsplan", "saison", "netzwerk", "beitritt"];
+const BEREICHE = ["mitglieder", "anwesenheit", "beitraege", "material", "saison", "netzwerk", "beitritt"];
 
 async function sitzung() {
   const supabase = await createClient();

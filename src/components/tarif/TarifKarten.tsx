@@ -17,7 +17,7 @@ const LEISTUNGEN: Record<"free" | BezahlTarif, string[]> = {
   verein: [
     "Vereinslizenz für deinen Verein",
     "Alle aktiven Mitglieder erhalten VEREIN-Zugang",
-    "Mitglieder, Anwesenheit, Trainingsplan, Saison, Finanzen",
+    "Mitglieder, Anwesenheit, Saison, Finanzen",
     "Trainer-Netzwerk für zugeordnete Trainer",
   ],
 };
