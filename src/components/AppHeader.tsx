@@ -75,7 +75,7 @@ export function AppHeader({
         </kbd>
       </div>
 
-      <div className="ml-auto flex items-center gap-2 sm:gap-3 md:ml-0">
+      <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3 md:ml-0">
         <Link
           href="/dashboard/benachrichtigungen"
           className="relative flex h-10 w-10 items-center justify-center rounded-xl text-brand-ink transition-colors hover:bg-brand-bg"
