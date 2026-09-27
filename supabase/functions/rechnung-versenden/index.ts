@@ -40,7 +40,8 @@ Deno.serve(async (req) => {
   const admin = dienst();
   const [{ data: r }, { data: s }] = await Promise.all([
     admin.from("rechnungen").select("*").eq("id", rechnungId).maybeSingle(),
-    admin.from("rechnungs_einstellungen").select("*").eq("id", true).maybeSingle(),
+    // Rechnungssteller und Kleinunternehmer-Hinweis zentral aus plattform_anbieter
+    admin.from("plattform_anbieter").select("*").eq("id", true).maybeSingle(),
   ]);
   if (!r || !s) return json({ error: "Rechnung nicht gefunden." }, 404);
   if (!istEmail(r.empfaenger_email)) return json({ error: "Für diese Rechnung ist keine gültige E-Mail-Adresse hinterlegt." }, 400);
@@ -60,13 +61,14 @@ Deno.serve(async (req) => {
     vorschau: `Deine TanzRaum-Rechnung ${r.nummer}.`,
     titel: `Rechnung ${r.nummer}`,
     absaetze: [
-      `<strong>${esc(s.firmenzeile)}</strong><br>${esc(s.adresse)}${s.steuernummer ? `<br>Steuernummer: ${esc(s.steuernummer)}` : ""}`,
+      `<strong>${esc(s.unternehmen ? `${s.name} – ${s.unternehmen}` : s.name)}</strong><br>${esc(`${s.strasse}, ${s.plz} ${s.ort}`)}` +
+        `${s.steuernummer ? `<br>Steuernummer: ${esc(s.steuernummer)}` : ""}${s.ust_id ? `<br>USt-IdNr.: ${esc(s.ust_id)}` : ""}`,
       `<strong>Rechnung an:</strong><br>${esc(r.empfaenger_name)}${r.empfaenger_adresse ? `<br>${esc(r.empfaenger_adresse)}` : ""}<br>${esc(r.empfaenger_email)}`,
       `Rechnungsdatum: <strong>${esc(datum)}</strong>`,
       tabelle,
       `Zahlungsart: ${r.zahlungsweg === "paypal" ? "PayPal" : "Überweisung"} – bereits vollständig beglichen.`,
     ],
-    hinweis: "Gemäß § 19 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmerregelung). Diese Rechnung wurde automatisch erstellt und ist ohne Unterschrift gültig.",
+    hinweis: `${s.kleinunternehmer ? `${s.kleinunternehmer_hinweis} ` : ""}Diese Rechnung wurde automatisch erstellt und ist ohne Unterschrift gültig.`,
   });
 
   const ok = (await sendeMail({ art: ART, an: [{ email: r.empfaenger_email, name: r.empfaenger_name }], betreff: `Deine TanzRaum-Rechnung ${r.nummer}`, html })).ok;

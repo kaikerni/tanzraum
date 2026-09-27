@@ -1,24 +1,44 @@
 import Link from "next/link";
-import { RechtsSeite, Abschnitt, Todo } from "@/components/recht/RechtsSeite";
+import { RechtsSeite, Abschnitt, Todo, AnbieterNichtVerfuegbar } from "@/components/recht/RechtsSeite";
+import { anbieterZeile, getAnbieter, telefonLink } from "@/lib/recht/anbieter";
+import { RECHTSTEXT_VERSION } from "@/lib/recht/versionen";
 
 export const metadata = { title: "Datenschutzerklärung" };
+export const dynamic = "force-dynamic";
 
 // Aufgefuehrt sind nur Dienste, die TanzRaum tatsaechlich nutzt (Stand des Codes). Wird ein Dienst
 // hinzugefuegt oder entfernt, muss dieser Text angepasst werden.
-export default function DatenschutzSeite() {
+export default async function DatenschutzSeite() {
+  const a = await getAnbieter();
+  if (!a) {
+    return (
+      <RechtsSeite titel="Datenschutzerklärung" stand={RECHTSTEXT_VERSION.datenschutz}>
+        <AnbieterNichtVerfuegbar />
+      </RechtsSeite>
+    );
+  }
+  const mail = (
+    <a href={`mailto:${a.email}`} className="text-brand-red underline">
+      {a.email}
+    </a>
+  );
   return (
-    <RechtsSeite titel="Datenschutzerklärung">
+    <RechtsSeite titel="Datenschutzerklärung" stand={RECHTSTEXT_VERSION.datenschutz}>
       <p className="text-[14px] text-brand-ink">
         Hier erfährst du, welche personenbezogenen Daten TanzRaum verarbeitet, wofür und an wen sie weitergegeben werden.
       </p>
 
       <Abschnitt titel="1. Verantwortlicher">
         <p>
-          Kai Kern, Taktmanufaktur, Jahnstraße 15, 67378 Zeiskam
+          {anbieterZeile(a)}
           <br />
-          Telefon: 0176 55101261
-          <br />
-          E-Mail: <a href="mailto:info@tanzraum.app" className="text-brand-red underline">info@tanzraum.app</a>
+          {a.telefon && (
+            <>
+              Telefon: <a href={telefonLink(a.telefon)} className="text-brand-red underline">{a.telefon}</a>
+              <br />
+            </>
+          )}
+          E-Mail: {mail}
         </p>
         <p>
           Ein Datenschutzbeauftragter ist nicht benannt, da hierfür keine gesetzliche Pflicht besteht.
@@ -106,7 +126,7 @@ export default function DatenschutzSeite() {
         </p>
         <p>
           Eine Zustimmung oder Einwilligung kann jederzeit für die Zukunft widerrufen werden – über ein verknüpftes Elternkonto oder
-          per E-Mail an <a href="mailto:info@tanzraum.app" className="text-brand-red underline">info@tanzraum.app</a>.
+          per E-Mail an {mail}.
         </p>
       </Abschnitt>
 
@@ -148,7 +168,7 @@ export default function DatenschutzSeite() {
           Wenn du Benachrichtigungen erlaubst, speichern wir die Push-Adresse deines Browsers. Die Benachrichtigung wird über den
           Push-Dienst deines Browser-Herstellers zugestellt (z. B. Google, Apple, Mozilla, Microsoft). Die Push-Nachricht selbst
           enthält keinen Inhalt – dein Gerät holt Titel und Vorschau danach direkt bei TanzRaum ab. Du kannst Push jederzeit in
-          den Browser-Einstellungen abschalten. Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO; bei Kinderkonten unter 16 nur mit
+          den Einstellungen (auf diesem Gerät bzw. je Kategorie, z. B. Chat oder Anrufe) oder in den Browser-Einstellungen abschalten. Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO; bei Kinderkonten unter 16 nur mit
           Einwilligung eines Elternteils (Art. 8 DSGVO).
         </p>
       </Abschnitt>
@@ -202,19 +222,29 @@ export default function DatenschutzSeite() {
         <ul>
           <li>Konto-, Profil- und Nachrichtendaten: bis zur Löschung deines Kontos (bzw. bis du einzelne Inhalte löschst).</li>
           <li>Vereinsdaten: solange der Verein sie benötigt bzw. bis der Verein sie entfernt.</li>
-          <li>Rechnungen und Buchungsbelege: 8 Jahre (§ 147 Abgabenordnung).</li>
+          <li>Rechnungen: 10 Jahre ab Ende des Rechnungsjahres (§ 147 Abgabenordnung), in dieser Zeit unverändert. Danach werden die Empfängerangaben automatisch anonymisiert, sofern keine andere gesetzliche Aufbewahrungspflicht besteht. Rechnungen bleiben auch nach einer Kontolöschung bis zum Fristende erhalten.</li>
           <li>E-Mail-Versandprotokolle: 90 Tage.</li>
           <li>Nicht bestätigte neue Kinderkonten: 14 Tage ab Registrierung, danach automatische Löschung.</li>
           <li>Nachweis der Elternzustimmung: solange das Kinderkonto besteht.</li>
+          <li>
+            Nachweise deiner Einwilligungen (z. B. Nutzungsbedingungen, Push, Map – jeweils mit Zeitpunkt und Fassung des Textes):
+            solange dein Konto besteht.
+          </li>
+          <li>
+            Kontolöschung: Nach dem Antrag ist dein Konto sofort gesperrt und wird nach 14 Tagen endgültig gelöscht (bis dahin
+            widerrufbar). Chatnachrichten, die du anderen geschickt hast, bleiben in deren Verläufen erhalten; der Absender wird als
+            „Gelöschtes Konto“ angezeigt. Solange du Mitglied eines Vereins bist, ist die Löschung erst nach Austritt möglich – die
+            Vereinsdaten verantwortet der Verein.
+          </li>
         </ul>
       </Abschnitt>
 
       <Abschnitt titel="15. Deine Rechte">
         <p>
           Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch
-          (Art. 15–21 DSGVO). Erteilte Einwilligungen kannst du jederzeit für die Zukunft widerrufen. Für diese Anliegen und die
-          Löschung deines Kontos schreib uns an{" "}
-          <a href="mailto:info@tanzraum.app" className="text-brand-red underline">info@tanzraum.app</a>.
+          (Art. 15–21 DSGVO). Erteilte Einwilligungen kannst du jederzeit für die Zukunft widerrufen. Einen Export deiner Daten
+          (JSON) und die Löschung deines Kontos findest du selbst unter Einstellungen → Datenschutz. Für alle weiteren Anliegen schreib
+          uns an {mail}.
         </p>
         <p>
           Du kannst dich bei einer Datenschutz-Aufsichtsbehörde beschweren, z. B. bei der für uns zuständigen Behörde: Der

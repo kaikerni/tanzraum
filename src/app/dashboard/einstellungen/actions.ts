@@ -74,3 +74,53 @@ export async function kontoPrivatSetzen(privat: boolean): Promise<AktionsErgebni
   if (error) return { error: "Die Einstellung konnte nicht gespeichert werden." };
   return { error: null, ok: privat ? "Dein Konto ist jetzt privat." : "Dein Konto ist jetzt öffentlich auffindbar." };
 }
+
+// Push-Kategorien (welche Benachrichtigungen dieses Konto bekommt); RLS: nur eigene Zeilen
+const PUSH_KATEGORIEN = ["chat", "anrufe", "training", "trainingsaenderung", "abmeldung", "news", "wichtige_news", "turniere"];
+
+export async function pushKategorieSetzen(kategorie: string, aktiv: boolean): Promise<AktionsErgebnis> {
+  if (!PUSH_KATEGORIEN.includes(kategorie)) return { error: "Unbekannte Kategorie." };
+  const { supabase, user } = await sitzung();
+  const { error } = await supabase
+    .from("push_einstellungen")
+    .upsert({ user_id: user.id, kategorie, aktiv, geaendert_am: new Date().toISOString() }, { onConflict: "user_id,kategorie" });
+  if (error) return { error: "Die Einstellung konnte nicht gespeichert werden." };
+  return { error: null, ok: "Gespeichert." };
+}
+
+// Konto loeschen: Passwort bestaetigen, Antrag in der Datenbank (prueft Hindernisse, sperrt das Konto sofort,
+// endgueltige Loeschung nach 14 Tagen), danach Mail mit Widerrufslink ueber die Edge Function "konto-loeschung".
+export async function kontoLoeschenBeantragen(_prev: AktionsErgebnis, formData: FormData): Promise<AktionsErgebnis> {
+  const passwort = String(formData.get("passwort") ?? "");
+  const bestaetigung = String(formData.get("bestaetigung") ?? "").trim();
+  if (bestaetigung !== "LÖSCHEN") return { error: "Bitte tippe zur Bestätigung LÖSCHEN in das Feld." };
+  if (!passwort) return { error: "Bitte gib dein Passwort ein." };
+
+  const { supabase, user } = await sitzung();
+  if (!user.email) return { error: "Für dein Konto ist keine E-Mail-Adresse hinterlegt. Bitte wende dich an den Support." };
+  const pruefer = createPlainClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { error: pruefFehler } = await pruefer.auth.signInWithPassword({ email: user.email, password: passwort });
+  if (pruefFehler) {
+    return { error: pruefFehler.status === 429 ? authFehlerText(pruefFehler) : "Das Passwort ist nicht korrekt." };
+  }
+  await pruefer.auth.signOut({ scope: "local" });
+
+  const { data: loeschenAb, error } = await supabase.rpc("konto_loeschung_beantragen");
+  if (error) return { error: error.code === "P0001" && error.message ? error.message : "Die Löschung konnte nicht beantragt werden." };
+
+  // Bestaetigung mit Widerrufslink an die Anmeldeadresse (Empfaenger und Inhalt legt der Server fest)
+  try {
+    await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/konto-loeschung`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY! },
+      body: JSON.stringify({ art: "bestaetigung", user_id: user.id }),
+      cache: "no-store",
+    });
+  } catch {
+    // Antrag bleibt gueltig; Widerruf ist auch ueber den Support moeglich
+  }
+  await supabase.auth.signOut({ scope: "local" });
+  redirect(`/konto/geloescht?ab=${encodeURIComponent(String(loeschenAb ?? ""))}`);
+}

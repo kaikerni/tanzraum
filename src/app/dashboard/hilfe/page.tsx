@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { RechtsLinks } from "@/components/recht/RechtsLinks";
 import { LifeBuoy, Mail, KeyRound, MessageSquare, Trophy } from "lucide-react";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
@@ -70,7 +69,6 @@ export default function HilfeSeite() {
           <span className="inline-flex items-center gap-1"><Trophy size={13} /> Turniere</span>
         </div>
       </section>
-      <RechtsLinks className="justify-center" />
     </div>
   );
 }

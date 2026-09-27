@@ -1,7 +1,10 @@
 import Link from "next/link";
-import { RechtsLinks } from "@/components/recht/RechtsLinks";
 import { redirect } from "next/navigation";
-import { Mail, KeyRound, EyeOff, Users, Map as MapIcon, UserRound } from "lucide-react";
+import { Mail, KeyRound, EyeOff, Users, Map as MapIcon, UserRound, Bell, ShieldCheck } from "lucide-react";
+import { PushSchalter } from "@/components/chat/PushSchalter";
+import { PushKategorien } from "@/components/einstellungen/PushKategorien";
+import { EinwilligungsVerlauf, type Einwilligung } from "@/components/einstellungen/EinwilligungsVerlauf";
+import { KontoLoeschen } from "@/components/einstellungen/KontoLoeschen";
 import { MapEinstellungen } from "@/components/einstellungen/MapEinstellungen";
 import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
@@ -32,7 +35,15 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
     supabase.rpc("mein_geburtsdatum"),
     supabase.rpc("mein_geschlecht"),
   ]);
-  const { data: mapDaten } = await supabase.rpc("meine_map_einstellungen");
+  const [{ data: mapDaten }, { data: pushDaten }, { data: einwilligungen }, { data: loeschung }] = await Promise.all([
+    supabase.rpc("meine_map_einstellungen"),
+    supabase.rpc("meine_push_einstellungen"),
+    supabase.from("einwilligungen").select("id, art, version, erteilt, quelle, zeitpunkt").eq("user_id", user.id).order("zeitpunkt", { ascending: false }).limit(50),
+    supabase.rpc("mein_konto_loeschung_status"),
+  ]);
+  // deno-lint-ignore no-explicit-any
+  const hindernisse = ((((loeschung ?? []) as any[])[0]?.hindernisse ?? []) as { grund: string; text: string }[]);
+  const pushStand = Object.fromEntries(((pushDaten ?? []) as { kategorie: string; aktiv: boolean }[]).map((p) => [p.kategorie, p.aktiv]));
   // deno-lint-ignore no-explicit-any
   const m = ((mapDaten ?? []) as any[])[0];
   const mapStand = {
@@ -110,6 +121,14 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
         )}
       </section>
 
+      <section className={KARTE} id="push">
+        <KarteKopf icon={Bell} titel="Push-Benachrichtigungen" untertitel="Auf welchem Gerät und wofür du benachrichtigt wirst." />
+        <div className="-mx-4">
+          <PushSchalter />
+        </div>
+        <PushKategorien stand={pushStand} />
+      </section>
+
       <section className={KARTE}>
         <KarteKopf
           icon={KeyRound}
@@ -121,7 +140,27 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
           Passwort vergessen? <Link href="/passwort-vergessen" className="font-semibold text-brand-red">Link zum Zurücksetzen anfordern</Link>
         </p>
       </section>
-      <RechtsLinks className="justify-center" />
+
+      <section className={KARTE} id="datenschutz">
+        <KarteKopf icon={ShieldCheck} titel="Datenschutz" untertitel="Deine Einwilligungen – jede Änderung wird mit Zeitpunkt und Fassung festgehalten." />
+        <EinwilligungsVerlauf liste={(einwilligungen ?? []) as Einwilligung[]} />
+        <div className="mt-4 flex flex-col gap-2 border-t border-brand-line pt-4">
+          <h3 className="text-[14px] font-bold text-brand-ink">Meine Daten</h3>
+          <p className="text-[13px] text-brand-ink-soft">
+            Lade alle Daten herunter, die TanzRaum zu deinem Konto speichert (JSON-Datei). Daten anderer Personen sind nicht enthalten.
+          </p>
+          <a
+            href="/dashboard/einstellungen/export"
+            className="inline-flex min-h-10 items-center self-start rounded-xl border border-brand-line bg-white px-4 text-[13.5px] font-semibold text-brand-ink hover:bg-brand-bg"
+          >
+            Datenexport herunterladen
+          </a>
+        </div>
+        <div className="mt-4 flex flex-col gap-2 border-t border-brand-line pt-4">
+          <h3 className="text-[14px] font-bold text-brand-ink">Konto löschen</h3>
+          <KontoLoeschen hindernisse={hindernisse} />
+        </div>
+      </section>
     </div>
   );
 }

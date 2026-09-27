@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
 // "/eltern": Zustimmung eines Elternteils ohne eigenes TanzRaum-Konto (nur mit einmaligem Link)
-const OEFFENTLICHE_PFADE = ["/login", "/signup", "/gesperrt", "/auth", "/passwort-vergessen", "/passwort-neu", "/impressum", "/datenschutz", "/nutzungsbedingungen", "/eltern"];
+const OEFFENTLICHE_PFADE = ["/login", "/signup", "/gesperrt", "/auth", "/passwort-vergessen", "/passwort-neu", "/impressum", "/datenschutz", "/nutzungsbedingungen", "/eltern", "/kontakt", "/lizenz", "/konto"];
 
 function istOeffentlich(pathname: string) {
   return OEFFENTLICHE_PFADE.some(

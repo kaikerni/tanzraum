@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { RechtsSeite, Abschnitt, Todo } from "@/components/recht/RechtsSeite";
+import { RechtsSeite, Abschnitt, Todo, AnbieterNichtVerfuegbar } from "@/components/recht/RechtsSeite";
+import { anbieterZeile, getAnbieter } from "@/lib/recht/anbieter";
+import { RECHTSTEXT_VERSION } from "@/lib/recht/versionen";
 import { createClient } from "@/lib/supabase/server";
 import { euro, getPreise } from "@/lib/tarife";
 
@@ -9,13 +11,21 @@ export const revalidate = 300;
 
 export default async function NutzungsbedingungenSeite() {
   const supabase = await createClient();
-  const preise = await getPreise(supabase);
+  const [preise, a] = await Promise.all([getPreise(supabase), getAnbieter()]);
+  if (!a) {
+    return (
+      <RechtsSeite titel="Nutzungsbedingungen" stand={RECHTSTEXT_VERSION.nutzungsbedingungen}>
+        <AnbieterNichtVerfuegbar />
+      </RechtsSeite>
+    );
+  }
+  const zeile = anbieterZeile(a);
 
   return (
-    <RechtsSeite titel="Nutzungsbedingungen">
+    <RechtsSeite titel="Nutzungsbedingungen" stand={RECHTSTEXT_VERSION.nutzungsbedingungen}>
       <Abschnitt titel="1. Anbieter und Geltungsbereich">
         <p>
-          TanzRaum ist eine Plattform für den karnevalistischen Tanzsport. Anbieter ist Kai Kern, Taktmanufaktur, Jahnstraße 15, 67378 Zeiskam (siehe{" "}
+          TanzRaum ist eine Plattform für den karnevalistischen Tanzsport. Anbieter ist {zeile} (siehe{" "}
           <Link href="/impressum" className="text-brand-red underline">
             Impressum
           </Link>
@@ -78,7 +88,7 @@ export default async function NutzungsbedingungenSeite() {
             <Todo>Leistungsbeschreibung je Tarif verbindlich festlegen</Todo>
           </li>
         </ul>
-        <p>Alle Preise sind Endpreise. Gemäß § 19 UStG (Kleinunternehmerregelung) wird keine Umsatzsteuer berechnet.</p>
+        <p>Alle Preise sind Endpreise.{a.kleinunternehmer ? ` ${a.kleinunternehmerHinweis}` : " Sie enthalten die gesetzliche Umsatzsteuer."}</p>
       </Abschnitt>
 
       <Abschnitt titel="4. Zahlung, Laufzeit und Kündigung">
@@ -103,7 +113,7 @@ export default async function NutzungsbedingungenSeite() {
         </ul>
       </Abschnitt>
 
-      <Abschnitt titel="5. Widerrufsrecht">
+      <Abschnitt titel="5. Widerrufsrecht" id="widerruf">
         <p>Verbraucher haben ein gesetzliches Widerrufsrecht. Für Vereine und Unternehmen gilt es nicht.</p>
         <h3 className="pt-1 font-bold">Widerrufsbelehrung</h3>
         <p className="font-semibold">Widerrufsrecht</p>
@@ -112,8 +122,8 @@ export default async function NutzungsbedingungenSeite() {
           vierzehn Tage ab dem Tag des Vertragsabschlusses.
         </p>
         <p>
-          Um Ihr Widerrufsrecht auszuüben, müssen Sie uns (Kai Kern, Taktmanufaktur, Jahnstraße 15, 67378 Zeiskam, Telefon 0176 55101261,
-          E-Mail info@tanzraum.app) mittels einer eindeutigen Erklärung (z. B. ein mit der Post versandter Brief oder E-Mail) über Ihren
+          Um Ihr Widerrufsrecht auszuüben, müssen Sie uns ({zeile}
+          {a.telefon ? `, Telefon ${a.telefon}` : ""}, E-Mail {a.email}) mittels einer eindeutigen Erklärung (z. B. ein mit der Post versandter Brief oder E-Mail) über Ihren
           Entschluss, diesen Vertrag zu widerrufen, informieren. Sie können dafür das beigefügte Muster-Widerrufsformular verwenden, das
           jedoch nicht vorgeschrieben ist.
         </p>
@@ -139,7 +149,7 @@ export default async function NutzungsbedingungenSeite() {
         <h3 className="pt-1 font-bold">Muster-Widerrufsformular</h3>
         <p>(Wenn Sie den Vertrag widerrufen wollen, dann füllen Sie bitte dieses Formular aus und senden Sie es zurück.)</p>
         <p>
-          An Kai Kern, Taktmanufaktur, Jahnstraße 15, 67378 Zeiskam, E-Mail: info@tanzraum.app
+          An {zeile}, E-Mail: {a.email}
           <br />
           Hiermit widerrufe(n) ich/wir (*) den von mir/uns (*) abgeschlossenen Vertrag über den Kauf der folgenden Waren (*)/die
           Erbringung der folgenden Dienstleistung (*)

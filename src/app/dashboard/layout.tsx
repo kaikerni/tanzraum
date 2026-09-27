@@ -6,6 +6,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { AppHeader } from "@/components/AppHeader";
 import { AnrufProvider } from "@/components/chat/AnrufProvider";
 import { MobileNav } from "@/components/MobileNav";
+import { AppFusszeile } from "@/components/recht/AppFusszeile";
 
 export default async function DashboardLayout({
   children,
@@ -40,6 +41,9 @@ export default async function DashboardLayout({
   const { data: kinderkonto } = await supabase.rpc("mein_kinderkonto_status");
   if (kinderkonto === "zustimmung_noetig" || kinderkonto === "wartet") redirect("/kinderkonto");
   if (!geschlecht) redirect("/geschlecht");
+  // Aktuelle Nutzungsbedingungen noch nicht bestaetigt (Bestandskonto oder neue Fassung) -> einmalig nachholen
+  const { data: rechtstexteOffen } = await supabase.rpc("rechtstexte_offen");
+  if (rechtstexteOffen === true) redirect("/rechtstexte");
 
   const [{ data: ungelesen }, { count: benachrichtigungen }, zugriff] = await Promise.all([
     supabase.rpc("eigene_ungelesene_nachrichten_anzahl"),
@@ -75,7 +79,10 @@ export default async function DashboardLayout({
       />
       <div className="flex min-h-0 flex-1">
         <AppSidebar kontext={kontext} zugriff={zugriff} ungeleseneNachrichten={ungeleseneNachrichten} />
-        <main className="flex-1 overflow-y-auto px-3 pb-28 pt-4 sm:px-5 md:pb-8 md:pt-5 xl:px-6">{children}</main>
+        <main className="flex flex-1 flex-col overflow-y-auto px-3 pb-28 pt-4 sm:px-5 md:pb-8 md:pt-5 xl:px-6">
+          <div className="flex-1">{children}</div>
+          <AppFusszeile className="mx-auto mt-10 w-full max-w-[1200px]" />
+        </main>
       </div>
       <MobileNav zugriff={zugriff} ungeleseneNachrichten={ungeleseneNachrichten} />
     </div>

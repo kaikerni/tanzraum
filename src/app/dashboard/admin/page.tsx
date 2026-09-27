@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Flag, ShieldCheck, Hammer, CreditCard, Medal } from "lucide-react";
+import { Flag, ShieldCheck, Hammer, CreditCard, Medal, Building2, Receipt } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 
@@ -48,6 +48,24 @@ export default async function AdminSeite() {
         <span className="flex-1">
           <span className="block text-[16px] font-bold text-brand-ink">Ehrungskatalog</span>
           <span className="block text-[13px] text-brand-ink-soft">Verbände und Verbandsauszeichnungen pflegen und prüfen</span>
+        </span>
+      </Link>
+      <Link href="/dashboard/admin/rechnungen" className={`${KARTE} flex items-center gap-4 hover:border-brand-red`}>
+        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-bg text-brand-ink">
+          <Receipt size={22} />
+        </span>
+        <span className="flex-1">
+          <span className="block text-[16px] font-bold text-brand-ink">Rechnungen</span>
+          <span className="block text-[13px] text-brand-ink-soft">Alle Rechnungen, Aufbewahrungsfristen, CSV-Export</span>
+        </span>
+      </Link>
+      <Link href="/dashboard/admin/anbieter" className={`${KARTE} flex items-center gap-4 hover:border-brand-red`}>
+        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-bg text-brand-ink">
+          <Building2 size={22} />
+        </span>
+        <span className="flex-1">
+          <span className="block text-[16px] font-bold text-brand-ink">Anbieterangaben</span>
+          <span className="block text-[13px] text-brand-ink-soft">Impressum, Kontakt, Rechnungssteller, Kleinunternehmer-Hinweis – an einer Stelle</span>
         </span>
       </Link>
       <section className={`${KARTE} flex items-center gap-3 text-[13.5px] text-brand-ink-soft`}>

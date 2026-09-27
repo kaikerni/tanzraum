@@ -118,9 +118,10 @@ export function alsChatEintrag(c: any): ChatEintrag {
 export function alsNachricht(n: any): ChatNachricht {
   return {
     id: n.id,
-    senderId: n.sender_id,
-    senderName: n.sender_name,
-    eigene: n.eigene,
+    // Absender hat sein Konto geloescht: Nachricht bleibt, Absender anonym
+    senderId: n.sender_id ?? "geloescht",
+    senderName: n.sender_id ? n.sender_name : "Gelöschtes Konto",
+    eigene: n.eigene === true,
     inhalt: n.inhalt,
     bildPfad: n.bild_pfad,
     umfrage: n.umfrage,

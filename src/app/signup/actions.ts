@@ -8,6 +8,7 @@ import { geburtsdatumFehler } from "@/lib/auth/geburtsdatum";
 import { istKinderkontoAlter } from "@/lib/auth/alter";
 import { elternMailSenden } from "@/lib/auth/elternMail";
 import { istGeschlecht } from "@/lib/geschlecht";
+import { RECHTSTEXT_VERSION } from "@/lib/recht/versionen";
 
 export type SignupState = {
   error: string | null;
@@ -42,6 +43,16 @@ export async function signUp(
   if (!istGeschlecht(gender)) {
     return { ...initialState, error: "Bitte wähle ein Geschlecht aus." };
   }
+  if (formData.get("rechtstexte") !== "on") {
+    return { ...initialState, error: "Bitte akzeptiere die Nutzungsbedingungen und bestätige die Datenschutzhinweise." };
+  }
+  // Die angezeigte Fassung muss die aktuelle sein (sonst Seite neu laden); die Datenbank prueft beim Anlegen erneut
+  if (
+    formData.get("nutzungsbedingungen_version") !== RECHTSTEXT_VERSION.nutzungsbedingungen ||
+    formData.get("datenschutz_version") !== RECHTSTEXT_VERSION.datenschutz
+  ) {
+    return { ...initialState, error: "Die Nutzungsbedingungen oder die Datenschutzerklärung wurden aktualisiert. Bitte lade die Seite neu." };
+  }
   const gebFehler = geburtsdatumFehler(geburtsdatum);
   if (gebFehler) return { ...initialState, error: gebFehler };
   if (password.length < 8) {
@@ -72,6 +83,8 @@ export async function signUp(
         handle: handle || null,
         gender,
         geburtsdatum,
+        nutzungsbedingungen_version: RECHTSTEXT_VERSION.nutzungsbedingungen,
+        datenschutz_version: RECHTSTEXT_VERSION.datenschutz,
         ...(kinderkonto ? { eltern_email: elternEmail } : {}),
       },
     },

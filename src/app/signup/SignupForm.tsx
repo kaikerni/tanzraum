@@ -4,6 +4,7 @@ import { useActionState, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { elternMailErneut, signUp, type SignupState } from "./actions";
 import { istKinderkontoAlter } from "@/lib/auth/alter";
+import { RECHTSTEXT_VERSION } from "@/lib/recht/versionen";
 
 const initialState: SignupState = { error: null, emailBestaetigenNoetig: false };
 
@@ -132,6 +133,24 @@ export function SignupForm({ weiter }: { weiter: string }) {
           minLength={8}
           required
         />
+      </label>
+
+      {/* Nachweis: Fassungen werden mitgesendet und in der Datenbank versioniert gespeichert (einwilligungen) */}
+      <input type="hidden" name="nutzungsbedingungen_version" value={RECHTSTEXT_VERSION.nutzungsbedingungen} />
+      <input type="hidden" name="datenschutz_version" value={RECHTSTEXT_VERSION.datenschutz} />
+      <label className="flex items-start gap-2 text-[13px] leading-snug text-brand-ink">
+        <input type="checkbox" name="rechtstexte" required className="mt-0.5" />
+        <span>
+          Ich akzeptiere die{" "}
+          <a href="/nutzungsbedingungen" target="_blank" rel="noopener" className="font-semibold text-brand-red underline">
+            Nutzungsbedingungen
+          </a>{" "}
+          und habe die{" "}
+          <a href="/datenschutz" target="_blank" rel="noopener" className="font-semibold text-brand-red underline">
+            Datenschutzerklärung
+          </a>{" "}
+          zur Kenntnis genommen.
+        </span>
       </label>
 
       {state.error && <p className="form-error">{state.error}</p>}
