@@ -63,8 +63,8 @@ export function AppHeader({
         <Image
           src="/tanzraum-logo-header.webp"
           alt="TanzRaum – Die Plattform für Tanzsport & Gemeinschaft"
-          width={1864}
-          height={458}
+          width={1392}
+          height={207}
           className="hidden h-11 w-auto sm:block md:h-[52px]"
           priority
         />

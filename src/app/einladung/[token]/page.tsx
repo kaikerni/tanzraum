@@ -23,7 +23,7 @@ export default async function EinladungSeite({ params }: { params: Promise<{ tok
   return (
     <div className="auth-page">
       <div className="auth-card flex flex-col gap-4">
-        <Image src="/tanzraum-logo-header.webp" alt="TanzRaum" width={1864} height={458} className="h-10 w-auto self-start" />
+        <Image src="/tanzraum-logo-header.webp" alt="TanzRaum" width={1392} height={207} className="h-10 w-auto self-start" />
         {!info ? (
           <>
             <h1>Einladung nicht gefunden</h1>

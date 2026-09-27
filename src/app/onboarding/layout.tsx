@@ -23,10 +23,10 @@ export default async function OnboardingLayout({
   return (
     <div className="flex min-h-screen flex-col items-center bg-brand-bg px-4 py-10">
       <Image
-        src="/tanzraum-logo-banner.webp"
+        src="/tanzraum-logo-header.webp"
         alt="TanzRaum"
-        width={180}
-        height={47}
+        width={1392}
+        height={207}
         className="mb-8 h-11 w-auto"
         priority
       />

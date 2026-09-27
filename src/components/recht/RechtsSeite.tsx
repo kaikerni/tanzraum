@@ -30,7 +30,7 @@ export function RechtsSeite({ titel, stand, children }: { titel: string; stand?:
     <div className="min-h-screen bg-brand-bg px-4 py-8">
       <article className="mx-auto flex max-w-[820px] flex-col gap-6 rounded-[var(--radius-l)] border border-brand-line bg-white p-5 shadow-[var(--shadow)] sm:p-8">
         <Link href="/dashboard" className="w-fit">
-          <Image src="/tanzraum-logo-header.webp" alt="TanzRaum" width={1864} height={458} className="h-9 w-auto" />
+          <Image src="/tanzraum-logo-header.webp" alt="TanzRaum" width={1392} height={207} className="h-9 w-auto" />
         </Link>
         <h1 className="text-[28px] font-extrabold tracking-tight text-brand-ink">{titel}</h1>
         {children}
