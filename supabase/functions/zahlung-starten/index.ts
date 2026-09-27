@@ -3,7 +3,7 @@
 // Die Datenbank prueft Berechtigung und Preis (abo_anlegen) und legt das Abo als "pending" an.
 // Aktiv wird der Tarif AUSSCHLIESSLICH durch den Webhook des Anbieters nach erfolgreicher Zahlung.
 
-import { JSON_KOPF, PERIODE_NAME, TARIF_NAME, UUID, ZahlungsFehler, angemeldet, appUrl, dienst, paypal, paypalToken, stripe } from "../_shared/zahlung.ts";
+import { JSON_KOPF, PERIODE_NAME, TARIF_NAME, UUID, ZahlungsFehler, angemeldet, appUrl, dienst, paypal, paypalModus, paypalToken, stripe } from "../_shared/zahlung.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -68,15 +68,18 @@ Deno.serve(async (req) => {
       return antwort({ url: session.url });
     }
 
-    // PayPal: Plan je Tarif/Zeitraum/Preis (zwischengespeichert in paypal_plans)
+    // PayPal: Plan je Tarif/Zeitraum/Preis (zwischengespeichert in paypal_plans, getrennt nach Sandbox/Live,
+    // da IDs aus der Sandbox im Live-Betrieb nicht existieren)
     const token = await paypalToken();
-    let { data: produkt } = await admin.from("paypal_plans").select("plan_id").eq("key", "product").maybeSingle();
+    const modus = paypalModus();
+    const produktKey = `${modus}:product`;
+    let { data: produkt } = await admin.from("paypal_plans").select("plan_id").eq("key", produktKey).maybeSingle();
     if (!produkt?.plan_id) {
       const p = await paypal("/v1/catalogs/products", "POST", { name: "TanzRaum", type: "SERVICE", category: "SOFTWARE" }, token);
-      await admin.from("paypal_plans").upsert({ key: "product", plan_id: p.id });
+      await admin.from("paypal_plans").upsert({ key: produktKey, plan_id: p.id });
       produkt = { plan_id: p.id };
     }
-    const planKey = `${abo.tarif}_${abo.periode}_${abo.preis_cent}`;
+    const planKey = `${modus}:${abo.tarif}_${abo.periode}_${abo.preis_cent}`;
     let { data: plan } = await admin.from("paypal_plans").select("plan_id").eq("key", planKey).maybeSingle();
     if (!plan?.plan_id) {
       const p = await paypal(

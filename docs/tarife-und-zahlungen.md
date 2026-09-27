@@ -64,6 +64,16 @@ aus dem Vault).
 `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_WEBHOOK_ID`,
 `PAYPAL_ENV` (`live`), `TANZRAUM_APP_URL` (`https://tanzraum.app`). Keins davon gelangt in den Browser.
 
+## Selbsttest (Live-Umstellung prüfen)
+
+`abo-abgleich?selbsttest=1` mit Header `x-tanzraum-geheimnis` (Vault `chat_push_geheimnis`, z. B. per `net.http_post`)
+liefert ohne Schlüssel: Art des Stripe-Schlüssels (`sk_live_`/`sk_test_`), Webhook-Secret vorhanden, Stripe-Konto
+(Zahlungen/Auszahlungen aktiv), Stripe-Webhook auf diese Adresse + fehlende Ereignisse, PayPal-Modus, Anmeldung ok,
+PayPal-Webhook-Adresse + fehlende Ereignisse.
+
+PayPal-Produkt und -Pläne werden in `paypal_plans` getrennt nach Modus zwischengespeichert (`live:…`, `sandbox:…`),
+weil Sandbox-IDs im Live-Betrieb nicht existieren. Alte Einträge ohne Präfix werden nicht mehr verwendet.
+
 ## Webhooks bei den Anbietern
 
 - Stripe: `https://oraiqjulxmohclfixwdq.supabase.co/functions/v1/stripe-webhook` – Ereignisse

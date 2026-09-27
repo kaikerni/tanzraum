@@ -125,8 +125,12 @@ export function stripeStatus(sub: any): { status: AboStatus; laeuftBis: string |
 }
 
 // ---------------- PayPal ----------------
+export function paypalModus(): "live" | "sandbox" {
+  return (Deno.env.get("PAYPAL_ENV") ?? "sandbox").trim().toLowerCase() === "live" ? "live" : "sandbox";
+}
+
 export function paypalBase(): string {
-  return (Deno.env.get("PAYPAL_ENV") ?? "sandbox").toLowerCase() === "live" ? "https://api-m.paypal.com" : "https://api-m.sandbox.paypal.com";
+  return paypalModus() === "live" ? "https://api-m.paypal.com" : "https://api-m.sandbox.paypal.com";
 }
 
 export async function paypalToken(): Promise<string> {
@@ -212,3 +216,89 @@ export async function rechnungErstellen(
 }
 
 export const JSON_KOPF = { "Content-Type": "application/json" };
+
+// ---------------- Selbsttest (nur Server) ----------------
+// Prueft die Einrichtung fuer den Live-Betrieb. Gibt nie Schluessel aus, nur ob sie vorhanden sind und welche Art
+// (Praefix wie "sk_live"), sowie den Stand bei Stripe/PayPal (Konto freigeschaltet, Webhook-Adresse, Ereignisse).
+export const STRIPE_EREIGNISSE = [
+  "checkout.session.completed",
+  "customer.subscription.created",
+  "customer.subscription.updated",
+  "customer.subscription.deleted",
+  "invoice.paid",
+  "invoice.payment_failed",
+];
+export const PAYPAL_EREIGNISSE = [
+  "BILLING.SUBSCRIPTION.ACTIVATED",
+  "BILLING.SUBSCRIPTION.UPDATED",
+  "BILLING.SUBSCRIPTION.CANCELLED",
+  "BILLING.SUBSCRIPTION.SUSPENDED",
+  "BILLING.SUBSCRIPTION.EXPIRED",
+  "BILLING.SUBSCRIPTION.PAYMENT.FAILED",
+  "PAYMENT.SALE.COMPLETED",
+];
+
+function praefix(wert: string | undefined, erlaubt: string[]): string | null {
+  if (!wert) return null;
+  return erlaubt.find((p) => wert.trim().startsWith(p)) ?? "unbekanntes Format";
+}
+
+export async function zahlungsDiagnose(): Promise<Record<string, unknown>> {
+  const projekt = Deno.env.get("SUPABASE_URL") ?? "";
+  const ergebnis: Record<string, unknown> = { app_url: appUrl() };
+
+  // Stripe
+  const sk = Deno.env.get("STRIPE_SECRET_KEY");
+  const whsec = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+  const st: Record<string, unknown> = {
+    schluessel: praefix(sk, ["sk_live_", "rk_live_", "sk_test_", "rk_test_"]),
+    webhook_secret: praefix(whsec, ["whsec_"]),
+  };
+  if (sk) {
+    try {
+      const konto = await stripe("account");
+      st.konto = { land: konto.country, waehrung: konto.default_currency, zahlungen_aktiv: konto.charges_enabled, auszahlungen_aktiv: konto.payouts_enabled, angaben_vollstaendig: konto.details_submitted };
+      const hooks = await stripe("webhook_endpoints?limit=100");
+      const ziel = `${projekt}/functions/v1/stripe-webhook`;
+      // deno-lint-ignore no-explicit-any
+      st.webhooks = (hooks.data ?? []).filter((h: any) => h.url === ziel).map((h: any) => ({
+        status: h.status,
+        live: h.livemode,
+        fehlende_ereignisse: (h.enabled_events ?? []).includes("*") ? [] : STRIPE_EREIGNISSE.filter((e) => !(h.enabled_events ?? []).includes(e)),
+      }));
+    } catch {
+      st.fehler = "Stripe-Abfrage fehlgeschlagen (Schlüssel ungültig oder ohne Leserechte)";
+    }
+  }
+  ergebnis.stripe = st;
+
+  // PayPal
+  const pp: Record<string, unknown> = {
+    modus: paypalModus(),
+    client_id: Boolean(Deno.env.get("PAYPAL_CLIENT_ID")),
+    client_secret: Boolean(Deno.env.get("PAYPAL_CLIENT_SECRET")),
+    webhook_id: Boolean(Deno.env.get("PAYPAL_WEBHOOK_ID")),
+  };
+  try {
+    const token = await paypalToken();
+    pp.anmeldung_ok = true;
+    const id = Deno.env.get("PAYPAL_WEBHOOK_ID");
+    if (id) {
+      try {
+        const hook = await paypal(`/v1/notifications/webhooks/${encodeURIComponent(id.trim())}`, "GET", undefined, token);
+        // deno-lint-ignore no-explicit-any
+        const namen: string[] = (hook.event_types ?? []).map((e: any) => e.name);
+        pp.webhook = {
+          adresse_passt: hook.url === `${projekt}/functions/v1/paypal-webhook`,
+          fehlende_ereignisse: namen.includes("*") ? [] : PAYPAL_EREIGNISSE.filter((e) => !namen.includes(e)),
+        };
+      } catch {
+        pp.webhook = "Webhook-ID bei PayPal nicht gefunden (anderer Modus oder andere App?)";
+      }
+    }
+  } catch {
+    pp.anmeldung_ok = false;
+  }
+  ergebnis.paypal = pp;
+  return ergebnis;
+}

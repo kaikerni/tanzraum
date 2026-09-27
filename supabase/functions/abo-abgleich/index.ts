@@ -1,16 +1,19 @@
-// Abgleich (verify_jwt: false, per pg_cron alle 10 Minuten, Header x-tanzraum-geheimnis). Handelt nur nach dem Stand in der Datenbank:
+// Abgleich (verify_jwt: false, per pg_cron alle 10 Minuten, Header x-tanzraum-geheimnis). Mit ?selbsttest=1 nur Einrichtungspruefung.
+// Handelt nur nach dem Stand in der Datenbank:
 // - persoenliches BASIC, dessen Inhaber ueber eine aktive Vereinslizenz abgedeckt ist -> beim Anbieter pausieren
 //   (Stripe: pause_collection, PayPal: suspend) -> Status paused_by_organization (keine doppelte Zahlung)
 // - pausiertes BASIC ohne Vereinsabdeckung mehr -> beim Anbieter fortsetzen -> active
 // Das Abo wird dabei nie geloescht oder neu angelegt.
 
-import { JSON_KOPF, dienst, paypal, stripe } from "../_shared/zahlung.ts";
+import { JSON_KOPF, dienst, paypal, stripe, zahlungsDiagnose } from "../_shared/zahlung.ts";
 
 Deno.serve(async (req) => {
   const admin = dienst();
   // Nur der eigene Cron-Job (Geheimnis aus dem Vault) darf den Abgleich ausloesen
   const { data: erlaubt } = await admin.rpc("interner_aufruf_ok", { p_geheimnis: req.headers.get("x-tanzraum-geheimnis") });
   if (erlaubt !== true) return new Response("Nicht berechtigt", { status: 401 });
+  // ?selbsttest=1: nur Einrichtung pruefen (keine Schluessel in der Antwort), kein Abgleich
+  if (new URL(req.url).searchParams.has("selbsttest")) return new Response(JSON.stringify(await zahlungsDiagnose()), { headers: JSON_KOPF });
   await admin.rpc("abos_ablaufen");
   const { data: liste, error } = await admin.rpc("abo_abgleich_liste");
   if (error) return new Response(JSON.stringify({ error: "Abgleich fehlgeschlagen" }), { status: 500, headers: JSON_KOPF });
