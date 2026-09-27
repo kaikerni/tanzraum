@@ -1,9 +1,10 @@
 // Zahlung starten (Stripe Checkout oder PayPal-Abo). verify_jwt: true
-// Body: { tarif: "basic" | "verein", periode: "monat" | "jahr", anbieter: "stripe" | "paypal", verein_id?: string }
+// Body: { tarif: "basic" | "verein", periode: "monat" | "jahr", anbieter: "stripe" | "paypal", verein_id?: string, leistungsbeginn: true }
+// leistungsbeginn: ausdrueckliches Verlangen des Leistungsbeginns vor Ablauf der Widerrufsfrist (Pflicht, wird nachgewiesen).
 // Die Datenbank prueft Berechtigung und Preis (abo_anlegen) und legt das Abo als "pending" an.
 // Aktiv wird der Tarif AUSSCHLIESSLICH durch den Webhook des Anbieters nach erfolgreicher Zahlung.
 
-import { JSON_KOPF, PERIODE_NAME, TARIF_NAME, UUID, ZahlungsFehler, angemeldet, appUrl, dienst, paypal, paypalModus, paypalToken, stripe } from "../_shared/zahlung.ts";
+import { JSON_KOPF, LEISTUNGSBEGINN_TEXT, LEISTUNGSBEGINN_VERSION, PERIODE_NAME, TARIF_NAME, UUID, ZahlungsFehler, angemeldet, appUrl, dienst, paypal, paypalModus, paypalToken, stripe } from "../_shared/zahlung.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -30,6 +31,9 @@ Deno.serve(async (req) => {
     return antwort({ error: "Ungültige Anfrage." }, 400);
   }
   if (vereinId !== null && !UUID.test(vereinId)) return antwort({ error: "Ungültiger Verein." }, 400);
+  if (body?.leistungsbeginn !== true) {
+    return antwort({ error: "Bitte bestätige zuerst, dass TanzRaum vor Ablauf der Widerrufsfrist mit der Leistung beginnen soll." }, 400);
+  }
 
   // Berechtigung + Preis serverseitig (als angemeldeter Nutzer)
   const { data: aboId, error } = await sitzung.nutzer.rpc("abo_anlegen", { p_tarif: tarif, p_periode: periode, p_anbieter: anbieter, p_verein_id: vereinId });
@@ -38,6 +42,20 @@ Deno.serve(async (req) => {
   const admin = dienst();
   const { data: abo } = await admin.from("abos").select("id, tarif, periode, preis_cent, inhaber, verein_id").eq("id", aboId).single();
   if (!abo) return antwort({ error: "Die Zahlung konnte nicht vorbereitet werden." }, 500);
+  // Nachweis: wer hat wann welchem Wortlaut (Version) fuer welches Abo zugestimmt (append-only)
+  const { error: nachweisFehler } = await admin.from("einwilligungen").insert({
+    user_id: sitzung.userId,
+    art: "vorzeitiger_leistungsbeginn",
+    version: LEISTUNGSBEGINN_VERSION,
+    erteilt: true,
+    quelle: "kauf",
+    erteilt_von: sitzung.userId,
+    details: { abo_id: abo.id, tarif: abo.tarif, periode: abo.periode, anbieter, text: LEISTUNGSBEGINN_TEXT },
+  });
+  if (nachweisFehler) {
+    await admin.from("abos").delete().eq("id", abo.id).eq("status", "pending");
+    return antwort({ error: "Die Zahlung konnte nicht vorbereitet werden." }, 500);
+  }
   const email = sitzung.email ?? undefined;
   const zurueck = `${appUrl()}/dashboard/tarif`;
   const titel = `${TARIF_NAME[abo.tarif]} – ${PERIODE_NAME[abo.periode]}`;

@@ -177,6 +177,11 @@ export function paypalStatus(sub: any, bisherBis: string | null): { status: AboS
 }
 
 // ---------------- gemeinsam ----------------
+// Vorzeitiger Leistungsbeginn: identisch mit src/lib/recht/leistungsbeginn.ts (Test in zahlung-tests.test.ts)
+export const LEISTUNGSBEGINN_VERSION = "27.09.2026";
+export const LEISTUNGSBEGINN_TEXT =
+  "Ich verlange ausdrücklich, dass TanzRaum vor Ablauf der Widerrufsfrist mit der Leistung beginnt. Mir ist bekannt, dass ich bei einem Widerruf einen angemessenen Betrag (Wertersatz) für die bis dahin erbrachte Leistung zahlen muss.";
+
 export const TARIF_NAME: Record<string, string> = { basic: "TanzRaum BASIC", verein: "TanzRaum VEREIN (Vereinslizenz)" };
 export const PERIODE_NAME: Record<string, string> = { monat: "monatlich", jahr: "jährlich" };
 

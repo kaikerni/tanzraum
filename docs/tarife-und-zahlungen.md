@@ -22,6 +22,15 @@ Stripe und PayPal liefern nur Ereignisse. Die Tariflogik liegt **einmal** zentra
 Preise stehen in `tarif_preise` (Cent). App, Onboarding und Nutzungsbedingungen lesen daraus;
 „🎁 2 MONATE GRATIS“ und die Ersparnis werden aus diesen Preisen berechnet (12 × Monat − Jahr).
 
+## Vorzeitiger Leistungsbeginn (Widerruf)
+
+Vor den Bezahlknöpfen steht ein Pflicht-Häkchen: „Ich verlange ausdrücklich, dass TanzRaum vor Ablauf der
+Widerrufsfrist mit der Leistung beginnt …“ (Wortlaut/Version: `src/lib/recht/leistungsbeginn.ts`, identisch in
+`supabase/functions/_shared/zahlung.ts`, per Test geprüft). `zahlung-starten` lehnt ohne `leistungsbeginn: true` ab
+und speichert den Nachweis in `einwilligungen` (art `vorzeitiger_leistungsbeginn`, quelle `kauf`, details mit Abo,
+Tarif, Zeitraum, Anbieter und Wortlaut). Sichtbar unter Einstellungen → Datenschutz. Wortlaut rechtlich prüfen lassen;
+bei Änderung Version in beiden Dateien erhöhen.
+
 ## Datenmodell
 
 - `abos` – ein Datensatz pro Abo: `inhaber` person|verein, Status `pending`, `active`, `trialing`, `past_due`,

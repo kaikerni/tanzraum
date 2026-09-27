@@ -1,5 +1,6 @@
 // Lokale Tests: npx deno test supabase/functions/zahlung-tests.test.ts
-import { formDaten, paypalStatus, stripeSignaturGueltig, stripeStatus } from "./_shared/zahlung.ts";
+import { LEISTUNGSBEGINN_TEXT, LEISTUNGSBEGINN_VERSION, formDaten, paypalStatus, stripeSignaturGueltig, stripeStatus } from "./_shared/zahlung.ts";
+import * as App from "../../src/lib/recht/leistungsbeginn.ts";
 
 function assert(b: boolean, m: string) {
   if (!b) throw new Error(m);
@@ -40,4 +41,9 @@ Deno.test("Stripe-Formular", () => {
   assert(f.get("line_items[0][price_data][unit_amount]") === "299", "verschachtelt");
   assert(f.get("line_items[0][price_data][recurring][interval]") === "month", "tief");
   assert(f.get("metadata[abo_id]") === "x", "metadata");
+});
+
+Deno.test("Leistungsbeginn: Wortlaut und Version in App und Server gleich", () => {
+  assert(App.LEISTUNGSBEGINN_TEXT === LEISTUNGSBEGINN_TEXT, "Text weicht ab");
+  assert(App.LEISTUNGSBEGINN_VERSION === LEISTUNGSBEGINN_VERSION, "Version weicht ab");
 });

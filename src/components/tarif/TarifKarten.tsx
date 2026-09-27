@@ -7,6 +7,7 @@ import { zahlungAufruf } from "./zahlungAufruf";
 import { vereinFuerLizenzAnlegen } from "@/app/dashboard/tarif/actions";
 import { SendenButton, Meldung, LEERES_ERGEBNIS } from "@/components/ui/SendenButton";
 import { euro, ersparnis, gratisMonate, type BezahlTarif, type Periode, type Preise } from "@/lib/tarife";
+import { LEISTUNGSBEGINN_TEXT } from "@/lib/recht/leistungsbeginn";
 
 type AdminVerein = { id: string; name: string; lizenz: boolean };
 
@@ -44,6 +45,7 @@ export function TarifKarten({
 }) {
   const [periode, setPeriode] = useState<Periode>(startPeriode);
   const [laedt, setLaedt] = useState<string | null>(null);
+  const [leistungsbeginn, setLeistungsbeginn] = useState(false);
   const [fehler, setFehler] = useState<{ tarif: BezahlTarif; text: string } | null>(null);
   const kaufbar = adminVereine.filter((v) => !v.lizenz);
   const [vereinId, setVereinId] = useState<string>(
@@ -59,6 +61,7 @@ export function TarifKarten({
       periode,
       anbieter,
       verein_id: tarif === "verein" ? vereinId || null : null,
+      leistungsbeginn,
     });
     if (fehler || !daten?.url) {
       setLaedt(null);
@@ -72,9 +75,23 @@ export function TarifKarten({
   function Kaufknoepfe({ tarif, gesperrt }: { tarif: BezahlTarif; gesperrt?: boolean }) {
     return (
       <div className="flex flex-col gap-2">
+        <label className="flex items-start gap-2 text-[12px] leading-snug text-brand-ink-soft">
+          <input
+            type="checkbox"
+            checked={leistungsbeginn}
+            onChange={(e) => setLeistungsbeginn(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-brand-red"
+          />
+          <span>
+            {LEISTUNGSBEGINN_TEXT}{" "}
+            <Link href="/nutzungsbedingungen#widerruf" target="_blank" className="font-semibold text-brand-red hover:underline">
+              Widerrufsbelehrung
+            </Link>
+          </span>
+        </label>
         <button
           type="button"
-          disabled={gesperrt || laedt !== null}
+          disabled={gesperrt || laedt !== null || !leistungsbeginn}
           onClick={() => kaufen(tarif, "stripe")}
           className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-brand-red px-4 py-2 text-[13.5px] font-semibold text-white hover:bg-brand-red-deep disabled:opacity-50"
         >
@@ -82,7 +99,7 @@ export function TarifKarten({
         </button>
         <button
           type="button"
-          disabled={gesperrt || laedt !== null}
+          disabled={gesperrt || laedt !== null || !leistungsbeginn}
           onClick={() => kaufen(tarif, "paypal")}
           className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-brand-line bg-white px-4 py-2 text-[13.5px] font-semibold text-brand-ink hover:bg-brand-bg disabled:opacity-50"
         >

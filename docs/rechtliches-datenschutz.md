@@ -29,7 +29,8 @@ Anzeigeeinstellungen; kein Tracking.
   zugestimmt/widerrufen (`erteilt`), wann (`zeitpunkt`), wie (`quelle`), durch wen (`erteilt_von`, z. B. Elternteil).
 - Erfasst bei: Registrierung (Checkbox; Fassungen werden mitgesendet und in der Datenbank geprüft), Nachholen für
   Bestandskonten (`rechtstexte_bestaetigen`), Push (Gerät an/aus, nur Zustandswechsel), TanzRaum Map (an/aus),
-  Elternzustimmung per Link (inkl. Push-Einwilligung) und Eltern-Einstellungen für Kinder unter 16 (Push, Map).
+  Elternzustimmung per Link (inkl. Push-Einwilligung), Eltern-Einstellungen für Kinder unter 16 (Push, Map) und
+  Kauf eines Tarifs (vorzeitiger Leistungsbeginn, siehe `docs/tarife-und-zahlungen.md`).
 - Einstellungen → Datenschutz zeigt den eigenen Verlauf.
 
 ## Push-Kategorien

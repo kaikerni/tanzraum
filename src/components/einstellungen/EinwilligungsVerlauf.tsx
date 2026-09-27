@@ -6,6 +6,7 @@ const ART: Record<string, string> = {
   eltern_zustimmung: "Zustimmung eines Elternteils (Kinderkonto)",
   push: "Push-Benachrichtigungen",
   map: "Anzeige auf der TanzRaum Map",
+  vorzeitiger_leistungsbeginn: "Leistungsbeginn vor Ablauf der Widerrufsfrist",
 };
 const QUELLE: Record<string, string> = {
   registrierung: "bei der Registrierung",
@@ -13,6 +14,7 @@ const QUELLE: Record<string, string> = {
   geraet: "auf einem Gerät",
   eltern_link: "durch ein Elternteil (E-Mail-Link)",
   eltern_einstellung: "durch ein verknüpftes Elternteil",
+  kauf: "beim Kauf eines Tarifs",
 };
 
 // Nachweis der eigenen Einwilligungen (nur lesen; Aenderungen erzeugen neue Eintraege)
