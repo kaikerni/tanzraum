@@ -26,6 +26,13 @@ Update auf eine neue Version
      rm -rf tanzraum-app && unzip -o tanzraum-app.zip -d tanzraum-app && cd tanzraum-app && bash installieren.sh
 Die Einstellungen in /opt/tanzraum/.env bleiben erhalten.
 
+nginx und Anmelde-Cookies
+-------------------------
+installieren.sh legt /etc/nginx/conf.d/tanzraum-proxy-puffer.conf an (proxy_buffer_size 16k usw.).
+Grund: Anmelden und Passwort-Zurücksetzen senden das Supabase-Sitzungs-Cookie (3-4 KB). Mit dem nginx-Standard
+(4 KB) antwortet nginx sonst mit 502 ("upstream sent too big header") und im Browser erscheint
+"Application error: a client-side exception has occurred".
+
 Nützliche Befehle
 -----------------
      systemctl status tanzraum        Läuft die App?

@@ -68,6 +68,7 @@ Secret `TANZRAUM_APP_URL` (Standard `https://tanzraum.app`).
 | `/passwort-vergessen` | Link anfordern – Antwort immer gleich (verrät nicht, ob ein Konto existiert) |
 | `/auth/bestaetigen` | Einlösen der E-Mail-Links; Fehlerseite für abgelaufene/benutzte Links |
 | `/passwort-neu` | Neues Passwort + Wiederholung; nur in frischer Zurücksetzen-Sitzung (`ist_recovery_sitzung`); danach Abmeldung auf allen Geräten |
+| Betrieb | Die Antwort beim Einlösen des Links (`/auth/bestaetigen`, Server Action `linkEinloesen` → `verifyOtp`) enthält das Sitzungs-Cookie (je nach Konto > 3 KB, in `.0`/`.1` aufgeteilt). nginx braucht dafür größere Puffer (`deploy/installieren.sh` → `conf.d/tanzraum-proxy-puffer.conf`), sonst 502 und „Application error“ – der Link ist dann schon verbraucht. |
 | `/dashboard/einstellungen` | E-Mail-Adresse ändern, Passwort ändern (aktuelles Passwort wird geprüft, andere Geräte werden abgemeldet) |
 | `/dashboard/verein` | Einladung mit optionaler Gruppe erstellen und „Per E-Mail senden“ |
 

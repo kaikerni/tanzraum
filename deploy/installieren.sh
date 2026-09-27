@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# TanzRaum auf einem eigenen Linux-Server (z. B. IONOS VPS, Ubuntu 22.04/24.04) installieren ODER aktualisieren.
+# TanzRaum auf einem eigenen Linux-Server (z. B. netcup VPS, Debian 12/13 oder Ubuntu 22.04/24.04) installieren ODER aktualisieren.
 #
 # Aufruf im entpackten Paket-Ordner (als root):
 #     bash installieren.sh
 #
 # Erstinstallation: Node.js 22, nginx, HTTPS (Let's Encrypt), Firewall, Dienst "tanzraum".
-# Erneuter Aufruf mit einem neuen Paket: nur die App-Dateien werden ersetzt und die App neu gestartet.
+# Erneuter Aufruf mit einem neuen Paket: die App-Dateien werden ersetzt und die App neu gestartet; die nginx-Puffer\n# fuer Anmelde-Cookies werden bei Bedarf ergaenzt (conf.d/tanzraum-proxy-puffer.conf).
 # Die Datei /opt/tanzraum/.env bleibt dabei erhalten.
 
 set -euo pipefail
@@ -115,6 +115,28 @@ EOF
   rm -f /etc/nginx/sites-enabled/default
   nginx -t
   systemctl reload nginx
+fi
+
+# ---------- nginx: Puffer fuer Antwort-Header (bei jedem Aufruf) ----------
+# Anmelden und Passwort-Zuruecksetzen antworten mit dem Supabase-Sitzungs-Cookie (je nach Konto 3-4 KB, von Supabase
+# in mehrere Cookies aufgeteilt). Mit dem nginx-Standard (proxy_buffer_size = 4 KB) passen diese Antwort-Header
+# nicht in den Puffer: nginx meldet "upstream sent too big header" und liefert 502 statt der Antwort -> im Browser
+# "Application error", das Cookie kommt nie an, der Link aus der E-Mail ist aber bereits verbraucht.
+# Eigene Datei in conf.d (http-Ebene), damit die von certbot angepasste Site-Konfiguration unberuehrt bleibt.
+PUFFER_CONF=/etc/nginx/conf.d/tanzraum-proxy-puffer.conf
+PUFFER_INHALT='# TanzRaum: Platz fuer grosse Antwort-Header (Supabase-Sitzungs-Cookies). Verwaltet von installieren.sh.
+proxy_buffer_size 16k;
+proxy_buffers 8 16k;
+proxy_busy_buffers_size 32k;'
+if [ "$(cat "$PUFFER_CONF" 2>/dev/null)" != "$PUFFER_INHALT" ]; then
+  schritt "nginx: Puffer fuer Anmelde-Cookies einrichten"
+  printf '%s\n' "$PUFFER_INHALT" > "$PUFFER_CONF"
+  if nginx -t 2>/dev/null; then
+    systemctl reload nginx
+  else
+    rm -f "$PUFFER_CONF"
+    echo "!!  nginx lehnt $PUFFER_CONF ab (nginx -t). Die Datei wurde wieder entfernt; bitte nginx -t pruefen."
+  fi
 fi
 
 # ---------- Firewall ----------
