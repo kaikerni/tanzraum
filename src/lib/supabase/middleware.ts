@@ -15,7 +15,7 @@ function istOeffentlich(pathname: string) {
 // Next.js laeuft hinter nginx auf 127.0.0.1:3000; request.nextUrl zeigt dort auf
 // http://localhost:3000. Weiterleitungen muessen die oeffentliche Adresse verwenden,
 // die nginx per X-Forwarded-Host/-Proto mitgibt (lokal ohne nginx: Host-Header).
-function oeffentlicheUrl(request: NextRequest) {
+export function oeffentlicheUrl(request: NextRequest) {
   const url = request.nextUrl.clone();
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
   const proto = request.headers.get("x-forwarded-proto");
@@ -26,6 +26,16 @@ function oeffentlicheUrl(request: NextRequest) {
     if (!/:\d+$/.test(host)) url.port = "";
   }
   return url;
+}
+
+// Einheitliche Adresse: www.tanzraum.app -> tanzraum.app (308, Methode bleibt erhalten).
+// Sitzungs-Cookies gelten je Hostname, und Supabase Auth erlaubt als Weiterleitungsziel nur die Hauptadresse.
+export function zurHauptadresse(request: NextRequest) {
+  const host = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "").split(",")[0].trim().toLowerCase();
+  if (!host.startsWith("www.")) return null;
+  const url = oeffentlicheUrl(request);
+  url.host = host.slice(4);
+  return NextResponse.redirect(url, 308);
 }
 
 export async function updateSession(request: NextRequest) {

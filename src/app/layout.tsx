@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Kaushan_Script } from "next/font/google";
 import "./globals.css";
+import { ServiceWorkerAufraeumen } from "@/components/ServiceWorkerAufraeumen";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const kaushan = Kaushan_Script({ subsets: ["latin"], weight: "400", variable: "--font-kaushan", display: "swap" });
@@ -25,7 +26,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="de" className={`${inter.variable} ${kaushan.variable}`}>
-      <body>{children}</body>
+      <body>
+        <ServiceWorkerAufraeumen />
+        {children}
+      </body>
     </html>
   );
 }

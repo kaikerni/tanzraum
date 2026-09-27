@@ -33,6 +33,19 @@ Grund: Anmelden und Passwort-Zurücksetzen senden das Supabase-Sitzungs-Cookie (
 (4 KB) antwortet nginx sonst mit 502 ("upstream sent too big header") und im Browser erscheint
 "Application error: a client-side exception has occurred".
 
+Prüfung am Ende von installieren.sh
+-----------------------------------
+Das Skript prüft zum Schluss, ob auf Port 3000 wirklich die gerade installierte Version antwortet (Build-Kennung).
+Läuft dort noch ein alter Prozess, meldet es das mit dem belegenden Prozess. Außerdem zeigt es, ob der nginx-Puffer
+für Anmelde-Cookies aktiv ist (und bei einem Konflikt die Meldung von nginx -t).
+
+Alter Service Worker, www-Adresse
+---------------------------------
+Ein früherer Web-Auftritt auf dieser Domain hat im Browser mancher Besucher "/service-worker.js" installiert.
+Die App liefert unter dieser Adresse einen Abschalt-Worker aus und meldet fremde Worker beim Laden ab – ohne dass
+jemand den Browser-Cache löschen muss. TanzRaums eigener Worker ist /sw.js (Push). www.tanzraum.app leitet auf
+tanzraum.app um.
+
 Nützliche Befehle
 -----------------
      systemctl status tanzraum        Läuft die App?

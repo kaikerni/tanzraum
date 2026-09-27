@@ -131,12 +131,24 @@ proxy_busy_buffers_size 32k;'
 if [ "$(cat "$PUFFER_CONF" 2>/dev/null)" != "$PUFFER_INHALT" ]; then
   schritt "nginx: Puffer fuer Anmelde-Cookies einrichten"
   printf '%s\n' "$PUFFER_INHALT" > "$PUFFER_CONF"
-  if nginx -t 2>/dev/null; then
+  if nginx -t 2>/tmp/tanzraum-nginx-test.txt; then
     systemctl reload nginx
   else
     rm -f "$PUFFER_CONF"
-    echo "!!  nginx lehnt $PUFFER_CONF ab (nginx -t). Die Datei wurde wieder entfernt; bitte nginx -t pruefen."
+    echo "!!  nginx lehnt $PUFFER_CONF ab – Datei wieder entfernt. Meldung von nginx -t:"
+    sed 's/^/      /' /tmp/tanzraum-nginx-test.txt
+    if ! nginx -t 2>/dev/null; then
+      echo "    Die nginx-Konfiguration ist auch ohne diese Datei fehlerhaft (siehe Meldung oben)."
+    else
+      echo "    Vermutlich ist proxy_buffer_size schon an anderer Stelle gesetzt (siehe Meldung oben)."
+    fi
   fi
+fi
+# Aktiv, wenn irgendwo ein ausreichend grosser Puffer (mind. 8 KB) gesetzt ist – auch ausserhalb dieser Datei
+if nginx -T 2>/dev/null | awk '$1 == "proxy_buffer_size" { v = $2; sub(";", "", v); n = v + 0; if (v ~ /[kK]$/) n *= 1024; if (v ~ /[mM]$/) n *= 1048576; if (n >= 8192) ok = 1 } END { exit !ok }'; then
+  echo "    nginx-Puffer fuer Anmelde-Cookies: aktiv"
+else
+  echo "!!  nginx-Puffer fuer Anmelde-Cookies: NICHT aktiv – Anmelden/Passwort-Reset koennen mit 502 scheitern."
 fi
 
 # ---------- Firewall ----------
@@ -163,10 +175,24 @@ if [ ! -d "/etc/letsencrypt/live/$DOMAIN" ]; then
   fi
 fi
 
-sleep 2
-if curl -fsS -o /dev/null "http://127.0.0.1:$PORT/login"; then
-  echo; echo "Fertig: TanzRaum läuft. Status: systemctl status tanzraum · Protokoll: journalctl -u tanzraum -f"
+# ---------- Pruefen: laeuft wirklich die neue Version? ----------
+# Die Seite enthaelt die Build-Kennung. Antwortet auf dem Port ein anderer (alter) Prozess, passen Seiten und
+# Server nicht zusammen ("Failed to find Server Action", "Application error").
+BUILD_ID="$(cat "$APP_DIR/.next/BUILD_ID")"
+for _ in $(seq 1 20); do
+  if curl -fsS "http://127.0.0.1:$PORT/login" 2>/dev/null | grep -q "$BUILD_ID"; then
+    echo; echo "Fertig: TanzRaum läuft (Version $BUILD_ID). Status: systemctl status tanzraum · Protokoll: journalctl -u tanzraum -f"
+    exit 0
+  fi
+  sleep 1
+done
+echo
+if curl -fsS -o /dev/null "http://127.0.0.1:$PORT/login" 2>/dev/null; then
+  echo "!!  Auf Port $PORT antwortet NICHT die gerade installierte Version ($BUILD_ID)."
+  echo "    Vermutlich läuft dort noch ein anderer, alter Prozess. Belegt wird der Port von:"
+  ss -ltnp "sport = :$PORT" 2>/dev/null | sed 's/^/      /' || true
+  echo "    Status des Dienstes: systemctl status tanzraum"
 else
-  echo; echo "Die App antwortet noch nicht. Protokoll ansehen: journalctl -u tanzraum -n 50"
-  exit 1
+  echo "Die App antwortet noch nicht. Protokoll ansehen: journalctl -u tanzraum -n 50"
 fi
+exit 1

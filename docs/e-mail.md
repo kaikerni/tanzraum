@@ -65,10 +65,10 @@ Secret `TANZRAUM_APP_URL` (Standard `https://tanzraum.app`).
 |---|---|
 | `/login` | „Passwort vergessen?“, verständliche Fehlermeldungen, „Bestätigungs-E-Mail erneut senden“ |
 | `/signup` | Registrierung; nach Bestätigung zurück zum Ziel (z. B. Einladung) |
-| `/passwort-vergessen` | Link anfordern – Antwort immer gleich (verrät nicht, ob ein Konto existiert) |
-| `/auth/bestaetigen` | Einlösen der E-Mail-Links; Fehlerseite für abgelaufene/benutzte Links |
-| `/passwort-neu` | Neues Passwort + Wiederholung; nur in frischer Zurücksetzen-Sitzung (`ist_recovery_sitzung`); danach Abmeldung auf allen Geräten |
-| Betrieb | Die Antwort beim Einlösen des Links (`/auth/bestaetigen`, Server Action `linkEinloesen` → `verifyOtp`) enthält das Sitzungs-Cookie (je nach Konto > 3 KB, in `.0`/`.1` aufgeteilt). nginx braucht dafür größere Puffer (`deploy/installieren.sh` → `conf.d/tanzraum-proxy-puffer.conf`), sonst 502 und „Application error“ – der Link ist dann schon verbraucht. |
+| `/passwort-vergessen` | Link anfordern (Formular → Route `/passwort-vergessen/senden`) – Antwort immer gleich (verrät nicht, ob ein Konto existiert) |
+| `/auth/bestaetigen` | Einlösen der E-Mail-Links per Klick (Formular → Route `/auth/bestaetigen/einloesen`, `verifyOtp`, Sitzungs-Cookies mit 303); Ergebnisse über `?status=` |
+| `/passwort-neu` | Neues Passwort + Wiederholung (Formular → Route `/passwort-neu/speichern`); nur in frischer Zurücksetzen-Sitzung (`ist_recovery_sitzung`); danach Abmeldung auf allen Geräten |
+| Betrieb | Die drei Formulare nutzen bewusst **keine Server Actions**: deren IDs ändern sich mit jedem Build, eine Seite aus einem älteren Stand (Update, alter Service Worker) führte sonst zu „Failed to find Server Action“ / „Application error“. Sie funktionieren auch ohne JavaScript; Origin-Prüfung gegen fremde Formulare. Die Antwort mit dem Sitzungs-Cookie (je nach Konto > 3 KB) braucht größere nginx-Puffer (`deploy/installieren.sh` → `conf.d/tanzraum-proxy-puffer.conf`), sonst 502. `www.tanzraum.app` leitet auf `tanzraum.app` um (Cookies gelten je Host, Supabase erlaubt nur die Hauptadresse). |
 | `/dashboard/einstellungen` | E-Mail-Adresse ändern, Passwort ändern (aktuelles Passwort wird geprüft, andere Geräte werden abgemeldet) |
 | `/dashboard/verein` | Einladung mit optionaler Gruppe erstellen und „Per E-Mail senden“ |
 
