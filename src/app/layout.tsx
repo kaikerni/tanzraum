@@ -8,9 +8,13 @@ const kaushan = Kaushan_Script({ subsets: ["latin"], weight: "400", variable: "-
 export const metadata: Metadata = {
   title: "TanzRaum",
   description: "Vereinsverwaltung für karnevalistischen Tanzsport",
+  // Alle Symbole mit weissem Hintergrund (transparente Symbole erscheinen auf manchen Handys schwarz hinterlegt)
   icons: {
-    icon: "/tanzraum-logo-mark.webp",
-    apple: "/apple-touch-icon.png",
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
   },
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "TanzRaum", statusBarStyle: "default" },

@@ -51,21 +51,13 @@ export function AppHeader({
 
   return (
     <header className="relative z-20 flex h-16 shrink-0 items-center gap-3 border-b border-brand-line bg-white px-4 sm:gap-4 md:h-[76px] md:px-6">
-      <Link href="/dashboard" className="flex shrink-0 items-center" aria-label="TanzRaum Startseite">
-        <Image
-          src="/tanzraum-logo-mark.webp"
-          alt="TanzRaum"
-          width={44}
-          height={44}
-          className="h-10 w-10 sm:hidden"
-          priority
-        />
+      <Link href="/dashboard" className="flex min-w-0 flex-1 items-center sm:flex-none sm:shrink-0" aria-label="TanzRaum Startseite">
         <Image
           src="/tanzraum-logo-header.webp"
           alt="TanzRaum – Die Plattform für Tanzsport & Gemeinschaft"
           width={1392}
           height={207}
-          className="hidden h-11 w-auto sm:block md:h-[52px]"
+          className="h-auto w-full max-w-[260px] sm:h-11 sm:w-auto sm:max-w-none md:h-[52px]"
           priority
         />
       </Link>
