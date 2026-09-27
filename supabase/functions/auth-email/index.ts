@@ -8,13 +8,12 @@
 // Die Seite bestaetigt erst nach einem Klick (schuetzt vor Link-Vorschau/Virenscannern, die Links vorab oeffnen).
 //
 // Zusaetzlich:
-//   GET  ?logo=1                                   -> TanzRaum-Logo (PNG) fuer E-Mails
+//   GET  ?logo=1                                   -> Weiterleitung zum TanzRaum-Logo (fuer aeltere E-Mails)
 //   POST { selbsttest: true } + x-tanzraum-geheimnis -> Diagnose ohne Geheimnisse (Brevo-Absender/Domain, Secrets)
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { appUrl, ABSENDER, istEmail, json, sendeMail, serviceSchluessel } from "../_shared/mail.ts";
+import { appUrl, ABSENDER, istEmail, json, LOGO_URL, sendeMail, serviceSchluessel } from "../_shared/mail.ts";
 import * as V from "../_shared/vorlagen.ts";
-import { LOGO_PNG_BASE64 } from "../_shared/logo.ts";
 
 type HookDaten = {
   user: { id: string; email?: string; new_email?: string; user_metadata?: Record<string, unknown> };
@@ -157,9 +156,7 @@ async function selbsttest() {
 Deno.serve(async (req) => {
   const url = new URL(req.url);
   if (req.method === "GET" && url.searchParams.has("logo")) {
-    return new Response(b64ToBytes(LOGO_PNG_BASE64), {
-      headers: { "Content-Type": "image/png", "Cache-Control": "public, max-age=604800", "Access-Control-Allow-Origin": "*" },
-    });
+    return new Response(null, { status: 302, headers: { Location: LOGO_URL, "Cache-Control": "public, max-age=86400" } });
   }
   if (req.method !== "POST") return json({ error: "Nicht erlaubt" }, 405);
 
