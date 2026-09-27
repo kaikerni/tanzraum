@@ -20,6 +20,9 @@ import { SpotlightLeiste } from "@/components/spotlights/SpotlightLeiste";
 import { getSpotlightIch, getSpotlightLeiste } from "@/lib/spotlights/getSpotlights";
 import { SPOTLIGHTS_AKTIV } from "@/lib/spotlights/typen";
 import { TarifZaehler, type TarifZaehlerDaten } from "@/components/admin/TarifZaehler";
+import { getAnkuendigungen, getMeineNews, getMeineUmfragen } from "@/lib/news/getNews";
+import { AnkuendigungenLeiste } from "@/components/news/AnkuendigungenLeiste";
+import { NewsDashboardKarte } from "@/components/news/NewsDashboardKarte";
 
 export default async function DashboardPage({
   searchParams,
@@ -53,6 +56,8 @@ export default async function DashboardPage({
       getAktuelleNachrichten(supabase, user.id, 4),
       getMeineKinder(supabase),
     ]);
+  // TanzRaum-Ankuendigungen (alle Nutzer) und relevante Vereins-News/offene Umfragen
+  const [ankuendigungen, news, umfragen] = await Promise.all([getAnkuendigungen(supabase), getMeineNews(supabase, 5), getMeineUmfragen(supabase, 10)]);
   // Spotlights prominent oben (ansehen: alle, erstellen: ab Basic bzw. mit Vereinslizenz)
   const [spotlightIch, spotlights] = SPOTLIGHTS_AKTIV
     ? await Promise.all([getSpotlightIch(supabase, user), getSpotlightLeiste(supabase)])
@@ -79,6 +84,16 @@ export default async function DashboardPage({
       {tarifZaehler && (
         <div className="mx-auto mb-4 max-w-[1560px]">
           <TarifZaehler z={tarifZaehler} />
+        </div>
+      )}
+      {ankuendigungen.some((a) => !a.gelesenAm) && (
+        <div className="mx-auto mb-4 max-w-[1560px]">
+          <AnkuendigungenLeiste liste={ankuendigungen.filter((a) => !a.gelesenAm)} />
+        </div>
+      )}
+      {(news.length > 0 || umfragen.length > 0) && (
+        <div className="mx-auto mb-4 max-w-[1560px]">
+          <NewsDashboardKarte news={news} umfragen={umfragen} />
         </div>
       )}
       {spotlightIch && (spotlightIch.darfErstellen || spotlights.length > 0) && (

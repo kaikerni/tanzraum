@@ -86,13 +86,21 @@ Deno.serve(async (req) => {
 
   try {
     const geheimnis = req.headers.get("x-tanzraum-geheimnis");
-    const { nachricht_id, anruf_id, admin_push } = await req.json();
-    if (!geheimnis || (typeof nachricht_id !== "string" && typeof anruf_id !== "string" && admin_push !== true)) return new Response("Ungültige Anfrage", { status: 400 });
+    const { nachricht_id, anruf_id, admin_push, news_id, ankuendigung_id } = await req.json();
+    if (
+      !geheimnis ||
+      (typeof nachricht_id !== "string" && typeof anruf_id !== "string" && admin_push !== true && typeof news_id !== "string" && typeof ankuendigung_id !== "string")
+    )
+      return new Response("Ungültige Anfrage", { status: 400 });
     const paar = await vapidPaar(admin);
     if (!paar) return new Response(JSON.stringify({ ok: false, grund: "VAPID fehlt" }), { status: 200 });
     const { oeffentlich, privat } = paar;
     const { data: ziele, error } =
-      admin_push === true
+      typeof news_id === "string"
+        ? await admin.rpc("news_push_ziele", { p_geheimnis: geheimnis, p_news_id: news_id })
+        : typeof ankuendigung_id === "string"
+        ? await admin.rpc("ankuendigung_push_ziele", { p_geheimnis: geheimnis, p_ankuendigung_id: ankuendigung_id })
+        : admin_push === true
         ? await admin.rpc("admin_push_ziele", { p_geheimnis: geheimnis })
         : typeof anruf_id === "string"
         ? await admin.rpc("anruf_push_ziele", { p_geheimnis: geheimnis, p_anruf_id: anruf_id })

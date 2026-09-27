@@ -7,6 +7,8 @@ import { AppHeader } from "@/components/AppHeader";
 import { AnrufProvider } from "@/components/chat/AnrufProvider";
 import { MobileNav } from "@/components/MobileNav";
 import { AppFusszeile } from "@/components/recht/AppFusszeile";
+import { WichtigPopup, type PopupEintrag } from "@/components/news/WichtigPopup";
+import { getAnkuendigungen, getOffeneWichtigeNews } from "@/lib/news/getNews";
 
 export default async function DashboardLayout({
   children,
@@ -45,7 +47,7 @@ export default async function DashboardLayout({
   const { data: rechtstexteOffen } = await supabase.rpc("rechtstexte_offen");
   if (rechtstexteOffen === true) redirect("/rechtstexte");
 
-  const [{ data: ungelesen }, { count: benachrichtigungen }, zugriff] = await Promise.all([
+  const [{ data: ungelesen }, { count: benachrichtigungen }, zugriff, wichtigeNews, ankuendigungen] = await Promise.all([
     supabase.rpc("eigene_ungelesene_nachrichten_anzahl"),
     supabase
       .from("benachrichtigungen")
@@ -53,7 +55,26 @@ export default async function DashboardLayout({
       .eq("user_id", user.id)
       .eq("gelesen", false),
     getZugriff(supabase, daten.istPlattformAdmin),
+    getOffeneWichtigeNews(supabase),
+    getAnkuendigungen(supabase),
   ]);
+  // Wichtige News und wichtige TanzRaum-Ankuendigungen erscheinen als Popup, bis sie bestaetigt sind
+  const popup: PopupEintrag[] = [
+    ...ankuendigungen
+      .filter((a) => a.wichtig && !a.gelesenAm)
+      .map((a) => ({
+        art: "ankuendigung" as const,
+        id: a.id,
+        titel: a.titel,
+        text: a.text,
+        quelle: "TanzRaum",
+        zeit: a.sichtbarAb,
+        bildUrl: a.bildUrl,
+        linkUrl: a.linkUrl,
+        linkText: a.linkText,
+      })),
+    ...wichtigeNews.map((n) => ({ art: "news" as const, id: n.id, titel: n.titel, text: n.text, quelle: n.autor ? `${n.vereinName} · ${n.autor}` : n.vereinName, zeit: n.erstelltAm })),
+  ];
 
   const name = [daten.vorname, daten.nachname].filter(Boolean).join(" ") || "TanzRaum-Nutzer";
   const ersterVerein = daten.vereine.find((v) => !v.vereinGesperrt) ?? daten.vereine[0];
@@ -85,6 +106,7 @@ export default async function DashboardLayout({
         </main>
       </div>
       <MobileNav zugriff={zugriff} ungeleseneNachrichten={ungeleseneNachrichten} />
+      {popup.length > 0 && <WichtigPopup eintraege={popup} />}
     </div>
     </AnrufProvider>
   );

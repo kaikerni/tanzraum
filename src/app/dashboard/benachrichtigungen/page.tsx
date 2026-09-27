@@ -11,6 +11,7 @@ function ziel(typ: string): string | null {
   if (typ.startsWith("ehrung_")) return "/dashboard/vereinsverwaltung/ehrungen";
   if (typ === "termin_erinnerung" || typ === "termin") return "/dashboard/kalender";
   if (typ === "tarif_kauf") return "/dashboard/admin/tarife";
+  if (typ === "news" || typ === "umfrage") return "/dashboard/news";
   if (typ.includes("netzwerk") || typ === "kontaktanfrage") return "/dashboard/netzwerk";
   return null;
 }

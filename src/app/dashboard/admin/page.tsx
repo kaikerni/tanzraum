@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Flag, ShieldCheck, Hammer, CreditCard, Medal, Building2, Receipt } from "lucide-react";
+import { Flag, ShieldCheck, Hammer, CreditCard, Medal, Building2, Receipt, Megaphone } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 
@@ -31,6 +31,15 @@ export default async function AdminSeite() {
           <span className="block text-[13px] text-brand-ink-soft">Gemeldete Personen und Spotlights prüfen</span>
         </span>
         {anzahl > 0 && <span className="rounded-full bg-brand-red px-2.5 py-0.5 text-[13px] font-bold text-white">{anzahl} offen</span>}
+      </Link>
+      <Link href="/dashboard/admin/ankuendigungen" className={`${KARTE} flex items-center gap-4 hover:border-brand-red`}>
+        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-blue-wash text-brand-blue">
+          <Megaphone size={22} />
+        </span>
+        <span className="flex-1">
+          <span className="block text-[16px] font-bold text-brand-ink">Ankündigungen</span>
+          <span className="block text-[13px] text-brand-ink-soft">Nachrichten an alle Dashboards – z. B. Wartungsarbeiten oder Neuheiten</span>
+        </span>
       </Link>
       <Link href="/dashboard/admin/tarife" className={`${KARTE} flex items-center gap-4 hover:border-brand-red`}>
         <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-gold-wash text-brand-gold">

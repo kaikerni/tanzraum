@@ -10,8 +10,8 @@ const KATEGORIEN: { key: string; label: string; aktivImSystem: boolean }[] = [
   { key: "trainingsaenderung", label: "Trainingsänderungen und Ausfälle", aktivImSystem: false },
   { key: "training", label: "Neue Trainingstermine", aktivImSystem: false },
   { key: "abmeldung", label: "Abmeldungen (für Trainer)", aktivImSystem: false },
-  { key: "wichtige_news", label: "Wichtige News", aktivImSystem: false },
-  { key: "news", label: "Alle News", aktivImSystem: false },
+  { key: "wichtige_news", label: "Wichtige News und TanzRaum-Hinweise", aktivImSystem: true },
+  { key: "news", label: "Alle News und TanzRaum-Neuigkeiten", aktivImSystem: true },
   { key: "turniere", label: "Turniere", aktivImSystem: false },
 ];
 

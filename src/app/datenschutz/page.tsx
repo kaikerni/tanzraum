@@ -163,6 +163,18 @@ export default async function DatenschutzSeite() {
         </ul>
       </Abschnitt>
 
+      <Abschnitt titel="7a. News, Umfragen und Ankündigungen">
+        <p>
+          Vereine können News und Umfragen an ihre Mitglieder, einzelne Gruppen, Rollen oder die Eltern einer Gruppe senden. Dafür
+          speichern wir, wer eine News oder Umfrage erhalten hat, ob und wann sie gelesen bzw. bestätigt wurde (Verfasser und
+          Vereinsadmins sehen diesen Lesestatus) und die abgegebenen Stimmen. Bei anonymen Umfragen sieht niemand, wer wie
+          abgestimmt hat; gespeichert wird die Stimme nur, um doppelte Abstimmungen zu verhindern. TanzRaum selbst zeigt
+          Ankündigungen (z. B. Wartungsarbeiten, Neuheiten) auf dem Dashboard und speichert, ob du sie ausgeblendet bzw. bestätigt
+          hast. Rechtsgrundlage: Vereinsmitgliedschaft bzw. Nutzungsvertrag (Art. 6 Abs. 1 lit. b DSGVO); für Vereinsdaten ist der
+          Verein verantwortlich.
+        </p>
+      </Abschnitt>
+
       <Abschnitt titel="8. Push-Benachrichtigungen">
         <p>
           Wenn du Benachrichtigungen erlaubst, speichern wir die Push-Adresse deines Browsers. Die Benachrichtigung wird über den

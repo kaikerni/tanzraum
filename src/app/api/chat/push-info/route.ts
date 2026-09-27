@@ -27,6 +27,26 @@ export async function GET() {
     );
   }
 
+  // TanzRaum-Ankuendigung bzw. Vereins-News mit Push (nur frische, noch nicht gelesene fuer diese Person)
+  const { data: ank } = await supabase.rpc("meine_push_ankuendigung");
+  // deno-lint-ignore no-explicit-any
+  const ankuendigung = ((ank ?? []) as any[])[0];
+  if (ankuendigung) {
+    return NextResponse.json(
+      { titel: ankuendigung.wichtig ? "⚠️ TanzRaum – wichtig" : "📣 TanzRaum", text: ankuendigung.titel, url: "/dashboard", tag: `ankuendigung-${ankuendigung.id}` },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
+  const { data: pn } = await supabase.rpc("meine_push_news");
+  // deno-lint-ignore no-explicit-any
+  const news = ((pn ?? []) as any[])[0];
+  if (news) {
+    return NextResponse.json(
+      { titel: `${news.wichtig ? "⚠️ Wichtig" : "📰 News"} · ${news.verein_name}`, text: news.titel, url: "/dashboard/news", tag: `news-${news.id}` },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
   // Plattformadmin: neuer Kauf (BASIC-Abo oder Vereinslizenz) -- nur eigene, frische Benachrichtigung
   const { data: kauf } = await supabase
     .from("benachrichtigungen")
