@@ -20,11 +20,16 @@ export type Mitglied = {
   kinder: Person[];
   istIch: boolean;
   geschlecht: string | null;
+  neu: boolean;
 };
 
 export async function getMitgliederListe(supabase: SupabaseClient, vereinId: string): Promise<Mitglied[] | null> {
-  const { data, error } = await supabase.rpc("mitglieder_liste", { p_verein_id: vereinId });
+  const [{ data, error }, { data: status }] = await Promise.all([
+    supabase.rpc("mitglieder_liste", { p_verein_id: vereinId }),
+    supabase.from("vereins_mitglieder").select("id, aufnahme_status").eq("verein_id", vereinId).eq("aufnahme_status", "neu"),
+  ]);
   if (error) return null;
+  const neu = new Set((status ?? []).map((s) => s.id as string));
   // deno-lint-ignore no-explicit-any
   return ((data ?? []) as any[]).map((m) => ({
     vmId: m.vm_id,
@@ -45,6 +50,7 @@ export async function getMitgliederListe(supabase: SupabaseClient, vereinId: str
     kinder: (m.kinder ?? []).map((p: any) => ({ vmId: p.vm_id, name: p.name })),
     istIch: m.ist_ich,
     geschlecht: m.geschlecht ?? null,
+    neu: neu.has(m.vm_id),
   }));
 }
 

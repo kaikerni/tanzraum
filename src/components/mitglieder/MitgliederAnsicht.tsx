@@ -380,7 +380,7 @@ export function MitgliederAnsicht({
   const [suche, setSuche] = useState("");
   const [gruppe, setGruppe] = useState("");
   const [rolle, setRolle] = useState("");
-  const [status, setStatus] = useState<"alle" | "aktiv" | "inaktiv">("aktiv");
+  const [status, setStatus] = useState<"alle" | "aktiv" | "inaktiv" | "neu">("aktiv");
   const [offen, setOffen] = useState<string | null>(null);
 
   const gefiltert = useMemo(() => {
@@ -390,7 +390,7 @@ export function MitgliederAnsicht({
         (!s || m.name.toLowerCase().includes(s) || (m.handle ?? "").toLowerCase().includes(s) || (m.email ?? "").toLowerCase().includes(s)) &&
         (!gruppe || (gruppe === "_ohne" ? m.gruppen.length === 0 : m.gruppen.some((g) => g.id === gruppe))) &&
         (!rolle || m.rolleId === rolle) &&
-        (status === "alle" || (status === "aktiv" ? m.aktiv : !m.aktiv)),
+        (status === "alle" || (status === "neu" ? m.neu : status === "aktiv" ? m.aktiv : !m.aktiv && !m.neu)),
     );
   }, [mitglieder, suche, gruppe, rolle, status]);
 
@@ -438,6 +438,7 @@ export function MitgliederAnsicht({
         </select>
         <select value={status} onChange={(e) => setStatus(e.target.value as typeof status)} aria-label="Nach Status filtern" className={FILTER}>
           <option value="aktiv">Aktive</option>
+          <option value="neu">Neu (Antrag offen)</option>
           <option value="inaktiv">Deaktivierte</option>
           <option value="alle">Alle</option>
         </select>
@@ -467,6 +468,7 @@ export function MitgliederAnsicht({
                       <span className="flex items-center gap-2">
                         <span className={`truncate text-[14px] font-semibold ${m.aktiv ? "text-brand-ink" : "text-brand-ink-faint line-through"}`}>{m.name}</span>
                         {m.istIch && <span className="shrink-0 rounded-full bg-brand-bg px-2 py-0.5 text-[10.5px] font-semibold text-brand-ink-soft">Du</span>}
+                        {m.neu && <span className="shrink-0 rounded-full bg-brand-gold-wash px-2 py-0.5 text-[10.5px] font-semibold text-brand-gold">neu – Antrag offen</span>}
                       </span>
                       <span className="block truncate text-[12.5px] text-brand-ink-soft">
                         {m.gruppen.length > 0 ? m.gruppen.map((g) => g.name).join(", ") : "keine Gruppe"}

@@ -184,6 +184,19 @@ export default async function DatenschutzSeite() {
         </p>
       </Abschnitt>
 
+      <Abschnitt titel="7b. Mitgliedsanträge von Vereinen">
+        <p>
+          Vereine können den Beitritt über einen digitalen Mitgliedsantrag abwickeln, dessen Inhalt der Verein selbst festlegt. Die
+          eingegebenen Angaben (z. B. Name, Anschrift, Geburtsdatum, Kontaktdaten, gewählte Gruppen, ggf. Bankverbindung für das
+          SEPA-Lastschriftmandat und die Entscheidung zur Foto-Einwilligung), die Unterschriften mit Zeitpunkt bzw. hochgeladene
+          unterschriebene Anträge und der Formularstand zum Zeitpunkt der Einreichung werden gespeichert und – je nach
+          Vereinseinstellung – als PDF an die E-Mail-Adresse des Vereins (und als Kopie an dich) gesendet. Einsehen können sie nur
+          du, verknüpfte Eltern sowie Vereinsadmins bzw. vom Verein berechtigte Personen – nicht die TanzRaum-Administration.
+          Verantwortlich für diese Daten ist der jeweilige Verein; TanzRaum stellt die Technik bereit. Rechtsgrundlage:
+          Beitritt zum Verein (Art. 6 Abs. 1 lit. b DSGVO) bzw. deine Einwilligung (Foto-Einwilligung, Art. 6 Abs. 1 lit. a DSGVO).
+        </p>
+      </Abschnitt>
+
       <Abschnitt titel="8. Push-Benachrichtigungen">
         <p>
           Wenn du Benachrichtigungen erlaubst, speichern wir die Push-Adresse deines Browsers. Die Benachrichtigung wird über den

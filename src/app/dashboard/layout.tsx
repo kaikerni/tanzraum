@@ -9,6 +9,8 @@ import { MobileNav } from "@/components/MobileNav";
 import { AppFusszeile } from "@/components/recht/AppFusszeile";
 import { WichtigPopup, type PopupEintrag } from "@/components/news/WichtigPopup";
 import { getAnkuendigungen, getOffeneWichtigeNews } from "@/lib/news/getNews";
+import { getMeineAntraege } from "@/lib/antraege/getAntraege";
+import { AntragHinweis } from "@/components/antraege/AntragHinweis";
 
 export default async function DashboardLayout({
   children,
@@ -47,7 +49,7 @@ export default async function DashboardLayout({
   const { data: rechtstexteOffen } = await supabase.rpc("rechtstexte_offen");
   if (rechtstexteOffen === true) redirect("/rechtstexte");
 
-  const [{ data: ungelesen }, { count: benachrichtigungen }, zugriff, wichtigeNews, ankuendigungen] = await Promise.all([
+  const [{ data: ungelesen }, { count: benachrichtigungen }, zugriff, wichtigeNews, ankuendigungen, meineAntraege] = await Promise.all([
     supabase.rpc("eigene_ungelesene_nachrichten_anzahl"),
     supabase
       .from("benachrichtigungen")
@@ -57,7 +59,9 @@ export default async function DashboardLayout({
     getZugriff(supabase, daten.istPlattformAdmin),
     getOffeneWichtigeNews(supabase),
     getAnkuendigungen(supabase),
+    getMeineAntraege(supabase),
   ]);
+  const offeneAntraege = meineAntraege.filter((a) => a.status === "offen");
   // Wichtige News und wichtige TanzRaum-Ankuendigungen erscheinen als Popup, bis sie bestaetigt sind
   const popup: PopupEintrag[] = [
     ...ankuendigungen
@@ -101,6 +105,7 @@ export default async function DashboardLayout({
       <div className="flex min-h-0 flex-1">
         <AppSidebar kontext={kontext} zugriff={zugriff} ungeleseneNachrichten={ungeleseneNachrichten} />
         <main className="flex flex-1 flex-col overflow-y-auto px-3 pb-28 pt-4 sm:px-5 md:pb-8 md:pt-5 xl:px-6">
+          {offeneAntraege.length > 0 && <AntragHinweis antraege={offeneAntraege} />}
           <div className="flex-1">{children}</div>
           <AppFusszeile className="mx-auto mt-10 w-full max-w-[1200px]" />
         </main>

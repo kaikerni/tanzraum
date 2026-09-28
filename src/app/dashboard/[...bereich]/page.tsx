@@ -6,7 +6,6 @@ import { KARTE } from "@/components/dashboard/Karten";
 
 // Menuepunkte, deren Modul noch nicht fertig ist, zeigen statt einer Fehlerseite einen Hinweis.
 const BESCHREIBUNG: Record<string, string> = {
-  "/dashboard/mitgliedsantraege": "Online-Mitgliedsanträge mit Daten, SEPA-Mandat und Einwilligungen prüfen und annehmen.",
   "/dashboard/dateien": "Dokumente, Satzung, Pläne und Fotos zentral im Verein ablegen.",
   "/dashboard/fahrgemeinschaften": "Fahrten zu Turnieren und Auftritten organisieren – wer fährt, wer hat noch Platz.",
   "/dashboard/musik": "Musikstücke und Schnitte für Tänze verwalten und mit der Gruppe teilen.",

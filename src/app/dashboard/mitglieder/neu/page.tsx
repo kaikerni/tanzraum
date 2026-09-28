@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Ticket } from "lucide-react";
+import { ArrowLeft, Ticket, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardData } from "@/lib/dashboard/getDashboardData";
 import { getAuswahllisten, getOffeneEinladungen } from "@/lib/verein/getVerein";
@@ -8,8 +8,10 @@ import { basisUrl } from "@/lib/url";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { EinladungsVerwaltung } from "@/components/verein/EinladungsVerwaltung";
+import { PersonHinzufuegen } from "@/components/antraege/VereinsAktionen";
 
-// Mitglieder kommen per Einladungslink in den Verein (eigenes TanzRaum-Konto, Rolle vom Vereinsadmin vorgegeben).
+// Mitglieder kommen in den Verein: Person mit TanzRaum-Konto direkt hinzufuegen oder per Einladungslink
+// (Registrierung). Je nach Vereinseinstellung sind sie danach "neu" und fuellen den Mitgliedsantrag aus.
 export default async function MitgliedHinzufuegenSeite({
   searchParams,
 }: {
@@ -46,9 +48,21 @@ export default async function MitgliedHinzufuegenSeite({
       </div>
       <section className={KARTE}>
         <KarteKopf
+          icon={UserPlus}
+          titel="Person mit TanzRaum-Konto hinzufügen"
+          untertitel="Per E-Mail-Adresse oder @Handle. Ist die Person einem anderen Verein zugeordnet, bitten wir diesen um Freigabe."
+        />
+        <PersonHinzufuegen
+          vereinId={mitgliedschaft.vereinId}
+          rollen={listen.rollen.filter((r) => !/admin/i.test(r.name))}
+          gruppen={(gruppen ?? []).map((g) => ({ id: g.id, name: g.name ?? "Gruppe" }))}
+        />
+      </section>
+      <section className={KARTE}>
+        <KarteKopf
           icon={Ticket}
           titel="Per Einladungslink"
-          untertitel="Die Person registriert sich (oder meldet sich an), öffnet den Link und ist dann mit der gewählten Rolle Mitglied. Danach kannst du sie Gruppen zuordnen und mit Eltern verknüpfen."
+          untertitel="Für Personen ohne TanzRaum-Konto: Sie registriert sich, öffnet den Link und füllt – falls euer Verein das verlangt – den Mitgliedsantrag aus."
         />
         <EinladungsVerwaltung
           vereinId={mitgliedschaft.vereinId}

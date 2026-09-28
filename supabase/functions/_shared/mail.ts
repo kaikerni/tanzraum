@@ -109,6 +109,12 @@ export function layout(opts: {
 </body></html>`;
 }
 
+function base64(bytes: Uint8Array): string {
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
 // ---------------------------------------------------------------------------------------------
 // Versand ueber Brevo (transaktionale E-Mails)
 // ---------------------------------------------------------------------------------------------
@@ -118,6 +124,7 @@ export async function sendeMail(opts: {
   betreff: string;
   html: string;
   antwortAn?: Empfaenger;
+  anhaenge?: { name: string; inhalt: Uint8Array }[];
 }): Promise<{ ok: boolean; gesendet: number }> {
   const schluessel = Deno.env.get("BREVO_API_KEY")?.trim();
   if (!schluessel) {
@@ -128,6 +135,7 @@ export async function sendeMail(opts: {
   if (empfaenger.length === 0) return { ok: false, gesendet: 0 };
 
   const text = nurText(opts.html);
+  const anhaenge = (opts.anhaenge ?? []).map((a) => ({ name: a.name, content: base64(a.inhalt) }));
   let gesendet = 0;
   // Brevo: bis zu 1000 Versionen pro Anfrage; jede Version = eigene E-Mail an genau eine Person
   for (let i = 0; i < empfaenger.length; i += 500) {
@@ -140,6 +148,7 @@ export async function sendeMail(opts: {
       textContent: text,
       tags: ["tanzraum", opts.art],
       headers: { "X-Mailin-custom": `art:${opts.art}` },
+      ...(anhaenge.length ? { attachment: anhaenge } : {}),
       ...(teil.length === 1 ? { to: teil } : { messageVersions: teil.map((e) => ({ to: [e] })) }),
     };
     try {

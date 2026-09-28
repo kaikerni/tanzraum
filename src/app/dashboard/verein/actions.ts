@@ -210,5 +210,7 @@ export async function einladungEinloesen(_prev: AktionsErgebnis, formData: FormD
   if (!ergebnis?.success) return { error: ergebnis?.error ?? "Einladung konnte nicht eingelöst werden." };
 
   revalidatePath("/dashboard", "layout");
+  // Verein verlangt einen Mitgliedsantrag: direkt dorthin
+  if (typeof ergebnis.antrag_id === "string") redirect(`/dashboard/mitgliedsantrag/${ergebnis.antrag_id}`);
   redirect(`/dashboard/verein?verein=${ergebnis.verein_id}`);
 }
