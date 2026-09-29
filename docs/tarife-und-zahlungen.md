@@ -78,7 +78,8 @@ aus dem Vault).
 `abo-abgleich?selbsttest=1` mit Header `x-tanzraum-geheimnis` (Vault `chat_push_geheimnis`, z. B. per `net.http_post`)
 liefert ohne Schlüssel: Art des Stripe-Schlüssels (`sk_live_`/`sk_test_`), Webhook-Secret vorhanden, Stripe-Konto
 (Zahlungen/Auszahlungen aktiv), Stripe-Webhook auf diese Adresse + fehlende Ereignisse, PayPal-Modus, Anmeldung ok,
-PayPal-Webhook-Adresse + fehlende Ereignisse.
+PayPal-Webhook-Adresse + fehlende Ereignisse sowie `webhooks_dieser_app` (IDs der Webhooks der App, zu der Client-ID/Secret
+gehören – leer heißt: Zugangsdaten stammen aus einer anderen App als der Webhook).
 
 PayPal-Produkt und -Pläne werden in `paypal_plans` getrennt nach Modus zwischengespeichert (`live:…`, `sandbox:…`),
 weil Sandbox-IDs im Live-Betrieb nicht existieren. Alte Einträge ohne Präfix werden nicht mehr verwendet.

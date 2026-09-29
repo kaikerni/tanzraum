@@ -301,6 +301,18 @@ export async function zahlungsDiagnose(): Promise<Record<string, unknown>> {
         pp.webhook = "Webhook-ID bei PayPal nicht gefunden (anderer Modus oder andere App?)";
       }
     }
+    // Webhooks der App, zu der Client-ID/Secret gehören (IDs sind keine Geheimnisse)
+    try {
+      const liste = await paypal("/v1/notifications/webhooks", "GET", undefined, token);
+      // deno-lint-ignore no-explicit-any
+      pp.webhooks_dieser_app = (liste.webhooks ?? []).map((w: any) => ({
+        id: w.id,
+        adresse_passt: w.url === `${projekt}/functions/v1/paypal-webhook`,
+        id_stimmt: Boolean(id) && w.id === id!.trim(),
+      }));
+    } catch {
+      pp.webhooks_dieser_app = "Liste nicht abrufbar";
+    }
   } catch {
     pp.anmeldung_ok = false;
   }
