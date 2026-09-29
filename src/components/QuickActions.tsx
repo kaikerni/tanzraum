@@ -32,7 +32,7 @@ const AKTIONEN: Aktion[] = [
   { href: "/dashboard/nachrichten/neu", zeile1: "Nachricht", zeile2: "schreiben", icon: Mail, tarif: "free" },
   { href: "/dashboard/dateien#hochladen", zeile1: "Datei", zeile2: "hochladen", icon: Upload, tarif: "basic", modul: "dateien" },
   { href: "/dashboard/turniere/neu", zeile1: "Turnier", zeile2: "erfassen", icon: Trophy, tarif: "verein", rechte: ["plattform_admin"], iconKlasse: "text-brand-gold", modul: "turniere" },
-  { href: "/dashboard/fahrgemeinschaften/neu", zeile1: "Fahrgemeinschaft", zeile2: "erstellen", icon: Car, tarif: "basic", modul: "fahrgemeinschaften" },
+  { href: "/dashboard/fahrgemeinschaften/neu", zeile1: "Fahrgemeinschaft", zeile2: "erstellen", icon: Car, tarif: "verein", rechte: ["fahrgemeinschaften"], modul: "fahrgemeinschaften" },
   { href: "/dashboard/musik", zeile1: "Musik", zeile2: "verwalten", icon: Music, tarif: "verein", rechte: ["rolle_admin", "rolle_trainer"], modul: "musik" },
   { href: "/dashboard/finanzen/neu", zeile1: "Einnahme/Ausgabe", zeile2: "erfassen", icon: Coins, tarif: "verein", rechte: ["beitraege"], modul: "finanzen" },
   { href: "/dashboard/verein/bearbeiten", zeile1: "Vereinsdaten", zeile2: "bearbeiten", icon: Settings, tarif: "verein", rechte: ["rolle_admin"] },

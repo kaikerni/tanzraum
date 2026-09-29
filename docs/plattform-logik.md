@@ -94,3 +94,32 @@ Vollständig entfernt: Komponente, Datenschutzabschnitt, Edge Function `tanzraum
 - Keine Behauptung einer App-Store-App; Installation als Web-App (PWA, `/sw.js`) für iPhone/iPad und Android erklärt.
 - **Offen:** Taktmanufaktur-Logo liegt nicht im Projekt – im Footer steht der Text „TanzRaum ist ein Projekt der
   Taktmanufaktur.“ Logo-Datei nachreichen, dann einbauen.
+
+## TeamCloud (Dateien)
+
+Migration `20260929162131_teamcloud`.
+- 500 MB je Verein, 100 MB eigene Dateien (ab BASIC), max. 50 MB je Datei (`teamcloud_limit`, Bucket-Limit).
+- Hochladen/Löschen im Verein: Vereinsadmin und Trainer (`darf_teamcloud`); ansehen/herunterladen: aufgenommene
+  Mitglieder (`sieht_teamcloud`). Bereich „dateien“ aus → nicht sichtbar.
+- Upload in drei Schritten: `teamcloud_upload_vorbereiten` (Rechte, Speicher, Platz reservieren) → Browser lädt direkt
+  in `vereins-dateien` (nur auf den reservierten Pfad erlaubt) → `teamcloud_upload_abschliessen` (tatsächliche Größe
+  aus dem Speicher geprüft). Abgebrochene Reservierungen geben ihren Platz nach 1 Stunde frei.
+- Seite `/dashboard/dateien` (Menü „TeamCloud“): Speicheranzeige, Ordner, Musik direkt anhören, Laden, Löschen.
+
+## Zugriff je Bereich (Vereinsadmin)
+
+Migration `20260929162928_bereich_zugang`. Vereinsverwaltung → Bereiche → „Wer hat Zugriff?“.
+Der Admin hat immer Zugriff; Einzelrechte pro Mitglied gelten zusätzlich.
+
+| Bereich | Recht | Standard |
+|---|---|---|
+| Fahrgemeinschaften (nur Verein-Lizenz) | `fahrgemeinschaften` | alle Mitglieder |
+| Kostüme & Requisiten | `material` | Betreuer |
+| Finanzen (nur Verein-Lizenz) | `beitraege` | nur Admin |
+| Statistiken | `statistiken` | nur Admin |
+
+Musik: ab BASIC (unverändert). Statistik-Inhalte wählt der Admin (`vereine.statistik_inhalte`: Mitgliederentwicklung,
+Rollen, Altersklassen, Tanzgruppen, Trainingsbeteiligung, Turnierergebnisse); Seite `/dashboard/statistiken` zeigt nur
+zusammengefasste Zahlen (`verein_statistik`).
+
+Noch in Arbeit (Hinweisseite): Fahrgemeinschaften, Musik, Kostüme & Requisiten, Finanzen.

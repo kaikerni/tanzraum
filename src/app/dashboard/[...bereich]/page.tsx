@@ -9,9 +9,8 @@ import { ModulAusHinweis, modulAusgeschaltet } from "@/components/verein/ModulSc
 const BESCHREIBUNG: Record<string, string> = {
   "/dashboard/fahrgemeinschaften": "Fahrten zu Turnieren und Auftritten organisieren – wer fährt, wer hat noch Platz.",
   "/dashboard/musik": "Musikstücke und Schnitte für Tänze verwalten und mit der Gruppe teilen.",
-  "/dashboard/kostueme": "Kostüme, Größen, Ausgaben und Material im Blick behalten.",
+  "/dashboard/kostueme": "Kostüme, Requisiten, Größen und Ausgaben im Blick behalten.",
   "/dashboard/finanzen": "Beiträge, Kassenbuch und Zahlungen des Vereins.",
-  "/dashboard/statistiken": "Auswertungen zu Mitgliedern, Trainingsbeteiligung und Turnieren.",
   "/dashboard/vereinsverwaltung": "Rechte, Rollen, Lizenz und Einstellungen des Vereins.",
   "/dashboard/admin": "Verwaltung der Plattform: Vereine, Personen, Turnierkalender und Support.",
 };

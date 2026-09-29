@@ -78,7 +78,7 @@ export function vorschau(ansicht: Exclude<VorschauAnsicht, "juryraum">): { props
   const istAdmin = ansicht === "admin";
   const zugriff: Zugriff = istAdmin
     ? { tarif: "verein", bereiche: [], istPlattformAdmin: true, netzwerk: "trainer", moduleAus: [] }
-    : { tarif: "verein", bereiche: ["rolle_admin", "mitglieder", "anwesenheit", "saison", "beitritt", "beitraege", "material"], istPlattformAdmin: false, moduleAus: [], netzwerk: "trainer" };
+    : { tarif: "verein", bereiche: ["rolle_admin", "mitglieder", "anwesenheit", "saison", "beitritt", "beitraege", "material", "fahrgemeinschaften", "statistiken"], istPlattformAdmin: false, moduleAus: [], netzwerk: "trainer" };
   const daten = istAdmin
     ? { ...basis("Admin"), istPlattformAdmin: true }
     : { ...basis("Sophie"), persoenlicherTarif: "free", vereine: [{ ...BEISPIELVEREIN, rolleName: "Vereinsadmin" }] };
