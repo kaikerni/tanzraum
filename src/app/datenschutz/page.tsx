@@ -75,7 +75,16 @@ export default async function DatenschutzSeite() {
             eigenständiges Konto (ab 16 Jahren) oder ein Kinderkonto mit Zustimmung der Eltern (unter 16 Jahren) vorliegt, und um
             die Schutzregeln für Kinderkonten anzuwenden.
           </li>
-          <li>Freiwillige Angaben: Profilbild, Beschreibung, Vereins- und Tanzangaben, Kontaktdaten.</li>
+          <li>
+            Freiwillige Angaben: Profilbild, Beschreibung, Vereins- und Tanzangaben, Kontaktdaten sowie „Verein, in dem ich tanze“ (ein
+            freier Text ohne offizielle Vereinszuordnung, jederzeit änderbar oder löschbar).
+          </li>
+          <li>
+            Online-Status: Solange TanzRaum geöffnet ist, speichern wir etwa minütlich den Zeitpunkt deiner letzten Aktivität. Daraus
+            entstehen nur Zahlen („12 gerade online“). Mit Namen sehen dich deine Kontakte und Mitglieder deines Vereins nur, wenn du das in
+            den Einstellungen einschaltest; Konten unter 16 Jahren werden nie mit Namen gezeigt. Die TanzRaum-Administration sieht
+            ausschließlich zusammengefasste Zahlen.
+          </li>
         </ul>
         <p>Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Nutzungsvertrag).</p>
       </Abschnitt>
@@ -143,7 +152,7 @@ export default async function DatenschutzSeite() {
             eingegebene Ort bzw. die Vereinsadresse übermittelt, nicht deine IP-Adresse.
           </li>
           <li>
-            Die Karte im TanzRaum-Netzwerk lädt dein Browser erst, wenn du auf „Karte laden“ tippst (auf Wunsch für dein Gerät
+            Die Karte in TanzRaum Connect lädt dein Browser erst, wenn du auf „Karte laden“ tippst (auf Wunsch für dein Gerät
             gemerkt, jederzeit abschaltbar unter der Karte). Dabei werden u. a. deine IP-Adresse und technische Gerätedaten an Google
             übertragen. Geteilte Standorte in Nachrichten und „Auf der Karte zeigen“ öffnen Google Maps erst beim Antippen.
           </li>
@@ -197,6 +206,17 @@ export default async function DatenschutzSeite() {
         </p>
       </Abschnitt>
 
+      <Abschnitt titel="7c. Fernwartung und Plattform-Statistik">
+        <p>
+          Vereinsadmins können den TanzRaum-Support um Hilfe bitten und dabei einen Fernzugriff für 24 Stunden freigeben. Während dieser
+          Zeit kann der Support ausschließlich Einstellungen des Vereins ändern (Vereinsdaten, Bereiche, Mitgliedsantrag-Formular) – nicht
+          Mitglieder, Anträge, Chats oder persönliche Daten. Jede Änderung wird mit Zeitpunkt protokolliert; der Verein sieht das
+          Protokoll und kann den Zugriff jederzeit widerrufen. Für den Betrieb wertet die TanzRaum-Administration nur zusammengefasste
+          Zahlen aus (z. B. Anzahl Nutzer, Vereine, Nachrichten pro Woche) – ohne Namen und ohne Inhalte. Rechtsgrundlage: Art. 6 Abs. 1
+          lit. b und f DSGVO (Vertragserfüllung bzw. berechtigtes Interesse an einem sicheren, funktionierenden Betrieb).
+        </p>
+      </Abschnitt>
+
       <Abschnitt titel="8. Push-Benachrichtigungen">
         <p>
           Wenn du Benachrichtigungen erlaubst, speichern wir die Push-Adresse deines Browsers. Die Benachrichtigung wird über den
@@ -227,16 +247,7 @@ export default async function DatenschutzSeite() {
         <p>Rechtsgrundlage: Art. 6 Abs. 1 lit. b und c DSGVO (Vertrag, steuerliche Aufbewahrungspflichten).</p>
       </Abschnitt>
 
-      <Abschnitt titel="11. KI-Assistent (nur TanzRaum-Administration)">
-        <p>
-          Der TanzRaum-Assistent steht nur der Plattform-Administration zur Verfügung. Die gestellte Frage und ausgewählte Verwaltungsdaten
-          (z. B. Kennzahlen, anstehende Termine, offene Beiträge mit Namen, Trainingsabmeldungen) werden an die Gemini API von Google
-          übermittelt, um eine Antwort zu erzeugen.{" "}
-          <Todo>Anbieter/Vertragspartner (Google), Auftragsverarbeitung, Drittlandübermittlung und Rechtsgrundlage prüfen</Todo>
-        </p>
-      </Abschnitt>
-
-      <Abschnitt titel="12. Cookies und lokaler Speicher">
+      <Abschnitt titel="11. Cookies und lokaler Speicher">
         <p>
           TanzRaum setzt nur technisch notwendige Cookies für die Anmeldung. Im lokalen Speicher deines Browsers merken wir uns
           Bedienvorlieben (z. B. zuletzt genutzte Smileys). Es gibt keine Werbe- oder Analyse-Tracker. Schriftarten werden von TanzRaum
@@ -244,14 +255,14 @@ export default async function DatenschutzSeite() {
         </p>
       </Abschnitt>
 
-      <Abschnitt titel="13. Externe Links">
+      <Abschnitt titel="12. Externe Links">
         <p>
           Links zu Google Maps oder Google Kalender öffnen die Seiten des jeweiligen Anbieters erst, wenn du sie anklickst. Dann gilt
           dessen Datenschutzerklärung.
         </p>
       </Abschnitt>
 
-      <Abschnitt titel="14. Speicherdauer">
+      <Abschnitt titel="13. Speicherdauer">
         <p>Wir speichern Daten, solange dein Konto besteht oder es für den jeweiligen Zweck nötig ist:</p>
         <ul>
           <li>Konto-, Profil- und Nachrichtendaten: bis zur Löschung deines Kontos (bzw. bis du einzelne Inhalte löschst).</li>
@@ -273,7 +284,7 @@ export default async function DatenschutzSeite() {
         </ul>
       </Abschnitt>
 
-      <Abschnitt titel="15. Deine Rechte">
+      <Abschnitt titel="14. Deine Rechte">
         <p>
           Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch
           (Art. 15–21 DSGVO). Erteilte Einwilligungen kannst du jederzeit für die Zukunft widerrufen. Einen Export deiner Daten

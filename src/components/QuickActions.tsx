@@ -12,7 +12,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { darf, type Tarif, type Zugriff } from "@/lib/navigation";
+import { darf, modulAn, type Tarif, type VereinsModul, type Zugriff } from "@/lib/navigation";
 
 type Aktion = {
   href: string;
@@ -23,23 +23,24 @@ type Aktion = {
   // Liste = eines davon reicht. "plattform_admin" = nur Plattform-Admin (Turniere legt laut RLS nur er an).
   rechte?: string[];
   iconKlasse?: string;
+  modul?: VereinsModul;
 };
 
 const AKTIONEN: Aktion[] = [
-  { href: "/dashboard/training/neu", zeile1: "Training", zeile2: "anlegen", icon: Plus, tarif: "verein", rechte: ["rolle_admin", "rolle_trainer"] },
+  { href: "/dashboard/training/neu", zeile1: "Training", zeile2: "anlegen", icon: Plus, tarif: "verein", rechte: ["rolle_admin", "rolle_trainer"], modul: "training" },
   { href: "/dashboard/mitglieder/neu", zeile1: "Mitglied", zeile2: "hinzufügen", icon: UserPlus, tarif: "verein", rechte: ["rolle_admin"] },
   { href: "/dashboard/nachrichten/neu", zeile1: "Nachricht", zeile2: "schreiben", icon: Mail, tarif: "free" },
-  { href: "/dashboard/dateien/hochladen", zeile1: "Datei", zeile2: "hochladen", icon: Upload, tarif: "basic" },
-  { href: "/dashboard/turniere/neu", zeile1: "Turnier", zeile2: "erfassen", icon: Trophy, tarif: "verein", rechte: ["plattform_admin"], iconKlasse: "text-brand-gold" },
-  { href: "/dashboard/fahrgemeinschaften/neu", zeile1: "Fahrgemeinschaft", zeile2: "erstellen", icon: Car, tarif: "basic" },
-  { href: "/dashboard/musik", zeile1: "Musik", zeile2: "verwalten", icon: Music, tarif: "verein", rechte: ["rolle_admin", "rolle_trainer"] },
-  { href: "/dashboard/finanzen/neu", zeile1: "Einnahme/Ausgabe", zeile2: "erfassen", icon: Coins, tarif: "verein", rechte: ["beitraege"] },
+  { href: "/dashboard/dateien/hochladen", zeile1: "Datei", zeile2: "hochladen", icon: Upload, tarif: "basic", modul: "dateien" },
+  { href: "/dashboard/turniere/neu", zeile1: "Turnier", zeile2: "erfassen", icon: Trophy, tarif: "verein", rechte: ["plattform_admin"], iconKlasse: "text-brand-gold", modul: "turniere" },
+  { href: "/dashboard/fahrgemeinschaften/neu", zeile1: "Fahrgemeinschaft", zeile2: "erstellen", icon: Car, tarif: "basic", modul: "fahrgemeinschaften" },
+  { href: "/dashboard/musik", zeile1: "Musik", zeile2: "verwalten", icon: Music, tarif: "verein", rechte: ["rolle_admin", "rolle_trainer"], modul: "musik" },
+  { href: "/dashboard/finanzen/neu", zeile1: "Einnahme/Ausgabe", zeile2: "erfassen", icon: Coins, tarif: "verein", rechte: ["beitraege"], modul: "finanzen" },
   { href: "/dashboard/verein/bearbeiten", zeile1: "Vereinsdaten", zeile2: "bearbeiten", icon: Settings, tarif: "verein", rechte: ["rolle_admin"] },
 ];
 
 export function QuickActions({ zugriff }: { zugriff: Zugriff }) {
   const sichtbar = AKTIONEN.filter((a) =>
-    a.rechte === undefined ? darf(zugriff, a.tarif) : a.rechte.some((r) => darf(zugriff, a.tarif, r)),
+    !modulAn(zugriff, a.modul) ? false : a.rechte === undefined ? darf(zugriff, a.tarif) : a.rechte.some((r) => darf(zugriff, a.tarif, r)),
   );
   if (sichtbar.length === 0) return null;
 

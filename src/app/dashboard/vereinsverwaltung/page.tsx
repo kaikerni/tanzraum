@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Medal, Users, Settings, ChevronRight, Hammer } from "lucide-react";
+import { Medal, Users, Settings, ChevronRight, Hammer, LayoutGrid, LifeBuoy, FileSignature } from "lucide-react";
 import { KARTE } from "@/components/dashboard/Karten";
 import { ehrungsKontext } from "@/lib/ehrungen/kontext";
 import { KeinZugriff, EHRUNGEN_PFAD, mitVerein } from "@/components/ehrungen/EhrungenKopf";
@@ -20,6 +20,24 @@ export default async function Vereinsverwaltung({ searchParams }: { searchParams
     },
     { href: `/dashboard/mitglieder?verein=${verein.vereinId}`, icon: Users, titel: "Mitglieder", text: "Mitglieder, Rollen, Gruppen und Familien verwalten." },
     { href: "/dashboard/verein/bearbeiten", icon: Settings, titel: "Vereinsdaten", text: "Name, Adresse, Logo und Beschreibung des Vereins." },
+    {
+      href: `/dashboard/vereinsverwaltung/bereiche?verein=${verein.vereinId}`,
+      icon: LayoutGrid,
+      titel: "Bereiche",
+      text: "Training, Kalender, Turniere, Chat, TeamCloud … ein- oder ausschalten. Daten bleiben erhalten.",
+    },
+    {
+      href: `/dashboard/mitgliedsantraege/formular?verein=${verein.vereinId}`,
+      icon: FileSignature,
+      titel: "Aufnahmeverfahren",
+      text: "Mitgliedsantrag, Unterschrift, Bestätigung bestehender Mitglieder, externes Verfahren.",
+    },
+    {
+      href: `/dashboard/vereinsverwaltung/fernwartung?verein=${verein.vereinId}`,
+      icon: LifeBuoy,
+      titel: "Fernwartung & Support",
+      text: "Hilfe vom TanzRaum-Support anfragen – zeitlich begrenzt, protokolliert, widerrufbar.",
+    },
   ];
   return (
     <div className="mx-auto flex max-w-[900px] flex-col gap-4">
@@ -40,7 +58,7 @@ export default async function Vereinsverwaltung({ searchParams }: { searchParams
         ))}
       </div>
       <p className="inline-flex items-center gap-1.5 text-[12.5px] text-brand-ink-faint">
-        <Hammer size={13} /> Rechte & Rollen, Lizenz und weitere Einstellungen folgen in einem der nächsten Updates.
+        <Hammer size={13} /> Rechte & Rollen und weitere Einstellungen folgen in einem der nächsten Updates.
       </p>
     </div>
   );

@@ -11,7 +11,7 @@ import { SpotlightLeiste } from "@/components/spotlights/SpotlightLeiste";
 import { getSpotlightIch, getSpotlightLeiste } from "@/lib/spotlights/getSpotlights";
 import { SPOTLIGHTS_AKTIV } from "@/lib/spotlights/typen";
 
-export const metadata = { title: "TanzRaum-Netzwerk" };
+export const metadata = { title: "TanzRaum Connect" };
 
 type Ansicht = "map" | "liste";
 
@@ -30,7 +30,7 @@ export default async function NetzwerkSeite({ searchParams }: { searchParams: Pr
     return (
       <div className="mx-auto flex max-w-[1200px] flex-col gap-3">
         <h1 className="flex items-center gap-2 text-[26px] font-extrabold tracking-tight text-brand-ink">
-          <Globe size={24} className="text-brand-red" /> TanzRaum-Netzwerk
+          <Globe size={24} className="text-brand-red" /> TanzRaum Connect
         </h1>
         {ich && (
           <section className={`${KARTE} py-3`} aria-label="Spotlights">
@@ -79,7 +79,7 @@ export default async function NetzwerkSeite({ searchParams }: { searchParams: Pr
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-[26px] font-extrabold tracking-tight text-brand-ink">
-            <Globe size={24} className="text-brand-red" /> TanzRaum-Netzwerk
+            <Globe size={24} className="text-brand-red" /> TanzRaum Connect
           </h1>
           <p className="text-[14px] text-brand-ink-soft">
             {ansicht === "map" ? "Wo ist TanzRaum?" : "Wer und welche Vereine gehören zu TanzRaum?"}

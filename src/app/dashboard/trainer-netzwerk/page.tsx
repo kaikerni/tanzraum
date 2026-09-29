@@ -25,7 +25,7 @@ export default async function NetzwerkSeite() {
         <h1 className="text-[26px] font-extrabold tracking-tight text-brand-ink">Trainer-Netzwerk</h1>
         <p className={`${KARTE} text-[14px] text-brand-ink-soft`}>
           Das Trainer-Netzwerk steht Trainerinnen, Trainern und Vereins-Admins in Vereinen mit Vereinslizenz zur Verfügung. Mit dem
-          persönlichen Basic-Tarif (ohne Verein) nutzt du das TanzRaum-Netzwerk.
+          persönlichen Basic-Tarif (ohne Verein) nutzt du TanzRaum Connect.
         </p>
       </div>
     );

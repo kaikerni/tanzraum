@@ -34,6 +34,11 @@ export default async function OnboardingFertigPage() {
             Verein: <strong className="text-brand-ink">{vereinName}</strong>
           </span>
         )}
+        {vereinName && (
+          <span className="mt-2 rounded-xl bg-brand-gold-wash px-3 py-2 text-brand-ink">
+            Nächster Schritt: Unter „Mein Tarif“ die Verein-Lizenz abschließen – dann könnt ihr Mitglieder aufnehmen.
+          </span>
+        )}
       </div>
       <form action={onboardingAbschliessen}>
         <button type="submit" className="btn-primary w-full">

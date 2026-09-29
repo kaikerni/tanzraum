@@ -13,7 +13,6 @@ import {
   Activity,
 } from "lucide-react";
 import { QuickActions } from "@/components/QuickActions";
-import { TanzraumAssistent } from "@/components/TanzraumAssistent";
 import { KpiKarte } from "@/components/dashboard/KpiKarte";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { BeteiligungDiagramm } from "@/components/dashboard/BeteiligungDiagramm";
@@ -31,7 +30,9 @@ import {
 } from "@/components/dashboard/Karten";
 
 import type { DashboardDaten } from "@/lib/dashboard/getDashboardData";
-import { darf, hatTarif, type Zugriff } from "@/lib/navigation";
+import { darf, hatTarif, modulAn, type Zugriff } from "@/lib/navigation";
+import type { OnlineUebersicht } from "@/lib/online/getOnline";
+import { OnlineAnzeige } from "@/components/online/OnlineAnzeige";
 import type {
   DashboardKennzahlen,
   Termin,
@@ -74,6 +75,7 @@ export type DashboardAnsichtProps = {
   nachrichten: AktuelleNachricht[];
   kinder: MeinKind[];
   wochen: number;
+  online?: OnlineUebersicht | null;
 };
 
 export function DashboardAnsicht({
@@ -89,9 +91,16 @@ export function DashboardAnsicht({
   nachrichten,
   kinder,
   wochen,
+  online = null,
 }: DashboardAnsichtProps) {
   const hatVerein = daten.istPlattformAdmin || (hatTarif(zugriff, "basic") && daten.vereine.length > 0);
   const k = kennzahlen;
+  // Vom Verein ausgeschaltete Bereiche erscheinen nirgends im Dashboard
+  const mitTraining = modulAn(zugriff, "training");
+  const mitTurnieren = modulAn(zugriff, "turniere");
+  const mitKalender = modulAn(zugriff, "kalender");
+  const termineSichtbar = termine.filter((t) => (mitTurnieren || t.typ !== "turnier") && (mitTraining || t.typ !== "training"));
+  const radarSichtbar = radar.filter((r) => mitTurnieren || r.typ !== "turnier");
   const b = k?.beteiligung ?? null;
   const beteiligungDelta = b && b.prozent !== null && b.vormonat !== null ? Math.round(b.prozent - b.vormonat) : null;
 
@@ -109,7 +118,7 @@ export function DashboardAnsicht({
         verlauf={k.mitglieder.verlauf}
       />
     ),
-    hatVerein && k?.trainingsHeute && (
+    hatVerein && mitTraining && k?.trainingsHeute && (
       <KpiKarte
         key="trainings"
         id="trainings"
@@ -121,7 +130,7 @@ export function DashboardAnsicht({
         verlauf={k.trainingsHeute.verlauf}
       />
     ),
-    k?.abmeldungenHeute && (
+    mitTraining && k?.abmeldungenHeute && (
       <KpiKarte
         key="abmeldungen"
         id="abmeldungen"
@@ -133,7 +142,7 @@ export function DashboardAnsicht({
         verlauf={k.abmeldungenHeute.verlauf}
       />
     ),
-    k?.turniereWoche && (
+    mitTurnieren && k?.turniereWoche && (
       <KpiKarte
         key="turniere"
         id="turniere"
@@ -161,7 +170,7 @@ export function DashboardAnsicht({
         verlauf={k.nachrichten.verlauf}
       />
     ),
-    b && (
+    b && modulAn(zugriff, "anwesenheit") && (
       <KpiKarte
         key="beteiligung"
         id="beteiligung"
@@ -182,12 +191,12 @@ export function DashboardAnsicht({
     ),
   ].filter(Boolean);
 
-  const zeigeBeteiligung = darf(zugriff, "verein", "anwesenheit");
+  const zeigeBeteiligung = darf(zugriff, "verein", "anwesenheit") && modulAn(zugriff, "anwesenheit");
   const zeigeAltersklassen = darf(zugriff, "verein", "mitglieder");
 
   return (
     <div className="mx-auto flex max-w-[1560px] flex-col gap-4">
-      {/* Hero + Assistent */}
+      {/* Hero + Tageskarte */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)]">
         <section className="relative isolate min-h-[190px] overflow-hidden rounded-[var(--radius-l)] border border-brand-line bg-white shadow-[var(--shadow)] sm:min-h-[220px]">
           <Image
@@ -212,10 +221,7 @@ export function DashboardAnsicht({
           </div>
         </section>
 
-        {daten.istPlattformAdmin ? (
-          <TanzraumAssistent />
-        ) : (
-          <section className={`${KARTE} flex flex-col justify-between`}>
+        <section className={`${KARTE} flex flex-col justify-between`}>
             <div className="text-[13px] font-medium text-brand-ink-soft">
               {new Date().toLocaleDateString("de-DE", {
                 weekday: "long",
@@ -228,8 +234,12 @@ export function DashboardAnsicht({
             <p className="mt-4 text-[18px] font-semibold leading-snug text-brand-ink">
               „Disziplin heute – Erfolg morgen.“
             </p>
+            {online && (
+              <div className="mt-4">
+                <OnlineAnzeige online={online} admin={daten.istPlattformAdmin} />
+              </div>
+            )}
           </section>
-        )}
       </div>
 
       {/* Kennzahlen */}
@@ -241,8 +251,8 @@ export function DashboardAnsicht({
 
       {/* Heute / Radar / Schnellaktionen */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {hatVerein && <HeuteKarte eintraege={heute} mehrereVereine={daten.istPlattformAdmin || daten.vereine.length > 1} />}
-        <RadarKarte eintraege={radar} />
+        {hatVerein && mitTraining && <HeuteKarte eintraege={heute} mehrereVereine={daten.istPlattformAdmin || daten.vereine.length > 1} />}
+        <RadarKarte eintraege={radarSichtbar} />
         <div className="md:col-span-2 xl:col-span-1">
           <QuickActions zugriff={zugriff} />
         </div>
@@ -251,7 +261,7 @@ export function DashboardAnsicht({
       {/* Nachrichten / Turniere / Trainingsbeteiligung */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         <NachrichtenKarte nachrichten={nachrichten} />
-        <TurniereKarte turniere={turniere} />
+        {mitTurnieren && <TurniereKarte turniere={turniere} />}
         {zeigeBeteiligung && (
           <section className={`${KARTE} md:col-span-2 xl:col-span-1`}>
             <KarteKopf
@@ -271,10 +281,16 @@ export function DashboardAnsicht({
 
       {/* Bestehende Karten */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className={zeigeAltersklassen ? "lg:col-span-2" : "lg:col-span-3"}>
-          <TermineKarte termine={termine} />
-        </div>
-        {zeigeAltersklassen && <AltersklassenKarte altersklassen={altersklassen} />}
+        {mitKalender && (
+          <div className={zeigeAltersklassen ? "lg:col-span-2" : "lg:col-span-3"}>
+            <TermineKarte termine={termineSichtbar} />
+          </div>
+        )}
+        {zeigeAltersklassen && (
+          <div className={mitKalender ? "" : "lg:col-span-3"}>
+            <AltersklassenKarte altersklassen={altersklassen} />
+          </div>
+        )}
       </div>
 
       <section className={KARTE}>

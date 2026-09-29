@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import Link from "next/link";
 import { useSelectedLayoutSegment, useRouter } from "next/navigation";
 import { Search, SquarePen, ChevronDown, UserPlus, Check, X, Ban, Handshake } from "lucide-react";
+import { AdminMarke, ADMIN_KENNUNG } from "./AdminMarke";
 import { createClient } from "@/lib/supabase/client";
 import { alsChatEintrag, type ChatEintrag, type Kontaktanfrage } from "@/lib/chat/getChat";
 import { kontaktanfrageBeantworten } from "@/app/dashboard/nachrichten/actions";
@@ -23,7 +24,10 @@ function ChatZeile({ c, offen }: { c: ChatEintrag; offen: boolean }) {
         <ChatAvatar typ={c.typ} name={c.name} avatarUrl={c.avatarUrl} />
         <div className="min-w-0 flex-1 border-b border-brand-line/70 pb-2.5">
           <div className="flex items-baseline justify-between gap-2">
-            <span className="truncate text-[15px] font-semibold text-brand-ink">{c.name}</span>
+            <span className="truncate text-[15px] font-semibold text-brand-ink">
+              {c.name}
+              {c.typ === "dm" && c.untertitel === ADMIN_KENNUNG && <AdminMarke />}
+            </span>
             <span className={`shrink-0 text-[11.5px] ${c.ungelesen > 0 ? "font-semibold text-brand-green" : "text-brand-ink-faint"}`}>
               {zeitKurz(c.letzteZeit)}
             </span>

@@ -116,7 +116,13 @@ export default async function AntragDetailSeite({ params }: { params: Promise<{ 
         <div className="flex flex-col gap-4">
           <section className={KARTE}>
             <KarteKopf icon={ShieldCheck} titel="Unterschriften" />
-            {a.verfahren === "papier" ? (
+            {a.verfahren === "bestehend" ? (
+              <p className="text-[13px] text-brand-ink-soft">
+                Bestehende Mitgliedschaft bestätigt{d.mitglied_seit ? ` (Mitglied seit ${d.mitglied_seit})` : ""} – bitte mit euren Unterlagen abgleichen.
+              </p>
+            ) : a.verfahren === "extern" ? (
+              <p className="text-[13px] text-brand-ink-soft">Aufnahme über euer eigenes Verfahren – keine Unterschrift in TanzRaum.</p>
+            ) : a.verfahren === "papier" ? (
               <p className="text-[13px] text-brand-ink-soft">{a.papierVorliegend ? "Unterschriebener Antrag liegt vor." : "Unterschrift auf Papier ausstehend."}</p>
             ) : unterschriftRollen.length > 0 ? (
               <ul className="flex flex-col gap-2">

@@ -3,6 +3,7 @@ import {
   datenAus,
   einstellungenAus,
   inhaltAus,
+  WAEHLBARE_VERFAHREN,
   type AntragDaten,
   type AntragEinstellungen,
   type AntragInhalt,
@@ -150,6 +151,10 @@ export type AntragFormularDaten = {
   inhalt: AntragInhalt;
   verein: VereinsDaten;
   erlaubteVerfahren: Verfahren[];
+  // Bereits Mitglied: Bestaetigung statt neuem Antrag (Einstellung des Vereins)
+  bestehendErlaubt: boolean;
+  externText: string;
+  externLink: string;
   personName: string | null;
   darfVerwalten: boolean;
   fuerMich: boolean;
@@ -186,7 +191,8 @@ export async function getAntragFormular(supabase: SupabaseClient, antragId: stri
       handy: daten.handy || f.person.telefon || "",
     };
   }
-  const verfahren = ((f.verfahren ?? []) as string[]).filter((v): v is Verfahren => v === "bildschirm" || v === "bestaetigung" || v === "papier");
+  const verfahren = ((f.verfahren ?? []) as string[]).filter((v): v is Verfahren => WAEHLBARE_VERFAHREN.includes(v as Verfahren));
+  const optionen = f.optionen ?? {};
   return {
     id: a.id,
     vereinId: a.verein_id,
@@ -198,6 +204,9 @@ export async function getAntragFormular(supabase: SupabaseClient, antragId: stri
     inhalt,
     verein: (eingereicht && a.vorlage?.verein ? { ...f.verein, ...a.vorlage.verein } : f.verein) as VereinsDaten,
     erlaubteVerfahren: verfahren.length ? verfahren : ["bildschirm", "papier"],
+    bestehendErlaubt: optionen.bestehende_bestaetigen !== false,
+    externText: typeof optionen.extern_text === "string" ? optionen.extern_text : "",
+    externLink: typeof optionen.extern_link === "string" && optionen.extern_link.startsWith("https://") ? optionen.extern_link : "",
     personName: f.person_name ?? null,
     darfVerwalten: !!f.darf_verwalten,
     fuerMich: !!f.fuer_mich,

@@ -1,7 +1,7 @@
 {
   "name": "TanzRaum",
   "short_name": "TanzRaum",
-  "description": "Vereinsverwaltung für karnevalistischen Tanzsport",
+  "description": "Die digitale Plattform für den Tanzsport – für Fans, Tänzer, Trainer, Betreuer und Vereine.",
   "lang": "de",
   "start_url": "/dashboard",
   "scope": "/",

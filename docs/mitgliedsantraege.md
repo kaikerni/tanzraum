@@ -28,6 +28,11 @@ Gruppen, abgefragte Felder, Texte (Beispieltexte wiederherstellbar), SEPA, Foto-
 Regeln, Beispieltexte und Prüfungen: `supabase/functions/_shared/antrag-vorlage.ts` (gemeinsam für App und PDF),
 PDF-Aufbau: `supabase/functions/_shared/antrag-pdf.ts`.
 
+Verfahren (vom Verein wählbar): Unterschrift auf dem Bildschirm, Name + Bestätigung, Ausdrucken/Hochladen und
+**extern** (eigenes Verfahren des Vereins mit Beschreibung/Link, ohne Unterschrift in TanzRaum). Zusätzlich dürfen
+**bestehende Mitglieder** ihre Mitgliedschaft nur bestätigen statt einen neuen Antrag auszufüllen
+(Einstellung `bestehende_bestaetigen`, Standard an). Details: `plattform-logik.md`.
+
 ## Rechtlicher Hinweis
 TanzRaum bildet das vom Verein gewählte Unterschriftsverfahren ab, garantiert aber nicht die rechtliche Wirksamkeit einer
 bestimmten Signaturart (insbesondere für SEPA-Lastschriftmandate).

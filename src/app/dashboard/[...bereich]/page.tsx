@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Hammer } from "lucide-react";
 import { NAV } from "@/lib/navigation";
 import { KARTE } from "@/components/dashboard/Karten";
+import { ModulAusHinweis, modulAusgeschaltet } from "@/components/verein/ModulSchutz";
 
 // Menuepunkte, deren Modul noch nicht fertig ist, zeigen statt einer Fehlerseite einen Hinweis.
 const BESCHREIBUNG: Record<string, string> = {
@@ -21,6 +22,7 @@ export default async function BereichInArbeit({ params }: { params: Promise<{ be
   const pfad = `/dashboard/${bereich.join("/")}`;
   const eintrag = NAV.find((n) => n.href === pfad);
   if (!eintrag) notFound();
+  if (eintrag.modul && (await modulAusgeschaltet(eintrag.modul))) return <ModulAusHinweis modul={eintrag.modul} />;
   const Icon = eintrag.icon;
 
   return (

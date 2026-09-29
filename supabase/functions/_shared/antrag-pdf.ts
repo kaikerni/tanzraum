@@ -415,7 +415,13 @@ export async function antragPdf(opts: {
   // Nachweis (Seite 1, unter den Vereinsfeldern)
   const nachweis = [
     status.eingereichtAm ? `Eingereicht über TanzRaum am ${zeitDe(status.eingereichtAm)}` : status.muster ? "Muster – Vorschau des Vereinsformulars" : "Noch nicht eingereicht",
-    verfahren ? `Unterschrift: ${VERFAHREN_LABEL[verfahren]}` : "",
+    verfahren === "bestehend"
+      ? `Bestehende Mitgliedschaft bestätigt${d.mitglied_seit ? ` (Mitglied seit ${d.mitglied_seit})` : ""}`
+      : verfahren === "extern"
+        ? "Aufnahme über das Verfahren des Vereins (ohne Unterschrift in TanzRaum)"
+        : verfahren
+          ? `Unterschrift: ${VERFAHREN_LABEL[verfahren]}`
+          : "",
     status.angenommenAm ? `Aufgenommen am ${datumDe(status.angenommenAm)}` : "",
   ].filter(Boolean);
   s.platz(30);

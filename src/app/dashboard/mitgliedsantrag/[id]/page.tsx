@@ -49,6 +49,9 @@ export default async function MeinAntragSeite({ params }: { params: Promise<{ id
           start={a.daten}
           erlaubteVerfahren={a.erlaubteVerfahren}
           heute={heute}
+          bestehendErlaubt={a.bestehendErlaubt}
+          externText={a.externText}
+          externLink={a.externLink}
         />
       ) : (
         <section className={`${KARTE} flex flex-col gap-3`}>

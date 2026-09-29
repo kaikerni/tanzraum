@@ -58,6 +58,11 @@ export default async function PersonSeite({ params }: { params: Promise<{ id: st
                   <MapPin size={14} /> {person.ort}
                 </span>
               )}
+              {person.vereinAngabe && person.vereine.length === 0 && (
+                <span className="inline-flex items-center gap-1" title="Eigene Angabe – keine offizielle Vereinszugehörigkeit">
+                  🩰 tanzt bei {person.vereinAngabe}
+                </span>
+              )}
             </div>
           </div>
         </div>

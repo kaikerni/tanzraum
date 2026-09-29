@@ -11,6 +11,7 @@ import { WichtigPopup, type PopupEintrag } from "@/components/news/WichtigPopup"
 import { getAnkuendigungen, getOffeneWichtigeNews } from "@/lib/news/getNews";
 import { getMeineAntraege } from "@/lib/antraege/getAntraege";
 import { AntragHinweis } from "@/components/antraege/AntragHinweis";
+import { OnlineHerzschlag } from "@/components/online/OnlineHerzschlag";
 
 export default async function DashboardLayout({
   children,
@@ -112,6 +113,7 @@ export default async function DashboardLayout({
       </div>
       <MobileNav zugriff={zugriff} ungeleseneNachrichten={ungeleseneNachrichten} />
       {popup.length > 0 && <WichtigPopup eintraege={popup} />}
+      <OnlineHerzschlag />
     </div>
     </AnrufProvider>
   );

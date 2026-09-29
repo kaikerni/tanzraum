@@ -192,7 +192,8 @@ export async function vereinNeuAnlegen(_prev: AktionsErgebnis, formData: FormDat
   const { data, error } = await supabase.rpc("verein_anlegen", { p_name: name, p_kuerzel: text(formData, "kuerzel") });
   if (error || !data) return { error: error?.message ?? "Verein konnte nicht angelegt werden." };
   revalidatePath("/dashboard", "layout");
-  redirect(`/dashboard/verein?verein=${data}`);
+  // Naechster Schritt der Vereinsregistrierung: Verein-Lizenz abschliessen
+  redirect(`/dashboard/tarif?verein=${data}#verein`);
 }
 
 const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;

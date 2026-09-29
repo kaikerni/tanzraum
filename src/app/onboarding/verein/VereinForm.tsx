@@ -16,7 +16,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <button type="submit" className="btn-primary" disabled={pending}>
-      {pending ? "Wird angelegt…" : "Verein anlegen"}
+      {pending ? "Wird registriert…" : "Verein registrieren"}
     </button>
   );
 }

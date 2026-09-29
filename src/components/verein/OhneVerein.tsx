@@ -37,11 +37,17 @@ export function OhneVerein() {
       <section className={KARTE}>
         <div className="mb-3 flex items-center gap-2.5">
           <Building2 size={20} className="text-brand-gold" />
-          <h2 className="text-[16px] font-bold text-brand-ink">Eigenen Verein anlegen</h2>
+          <h2 className="text-[16px] font-bold text-brand-ink">Verein registrieren</h2>
         </div>
-        <p className="mb-4 text-[13px] text-brand-ink-soft">
-          Du wirst Vereinsadmin. Die Vereinsfunktionen für alle Mitglieder schaltet die Vereinslizenz frei.
+        <p className="mb-2 text-[13px] text-brand-ink-soft">
+          Vereinsverwaltung gibt es in TanzRaum nur mit der Verein-Lizenz. So geht&apos;s:
         </p>
+        <ol className="mb-4 list-decimal pl-5 text-[13px] text-brand-ink-soft">
+          <li>Verein registrieren – du wirst Vereinsadmin</li>
+          <li>Verein-Lizenz abschließen</li>
+          <li>Vereinsdaten und Bereiche einrichten</li>
+          <li>Mitglieder einladen bzw. hinzufügen</li>
+        </ol>
         <form action={anlegen} className="flex flex-col gap-3">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr]">
             <label className="field">
@@ -55,8 +61,8 @@ export function OhneVerein() {
           </div>
           <Meldung ergebnis={neu} />
           <div>
-            <SendenButton laedtText="Wird angelegt …" variante="sekundaer">
-              Verein anlegen
+            <SendenButton laedtText="Wird registriert …" variante="sekundaer">
+              Verein registrieren
             </SendenButton>
           </div>
         </form>

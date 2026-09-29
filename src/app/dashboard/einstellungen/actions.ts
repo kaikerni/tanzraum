@@ -75,6 +75,25 @@ export async function kontoPrivatSetzen(privat: boolean): Promise<AktionsErgebni
   return { error: null, ok: privat ? "Dein Konto ist jetzt privat." : "Dein Konto ist jetzt öffentlich auffindbar." };
 }
 
+// Freiwillige Profilangabe "Verein, in dem ich tanze" -- keine offizielle Vereinszuordnung, keine Rechte
+export async function vereinAngabeSetzen(_prev: AktionsErgebnis, formData: FormData): Promise<AktionsErgebnis> {
+  const loeschen = formData.get("aktion") === "loeschen";
+  const wert = loeschen ? "" : String(formData.get("verein_angabe") ?? "").replace(/\s+/g, " ").trim();
+  if (wert.length > 100) return { error: "Bitte höchstens 100 Zeichen." };
+  const { supabase, user } = await sitzung();
+  const { error } = await supabase.from("profiles").update({ verein_angabe: wert || null }).eq("id", user.id);
+  if (error) return { error: "Die Angabe konnte nicht gespeichert werden." };
+  return { error: null, ok: wert ? "Gespeichert." : "Angabe entfernt." };
+}
+
+// Online-Status fuer Kontakte und Vereinsmitglieder mit Namen zeigen (Opt-in)
+export async function onlineSichtbarSetzen(sichtbar: boolean): Promise<AktionsErgebnis> {
+  const { supabase } = await sitzung();
+  const { error } = await supabase.rpc("online_sichtbar_setzen", { p_sichtbar: sichtbar });
+  if (error) return { error: "Die Einstellung konnte nicht gespeichert werden." };
+  return { error: null, ok: sichtbar ? "Kontakte sehen jetzt, wenn du online bist." : "Dein Online-Status ist jetzt verborgen." };
+}
+
 // Push-Kategorien (welche Benachrichtigungen dieses Konto bekommt); RLS: nur eigene Zeilen
 const PUSH_KATEGORIEN = ["chat", "anrufe", "training", "trainingsaenderung", "abmeldung", "news", "wichtige_news", "turniere"];
 

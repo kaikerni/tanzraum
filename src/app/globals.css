@@ -321,3 +321,41 @@ button.card:hover {
   margin-bottom: 16px;
 }
 }
+
+/* Startseite: dezente Animationen (bei "Bewegung reduzieren" aus) */
+@keyframes tr-schweben {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+.tr-schweben {
+  animation: tr-schweben 6s ease-in-out infinite;
+}
+.tr-einblenden {
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease;
+}
+.tr-versteckt {
+  opacity: 0;
+  transform: translateY(18px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tr-schweben {
+    animation: none;
+  }
+  .tr-einblenden {
+    transition: none;
+  }
+  .tr-versteckt {
+    opacity: 1;
+    transform: none;
+  }
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+}

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Mail, KeyRound, EyeOff, Users, Map as MapIcon, UserRound, Bell, ShieldCheck } from "lucide-react";
+import { Mail, KeyRound, EyeOff, Users, Map as MapIcon, UserRound, Bell, ShieldCheck, Building2, Radio } from "lucide-react";
 import { PushSchalter } from "@/components/chat/PushSchalter";
 import { PushKategorien } from "@/components/einstellungen/PushKategorien";
 import { EinwilligungsVerlauf, type Einwilligung } from "@/components/einstellungen/EinwilligungsVerlauf";
@@ -9,7 +9,7 @@ import { MapEinstellungen } from "@/components/einstellungen/MapEinstellungen";
 import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
-import { EmailAendern, PasswortAendern, PrivatSchalter } from "@/components/einstellungen/KontoSicherheit";
+import { EmailAendern, OnlineSchalter, PasswortAendern, PrivatSchalter, VereinAngabe } from "@/components/einstellungen/KontoSicherheit";
 import { GeschlechtAuswahl } from "@/components/einstellungen/GeschlechtAuswahl";
 import { ElternCode, KindVerknuepfen, MeineKinder } from "@/components/familie/Familie";
 import { alterAm, getMeineEltern, getMeineKinder, getMeineSchutzEinstellungen } from "@/lib/familie/getFamilie";
@@ -30,11 +30,13 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
   if (!user) redirect("/login?weiter=/dashboard/einstellungen");
 
   const { email } = await searchParams;
-  const [{ data: profil }, { data: geburtsdatum }, { data: geschlecht }] = await Promise.all([
+  const [{ data: profil }, { data: geburtsdatum }, { data: geschlecht }, { data: angabenRoh }] = await Promise.all([
     supabase.from("profiles").select("konto_privat").eq("id", user.id).maybeSingle(),
     supabase.rpc("mein_geburtsdatum"),
     supabase.rpc("mein_geschlecht"),
+    supabase.rpc("meine_profilangaben"),
   ]);
+  const angaben = (angabenRoh ?? {}) as { verein_angabe?: string | null; online_sichtbar?: boolean };
   const [{ data: mapDaten }, { data: pushDaten }, { data: einwilligungen }, { data: loeschung }] = await Promise.all([
     supabase.rpc("meine_map_einstellungen"),
     supabase.rpc("meine_push_einstellungen"),
@@ -88,8 +90,18 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
       </section>
 
       <section className={KARTE}>
+        <KarteKopf icon={Building2} titel="Mein Verein im Profil" untertitel="Freiwillige Angabe – jederzeit änderbar oder löschbar." />
+        <VereinAngabe wert={angaben.verein_angabe ?? null} />
+      </section>
+
+      <section className={KARTE}>
         <KarteKopf icon={EyeOff} titel="Privatsphäre" />
         <PrivatSchalter privat={!!profil?.konto_privat} />
+      </section>
+
+      <section className={KARTE} id="online">
+        <KarteKopf icon={Radio} titel="Online-Status" />
+        <OnlineSchalter sichtbar={!!angaben.online_sichtbar} />
       </section>
 
       <section className={KARTE} id="map">

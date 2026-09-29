@@ -66,9 +66,10 @@ export async function antragAbsenden(
   if (formular.status !== "offen") return { error: "Dieser Antrag wurde bereits eingereicht." };
 
   const daten = datenAus(datenRoh);
-  const unterschriften = verfahren === "papier" ? {} : unterschriftenAus(unterschriftenRoh);
+  const unterschriften = verfahren === "bildschirm" || verfahren === "bestaetigung" ? unterschriftenAus(unterschriftenRoh) : {};
   // Dieselbe Pruefung wie im Formular (Vorlage des Vereins, Pflichtfelder, IBAN, Unterschriften)
-  const fehler = pruefeAntrag(formular.inhalt, daten, verfahren, unterschriften, heute(), formular.erlaubteVerfahren);
+  const erlaubt = formular.bestehendErlaubt ? [...formular.erlaubteVerfahren, "bestehend" as const] : formular.erlaubteVerfahren;
+  const fehler = pruefeAntrag(formular.inhalt, daten, verfahren, unterschriften, heute(), erlaubt);
   if (fehler) return { error: fehler };
 
   const { error } = await supabase.rpc("antrag_einreichen", {

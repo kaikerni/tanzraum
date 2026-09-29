@@ -153,7 +153,11 @@ Deno.serve(async (req) => {
           `Über TanzRaum ist ein neuer Mitgliedsantrag für <strong>${esc(verein.name)}</strong> eingegangen: <strong>${esc(name)}</strong>.`,
           a.unterschrift_verfahren === "papier"
             ? "Die Person hat „Ausdrucken und unterschreiben“ gewählt – die unterschriebene Fassung wird nachgereicht."
-            : "Der Antrag liegt als PDF bei.",
+            : a.unterschrift_verfahren === "bestehend"
+              ? "Die Person gibt an, bereits Mitglied zu sein, und hat das bestätigt. Bitte mit euren Unterlagen abgleichen."
+              : a.unterschrift_verfahren === "extern"
+                ? "Die Aufnahme läuft über euer eigenes Verfahren – in TanzRaum wurde nicht unterschrieben."
+                : "Der Antrag liegt als PDF bei.",
         ],
         button: { text: "Antrag in TanzRaum öffnen", url: `${appUrl()}/dashboard/mitgliedsantraege/${antragId}` },
         hinweis: "Der Antrag enthält personenbezogene Daten (ggf. Bankverbindung). Bitte vertraulich behandeln und nicht weiterleiten.",
@@ -178,7 +182,9 @@ Deno.serve(async (req) => {
           `dein Mitgliedsantrag bei <strong>${esc(verein.name)}</strong> wurde übermittelt. Eine Kopie liegt als PDF bei.`,
           a.unterschrift_verfahren === "papier"
             ? "Du hast „Ausdrucken und unterschreiben“ gewählt: Bitte drucke das PDF aus, unterschreibe es und gib es beim Verein ab oder lade es in TanzRaum hoch."
-            : "Der Verein prüft deinen Antrag und meldet sich bei dir.",
+            : a.unterschrift_verfahren === "extern"
+              ? "Die weitere Aufnahme läuft über das Verfahren des Vereins. Der Verein meldet sich bei dir."
+              : "Der Verein prüft deinen Antrag und meldet sich bei dir.",
         ],
         button: { text: "Antrag ansehen", url: `${appUrl()}/dashboard/mitgliedsantrag/${antragId}` },
       });

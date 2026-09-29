@@ -13,7 +13,7 @@ type AdminVerein = { id: string; name: string; lizenz: boolean };
 
 const LEISTUNGEN: Record<"free" | BezahlTarif, string[]> = {
   free: ["Dein TanzRaum-Konto", "Turnierkalender", "Kontaktanfragen im Netzwerk", "Nachrichten mit Vereinskontakten"],
-  basic: ["Alles aus FREE", "TanzRaum-Netzwerk mit Map und Suche", "Eigener Kalender, Dateien, Musik", "Nachrichten im Netzwerk"],
+  basic: ["Alles aus FREE", "TanzRaum Connect mit Map und Suche", "Eigener Kalender, Dateien, Musik", "Nachrichten im Netzwerk"],
   verein: [
     "Vereinslizenz für deinen Verein",
     "Alle aktiven Mitglieder erhalten VEREIN-Zugang",
@@ -242,8 +242,8 @@ export function TarifKarten({
             ) : (
               <form action={anlegen} className="flex flex-col gap-2">
                 <p className="text-[12.5px] text-brand-ink-soft">
-                  Die Lizenz kauft der Vereinsadmin. Du hast noch keinen Verein, den du verwaltest – lege ihn hier an (du wirst
-                  Vereinsadmin) und kaufe danach die Lizenz.
+                  Die Lizenz kauft der Vereinsadmin. Du hast noch keinen Verein, den du verwaltest – registriere ihn hier (du wirst
+                  Vereinsadmin) und schließe danach die Lizenz ab.
                 </p>
                 <label className="field">
                   <span>Vereinsname</span>
@@ -254,8 +254,8 @@ export function TarifKarten({
                   <input name="kuerzel" placeholder="z. B. KCM" />
                 </label>
                 <Meldung ergebnis={neu} />
-                <SendenButton laedtText="Wird angelegt …" variante="sekundaer">
-                  Verein anlegen
+                <SendenButton laedtText="Wird registriert …" variante="sekundaer">
+                  Verein registrieren
                 </SendenButton>
               </form>
             )}

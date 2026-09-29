@@ -33,6 +33,8 @@ export type PersonProfil = {
   privat: boolean;
   ich: boolean;
   ort: string | null;
+  // Freiwillige Angabe "Verein, in dem ich tanze" -- keine offizielle Zuordnung
+  vereinAngabe: string | null;
   geschlecht: string | null;
   vereine: { id: string; name: string; ort: string | null; rolle: string }[];
   gruppen: { id: string; name: string; verein: string; funktion: string | null; disziplin: string | null; altersklasse: string | null }[];
@@ -107,6 +109,7 @@ export async function getPerson(supabase: SupabaseClient, id: string): Promise<P
     privat: p.privat,
     ich: p.ich,
     ort: p.ort,
+    vereinAngabe: p.verein_angabe ?? null,
     geschlecht: p.geschlecht ?? null,
     vereine: p.vereine ?? [],
     gruppen: p.gruppen ?? [],

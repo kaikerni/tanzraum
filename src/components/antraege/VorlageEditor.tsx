@@ -7,6 +7,7 @@ import {
   FELD_LABEL,
   STANDARD_INHALT,
   VERFAHREN_LABEL,
+  WAEHLBARE_VERFAHREN,
   type AntragEinstellungen,
   type AntragInhalt,
   type Benachrichtigung,
@@ -160,8 +161,8 @@ export function VorlageEditor({
           </div>
         </div>
         <div className="flex flex-col gap-2">
-          <span className="text-[12.5px] font-semibold text-brand-ink-soft">Zulässige Unterschriftsverfahren</span>
-          {(Object.keys(VERFAHREN_LABEL) as Verfahren[]).map((v) => (
+          <span className="text-[12.5px] font-semibold text-brand-ink-soft">Zulässige Verfahren für neue Mitglieder</span>
+          {WAEHLBARE_VERFAHREN.map((v) => (
             <label key={v} className="flex items-center gap-2.5 text-[13.5px] text-brand-ink">
               <input type="checkbox" checked={einst.verfahren.includes(v)} onChange={(x) => verfahrenUmschalten(v, x.target.checked)} className="h-4 w-4 accent-[#e11d2e]" />
               {VERFAHREN_LABEL[v]}
@@ -172,6 +173,28 @@ export function VorlageEditor({
             ausreicht – insbesondere für ein SEPA-Lastschriftmandat entscheidet ihr bzw. euer Kreditinstitut.
           </p>
         </div>
+        {einst.verfahren.includes("extern") && (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Feld label="Verfahren des Vereins – Beschreibung">
+              <textarea
+                value={einst.extern_text}
+                onChange={(x) => e("extern_text", x.target.value.slice(0, 1000))}
+                rows={3}
+                placeholder="z. B. Bitte kommt zum Training und gebt den Antrag beim Vorstand ab."
+                className={EINGABE}
+              />
+            </Feld>
+            <Feld label="Link (optional, https://…)">
+              <input value={einst.extern_link} onChange={(x) => e("extern_link", x.target.value.slice(0, 300))} placeholder="https://www.verein.de/mitglied-werden" className={EINGABE} />
+            </Feld>
+          </div>
+        )}
+        <Schalter
+          an={einst.bestehende_bestaetigen}
+          setAn={(w) => e("bestehende_bestaetigen", w)}
+          label="Bestehende Mitglieder dürfen ihre Mitgliedschaft nur bestätigen"
+          text="Wer schon Mitglied ist, muss keinen neuen Antrag ausfüllen – Name, E-Mail und Bestätigung genügen. Ihr nehmt die Bestätigung wie einen Antrag an."
+        />
       </Abschnitt>
 
       <Abschnitt titel="Kopf des Formulars" hinweis={`Erscheint oben auf dem Antrag von ${vereinName}.`}>

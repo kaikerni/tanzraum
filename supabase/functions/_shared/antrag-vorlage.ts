@@ -5,7 +5,10 @@
 
 export type FeldStatus = "aus" | "optional" | "pflicht";
 export type FeldSchluessel = "telefon" | "handy" | "telefon_geschaeftlich" | "fax" | "beruf" | "nationalitaet";
-export type Verfahren = "bildschirm" | "bestaetigung" | "papier";
+// "extern" = eigenes Verfahren des Vereins (z. B. persoenlich, Vereinswebseite); "bestehend" = bereits Mitglied, nur Bestaetigung
+export type Verfahren = "bildschirm" | "bestaetigung" | "papier" | "extern" | "bestehend";
+// Vom Verein freischaltbare Verfahren fuer neue Mitglieder ("bestehend" steuert eine eigene Einstellung)
+export const WAEHLBARE_VERFAHREN: Verfahren[] = ["bildschirm", "bestaetigung", "papier", "extern"];
 export type Benachrichtigung = "keine" | "app" | "app_email";
 
 export type Vorstandsmitglied = { funktion: string; name: string; anschrift: string; kontakt: string };
@@ -52,6 +55,11 @@ export type AntragEinstellungen = {
   aufnahme_pdf_speichern: boolean;
   ablehnung_benachrichtigung: Benachrichtigung;
   ablehnung_text: string;
+  // Bestehende Mitglieder bestaetigen nur ihre Mitgliedschaft statt eines neuen Antrags
+  bestehende_bestaetigen: boolean;
+  // Externes Verfahren: Beschreibung und optionaler Link (z. B. Vereinswebseite)
+  extern_text: string;
+  extern_link: string;
 };
 
 export type Sorgeberechtigte = { name: string };
@@ -84,6 +92,8 @@ export type AntragDaten = {
   foto: "" | "ja" | "nein";
   bestaetigt: boolean;
   unterschrift_ort: string;
+  bestehend_bestaetigt: boolean;
+  mitglied_seit: string;
 };
 
 export type Unterschrift = { bild?: string; name?: string; zeitpunkt: string };
@@ -102,6 +112,8 @@ export const VERFAHREN_LABEL: Record<Verfahren, string> = {
   bildschirm: "Unterschrift auf dem Bildschirm",
   bestaetigung: "Name eintragen und bestätigen",
   papier: "Ausdrucken, unterschreiben und abgeben",
+  extern: "Verfahren des Vereins (extern / persönlich)",
+  bestehend: "Bestehende Mitgliedschaft bestätigt",
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -155,6 +167,9 @@ export const STANDARD_EINSTELLUNGEN: AntragEinstellungen = {
   aufnahme_pdf_speichern: true,
   ablehnung_benachrichtigung: "app",
   ablehnung_text: "Dein Mitgliedsantrag beim Verein {verein} wurde leider nicht angenommen.",
+  bestehende_bestaetigen: true,
+  extern_text: "",
+  extern_link: "",
 };
 
 export const LEERE_DATEN: AntragDaten = {
@@ -186,6 +201,8 @@ export const LEERE_DATEN: AntragDaten = {
   foto: "",
   bestaetigt: false,
   unterschrift_ort: "",
+  bestehend_bestaetigt: false,
+  mitglied_seit: "",
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -247,7 +264,7 @@ export function inhaltAus(roh: unknown): AntragInhalt {
 export function einstellungenAus(roh: unknown): AntragEinstellungen {
   const r = istObjekt(roh) ? roh : {};
   const s = STANDARD_EINSTELLUNGEN;
-  const verfahren = liste(r.verfahren, 3, (e) => (e === "bildschirm" || e === "bestaetigung" || e === "papier" ? (e as Verfahren) : null));
+  const verfahren = liste(r.verfahren, 4, (e) => (WAEHLBARE_VERFAHREN.includes(e as Verfahren) ? (e as Verfahren) : null));
   return {
     antrag_erforderlich: bool(r.antrag_erforderlich, s.antrag_erforderlich),
     verfahren: verfahren.length > 0 ? [...new Set(verfahren)] : s.verfahren,
@@ -261,6 +278,9 @@ export function einstellungenAus(roh: unknown): AntragEinstellungen {
     aufnahme_pdf_speichern: bool(r.aufnahme_pdf_speichern, s.aufnahme_pdf_speichern),
     ablehnung_benachrichtigung: benachrichtigung(r.ablehnung_benachrichtigung, s.ablehnung_benachrichtigung),
     ablehnung_text: text(r.ablehnung_text, 500, s.ablehnung_text) || s.ablehnung_text,
+    bestehende_bestaetigen: bool(r.bestehende_bestaetigen, s.bestehende_bestaetigen),
+    extern_text: text(r.extern_text, 1000).trim(),
+    extern_link: /^https:\/\/\S+$/.test(text(r.extern_link, 300).trim()) ? text(r.extern_link, 300).trim() : "",
   };
 }
 
@@ -296,6 +316,8 @@ export function datenAus(roh: unknown): AntragDaten {
     foto: r.foto === "ja" || r.foto === "nein" ? r.foto : "",
     bestaetigt: bool(r.bestaetigt, false),
     unterschrift_ort: t("unterschrift_ort", 80),
+    bestehend_bestaetigt: bool(r.bestehend_bestaetigt, false),
+    mitglied_seit: t("mitglied_seit", 40),
   };
 }
 
@@ -368,6 +390,14 @@ export function pruefeAntrag(
   heute: string,
   erlaubt: Verfahren[],
 ): string | null {
+  if (verfahren === "bestehend") {
+    // Bereits Mitglied: nur Name, E-Mail und ausdrueckliche Bestaetigung
+    if (!erlaubt.includes("bestehend")) return "Der Verein verlangt auch von bestehenden Mitgliedern den Mitgliedsantrag.";
+    if (!d.vorname || !d.nachname) return "Bitte Vor- und Nachnamen angeben.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) return "Bitte eine gültige E-Mail-Adresse angeben.";
+    if (!d.bestehend_bestaetigt) return "Bitte bestätigen, dass du bereits Mitglied im Verein bist.";
+    return null;
+  }
   if (inhalt.mitgliedsarten.length > 0) {
     const art = inhalt.mitgliedsarten.find((a) => a.name === d.mitgliedsart);
     if (!art) return "Bitte die Art der Mitgliedschaft wählen.";
@@ -391,7 +421,7 @@ export function pruefeAntrag(
   if (inhalt.foto_aktiv && !d.foto) return "Bitte bei der Foto-Einwilligung „Ja“ oder „Nein“ wählen.";
   if (!d.bestaetigt) return "Bitte bestätigen, dass du die Texte gelesen hast.";
   if (!verfahren || !erlaubt.includes(verfahren)) return "Bitte wählen, wie du unterschreibst.";
-  if (verfahren !== "papier") {
+  if (verfahren !== "papier" && verfahren !== "extern") {
     for (const rolle of benoetigteUnterschriften(inhalt, d, heute)) {
       const u = unterschriften[rolle];
       if (verfahren === "bildschirm" && !(u?.bild ?? "").startsWith("data:image/png;base64,")) {

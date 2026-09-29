@@ -7,8 +7,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "sw
 const kaushan = Kaushan_Script({ subsets: ["latin"], weight: "400", variable: "--font-kaushan", display: "swap" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://tanzraum.app"),
   title: "TanzRaum",
-  description: "Vereinsverwaltung für karnevalistischen Tanzsport",
+  description: "Die digitale Plattform für den Tanzsport – für Fans, Tänzer, Trainer, Betreuer und Vereine.",
   // Alle Symbole mit weissem Hintergrund (transparente Symbole erscheinen auf manchen Handys schwarz hinterlegt)
   icons: {
     icon: [

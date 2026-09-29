@@ -31,6 +31,7 @@ import {
   Search,
   Mail,
 } from "lucide-react";
+import { AdminMarke, ADMIN_KENNUNG } from "./AdminMarke";
 import { createClient } from "@/lib/supabase/client";
 import { alsNachricht, type ChatKopf, type ChatNachricht, type Umfrage } from "@/lib/chat/getChat";
 import {
@@ -555,7 +556,10 @@ export function ChatFenster({
         </Link>
         <ChatAvatar typ={kopf.typ} name={kopf.name} avatarUrl={kopf.avatarUrl} groesse={40} />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[15.5px] font-bold text-brand-ink">{kopf.name}</div>
+          <div className="truncate text-[15.5px] font-bold text-brand-ink">
+            {kopf.name}
+            {kopf.typ === "dm" && kopf.untertitel === ADMIN_KENNUNG && <AdminMarke />}
+          </div>
           <div className="truncate text-[12px] text-brand-ink-soft">
             {tippNamen.length > 0 ? (
               <span className="font-medium text-brand-green">

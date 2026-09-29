@@ -13,6 +13,7 @@ import {
   getMeineKinder,
 } from "@/lib/dashboard/getDashboardUebersicht";
 import { getAktuelleNachrichten } from "@/lib/dashboard/getNachrichten";
+import { getOnline } from "@/lib/online/getOnline";
 import { ZEITRAEUME } from "@/lib/dashboard/zeitraeume";
 import { DashboardAnsicht } from "@/components/dashboard/DashboardAnsicht";
 import { KARTE } from "@/components/dashboard/Karten";
@@ -57,7 +58,12 @@ export default async function DashboardPage({
       getMeineKinder(supabase),
     ]);
   // TanzRaum-Ankuendigungen (alle Nutzer) und relevante Vereins-News/offene Umfragen
-  const [ankuendigungen, news, umfragen] = await Promise.all([getAnkuendigungen(supabase), getMeineNews(supabase, 5), getMeineUmfragen(supabase, 10)]);
+  const [ankuendigungen, news, umfragen, online] = await Promise.all([
+    getAnkuendigungen(supabase),
+    getMeineNews(supabase, 5),
+    getMeineUmfragen(supabase, 10),
+    getOnline(supabase, daten.istPlattformAdmin),
+  ]);
   // Spotlights prominent oben (ansehen: alle, erstellen: ab Basic bzw. mit Vereinslizenz)
   const [spotlightIch, spotlights] = SPOTLIGHTS_AKTIV
     ? await Promise.all([getSpotlightIch(supabase, user), getSpotlightLeiste(supabase)])
@@ -114,6 +120,7 @@ export default async function DashboardPage({
       nachrichten={nachrichten}
       kinder={kinder}
       wochen={wochen}
+      online={online}
     />
     </>
   );

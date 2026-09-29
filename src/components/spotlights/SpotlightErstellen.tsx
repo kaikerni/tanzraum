@@ -218,7 +218,7 @@ export function SpotlightErstellen({
                 <legend className="mb-1 text-[13px] font-semibold text-brand-ink">Wer sieht es?</legend>
                 {(
                   [
-                    ["netzwerk", Globe, "Alle im TanzRaum-Netzwerk"],
+                    ["netzwerk", Globe, "Alle in TanzRaum Connect"],
                     ["kontakte", Users, "Nur mein Verein & meine Kontakte"],
                   ] as const
                 ).map(([wert, Icon, label]) => (
