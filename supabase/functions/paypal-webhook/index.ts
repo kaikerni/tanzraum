@@ -2,7 +2,7 @@
 // Uebersetzt PayPal-Ereignisse in abo_aktualisieren – die Tariflogik liegt zentral in der Datenbank.
 // Ereignisse: BILLING.SUBSCRIPTION.ACTIVATED/UPDATED/CANCELLED/SUSPENDED/EXPIRED/PAYMENT.FAILED, PAYMENT.SALE.COMPLETED
 
-import { JSON_KOPF, dienst, ereignisErgebnis, ereignisNeu, paypal, paypalStatus, paypalToken, rechnungErstellen } from "../_shared/zahlung.ts";
+import { JSON_KOPF, dienst, ereignisErgebnis, ereignisNeu, paypal, paypalStatus, paypalToken, rechnungErstellen, tagBerlin } from "../_shared/zahlung.ts";
 
 async function signaturGueltig(token: string, h: Headers, body: string): Promise<boolean> {
   const webhookId = Deno.env.get("PAYPAL_WEBHOOK_ID");
@@ -61,7 +61,9 @@ Deno.serve(async (req) => {
         if (error) throw new Error("abo_aktualisieren");
         if (event.event_type === "PAYMENT.SALE.COMPLETED") {
           const betrag = Number(r.amount?.total ?? r.amount?.value ?? 0);
-          if (betrag > 0) await rechnungErstellen(admin, abo, betrag, "paypal");
+          // Leistungszeitraum: Zahlungstag bis zur naechsten Abbuchung
+          const bezahlt = r.create_time ?? sub?.billing_info?.last_payment?.time ?? null;
+          if (betrag > 0) await rechnungErstellen(admin, abo, betrag, "paypal", { von: tagBerlin(bezahlt), bis: tagBerlin(sub?.billing_info?.next_billing_time, 1) });
         }
       }
     }

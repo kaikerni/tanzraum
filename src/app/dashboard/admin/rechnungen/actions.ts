@@ -13,3 +13,26 @@ export async function aufbewahrungSperren(rechnungId: string, gesperrt: boolean,
   revalidatePath("/dashboard/admin/rechnungen");
   return { error: null, ok: gesperrt ? "Anonymisierung gesperrt." : "Sperre aufgehoben." };
 }
+
+// Rechnung erneut an die hinterlegte Adresse senden (mit PDF im Anhang). Rechte, Empfaenger und Ratenbegrenzung
+// (3 pro Rechnung und Tag) prueft die Edge Function rechnung-versenden.
+export async function rechnungErneutSenden(rechnungId: string): Promise<AktionsErgebnis> {
+  if (!/^[0-9a-f-]{36}$/i.test(rechnungId)) return { error: "Ungültige Rechnung." };
+  const supabase = await createClient();
+  const { data: istAdmin } = await supabase.rpc("ist_plattform_admin_aktuell");
+  if (istAdmin !== true) return { error: "Kein Zugriff." };
+  const { data, error } = await supabase.functions.invoke("rechnung-versenden", { body: { rechnung_id: rechnungId } });
+  if (error) {
+    let meldung = "Die Rechnung konnte gerade nicht gesendet werden. Bitte versuche es später erneut.";
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const antwort = await (error as any).context?.json?.();
+      if (typeof antwort?.error === "string") meldung = antwort.error;
+    } catch {
+      /* neutrale Meldung */
+    }
+    return { error: meldung };
+  }
+  revalidatePath("/dashboard/admin/rechnungen");
+  return { error: null, ok: `Rechnung ${(data as { nummer?: string })?.nummer ?? ""} wurde erneut gesendet.` };
+}

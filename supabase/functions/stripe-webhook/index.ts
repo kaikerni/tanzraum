@@ -3,7 +3,7 @@
 // Ereignisse im Stripe-Dashboard: checkout.session.completed, customer.subscription.created,
 // customer.subscription.updated, customer.subscription.deleted, invoice.paid, invoice.payment_failed
 
-import { JSON_KOPF, dienst, ereignisErgebnis, ereignisNeu, rechnungErstellen, stripe, stripeSignaturGueltig, stripeStatus } from "../_shared/zahlung.ts";
+import { JSON_KOPF, dienst, ereignisErgebnis, ereignisNeu, rechnungErstellen, stripe, stripeSignaturGueltig, stripeStatus, tagBerlin } from "../_shared/zahlung.ts";
 
 Deno.serve(async (req) => {
   const body = await req.text();
@@ -85,7 +85,14 @@ Deno.serve(async (req) => {
         if (!abo) break;
         if (event.type === "invoice.paid") {
           await anwenden(abo, sub, event.type);
-          if ((obj.amount_paid ?? 0) > 0) await rechnungErstellen(admin, abo, obj.amount_paid / 100, abo.tarif === "verein" ? "lastschrift (stripe)" : "karte/lastschrift (stripe)");
+          // Leistungszeitraum aus der Rechnungsposition (invoice.period_* beschreibt bei Abos den Vorzeitraum)
+          const periode = obj.lines?.data?.[0]?.period;
+          if ((obj.amount_paid ?? 0) > 0) {
+            await rechnungErstellen(admin, abo, obj.amount_paid / 100, abo.tarif === "verein" ? "lastschrift (stripe)" : "karte/lastschrift (stripe)", {
+              von: tagBerlin(periode?.start),
+              bis: tagBerlin(periode?.end, 1),
+            });
+          }
         } else {
           await anwenden(abo, sub, event.type, "past_due");
         }

@@ -119,6 +119,22 @@ weil Sandbox-IDs im Live-Betrieb nicht existieren. Alte Einträge ohne Präfix w
 - **Push an Plattform-Admins** bei jedem neuen BASIC-Abo und jeder neuen Vereinslizenz (`kauf_melden`, nur beim
   ersten Aktivwerden, nicht bei Verlängerungen).
 
+## Rechnungen
+
+Migration `20260929215046_rechnungen_pdf`.
+- Erstellt bei jeder bezahlten Zahlung (`invoice.paid` bzw. `PAYMENT.SALE.COMPLETED`, manuell bei Überweisung) über
+  `erstelle_rechnung`; Nummer fortlaufend je Jahr `TR-<Jahr>-0001` (`naechste_rechnungsnummer`, Zähler in
+  `rechnungs_einstellungen`, neues Jahr beginnt bei 0001).
+- Inhalt: Logo, Aussteller (Stand bei Erstellung in `rechnungen.aussteller`, aus `plattform_anbieter`), Empfänger
+  (Person: Name + E-Mail; Verein: Name + Anschrift), Rechnungsnummer/-datum, Leistungszeitraum (`leistung_von/bis`, aus
+  Stripe-Rechnungsposition bzw. PayPal-Zahlung), Posten, Gesamtbetrag, Kleinunternehmer-Hinweis (§ 19 UStG) oder
+  Netto/USt 19 %, Zahlart, Steuernummer. Alles unveränderlich (`rechnung_unveraenderlich`), 10 Jahre aufbewahrt.
+- PDF: `supabase/functions/_shared/rechnung-pdf.ts` (pdf-lib). Edge Function `rechnung-pdf` liefert eine Rechnung oder
+  ein Sammel-PDF (je Rechnung eine Seite); Zugriff per RLS (Plattform-Admin alle, Empfänger/Vereinsadmin eigene).
+- Versand: `rechnung-versenden` schickt die Rechnung an `empfaenger_email` mit PDF im Anhang (max. 3× pro Rechnung/Tag).
+- Administration → Rechnungen (`/dashboard/admin/rechnungen`): Liste mit Jahresfilter und Summe, Zeile anklicken →
+  Vorschau, „PDF herunterladen“, „Erneut per E-Mail senden“, „Alle Rechnungen (des Jahres) als PDF“, CSV.
+
 ## Backup (Free-Plan)
 
 Der Supabase-Free-Plan hat **keine automatischen Backups**. Empfehlung: regelmäßig (mind. wöchentlich und vor

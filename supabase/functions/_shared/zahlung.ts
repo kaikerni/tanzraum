@@ -205,6 +205,7 @@ export async function rechnungErstellen(
   abo: { inhaber: string; user_id: string | null; verein_id: string | null; tarif: string; periode: string },
   betragEuro: number,
   zahlungsweg: string,
+  zeitraum?: { von: string | null; bis: string | null },
 ) {
   try {
     const { data: id, error } = await admin.rpc("erstelle_rechnung", {
@@ -215,6 +216,9 @@ export async function rechnungErstellen(
       p_periode: abo.periode,
       p_betrag: betragEuro,
       p_zahlungsweg: zahlungsweg,
+      // Leistungszeitraum laut Anbieter (sonst ab heute fuer 1 Monat/Jahr)
+      p_leistung_von: zeitraum?.von ?? null,
+      p_leistung_bis: zeitraum?.bis ?? null,
     });
     if (error || !id) return console.error("[rechnung] erstellen fehlgeschlagen");
     const { error: e2 } = await admin.functions.invoke("rechnung-versenden", { body: { rechnung_id: id } });
@@ -225,6 +229,14 @@ export async function rechnungErstellen(
 }
 
 export const JSON_KOPF = { "Content-Type": "application/json" };
+
+// Datum (YYYY-MM-DD, Europe/Berlin) aus Unix-Sekunden oder ISO-Zeit; tageVorher=1 fuer "bis einschliesslich"
+export function tagBerlin(t: number | string | null | undefined, tageVorher = 0): string | null {
+  if (t === null || t === undefined || t === "") return null;
+  const ms = typeof t === "number" ? t * 1000 : Date.parse(t);
+  if (!Number.isFinite(ms)) return null;
+  return new Date(ms - tageVorher * 86400_000).toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" });
+}
 
 // ---------------- Selbsttest (nur Server) ----------------
 // Prueft die Einrichtung fuer den Live-Betrieb. Gibt nie Schluessel aus, nur ob sie vorhanden sind und welche Art
