@@ -117,7 +117,7 @@ export const NAV: NavEintrag[] = [
   // Sozialer Bereich: Map ist die Startansicht. Nachrichten haben keinen eigenen Menuepunkt (Kopfzeile, Profile, Kontakte).
   { href: "/dashboard/netzwerk", label: "TanzRaum Connect", kurz: "Connect", icon: Globe, tarif: "basic" },
   { href: "/dashboard/trainer-netzwerk", label: "Trainer-Netzwerk", icon: Handshake, tarif: "verein", netzwerk: "trainer", modul: "trainer_netzwerk" },
-  { href: "/dashboard/dateien", label: "Dateien", icon: Folder, tarif: "basic", modul: "dateien" },
+  { href: "/dashboard/dateien", label: "TeamCloud", icon: Folder, tarif: "basic", modul: "dateien" },
   { href: "/dashboard/fahrgemeinschaften", label: "Fahrgemeinschaften", icon: Car, tarif: "basic", nichtNurFuer: ["rolle_betreuer"], modul: "fahrgemeinschaften" },
   { href: "/dashboard/musik", label: "Musik", icon: Music, tarif: "basic", nichtNurFuer: ["rolle_betreuer", "rolle_eltern"], modul: "musik" },
   { href: "/dashboard/kostueme", label: "Kostüme & Material", icon: Shirt, tarif: "verein", recht: "material", modul: "kostueme" },
@@ -163,7 +163,7 @@ export function sichtbareNav(zugriff: Zugriff): NavEintrag[] {
 }
 
 // Nur fuer diese Seiten werden "Alle anzeigen"-Links gesetzt; waechst mit jedem fertigen Modul.
-export const FERTIGE_SEITEN = new Set<string>(["/dashboard", "/dashboard/verein", "/dashboard/mitglieder", "/dashboard/training", "/dashboard/anwesenheit", "/dashboard/kalender", "/dashboard/nachrichten", "/dashboard/einstellungen", "/dashboard/turniere", "/dashboard/saisonplanung", "/dashboard/trainer-netzwerk", "/dashboard/netzwerk", "/dashboard/admin", "/dashboard/tarif", "/dashboard/vereinsverwaltung", "/dashboard/news"]);
+export const FERTIGE_SEITEN = new Set<string>(["/dashboard", "/dashboard/verein", "/dashboard/mitglieder", "/dashboard/training", "/dashboard/anwesenheit", "/dashboard/kalender", "/dashboard/nachrichten", "/dashboard/einstellungen", "/dashboard/turniere", "/dashboard/saisonplanung", "/dashboard/trainer-netzwerk", "/dashboard/netzwerk", "/dashboard/admin", "/dashboard/tarif", "/dashboard/vereinsverwaltung", "/dashboard/news", "/dashboard/dateien"]);
 
 export function istFertig(href: string): boolean {
   return FERTIGE_SEITEN.has(href);

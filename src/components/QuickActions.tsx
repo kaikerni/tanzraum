@@ -30,7 +30,7 @@ const AKTIONEN: Aktion[] = [
   { href: "/dashboard/training/neu", zeile1: "Training", zeile2: "anlegen", icon: Plus, tarif: "verein", rechte: ["rolle_admin", "rolle_trainer"], modul: "training" },
   { href: "/dashboard/mitglieder/neu", zeile1: "Mitglied", zeile2: "hinzufügen", icon: UserPlus, tarif: "verein", rechte: ["rolle_admin"] },
   { href: "/dashboard/nachrichten/neu", zeile1: "Nachricht", zeile2: "schreiben", icon: Mail, tarif: "free" },
-  { href: "/dashboard/dateien/hochladen", zeile1: "Datei", zeile2: "hochladen", icon: Upload, tarif: "basic", modul: "dateien" },
+  { href: "/dashboard/dateien#hochladen", zeile1: "Datei", zeile2: "hochladen", icon: Upload, tarif: "basic", modul: "dateien" },
   { href: "/dashboard/turniere/neu", zeile1: "Turnier", zeile2: "erfassen", icon: Trophy, tarif: "verein", rechte: ["plattform_admin"], iconKlasse: "text-brand-gold", modul: "turniere" },
   { href: "/dashboard/fahrgemeinschaften/neu", zeile1: "Fahrgemeinschaft", zeile2: "erstellen", icon: Car, tarif: "basic", modul: "fahrgemeinschaften" },
   { href: "/dashboard/musik", zeile1: "Musik", zeile2: "verwalten", icon: Music, tarif: "verein", rechte: ["rolle_admin", "rolle_trainer"], modul: "musik" },
