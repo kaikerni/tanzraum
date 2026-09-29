@@ -35,12 +35,24 @@ Deno.serve(async (req) => {
     const anwenden = async (abo: any, sub: any, grund: string, statusErzwingen?: string) => {
       const s = stripeStatus(sub);
       status = statusErzwingen ?? s.status;
+      // "past_due" gilt als Zugang (Kulanz bei Verlaengerungen) – ein noch nie bezahltes Abo bleibt dagegen "pending"
+      // (z. B. erste Lastschrift geplatzt)
+      if (abo.status === "pending" && status === "past_due") status = "pending";
       aboId = abo.id;
       const { error } = await admin.rpc("abo_aktualisieren", {
         p_abo_id: abo.id, p_status: status, p_laeuft_bis: s.laeuftBis, p_gekuendigt_zum: s.gekuendigtZum,
         p_anbieter_abo_id: sub.id, p_anbieter_kunde_id: typeof sub.customer === "string" ? sub.customer : null, p_grund: grund,
       });
       if (error) throw new Error("abo_aktualisieren");
+    };
+
+    // Lastschrift: Stripe setzt das Abo schon auf "active", waehrend die erste Zahlung noch laeuft (mehrere Tage).
+    // Freigeschaltet wird erst mit invoice.paid – solange die erste Rechnung offen ist, bleibt das Abo "pending".
+    // deno-lint-ignore no-explicit-any
+    const ersteZahlungOffen = async (abo: any, sub: any): Promise<boolean> => {
+      if (abo.status !== "pending" || !["active", "trialing"].includes(sub?.status) || !sub?.latest_invoice) return false;
+      const rechnung = typeof sub.latest_invoice === "string" ? await stripe(`invoices/${sub.latest_invoice}`) : sub.latest_invoice;
+      return rechnung.status !== "paid" && (rechnung.amount_due ?? 0) > 0;
     };
 
     switch (event.type) {
@@ -56,7 +68,7 @@ Deno.serve(async (req) => {
       case "customer.subscription.created":
       case "customer.subscription.updated": {
         const abo = await aboZu(obj.id, obj.metadata?.abo_id ?? null);
-        if (abo) await anwenden(abo, obj, event.type);
+        if (abo) await anwenden(abo, obj, event.type, (await ersteZahlungOffen(abo, obj)) ? "pending" : undefined);
         break;
       }
       case "customer.subscription.deleted": {
@@ -73,7 +85,7 @@ Deno.serve(async (req) => {
         if (!abo) break;
         if (event.type === "invoice.paid") {
           await anwenden(abo, sub, event.type);
-          if ((obj.amount_paid ?? 0) > 0) await rechnungErstellen(admin, abo, obj.amount_paid / 100, "karte/lastschrift (stripe)");
+          if ((obj.amount_paid ?? 0) > 0) await rechnungErstellen(admin, abo, obj.amount_paid / 100, abo.tarif === "verein" ? "lastschrift (stripe)" : "karte/lastschrift (stripe)");
         } else {
           await anwenden(abo, sub, event.type, "past_due");
         }

@@ -52,6 +52,8 @@ Deno.serve(async (req) => {
         const sub = await paypal(`/v1/billing/subscriptions/${subId}`, "GET", undefined, token);
         const s = paypalStatus(sub, abo.laeuft_bis);
         status = event.event_type === "BILLING.SUBSCRIPTION.PAYMENT.FAILED" ? "past_due" : s.status;
+        // "past_due" gilt als Zugang (Kulanz bei Verlaengerungen) – ein noch nie bezahltes Abo bleibt "pending"
+        if (abo.status === "pending" && status === "past_due") status = "pending";
         const { error } = await admin.rpc("abo_aktualisieren", {
           p_abo_id: abo.id, p_status: status, p_laeuft_bis: s.laeuftBis, p_gekuendigt_zum: s.gekuendigtZum,
           p_anbieter_abo_id: subId, p_anbieter_kunde_id: sub?.subscriber?.payer_id ?? null, p_grund: event.event_type,

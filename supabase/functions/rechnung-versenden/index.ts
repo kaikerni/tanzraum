@@ -14,6 +14,14 @@ import { angemeldet, dienst, protokollieren, UUID, versandSeit } from "../_share
 
 const ART = "rechnung";
 const euro = (n: unknown) => Number(n ?? 0).toFixed(2).replace(".", ",") + " €";
+// zahlungsweg aus stripe-webhook ("lastschrift (stripe)", "karte/lastschrift (stripe)"), paypal-webhook ("paypal") oder manuell
+const zahlungsartText = (w: unknown) => {
+  const z = String(w ?? "").toLowerCase();
+  if (z === "paypal") return "PayPal";
+  if (z.startsWith("lastschrift")) return "SEPA-Lastschrift (Stripe)";
+  if (z.includes("stripe")) return "Karte oder SEPA-Lastschrift (Stripe)";
+  return "Überweisung";
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -66,7 +74,7 @@ Deno.serve(async (req) => {
       `<strong>Rechnung an:</strong><br>${esc(r.empfaenger_name)}${r.empfaenger_adresse ? `<br>${esc(r.empfaenger_adresse)}` : ""}<br>${esc(r.empfaenger_email)}`,
       `Rechnungsdatum: <strong>${esc(datum)}</strong>`,
       tabelle,
-      `Zahlungsart: ${r.zahlungsweg === "paypal" ? "PayPal" : "Überweisung"} – bereits vollständig beglichen.`,
+      `Zahlungsart: ${zahlungsartText(r.zahlungsweg)} – bereits vollständig beglichen.`,
     ],
     hinweis: `${s.kleinunternehmer ? `${s.kleinunternehmer_hinweis} ` : ""}Diese Rechnung wurde automatisch erstellt und ist ohne Unterschrift gültig.`,
   });

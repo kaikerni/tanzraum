@@ -182,6 +182,10 @@ export const LEISTUNGSBEGINN_VERSION = "27.09.2026";
 export const LEISTUNGSBEGINN_TEXT =
   "Ich verlange ausdrücklich, dass TanzRaum vor Ablauf der Widerrufsfrist mit der Leistung beginnt. Mir ist bekannt, dass ich bei einem Widerruf einen angemessenen Betrag (Wertersatz) für die bis dahin erbrachte Leistung zahlen muss.";
 
+// Stripe-Zahlarten je Tarif. "card" schliesst Apple Pay/Google Pay ein (im Stripe-Dashboard unter Wallets aktiv).
+// Lastschrift kostet einen festen Betrag, Karte einen Prozentsatz – bei der Vereinslizenz deshalb nur Lastschrift.
+export const STRIPE_ZAHLARTEN: Record<string, string[]> = { basic: ["card", "sepa_debit"], verein: ["sepa_debit"] };
+
 export const TARIF_NAME: Record<string, string> = { basic: "TanzRaum BASIC", verein: "TanzRaum VEREIN (Vereinslizenz)" };
 export const PERIODE_NAME: Record<string, string> = { monat: "monatlich", jahr: "jährlich" };
 

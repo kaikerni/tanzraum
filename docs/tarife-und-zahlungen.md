@@ -22,6 +22,22 @@ Stripe und PayPal liefern nur Ereignisse. Die Tariflogik liegt **einmal** zentra
 Preise stehen in `tarif_preise` (Cent). App, Onboarding und Nutzungsbedingungen lesen daraus;
 „🎁 2 MONATE GRATIS“ und die Ersparnis werden aus diesen Preisen berechnet (12 × Monat − Jahr).
 
+## Zahlarten
+
+| Tarif | Stripe | PayPal |
+|---|---|---|
+| BASIC | Karte (inkl. Apple Pay/Google Pay) oder SEPA-Lastschrift | ja |
+| VEREIN | nur SEPA-Lastschrift (fester Betrag statt Prozent – spart bei 299 € rund 4 € je Zahlung) | ja |
+
+- Festgelegt in `STRIPE_ZAHLARTEN` (`supabase/functions/_shared/zahlung.ts`), an Checkout als `payment_method_types`.
+  Im Stripe-Dashboard müssen **SEPA-Lastschrift** und unter Wallets **Apple Pay/Google Pay** aktiv sein.
+- Lastschrift ist verzögert: Stripe setzt das Abo schon auf `active`, während die erste Zahlung noch läuft.
+  `stripe-webhook` lässt ein Abo deshalb `pending`, solange die erste Rechnung offen ist (`ersteZahlungOffen`);
+  freigeschaltet wird mit `invoice.paid` (in der Regel 3–5 Werktage).
+- `past_due` zählt als Zugang (Kulanz bei Verlängerungen). Ein noch nie bezahltes Abo (`pending`) wird dagegen nie
+  `past_due` – in Stripe- und PayPal-Webhook abgesichert (z. B. erste Lastschrift geplatzt).
+- Rechnungs-Mail nennt die Zahlart (`zahlungsartText` in `rechnung-versenden`).
+
 ## Vorzeitiger Leistungsbeginn (Widerruf)
 
 Vor den Bezahlknöpfen steht ein Pflicht-Häkchen: „Ich verlange ausdrücklich, dass TanzRaum vor Ablauf der

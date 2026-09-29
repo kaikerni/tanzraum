@@ -237,9 +237,10 @@ export default async function DatenschutzSeite() {
 
       <Abschnitt titel="10. Zahlungen (Stripe, PayPal, Banküberweisung)">
         <p>
-          Kostenpflichtige Tarife (BASIC, VEREIN) bezahlst du über Stripe (Stripe Payments Europe, Ltd., Irland; Karte oder
-          Lastschrift) oder PayPal (PayPal (Europe) S.à r.l. et Cie, S.C.A., Luxemburg). Deine Zahlungsdaten gibst du direkt beim
-          jeweiligen Anbieter ein; TanzRaum erhält keine Karten- oder Kontodaten, sondern nur die Lizenz- bzw. Zahlungskennung, den Zahlungsstatus,
+          Kostenpflichtige Tarife (BASIC, VEREIN) bezahlst du über Stripe (Stripe Payments Europe, Ltd., Irland; BASIC per Karte
+          oder SEPA-Lastschrift, die Vereinslizenz per SEPA-Lastschrift) oder PayPal (PayPal (Europe) S.à r.l. et Cie, S.C.A.,
+          Luxemburg). Nutzt du bei Stripe Apple Pay oder Google Pay, gelten zusätzlich die Datenschutzbestimmungen von Apple bzw.
+          Google, mit denen du diese Dienste vereinbart hast. Deine Zahlungsdaten gibst du direkt beim jeweiligen Anbieter ein; TanzRaum erhält keine Karten- oder Kontodaten, sondern nur die Lizenz- bzw. Zahlungskennung, den Zahlungsstatus,
           die Laufzeit und die Kunden-Kennung des Anbieters. Bei Zahlung per Banküberweisung verarbeiten wir die Angaben aus dem
           Zahlungseingang (Name, IBAN, Betrag, Verwendungszweck), um die Zahlung zuzuordnen. Für Rechnungen speichern wir Name, Tarif,
           Betrag und Zahlungsweg.

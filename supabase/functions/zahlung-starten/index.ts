@@ -4,7 +4,7 @@
 // Die Datenbank prueft Berechtigung und Preis (abo_anlegen) und legt das Abo als "pending" an.
 // Aktiv wird der Tarif AUSSCHLIESSLICH durch den Webhook des Anbieters nach erfolgreicher Zahlung.
 
-import { JSON_KOPF, LEISTUNGSBEGINN_TEXT, LEISTUNGSBEGINN_VERSION, PERIODE_NAME, TARIF_NAME, UUID, ZahlungsFehler, angemeldet, appUrl, dienst, paypal, paypalModus, paypalToken, stripe } from "../_shared/zahlung.ts";
+import { JSON_KOPF, LEISTUNGSBEGINN_TEXT, LEISTUNGSBEGINN_VERSION, PERIODE_NAME, STRIPE_ZAHLARTEN, TARIF_NAME, UUID, ZahlungsFehler, angemeldet, appUrl, dienst, paypal, paypalModus, paypalToken, stripe } from "../_shared/zahlung.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -64,6 +64,9 @@ Deno.serve(async (req) => {
     if (anbieter === "stripe") {
       const session = await stripe("checkout/sessions", "POST", {
         mode: "subscription",
+        // Zahlarten (Gebuehren): BASIC Karte (inkl. Apple Pay/Google Pay) oder SEPA-Lastschrift,
+        // Vereinslizenz nur SEPA-Lastschrift (fester Betrag statt Prozent). Siehe STRIPE_ZAHLARTEN.
+        payment_method_types: STRIPE_ZAHLARTEN[abo.tarif] ?? ["card", "sepa_debit"],
         client_reference_id: abo.id,
         customer_email: email,
         locale: "de",

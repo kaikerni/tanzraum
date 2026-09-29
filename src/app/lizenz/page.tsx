@@ -59,7 +59,10 @@ export default async function LizenzSeite() {
 
       <Abschnitt titel="Zahlung, Laufzeit, Kündigung">
         <ul>
-          <li>Bezahlt wird im Voraus über Stripe (Karte/Lastschrift), PayPal oder per Banküberweisung.</li>
+          <li>
+            Bezahlt wird im Voraus: BASIC per Karte (auch Apple Pay/Google Pay), SEPA-Lastschrift (beides über Stripe) oder
+            PayPal; die Vereinslizenz per SEPA-Lastschrift (über Stripe), PayPal oder Banküberweisung.
+          </li>
           <li>Eine Lizenz wird erst freigeschaltet, wenn die Zahlung bestätigt ist.</li>
           <li>Lizenzen verlängern sich automatisch um die gewählte Laufzeit (Monat bzw. Jahr). Du kannst jederzeit kündigen; die Lizenz bleibt bis zum Ende des bezahlten Zeitraums aktiv, danach gilt wieder FREE.</li>
           <li>Verbraucher haben ein gesetzliches Widerrufsrecht (siehe Widerrufsbelehrung in den Nutzungsbedingungen).</li>

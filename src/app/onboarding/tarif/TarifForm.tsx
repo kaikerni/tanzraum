@@ -78,7 +78,8 @@ export function TarifForm({ preise }: { preise: Preise | null }) {
 
       <p className="text-[12px] text-brand-ink-soft">
         Bei Basic/Verein merken wir uns nur deinen Wunsch. Am Ende geht es direkt zur Bezahlung
-        (Karte/Lastschrift oder PayPal) – freigeschaltet wird nach bestätigter Zahlung.
+        (Basic: Karte, Apple/Google Pay, Lastschrift oder PayPal · Verein: Lastschrift oder PayPal) – freigeschaltet wird nach
+        bestätigter Zahlung.
       </p>
 
       <button

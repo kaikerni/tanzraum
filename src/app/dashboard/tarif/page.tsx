@@ -89,8 +89,8 @@ export default async function MeinTarifSeite({
 
       {sp.zahlung === "erfolg" && (
         <p className="form-success">
-          Danke! Sobald der Zahlungsanbieter die Zahlung bestätigt, wird dein Tarif freigeschaltet – meist innerhalb weniger
-          Sekunden. Falls noch nichts zu sehen ist, lade die Seite gleich neu.
+          Danke! Sobald der Zahlungsanbieter die Zahlung bestätigt, wird dein Tarif freigeschaltet – bei Karte und PayPal
+          meist innerhalb weniger Sekunden, bei SEPA-Lastschrift nach dem Zahlungseingang (in der Regel 3–5 Werktage).
         </p>
       )}
       {sp.zahlung === "abgebrochen" && <p className="form-error">Die Zahlung wurde abgebrochen. Es wurde nichts berechnet.</p>}

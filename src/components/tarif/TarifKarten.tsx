@@ -95,8 +95,12 @@ export function TarifKarten({
           onClick={() => kaufen(tarif, "stripe")}
           className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-brand-red px-4 py-2 text-[13.5px] font-semibold text-white hover:bg-brand-red-deep disabled:opacity-50"
         >
-          <CreditCard size={16} /> {laedt === `${tarif}-stripe` ? "Weiter zu Stripe …" : "Karte / Lastschrift"}
+          <CreditCard size={16} />{" "}
+          {laedt === `${tarif}-stripe` ? "Weiter zu Stripe …" : tarif === "verein" ? "SEPA-Lastschrift" : "Karte, Apple/Google Pay, Lastschrift"}
         </button>
+        {tarif === "verein" && (
+          <p className="text-[12px] text-brand-ink-soft">Freischaltung nach Zahlungseingang, bei Lastschrift in der Regel 3–5 Werktage.</p>
+        )}
         <button
           type="button"
           disabled={gesperrt || laedt !== null || !leistungsbeginn}

@@ -93,9 +93,12 @@ export default async function NutzungsbedingungenSeite() {
 
       <Abschnitt titel="4. Zahlung, Laufzeit und Kündigung">
         <ul>
-          <li>Bezahlt wird im Voraus über Stripe (Karte/Lastschrift), PayPal oder per Banküberweisung.</li>
           <li>
-            Ein Tarif wird erst freigeschaltet, wenn die Zahlung bestätigt ist (bei Banküberweisung nach Zahlungseingang). Schlägt eine Zahlung fehl, wird der
+            Bezahlt wird im Voraus: BASIC per Karte (auch Apple Pay/Google Pay), SEPA-Lastschrift (beides über Stripe) oder
+            PayPal; die Vereinslizenz per SEPA-Lastschrift (über Stripe), PayPal oder Banküberweisung.
+          </li>
+          <li>
+            Ein Tarif wird erst freigeschaltet, wenn die Zahlung bestätigt ist (bei SEPA-Lastschrift und Banküberweisung nach Zahlungseingang). Schlägt eine Zahlung fehl, wird der
             Tarif nicht aktiviert bzw. als „Zahlung offen“ geführt.
           </li>
           <li>
