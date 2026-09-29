@@ -80,9 +80,8 @@ Stand: 29.09.2026 · Migrationen `20260929135109_plattform_logik`, `202609291356
 
 ## TanzRaum KI
 
-Vollständig entfernt (Komponente, Datenschutzabschnitt). Die Edge Function `tanzraum-assistent` antwortet nur noch
-mit 410. **Offen (manuell im Supabase-Dashboard):** Function `tanzraum-assistent` löschen und das Secret
-`GEMINI_API_KEY` entfernen.
+Vollständig entfernt: Komponente, Datenschutzabschnitt, Edge Function `tanzraum-assistent` und Secret
+`GEMINI_API_KEY` (beides am 29.09.2026 im Supabase-Dashboard gelöscht).
 
 ## Startseite `/`
 
