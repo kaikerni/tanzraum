@@ -17,7 +17,20 @@ export const ABO_STATUS_LABEL: Record<string, string> = {
   paused_by_organization: "Pausiert (Vereinslizenz)",
 };
 
-export const ANBIETER_LABEL: Record<string, string> = { stripe: "Karte/Lastschrift (Stripe)", paypal: "PayPal", manuell: "Manuell (Support)" };
+export const ANBIETER_LABEL: Record<string, string> = {
+  stripe: "Karte/Lastschrift (Stripe)",
+  paypal: "PayPal",
+  manuell: "Manuell (Support)",
+  ueberweisung: "Überweisung",
+};
+
+// Wie sich eine Lizenz verlaengert (Anzeige auf "Mein Tarif")
+export const VERLAENGERUNG_LABEL: Record<string, string> = {
+  stripe: "automatisch per Karte/Lastschrift",
+  paypal: "automatisch per PayPal",
+  manuell: "über den TanzRaum-Support",
+  ueberweisung: "per Überweisung",
+};
 export const PERIODE_LABEL: Record<string, string> = { monat: "monatlich", jahr: "jährlich", unbefristet: "unbefristet" };
 
 export async function getPreise(supabase: SupabaseClient): Promise<Preise | null> {
@@ -65,6 +78,18 @@ export type AboInfo = {
   pause_verein?: string | null;
 };
 
+export type OffeneUeberweisung = {
+  id: string;
+  art: "neu" | "verlaengerung";
+  betrag_cent: number;
+  referenz: string;
+  faellig_am: string;
+  erstellt_am: string;
+  empfaenger_email: string | null;
+};
+
+export type Bankverbindung = { inhaber: string | null; iban: string | null; bic: string | null; bank: string | null };
+
 export type MeinTarifStatus = {
   zugang: {
     persoenlicher_tarif: string;
@@ -76,5 +101,15 @@ export type MeinTarifStatus = {
   };
   verein_name: string | null;
   abos: AboInfo[];
-  admin_vereine: { id: string; name: string; lizenz: boolean; lizenz_bis: string | null; abo: AboInfo | null }[];
+  admin_vereine: { id: string; name: string; lizenz: boolean; lizenz_bis: string | null; abo: AboInfo | null; ueberweisung: OffeneUeberweisung | null }[];
+  bank: Bankverbindung | null;
+  ueberweisung_moeglich: boolean;
 };
+
+export const ibanLesbar = (iban: string | null | undefined) => (iban ?? "").replace(/(.{4})/g, "$1 ").trim();
+
+// Tage bis zu einem Zeitpunkt (aufgerundet, nie negativ)
+export function tageBis(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000));
+}

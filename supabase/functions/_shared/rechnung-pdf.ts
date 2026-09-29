@@ -134,9 +134,11 @@ function adresseZeilen(a: string | null): string[] {
   return a.split(/\s*,\s*|\n/).map((s) => s.trim()).filter(Boolean);
 }
 
-function seiteZeichnen(doc: PDFDocument, z: Zeichner, r: RechnungDaten, logo: PDFImage | null) {
+type Empfaenger = { name: string; adresse: string | null; email: string | null; anonymisiert?: boolean };
+
+// Briefkopf: Farbbalken, Logo, Aussteller rechts oben, Ruecksendezeile + Anschriftfeld links, Angaben rechts daneben
+function briefkopf(doc: PDFDocument, z: Zeichner, a: Aussteller, e: Empfaenger, info: [string, string][], logo: PDFImage | null) {
   const s = doc.addPage([A4.b, A4.h]);
-  const a: Aussteller = r.aussteller ?? {};
   const firma = [a.name, a.unternehmen].filter(Boolean).join(" – ") || "TanzRaum";
   const ortZeile = [a.plz, a.ort].filter(Boolean).join(" ");
   const oben = A4.h - 48;
@@ -165,33 +167,61 @@ function seiteZeichnen(doc: PDFDocument, z: Zeichner, r: RechnungDaten, logo: PD
   z.text(s, [firma, a.strasse, ortZeile].filter(Boolean).join(" · "), RAND, ey, { groesse: 7.5, farbe: GRAU });
   s.drawLine({ start: { x: RAND, y: ey - 4 }, end: { x: RAND + 250, y: ey - 4 }, thickness: 0.5, color: LINIE });
   ey -= 20;
-  if (r.anonymisiert_am) {
+  if (e.anonymisiert) {
     ey = z.text(s, "Empfänger nach Ablauf der Aufbewahrungsfrist anonymisiert", RAND, ey, { groesse: 10.5, farbe: GRAU, breite: 250 });
   } else {
-    ey = z.text(s, r.empfaenger_name, RAND, ey, { groesse: 11, fett: true, breite: 250 });
-    for (const zeile of adresseZeilen(r.empfaenger_adresse)) ey = z.text(s, zeile, RAND, ey, { groesse: 10.5, breite: 250 });
-    if (r.empfaenger_email) ey = z.text(s, r.empfaenger_email, RAND, ey, { groesse: 9.5, farbe: GRAU, breite: 250 });
+    ey = z.text(s, e.name, RAND, ey, { groesse: 11, fett: true, breite: 250 });
+    for (const zeile of adresseZeilen(e.adresse)) ey = z.text(s, zeile, RAND, ey, { groesse: 10.5, breite: 250 });
+    if (e.email) ey = z.text(s, e.email, RAND, ey, { groesse: 9.5, farbe: GRAU, breite: 250 });
   }
 
-  // Rechnungsangaben rechts neben dem Anschriftfeld
+  // Angaben rechts neben dem Anschriftfeld (erste Zeile fett)
   const infoX = RAND + 262;
-  const werteX = rechts;
   let iy = A4.h - 170;
-  const info: [string, string][] = [
-    ["Rechnungsnummer", r.nummer],
-    ["Rechnungsdatum", datumDe(r.rechnungsdatum)],
-    ["Leistungszeitraum", r.leistung_von ? `${datumDe(r.leistung_von)} – ${datumDe(r.leistung_bis)}` : datumDe(r.rechnungsdatum)],
-  ];
-  if (a.steuernummer) info.push(["Steuernummer", a.steuernummer]);
-  if (a.ust_id) info.push(["USt-IdNr.", a.ust_id]);
-  for (const [k, v] of info) {
+  const alle: [string, string][] = [...info];
+  if (a.steuernummer) alle.push(["Steuernummer", a.steuernummer]);
+  if (a.ust_id) alle.push(["USt-IdNr.", a.ust_id]);
+  alle.forEach(([k, v], i) => {
     z.text(s, k, infoX, iy, { groesse: 9, farbe: GRAU });
-    z.text(s, v, werteX, iy, { groesse: 9.5, fett: k === "Rechnungsnummer", rechts: true });
+    z.text(s, v, rechts, iy, { groesse: 9.5, fett: i === 0, rechts: true });
     iy -= 15;
-  }
+  });
+
+  // Fusszeile
+  const fy = 58;
+  s.drawLine({ start: { x: RAND, y: fy + 16 }, end: { x: rechts, y: fy + 16 }, thickness: 0.5, color: LINIE });
+  const spalte = BREITE / 3;
+  z.text(s, `${firma}\n${[a.strasse, ortZeile].filter(Boolean).join(", ")}`, RAND, fy, { groesse: 7.5, farbe: GRAU, breite: spalte - 8, abstand: 1.35 });
+  z.text(s, `${a.email ?? ""}\ntanzraum.app`, RAND + spalte, fy, { groesse: 7.5, farbe: GRAU, breite: spalte - 8, abstand: 1.35 });
+  z.text(s, [a.steuernummer ? `Steuernummer ${a.steuernummer}` : "", a.ust_id ? `USt-IdNr. ${a.ust_id}` : ""].filter(Boolean).join("\n") || " ", RAND + 2 * spalte, fy, {
+    groesse: 7.5,
+    farbe: GRAU,
+    breite: spalte - 8,
+    abstand: 1.35,
+  });
+
+  return { s, y: Math.min(ey, iy) - 34, rechts };
+}
+
+function seiteZeichnen(doc: PDFDocument, z: Zeichner, r: RechnungDaten, logo: PDFImage | null) {
+  const a: Aussteller = r.aussteller ?? {};
+  const kopf = briefkopf(
+    doc,
+    z,
+    a,
+    { name: r.empfaenger_name, adresse: r.empfaenger_adresse, email: r.empfaenger_email, anonymisiert: !!r.anonymisiert_am },
+    [
+      ["Rechnungsnummer", r.nummer],
+      ["Rechnungsdatum", datumDe(r.rechnungsdatum)],
+      ["Leistungszeitraum", r.leistung_von ? `${datumDe(r.leistung_von)} – ${datumDe(r.leistung_bis)}` : datumDe(r.rechnungsdatum)],
+    ],
+    logo,
+  );
+  const s = kopf.s;
+  const rechts = kopf.rechts;
+  let y = kopf.y;
 
   // Titel und Einleitung
-  y = Math.min(ey, iy) - 34;
   y = z.text(s, `Rechnung ${r.nummer}`, RAND, y, { groesse: 18, fett: true }) - 6;
   y = z.text(s, "Vielen Dank für deinen Einkauf bei TanzRaum. Wir stellen dir folgende Leistung in Rechnung:", RAND, y, { groesse: 10.5, breite: BREITE }) - 10;
 
@@ -239,21 +269,111 @@ function seiteZeichnen(doc: PDFDocument, z: Zeichner, r: RechnungDaten, logo: PD
     y = z.text(s, a.kleinunternehmer_hinweis || "Gemäß § 19 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmerregelung).", RAND, y, { groesse: 10, breite: BREITE }) - 4;
   }
   y = z.text(s, `Zahlungsart: ${zahlungsartText(r.zahlungsweg)}. Der Rechnungsbetrag ist bereits beglichen.`, RAND, y, { groesse: 10, breite: BREITE }) - 4;
-  y = z.text(s, "Die Lizenz verlängert sich automatisch um die gewählte Laufzeit und kann jederzeit unter „Mein Tarif“ zum Ende des bezahlten Zeitraums gekündigt werden.", RAND, y, { groesse: 9.5, farbe: GRAU, breite: BREITE }) - 14;
+  const verlaengerung = String(r.zahlungsweg ?? "").toLowerCase().startsWith("ueberweisung")
+    ? "Vor Ablauf der Lizenz erhältst du rechtzeitig eine Zahlungsaufforderung für das nächste Jahr. Eine Kündigung ist jederzeit unter „Mein Tarif“ zum Ende des bezahlten Zeitraums möglich."
+    : "Die Lizenz verlängert sich automatisch um die gewählte Laufzeit und kann jederzeit unter „Mein Tarif“ zum Ende des bezahlten Zeitraums gekündigt werden.";
+  y = z.text(s, verlaengerung, RAND, y, { groesse: 9.5, farbe: GRAU, breite: BREITE }) - 14;
   z.text(s, "Diese Rechnung wurde automatisch erstellt und ist ohne Unterschrift gültig.", RAND, y, { groesse: 9, farbe: GRAU, breite: BREITE });
+}
 
-  // Fusszeile
-  const fy = 58;
-  s.drawLine({ start: { x: RAND, y: fy + 16 }, end: { x: rechts, y: fy + 16 }, thickness: 0.5, color: LINIE });
-  const spalte = BREITE / 3;
-  z.text(s, `${firma}\n${[a.strasse, ortZeile].filter(Boolean).join(", ")}`, RAND, fy, { groesse: 7.5, farbe: GRAU, breite: spalte - 8, abstand: 1.35 });
-  z.text(s, `${a.email ?? ""}\ntanzraum.app`, RAND + spalte, fy, { groesse: 7.5, farbe: GRAU, breite: spalte - 8, abstand: 1.35 });
-  z.text(s, [a.steuernummer ? `Steuernummer ${a.steuernummer}` : "", a.ust_id ? `USt-IdNr. ${a.ust_id}` : ""].filter(Boolean).join("\n") || " ", RAND + 2 * spalte, fy, {
-    groesse: 7.5,
-    farbe: GRAU,
-    breite: spalte - 8,
-    abstand: 1.35,
-  });
+// ---------------- Zahlungsaufforderung (Vereinslizenz per Ueberweisung) ----------------
+export type Bankverbindung = { inhaber: string | null; iban: string | null; bic: string | null; bank: string | null };
+export type AufforderungDaten = {
+  referenz: string;
+  art: "neu" | "verlaengerung";
+  betrag_cent: number;
+  faellig_am: string;
+  erstellt_am: string;
+  verein_name: string;
+  verein_adresse: string | null;
+  empfaenger_email: string | null;
+  lizenz_bis: string | null; // bei Verlaengerung: bisheriges Ende
+};
+
+export const ibanLesbar = (iban: string | null) => (iban ?? "").replace(/(.{4})/g, "$1 ").trim();
+
+export async function aufforderungPdf(d: AufforderungDaten, a: Aussteller, bank: Bankverbindung, logoBytes?: Uint8Array | null): Promise<Uint8Array> {
+  const doc = await PDFDocument.create();
+  doc.setTitle(`Zahlungsaufforderung ${d.referenz}`);
+  doc.setAuthor("TanzRaum");
+  doc.setCreator("TanzRaum");
+  const z = new Zeichner();
+  await z.init(doc);
+  let logo: PDFImage | null = null;
+  if (logoBytes && logoBytes.length > 8 && logoBytes[0] === 0x89) {
+    try {
+      logo = await doc.embedPng(logoBytes);
+    } catch {
+      logo = null;
+    }
+  }
+  const betrag = d.betrag_cent / 100;
+  const kopf = briefkopf(
+    doc,
+    z,
+    a,
+    { name: d.verein_name, adresse: d.verein_adresse, email: d.empfaenger_email },
+    [
+      ["Referenz", d.referenz],
+      ["Datum", datumDe(d.erstellt_am)],
+      ["Zahlbar bis", datumDe(d.faellig_am)],
+    ],
+    logo,
+  );
+  const s = kopf.s;
+  const rechts = kopf.rechts;
+  let y = kopf.y;
+
+  y = z.text(s, "Zahlungsaufforderung", RAND, y, { groesse: 18, fett: true }) - 6;
+  const einleitung =
+    d.art === "verlaengerung"
+      ? `Die Vereinslizenz von ${d.verein_name} läuft am ${datumDe(d.lizenz_bis)} ab. Damit sie ohne Unterbrechung ein weiteres Jahr weiterläuft, überweise bitte den folgenden Betrag bis zum ${datumDe(d.faellig_am)}.`
+      : `Vielen Dank für deine Bestellung der TanzRaum-Vereinslizenz für ${d.verein_name.replace(/\.$/, "")}. Bitte überweise den folgenden Betrag bis zum ${datumDe(d.faellig_am)}. Die Lizenz wird freigeschaltet, sobald die Zahlung bei uns eingegangen ist.`;
+  y = z.text(s, einleitung, RAND, y, { groesse: 10.5, breite: BREITE }) - 12;
+
+  // Posten
+  s.drawRectangle({ x: RAND, y: y - 6, width: BREITE, height: 22, color: rgb(0.961, 0.965, 0.976) });
+  z.text(s, "Leistung", RAND + 6, y, { groesse: 9, fett: true });
+  z.text(s, "Betrag", rechts - 6, y, { groesse: 9, fett: true, rechts: true });
+  y -= 28;
+  let ty = z.text(s, "TanzRaum Verein-Tarif – Jahreslizenz", RAND + 6, y, { groesse: 10, fett: true, breite: 330 });
+  ty = z.text(s, d.art === "verlaengerung" ? "Verlängerung um 1 Jahr, nahtlos im Anschluss" : "Laufzeit 1 Jahr ab Zahlungseingang", RAND + 6, ty, { groesse: 9, farbe: GRAU });
+  z.text(s, euro(betrag), rechts - 6, y, { groesse: 10, rechts: true });
+  y = ty - 6;
+  s.drawLine({ start: { x: RAND, y }, end: { x: rechts, y }, thickness: 0.7, color: LINIE });
+  y -= 20;
+  const sx = RAND + 290;
+  s.drawRectangle({ x: sx - 8, y: y - 8, width: rechts - sx + 8, height: 26, color: rgb(0.992, 0.949, 0.953) });
+  z.text(s, "Zu zahlen", sx, y, { groesse: 11.5, fett: true });
+  z.text(s, euro(betrag), rechts - 6, y, { groesse: 11.5, fett: true, rechts: true });
+  y -= 38;
+
+  // Bankverbindung
+  const boxH = 118;
+  s.drawRectangle({ x: RAND, y: y - boxH + 14, width: BREITE, height: boxH, borderColor: LINIE, borderWidth: 1, color: rgb(1, 1, 1) });
+  let by = y;
+  by = z.text(s, "Bitte überweise auf folgendes Konto", RAND + 12, by, { groesse: 10.5, fett: true }) - 4;
+  const zeilen: [string, string][] = [
+    ["Kontoinhaber", bank.inhaber ?? ""],
+    ["IBAN", ibanLesbar(bank.iban)],
+    ...(bank.bic ? ([["BIC", bank.bic]] as [string, string][]) : []),
+    ...(bank.bank ? ([["Bank", bank.bank]] as [string, string][]) : []),
+    ["Betrag", euro(betrag)],
+    ["Verwendungszweck", `${d.referenz} TanzRaum`],
+  ];
+  for (const [k, v] of zeilen) {
+    z.text(s, k, RAND + 12, by, { groesse: 9.5, farbe: GRAU });
+    z.text(s, v, RAND + 130, by, { groesse: 10, fett: k === "IBAN" || k === "Verwendungszweck" });
+    by -= 14;
+  }
+  y = y - boxH - 6;
+
+  if (a.kleinunternehmer !== false) {
+    y = z.text(s, a.kleinunternehmer_hinweis || "Gemäß § 19 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmerregelung).", RAND, y, { groesse: 9.5, breite: BREITE }) - 4;
+  }
+  y = z.text(s, "Bitte gib unbedingt den Verwendungszweck an, damit wir die Zahlung zuordnen können. Die Rechnung erhältst du nach Zahlungseingang automatisch per E-Mail.", RAND, y, { groesse: 9.5, farbe: GRAU, breite: BREITE }) - 4;
+  z.text(s, "Diese Zahlungsaufforderung ist keine Rechnung.", RAND, y, { groesse: 9, farbe: GRAU, breite: BREITE });
+  return await doc.save();
 }
 
 // Eine oder mehrere Rechnungen als PDF (je Rechnung eine Seite)

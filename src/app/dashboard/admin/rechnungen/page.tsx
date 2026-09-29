@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Receipt, Download, FileStack } from "lucide-react";
+import { Receipt, Download, FileStack, Landmark } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { RechnungenListe, type RechnungZeile } from "@/components/admin/RechnungenListe";
+import { UeberweisungenListe, type UeberweisungZeile } from "@/components/admin/UeberweisungenListe";
 
 export const metadata = { title: "Rechnungen – TanzRaum-Administration" };
 
@@ -32,7 +33,13 @@ export default async function RechnungenSeite({ searchParams }: { searchParams: 
     .order("nummer", { ascending: false })
     .limit(500);
   if (jahr) q = q.gte("rechnungsdatum", `${jahr}-01-01`).lte("rechnungsdatum", `${jahr}-12-31`);
-  const [{ data }, { data: jahreDaten }] = await Promise.all([q, supabase.from("rechnungen").select("rechnungsdatum").order("rechnungsdatum")]);
+  const [{ data }, { data: jahreDaten }, { data: ueberweisungen }] = await Promise.all([
+    q,
+    supabase.from("rechnungen").select("rechnungsdatum").order("rechnungsdatum"),
+    supabase.rpc("admin_ueberweisungen"),
+  ]);
+  const ueListe = (ueberweisungen ?? []) as UeberweisungZeile[];
+  const ueOffen = ueListe.filter((u) => u.status === "offen").length;
   const liste = (data ?? []) as RechnungZeile[];
   const jahre = [...new Set((jahreDaten ?? []).map((r: { rechnungsdatum: string }) => Number(r.rechnungsdatum.slice(0, 4))))].sort((a, b) => b - a);
   const summe = liste.reduce((s, r) => s + Number(r.betrag), 0);
@@ -43,6 +50,15 @@ export default async function RechnungenSeite({ searchParams }: { searchParams: 
       <Link href="/dashboard/admin" className="text-[13px] font-semibold text-brand-ink-soft hover:text-brand-ink">
         ← Administration
       </Link>
+      <section id="ueberweisungen" className={KARTE}>
+        <KarteKopf
+          icon={Landmark}
+          titel={`Offene Überweisungen${ueOffen ? ` (${ueOffen})` : ""}`}
+          untertitel="Vereinslizenzen per Überweisung. Sobald das Geld auf deinem Konto ist (Verwendungszweck = Referenz ZA-…): „Zahlung eingegangen“ – die Lizenz wird für 1 Jahr freigeschaltet und die Rechnung automatisch versendet."
+        />
+        <UeberweisungenListe liste={ueListe} />
+      </section>
+
       <section className={KARTE}>
         <KarteKopf
           icon={Receipt}

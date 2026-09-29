@@ -1,26 +1,17 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import Link from "next/link";
-import { Check, CreditCard, Building2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Check, CreditCard, Building2, Landmark } from "lucide-react";
 import { zahlungAufruf } from "./zahlungAufruf";
-import { vereinFuerLizenzAnlegen } from "@/app/dashboard/tarif/actions";
+import { ueberweisungBeantragen, vereinFuerLizenzAnlegen } from "@/app/dashboard/tarif/actions";
+import { TARIF_LEISTUNGEN } from "@/lib/tarif-leistungen";
 import { SendenButton, Meldung, LEERES_ERGEBNIS } from "@/components/ui/SendenButton";
 import { euro, ersparnis, gratisMonate, type BezahlTarif, type Periode, type Preise } from "@/lib/tarife";
 import { LEISTUNGSBEGINN_TEXT } from "@/lib/recht/leistungsbeginn";
 
 type AdminVerein = { id: string; name: string; lizenz: boolean };
-
-const LEISTUNGEN: Record<"free" | BezahlTarif, string[]> = {
-  free: ["Dein TanzRaum-Konto", "Turnierkalender", "Kontaktanfragen im Netzwerk", "Nachrichten mit Vereinskontakten"],
-  basic: ["Alles aus FREE", "TanzRaum Connect mit Map und Suche", "Eigener Kalender, Dateien, Musik", "Nachrichten im Netzwerk"],
-  verein: [
-    "Vereinslizenz für deinen Verein",
-    "Alle aktiven Mitglieder erhalten VEREIN-Zugang",
-    "Mitglieder, Anwesenheit, Saison, Finanzen",
-    "Trainer-Netzwerk für zugeordnete Trainer",
-  ],
-};
 
 export function TarifKarten({
   preise,
@@ -32,6 +23,7 @@ export function TarifKarten({
   startPeriode,
   vorgewaehlterVerein,
   wunsch,
+  ueberweisungMoeglich = false,
 }: {
   preise: Preise;
   effektiv: string;
@@ -42,6 +34,7 @@ export function TarifKarten({
   startPeriode: Periode;
   vorgewaehlterVerein: string | null;
   wunsch: string | null;
+  ueberweisungMoeglich?: boolean;
 }) {
   const [periode, setPeriode] = useState<Periode>(startPeriode);
   const [laedt, setLaedt] = useState<string | null>(null);
@@ -52,6 +45,22 @@ export function TarifKarten({
     kaufbar.find((v) => v.id === vorgewaehlterVerein)?.id ?? kaufbar[0]?.id ?? "",
   );
   const [neu, anlegen] = useActionState(vereinFuerLizenzAnlegen, LEERES_ERGEBNIS);
+  const router = useRouter();
+  const maxErsparnis = Math.max(ersparnis(preise, "basic"), ersparnis(preise, "verein"));
+  const [ueLaeuft, ueStarten] = useTransition();
+  const [ueMeldung, setUeMeldung] = useState<{ error: string | null; ok?: string | null } | null>(null);
+
+  function perUeberweisung() {
+    setUeMeldung(null);
+    ueStarten(async () => {
+      const r = await ueberweisungBeantragen(vereinId, leistungsbeginn);
+      setUeMeldung(r);
+      if (!r.error) {
+        router.refresh();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+  }
 
   async function kaufen(tarif: BezahlTarif, anbieter: "stripe" | "paypal") {
     setFehler(null);
@@ -109,6 +118,26 @@ export function TarifKarten({
         >
           {laedt === `${tarif}-paypal` ? "Weiter zu PayPal …" : "Mit PayPal bezahlen"}
         </button>
+        {tarif === "verein" && ueberweisungMoeglich && periode === "jahr" && (
+          <button
+            type="button"
+            disabled={gesperrt || laedt !== null || ueLaeuft || !leistungsbeginn}
+            onClick={perUeberweisung}
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-brand-line bg-white px-4 py-2 text-[13.5px] font-semibold text-brand-ink hover:bg-brand-bg disabled:opacity-50"
+          >
+            <Landmark size={16} /> {ueLaeuft ? "Wird beauftragt …" : "Per Überweisung (ohne Gebühren)"}
+          </button>
+        )}
+        {tarif === "verein" && ueberweisungMoeglich && periode === "monat" && (
+          <p className="text-[12px] text-brand-ink-soft">
+            Per Überweisung?{" "}
+            <button type="button" onClick={() => setPeriode("jahr")} className="font-semibold text-brand-red underline">
+              Bei jährlicher Zahlung möglich
+            </button>
+          </p>
+        )}
+        {tarif === "verein" && ueMeldung?.error && <p className="form-error">{ueMeldung.error}</p>}
+        {tarif === "verein" && ueMeldung?.ok && <p className="form-success">{ueMeldung.ok}</p>}
         {fehler?.tarif === tarif && <p className="form-error">{fehler.text}</p>}
       </div>
     );
@@ -133,8 +162,11 @@ export function TarifKarten({
             )}
           </div>
         ) : (
-          <div className="text-[12.5px] text-brand-ink-soft">
-            monatlich kündbar · jährlich {euro(preise[tarif].jahr)} ({gratis > 0 ? `${gratis} Monate gratis` : "günstiger"})
+          <div className="flex flex-col gap-0.5 text-[12.5px] text-brand-ink-soft">
+            <span>monatlich kündbar</span>
+            <button type="button" onClick={() => setPeriode("jahr")} className="w-fit text-left font-semibold text-brand-green hover:underline">
+              💡 Jährlich buchen{gratis > 0 ? ` & ${gratis} ${gratis === 1 ? "Monat" : "Monate"} sparen` : " und sparen"} →
+            </button>
           </div>
         )}
         <div className="text-[12px] text-brand-ink-soft">
@@ -146,10 +178,14 @@ export function TarifKarten({
 
   function Liste({ tarif }: { tarif: "free" | BezahlTarif }) {
     return (
-      <ul className="flex flex-col gap-1.5 text-[13px] text-brand-ink">
-        {LEISTUNGEN[tarif].map((l) => (
-          <li key={l} className="flex gap-2">
-            <Check size={15} className="mt-0.5 shrink-0 text-brand-green" /> {l}
+      <ul className="flex flex-col gap-2 text-[13.5px] text-brand-ink">
+        {TARIF_LEISTUNGEN[tarif].map((l) => (
+          <li key={l.text} className={`flex gap-2 ${l.bald ? "text-brand-ink-soft" : ""}`}>
+            <Check size={16} className={`mt-0.5 shrink-0 ${l.bald ? "text-brand-ink-soft" : "text-brand-red"}`} />
+            <span>
+              {l.text}
+              {l.bald && <span className="ml-1.5 rounded-full bg-brand-bg px-2 py-0.5 text-[11px] font-semibold">bald</span>}
+            </span>
           </li>
         ))}
       </ul>
@@ -172,7 +208,16 @@ export function TarifKarten({
               onClick={() => setPeriode(p)}
               className={`rounded-full px-3.5 py-1 font-semibold ${periode === p ? "bg-brand-red text-white" : "text-brand-ink-soft"}`}
             >
-              {p === "monat" ? "Monatlich" : "Jährlich · 🎁 2 Monate gratis"}
+              {p === "monat" ? (
+                "Monatlich"
+              ) : (
+                <span className="inline-flex items-center gap-2">
+                  Jährlich
+                  {maxErsparnis > 0 && (
+                    <span className="rounded-full bg-brand-green px-2 py-0.5 text-[11px] font-bold text-white">spare bis zu {euro(maxErsparnis)}</span>
+                  )}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -182,7 +227,7 @@ export function TarifKarten({
         {/* FREE */}
         <section className={karte(effektiv === "free")}>
           <div>
-            <div className="text-[13px] font-bold tracking-wide text-brand-ink-soft">FREE</div>
+            <div className="text-[19px] font-extrabold text-brand-ink">Free</div>
             <div className="text-[28px] font-extrabold text-brand-ink">0 €</div>
             <div className="text-[12.5px] text-brand-ink-soft">dauerhaft kostenlos</div>
           </div>
@@ -192,7 +237,10 @@ export function TarifKarten({
 
         {/* BASIC */}
         <section className={karte(wunsch === "basic" || persoenlich === "basic")}>
-          <div className="text-[13px] font-bold tracking-wide text-brand-ink-soft">BASIC · für dich persönlich</div>
+          <div>
+            <div className="text-[19px] font-extrabold text-brand-ink">Basic</div>
+            <div className="text-[12.5px] text-brand-ink-soft">für dich persönlich</div>
+          </div>
           <Preis tarif="basic" />
           <Liste tarif="basic" />
           <div className="mt-auto">
@@ -208,7 +256,10 @@ export function TarifKarten({
 
         {/* VEREIN */}
         <section id="verein" className={karte(wunsch === "verein")}>
-          <div className="text-[13px] font-bold tracking-wide text-brand-ink-soft">VEREIN · Lizenz für deinen Verein</div>
+          <div>
+            <div className="text-[19px] font-extrabold text-brand-ink">Verein</div>
+            <div className="text-[12.5px] text-brand-ink-soft">Lizenz für deinen ganzen Verein</div>
+          </div>
           <Preis tarif="verein" />
           <Liste tarif="verein" />
           <p className="text-[12px] text-brand-ink-soft">
@@ -238,7 +289,7 @@ export function TarifKarten({
               </>
             ) : adminVereine.length > 0 ? (
               <div className={hinweis}>
-                Deine Vereine haben bereits eine aktive Lizenz.{" "}
+                Deine Vereine haben bereits eine Lizenz oder eine beauftragte Überweisung (siehe oben).{" "}
                 <Link href="/dashboard/verein" className="text-brand-red underline">
                   Zum Verein
                 </Link>

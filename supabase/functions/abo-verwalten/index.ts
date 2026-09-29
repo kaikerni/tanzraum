@@ -24,11 +24,15 @@ Deno.serve(async (req) => {
   if (!abo || !["active", "trialing", "past_due", "paused_by_organization"].includes(abo.status)) {
     return antwort({ error: "Dieses Abo ist nicht aktiv." }, 400);
   }
-  if (abo.anbieter === "manuell" || !abo.anbieter_abo_id) return antwort({ error: "Dieses Abo verwaltet der TanzRaum-Support – bitte schreib an info@tanzraum.app." }, 400);
+  if (abo.anbieter === "manuell" || (!abo.anbieter_abo_id && abo.anbieter !== "ueberweisung")) return antwort({ error: "Dieses Abo verwaltet der TanzRaum-Support – bitte schreib an info@tanzraum.app." }, 400);
 
   try {
     let laeuftBis: string | null = abo.laeuft_bis;
-    if (abo.anbieter === "stripe") {
+    if (abo.anbieter === "ueberweisung") {
+      // Ueberweisung: nichts beim Anbieter zu tun – keine weitere Zahlungsaufforderung, offene Verlaengerung entfaellt
+      await admin.from("zahlungsaufforderungen").update({ status: "storniert", storniert_am: new Date().toISOString() })
+        .eq("abo_id", abo.id).eq("status", "offen");
+    } else if (abo.anbieter === "stripe") {
       const sub = await stripe(`subscriptions/${abo.anbieter_abo_id}`, "POST", { cancel_at_period_end: "true" });
       laeuftBis = stripeStatus(sub).laeuftBis ?? laeuftBis;
     } else {

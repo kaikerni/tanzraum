@@ -38,5 +38,12 @@ Deno.serve(async (req) => {
       await admin.from("abos").update({ letzter_fehler: pausieren ? "Pausieren beim Anbieter fehlgeschlagen" : "Fortsetzen beim Anbieter fehlgeschlagen" }).eq("id", a.abo_id);
     }
   }
-  return new Response(JSON.stringify({ ok, fehler }), { headers: JSON_KOPF });
+  // Vereinslizenz per Ueberweisung: 30 Tage vor Ablauf Zahlungsaufforderung anlegen und versenden
+  let aufforderungen = 0;
+  const { data: neu } = await admin.rpc("ueberweisung_verlaengerungen");
+  for (const id of (neu ?? []) as string[]) {
+    const { error: e } = await admin.functions.invoke("zahlungsaufforderung", { body: { aufforderung_id: id, aktion: "senden" } });
+    if (!e) aufforderungen++;
+  }
+  return new Response(JSON.stringify({ ok, fehler, aufforderungen }), { headers: JSON_KOPF });
 });

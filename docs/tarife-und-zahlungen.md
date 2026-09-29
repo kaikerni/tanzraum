@@ -135,6 +135,25 @@ Migration `20260929215046_rechnungen_pdf`.
 - Administration → Rechnungen (`/dashboard/admin/rechnungen`): Liste mit Jahresfilter und Summe, Zeile anklicken →
   Vorschau, „PDF herunterladen“, „Erneut per E-Mail senden“, „Alle Rechnungen (des Jahres) als PDF“, CSV.
 
+## Vereinslizenz per Überweisung
+
+Nur Verein-Tarif, nur jährlich, ohne Zahlungsanbieter (keine Gebühren). Sichtbar erst, wenn in
+Administration → Anbieterangaben Kontoinhaber und IBAN hinterlegt sind (`ueberweisung_moeglich`).
+
+1. Vereinsadmin wählt „Per Überweisung (ohne Gebühren)“ → `ueberweisung_beantragen`: Abo `pending`
+   (`anbieter='ueberweisung'`) + Zahlungsaufforderung (`zahlungsaufforderungen`, Referenz `ZA-XXXXXX`, fällig in 14 Tagen).
+   Edge Function `zahlungsaufforderung` schickt Mail + PDF (Bankverbindung, Betrag, Verwendungszweck) und
+   einen Hinweis an die Anbieter-E-Mail.
+2. Solange eine Überweisung offen ist, ist Stripe/PayPal für diesen Verein gesperrt (keine Doppelzahlung).
+   Unter „Mein Tarif“ stehen Bankdaten (Kopieren), PDF, erneut senden und Zurückziehen.
+3. Geld da → Administration → Rechnungen → „Offene Überweisungen“ → „Zahlung eingegangen“
+   (`admin_ueberweisung_bestaetigen`): Lizenz aktiv für 1 Jahr (bei Verlängerung nahtlos ab bisherigem Ende),
+   Rechnung mit Leistungszeitraum wird erstellt und automatisch versendet.
+4. 30 Tage vor Ablauf legt `abo-abgleich` (`ueberweisung_verlaengerungen`) automatisch eine Verlängerungs-Aufforderung
+   an und versendet sie. Ohne Zahlung endet die Lizenz zum Stichtag (`abos_ablaufen`); nie bezahlte Erst-Aufforderungen
+   werden nach 30 Tagen storniert.
+5. Kündigen unter „Mein Tarif“: Lizenz bleibt bis zum Ende aktiv, offene Aufforderungen werden storniert.
+
 ## Backup (Free-Plan)
 
 Der Supabase-Free-Plan hat **keine automatischen Backups**. Empfehlung: regelmäßig (mind. wöchentlich und vor

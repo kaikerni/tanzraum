@@ -18,6 +18,10 @@ export type AnbieterDaten = {
   kleinunternehmer_hinweis: string;
   ust_id: string | null;
   steuernummer: string | null;
+  bank_inhaber: string | null;
+  iban: string | null;
+  bic: string | null;
+  bank_name: string | null;
 };
 
 export function AnbieterFormular({ a }: { a: AnbieterDaten }) {
@@ -80,6 +84,32 @@ export function AnbieterFormular({ a }: { a: AnbieterDaten }) {
           <label className="field">
             <span>Steuernummer (nur auf Rechnungen, nicht öffentlich)</span>
             <input name="steuernummer" defaultValue={a.steuernummer ?? ""} maxLength={30} />
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset className="flex flex-col gap-2 rounded-xl border border-brand-line p-3">
+        <legend className="px-1 text-[12px] font-semibold uppercase tracking-wide text-brand-ink-soft">Bankverbindung (Vereinslizenz per Überweisung)</legend>
+        <p className="text-[12.5px] text-brand-ink-soft">
+          Erscheint nur auf Zahlungsaufforderungen und bei Vereinsadmins mit offener Überweisung – nicht öffentlich. Ohne IBAN und
+          Kontoinhaber wird die Zahlart „Überweisung“ nicht angeboten.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="field">
+            <span>Kontoinhaber</span>
+            <input name="bank_inhaber" defaultValue={a.bank_inhaber ?? ""} maxLength={120} autoComplete="off" />
+          </label>
+          <label className="field">
+            <span>Bank (optional)</span>
+            <input name="bank_name" defaultValue={a.bank_name ?? ""} maxLength={120} autoComplete="off" />
+          </label>
+          <label className="field">
+            <span>IBAN</span>
+            <input name="iban" defaultValue={a.iban ?? ""} maxLength={42} autoComplete="off" spellCheck={false} />
+          </label>
+          <label className="field">
+            <span>BIC (optional)</span>
+            <input name="bic" defaultValue={a.bic ?? ""} maxLength={11} autoComplete="off" spellCheck={false} />
           </label>
         </div>
       </fieldset>

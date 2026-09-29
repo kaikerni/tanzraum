@@ -1,66 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CreditCard, Building2, PauseCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { CreditCard, Building2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 import { TarifKarten } from "@/components/tarif/TarifKarten";
-import { AboKuendigen } from "@/components/tarif/AboKuendigen";
-import {
-  ABO_STATUS_LABEL,
-  ANBIETER_LABEL,
-  PERIODE_LABEL,
-  TARIF_LABEL,
-  datum,
-  euro,
-  getPreise,
-  type AboInfo,
-  type MeinTarifStatus,
-} from "@/lib/tarife";
+import { LizenzKarte } from "@/components/tarif/LizenzKarte";
+import { OffeneUeberweisung } from "@/components/tarif/OffeneUeberweisung";
+import { TARIF_LABEL, datum, getPreise, type MeinTarifStatus } from "@/lib/tarife";
 
 export const metadata = { title: "Mein Tarif" };
-
-const KUENDBAR = ["active", "trialing", "past_due", "paused_by_organization"];
-
-function AboZeile({ abo, titel }: { abo: AboInfo; titel: string }) {
-  const bis = datum(abo.gekuendigt_zum ?? abo.laeuft_bis);
-  return (
-    <div className="flex flex-col gap-2 rounded-xl border border-brand-line p-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-col gap-0.5 text-[13.5px]">
-        <span className="font-bold text-brand-ink">
-          {titel} · {PERIODE_LABEL[abo.periode] ?? abo.periode}
-          {abo.anbieter !== "manuell" && ` · ${euro(abo.preis_cent)}`}
-        </span>
-        <span className="text-brand-ink-soft">
-          Status: <strong className="text-brand-ink">{ABO_STATUS_LABEL[abo.status] ?? abo.status}</strong> · {ANBIETER_LABEL[abo.anbieter] ?? abo.anbieter}
-        </span>
-        {abo.status === "paused_by_organization" && (
-          <span className="flex items-center gap-1.5 text-brand-ink-soft">
-            <PauseCircle size={14} /> Pausiert seit {datum(abo.pausiert_am)}
-            {abo.pause_verein ? `, weil ${abo.pause_verein} eine Vereinslizenz hat` : ""}. Es wird nichts abgebucht; nach
-            dem Ende der Vereinsabdeckung läuft deine Lizenz automatisch weiter.
-          </span>
-        )}
-        {abo.status === "cancelled" && bis && <span className="text-brand-ink-soft">Gekündigt – der Tarif bleibt bis {bis} aktiv.</span>}
-        {abo.status === "past_due" && (
-          <span className="flex items-center gap-1.5 text-brand-red">
-            <AlertTriangle size={14} /> Die letzte Zahlung ist fehlgeschlagen. Bitte prüfe deine Zahlungsart beim Anbieter.
-          </span>
-        )}
-        {abo.status === "pending" && <span className="text-brand-ink-soft">Wir warten auf die Bestätigung des Zahlungsanbieters.</span>}
-        {["active", "trialing"].includes(abo.status) && bis && <span className="text-brand-ink-soft">Nächste Verlängerung: {bis}</span>}
-      </div>
-      {KUENDBAR.includes(abo.status) && abo.anbieter !== "manuell" && (
-        <AboKuendigen
-          aboId={abo.id}
-          frage={`${titel} wirklich kündigen? Der Tarif bleibt bis zum Ende des bezahlten Zeitraums aktiv.`}
-        />
-      )}
-      {KUENDBAR.includes(abo.status) && abo.anbieter === "manuell" && (
-        <span className="text-[12.5px] text-brand-ink-soft">Kündigung über info@tanzraum.app</span>
-      )}
-    </div>
-  );
-}
 
 export default async function MeinTarifSeite({
   searchParams,
@@ -118,9 +66,9 @@ export default async function MeinTarifSeite({
           </div>
         </div>
         {status.abos.length > 0 ? (
-          <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             {status.abos.map((a) => (
-              <AboZeile key={a.id} abo={a} titel={`${TARIF_LABEL[a.tarif] ?? a.tarif}-Lizenz`} />
+              <LizenzKarte key={a.id} abo={a} tarif={a.tarif} kopf="Deine aktive Lizenz" />
             ))}
           </div>
         ) : (
@@ -132,15 +80,16 @@ export default async function MeinTarifSeite({
         <section className={`${KARTE} flex flex-col gap-3`}>
           <h2 className="text-[16px] font-bold text-brand-ink">Vereinslizenzen, die du verwaltest</h2>
           {status.admin_vereine.map((v) => (
-            <div key={v.id} className="flex flex-col gap-2">
+            <div key={v.id} className="flex flex-col gap-3">
               <div className="flex items-center gap-2 text-[14px] font-semibold text-brand-ink">
                 {v.lizenz ? <CheckCircle2 size={16} className="text-brand-green" /> : <AlertTriangle size={16} className="text-brand-amber" />}
-                {v.name}: {v.lizenz ? `Lizenz aktiv${v.lizenz_bis ? ` bis ${datum(v.lizenz_bis)}` : ""}` : "keine Lizenz"}
+                {v.name}: {v.lizenz ? `Lizenz aktiv${v.lizenz_bis ? ` bis ${datum(v.lizenz_bis)}` : ""}` : v.ueberweisung ? "Lizenz nach Zahlungseingang" : "keine Lizenz"}
                 <Link href={`/dashboard/verein?verein=${v.id}`} className="ml-auto text-[12.5px] font-semibold text-brand-red">
                   Zum Verein →
                 </Link>
               </div>
-              {v.abo && <AboZeile abo={v.abo} titel={`Vereinslizenz ${v.name}`} />}
+              {v.ueberweisung && <OffeneUeberweisung u={v.ueberweisung} bank={status.bank} verein={v.name} />}
+              {v.abo && <LizenzKarte abo={v.abo} tarif="verein" kopf={`Vereinslizenz · ${v.name}`} />}
             </div>
           ))}
         </section>
@@ -153,7 +102,8 @@ export default async function MeinTarifSeite({
           persoenlich={z.persoenlicher_tarif}
           vereinszugang={z.vereinszugang}
           vereinName={status.verein_name}
-          adminVereine={status.admin_vereine.map((v) => ({ id: v.id, name: v.name, lizenz: v.lizenz }))}
+          adminVereine={status.admin_vereine.map((v) => ({ id: v.id, name: v.name, lizenz: v.lizenz || !!v.ueberweisung }))}
+          ueberweisungMoeglich={status.ueberweisung_moeglich === true}
           startPeriode={sp.periode === "jahr" ? "jahr" : "monat"}
           vorgewaehlterVerein={sp.verein ?? null}
           wunsch={sp.wunsch === "basic" || sp.wunsch === "verein" ? sp.wunsch : null}
