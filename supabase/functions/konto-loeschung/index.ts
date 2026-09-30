@@ -37,11 +37,12 @@ Deno.serve(async (req) => {
     if (typeof userId !== "string" || !UUID.test(userId)) return json({ error: "Ungültige Anfrage." }, 400);
     const { data: k } = await admin
       .from("konto_loeschungen")
-      .select("user_id, loeschen_ab, mails_gesendet, letzte_mail_am")
+      .select("user_id, loeschen_ab, mails_gesendet, letzte_mail_am, durch_admin")
       .eq("user_id", userId)
       .maybeSingle();
     // Keine Auskunft, ob ein Konto/Antrag existiert
-    if (!k || new Date(k.loeschen_ab).getTime() <= Date.now()) return json({ ok: true });
+    // Von der TanzRaum-Administration veranlasste Loeschungen haben keinen Widerrufslink
+    if (!k || k.durch_admin || new Date(k.loeschen_ab).getTime() <= Date.now()) return json({ ok: true });
     if (k.mails_gesendet >= 3 || (k.letzte_mail_am && Date.now() - new Date(k.letzte_mail_am).getTime() < 5 * 60_000)) {
       return json({ error: "Die E-Mail wurde gerade erst verschickt." }, 429);
     }

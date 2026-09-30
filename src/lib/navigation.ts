@@ -153,6 +153,7 @@ export const ADMIN_NAV: NavEintrag[] = [
   { href: "/dashboard/admin/meldungen", label: "Meldungen", icon: Flag, tarif: "free" },
   { href: "/dashboard/admin/statistik", label: "Plattform-Statistik", kurz: "Statistik", icon: BarChart3, tarif: "free" },
   { href: "/dashboard/admin/vereine", label: "Vereine", icon: Building2, tarif: "free" },
+  { href: "/dashboard/admin/benutzer", label: "Benutzer", icon: Users, tarif: "free" },
   { href: "/dashboard/admin/tarife", label: "Tarife & Lizenzen", kurz: "Tarife", icon: CreditCard, tarif: "free" },
   { href: "/dashboard/admin/rechnungen", label: "Rechnungen", icon: Receipt, tarif: "free" },
   { href: "/dashboard/admin/boerse", label: "Börse-Moderation", kurz: "Börse", icon: Store, tarif: "free" },

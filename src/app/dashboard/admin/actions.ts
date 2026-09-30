@@ -62,3 +62,26 @@ export async function musikEinstellen(aktiv: boolean): Promise<AktionsErgebnis> 
   revalidatePath("/dashboard", "layout");
   return { error: null, ok: aktiv ? "Musikbereich ist eingeschaltet." : "Musikbereich ist für alle ausgeschaltet." };
 }
+
+// Benutzerkonto loeschen: in 14 Tagen (abbrechbar) oder sofort. Hindernisse und Rechte prueft die Datenbank.
+export async function kontoLoeschenAdmin(userId: string, grund: string, sofort: boolean): Promise<AktionsErgebnis> {
+  if (!UUID.test(userId)) return { error: "Ungültige Auswahl." };
+  const text = grund.trim().slice(0, 500);
+  if (!text) return { error: "Bitte einen Grund angeben." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("admin_konto_loeschen", { p_user: userId, p_grund: text, p_sofort: sofort === true });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath("/dashboard/admin/benutzer");
+  if (sofort) return { error: null, ok: "Das Konto ist gesperrt und wird jetzt endgültig gelöscht (dauert wenige Sekunden)." };
+  const am = new Date(String(data)).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" });
+  return { error: null, ok: `Das Konto ist gesperrt und wird am ${am} endgültig gelöscht.` };
+}
+
+export async function kontoLoeschungAbbrechenAdmin(userId: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(userId)) return { error: "Ungültige Auswahl." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_konto_loeschung_abbrechen", { p_user: userId });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath("/dashboard/admin/benutzer");
+  return { error: null, ok: "Löschung abgebrochen – das Konto ist wieder nutzbar." };
+}
