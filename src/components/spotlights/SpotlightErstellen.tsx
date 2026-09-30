@@ -76,7 +76,7 @@ export function SpotlightErstellen({
         pfad = `${userId}/${crypto.randomUUID()}.${endung}`;
         const supabase = createClient();
         const { error } = await supabase.storage.from("spotlights").upload(pfad, blob, { contentType: blob.type || (art === "foto" ? "image/jpeg" : "video/mp4") });
-        if (error) throw new Error("Das Hochladen hat nicht geklappt (max. 50 MB). Bitte versuche es erneut.");
+        if (error) throw new Error("Das Foto konnte nicht hochgeladen werden. Bitte versuche es erneut.");
       }
       setStatus("Wird veröffentlicht …");
       const r = await spotlightErstellen({ mediaPfad: pfad, mediaTyp: art, text, hintergrund: art === "text" ? hintergrund : null, sticker, sichtbarkeit });

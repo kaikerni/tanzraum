@@ -53,10 +53,11 @@ const TARIF_LABEL: Record<string, string> = {
 };
 
 function begruessung(): string {
+  // Nur die Stunde (formatToParts), sonst liefert de-DE "11 Uhr" -> NaN -> faelschlich "Guten Abend"
   const stunde = Number(
-    new Intl.DateTimeFormat("de-DE", { hour: "2-digit", hourCycle: "h23", timeZone: "Europe/Berlin" }).format(
-      new Date(),
-    ),
+    new Intl.DateTimeFormat("de-DE", { hour: "numeric", hourCycle: "h23", timeZone: "Europe/Berlin" })
+      .formatToParts(new Date())
+      .find((t) => t.type === "hour")?.value ?? "12",
   );
   if (stunde < 11) return "Guten Morgen";
   if (stunde < 18) return "Guten Tag";
