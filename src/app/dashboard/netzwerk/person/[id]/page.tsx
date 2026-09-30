@@ -8,8 +8,7 @@ import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { PersonAktionen } from "@/components/netzwerk/PersonAktionen";
 import { farbeFuer, initialen } from "@/components/chat/ChatAvatar";
 import { PersonSpotlights } from "@/components/spotlights/PersonSpotlights";
-import { getSpotlightLeiste } from "@/lib/spotlights/getSpotlights";
-import { SPOTLIGHTS_AKTIV } from "@/lib/spotlights/typen";
+import { getSpotlightLeiste, spotlightsFuerMich } from "@/lib/spotlights/getSpotlights";
 import { funktionsBezeichnung, rollenBezeichnung, type Funktion } from "@/lib/geschlecht";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -18,6 +17,8 @@ export default async function PersonSeite({ params }: { params: Promise<{ id: st
   const { id } = await params;
   if (!UUID.test(id)) notFound();
   const supabase = await createClient();
+  // Spotlights nur, wenn die TanzRaum-Administration sie fuer den eigenen Tarif eingeschaltet hat
+  const spotlightsAn = await spotlightsFuerMich(supabase);
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -25,7 +26,7 @@ export default async function PersonSeite({ params }: { params: Promise<{ id: st
   const person = await getPerson(supabase, id);
   if (!person) notFound();
   const rollen = [...new Set(person.vereine.map((v) => rollenBezeichnung(v.rolle, person.geschlecht)))].join(" · ");
-  const spotlight = SPOTLIGHTS_AKTIV ? ((await getSpotlightLeiste(supabase)).find((p) => p.userId === person.id) ?? null) : null;
+  const spotlight = spotlightsAn ? ((await getSpotlightLeiste(supabase)).find((p) => p.userId === person.id) ?? null) : null;
 
   return (
     <div className="mx-auto flex max-w-[760px] flex-col gap-4">
@@ -109,7 +110,7 @@ export default async function PersonSeite({ params }: { params: Promise<{ id: st
         </section>
       )}
 
-      {SPOTLIGHTS_AKTIV && (
+      {spotlightsAn && (
       <section className={KARTE} id="spotlights">
         <KarteKopf icon={Sparkles} titel="Spotlights" />
         <PersonSpotlights person={spotlight} />

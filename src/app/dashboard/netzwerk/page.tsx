@@ -8,8 +8,7 @@ import { googleMapsBrowserSchluessel } from "@/lib/geo/geocode";
 import { NetzwerkListe } from "@/components/netzwerk/NetzwerkListe";
 import { KARTE } from "@/components/dashboard/Karten";
 import { SpotlightLeiste } from "@/components/spotlights/SpotlightLeiste";
-import { getSpotlightIch, getSpotlightLeiste } from "@/lib/spotlights/getSpotlights";
-import { SPOTLIGHTS_AKTIV } from "@/lib/spotlights/typen";
+import { getSpotlightIch, getSpotlightLeiste, spotlightsFuerMich } from "@/lib/spotlights/getSpotlights";
 
 export const metadata = { title: "TanzRaum Connect" };
 
@@ -17,6 +16,8 @@ type Ansicht = "map" | "liste";
 
 export default async function NetzwerkSeite({ searchParams }: { searchParams: Promise<{ ansicht?: string; verein?: string }> }) {
   const supabase = await createClient();
+  // Spotlights nur, wenn die TanzRaum-Administration sie fuer den eigenen Tarif eingeschaltet hat
+  const spotlightsAn = await spotlightsFuerMich(supabase);
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -24,7 +25,7 @@ export default async function NetzwerkSeite({ searchParams }: { searchParams: Pr
 
   // Free: Spotlights ansehen (und Profile daraus oeffnen), Map und Liste ab Basic
   if (!(await darfNetzwerk(supabase))) {
-    const [spotlights, ich] = SPOTLIGHTS_AKTIV
+    const [spotlights, ich] = spotlightsAn
       ? await Promise.all([getSpotlightLeiste(supabase), getSpotlightIch(supabase, user)])
       : [[], null];
     return (
@@ -54,8 +55,8 @@ export default async function NetzwerkSeite({ searchParams }: { searchParams: Pr
   // Die Map ist immer die Standardansicht; Spotlights stehen immer oben
   const ansicht: Ansicht = roh === "liste" ? "liste" : "map";
   const [spotlights, ich, punkte, { data: map }] = await Promise.all([
-    SPOTLIGHTS_AKTIV ? getSpotlightLeiste(supabase) : Promise.resolve([]),
-    SPOTLIGHTS_AKTIV ? getSpotlightIch(supabase, user) : Promise.resolve(null),
+    spotlightsAn ? getSpotlightLeiste(supabase) : Promise.resolve([]),
+    spotlightsAn ? getSpotlightIch(supabase, user) : Promise.resolve(null),
     ansicht === "map" ? getMapPunkte(supabase) : Promise.resolve([]),
     ansicht === "map" ? supabase.rpc("meine_map_einstellungen") : Promise.resolve({ data: null }),
   ]);

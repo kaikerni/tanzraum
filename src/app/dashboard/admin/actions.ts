@@ -21,3 +21,13 @@ export async function meldungBearbeiten(id: string, notiz: string, spotlightEntf
   revalidatePath("/dashboard/admin/meldungen");
   return { error: null, ok: "Meldung erledigt." };
 }
+
+// Spotlights plattformweit an/aus und fuer welche Tarife sichtbar (Pruefung in der Datenbank: nur Plattform-Administration)
+export async function spotlightsEinstellen(aktiv: boolean, tarife: string[]): Promise<AktionsErgebnis> {
+  const erlaubt = tarife.filter((t) => ["free", "basic", "verein"].includes(t));
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_spotlights_setzen", { p_aktiv: aktiv, p_tarife: erlaubt });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath("/dashboard", "layout");
+  return { error: null, ok: aktiv ? "Spotlights sind eingeschaltet." : "Spotlights sind für alle ausgeschaltet." };
+}

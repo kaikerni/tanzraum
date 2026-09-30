@@ -43,18 +43,18 @@ Nicht umgesetzt (bewusst): Connect Match, Radar, Newsfeed, dauerhafte Beiträge,
 
 ## Spotlights
 
-> **Derzeit ausgeblendet (pausiert).** Der aktuelle Supabase-Tarif hat zu wenig Speicher. Es werden keine Spotlights
-> angezeigt und nichts in Supabase gespeichert; Tabellen und Funktionen bleiben erhalten. Künftig **nur Fotos**
-> (max. 5 MB, im Browser verkleinert).
+> **Nur Fotos** (max. 5 MB, im Browser verkleinert), nach 24 Stunden automatisch gelöscht – wegen des Speichers im
+> Supabase-Tarif keine Videos.
 >
-> **Wieder einschalten** (nach Tarifwechsel):
-> 1. `src/lib/spotlights/typen.ts`: `SPOTLIGHTS_AKTIV = true`
-> 2. In `spotlight_erstellen` den Block „PAUSE“ (raise exception … derzeit nicht verfügbar) entfernen
-> 3. Upload-Regel anlegen:
->    `create policy "Nutzer laedt eigenes Spotlight-Medium hoch" on storage.objects for insert to authenticated
->    with check (bucket_id = 'spotlights' and (storage.foldername(name))[1] = (auth.uid())::text);`
->
-> Die folgende Beschreibung gilt ab dem Wiedereinschalten.
+> **Ein-/Ausschalten:** TanzRaum-Administration → Karte „Spotlights“ (Migration `20260930010027_spotlights_schalter`).
+> - Schalter an/aus für alle (`plattform_einstellungen.spotlights_aktiv`, Standard aus). Aus = Leiste, Profilbereich,
+>   Medien und Erstellen für alle weg; nichts wird gelöscht.
+> - Tarife, für die Spotlights erscheinen (`spotlights_tarife`: FREE/BASIC/VEREIN). Die Administration sieht und
+>   erstellt Spotlights immer, solange sie eingeschaltet sind.
+> - Geprüft in der Datenbank: `spotlights_fuer_mich()` in `darf_spotlight_sehen`, `spotlight_medium_sichtbar`,
+>   `spotlight_erstellen` und in der Upload-Regel; die App fragt `spotlights_fuer_mich` ab.
+
+> Die folgende Beschreibung gilt, solange Spotlights eingeschaltet sind.
 
 - Immer **persönlich**: Besitzer ist die angemeldete Person (`spotlight_erstellen` setzt ihn serverseitig), Anzeige nur
   mit persönlichem Namen und Profilbild – nie Verein, Gruppe oder Rolle; kein „Posten als Verein/Gruppe“.

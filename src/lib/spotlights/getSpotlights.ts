@@ -2,6 +2,12 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { SpotlightPerson } from "./typen";
 import type { Ich } from "@/components/spotlights/SpotlightLeiste";
 
+// Schalter der TanzRaum-Administration (an/aus + freigegebene Tarife), geprueft in der Datenbank
+export async function spotlightsFuerMich(supabase: SupabaseClient): Promise<boolean> {
+  const { data } = await supabase.rpc("spotlights_fuer_mich");
+  return data === true;
+}
+
 export async function getSpotlightLeiste(supabase: SupabaseClient): Promise<SpotlightPerson[]> {
   const { data } = await supabase.rpc("spotlight_leiste");
   // deno-lint-ignore no-explicit-any

@@ -18,8 +18,7 @@ import { ZEITRAEUME } from "@/lib/dashboard/zeitraeume";
 import { DashboardAnsicht } from "@/components/dashboard/DashboardAnsicht";
 import { KARTE } from "@/components/dashboard/Karten";
 import { SpotlightLeiste } from "@/components/spotlights/SpotlightLeiste";
-import { getSpotlightIch, getSpotlightLeiste } from "@/lib/spotlights/getSpotlights";
-import { SPOTLIGHTS_AKTIV } from "@/lib/spotlights/typen";
+import { getSpotlightIch, getSpotlightLeiste, spotlightsFuerMich } from "@/lib/spotlights/getSpotlights";
 import { TarifZaehler, type TarifZaehlerDaten } from "@/components/admin/TarifZaehler";
 import { getAnkuendigungen, getMeineNews, getMeineUmfragen } from "@/lib/news/getNews";
 import { AnkuendigungenLeiste } from "@/components/news/AnkuendigungenLeiste";
@@ -31,6 +30,8 @@ export default async function DashboardPage({
   searchParams: Promise<{ wochen?: string }>;
 }) {
   const supabase = await createClient();
+  // Spotlights nur, wenn die TanzRaum-Administration sie fuer den eigenen Tarif eingeschaltet hat
+  const spotlightsAn = await spotlightsFuerMich(supabase);
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -65,7 +66,7 @@ export default async function DashboardPage({
     getOnline(supabase, daten.istPlattformAdmin),
   ]);
   // Spotlights prominent oben (ansehen: alle, erstellen: ab Basic bzw. mit Vereinslizenz)
-  const [spotlightIch, spotlights] = SPOTLIGHTS_AKTIV
+  const [spotlightIch, spotlights] = spotlightsAn
     ? await Promise.all([getSpotlightIch(supabase, user), getSpotlightLeiste(supabase)])
     : [null, []];
 
