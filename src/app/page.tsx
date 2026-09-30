@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getPreise } from "@/lib/tarife";
 import { Startseite } from "@/components/start/Startseite";
@@ -25,13 +24,20 @@ export const metadata: Metadata = {
   },
 };
 
-// Nicht angemeldet: oeffentliche Startseite. Angemeldet: direkt ins Dashboard.
+// Startseite immer sichtbar – angemeldete Nutzer sehen statt „Anmelden/Registrieren“ den Weg zum Dashboard.
+// (Die installierte App startet direkt im Dashboard, siehe manifest start_url.)
 export default async function Home() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (user) redirect("/dashboard");
-  const preise = await getPreise(supabase);
-  return <Startseite preise={preise} />;
+  const [
+    {
+      data: { user },
+    },
+    preise,
+  ] = await Promise.all([supabase.auth.getUser(), getPreise(supabase)]);
+  let vorname: string | null = null;
+  if (user) {
+    const { data } = await supabase.from("profiles").select("vorname").eq("id", user.id).maybeSingle();
+    vorname = (data?.vorname as string | null) ?? "";
+  }
+  return <Startseite preise={preise} angemeldet={user ? { vorname } : null} />;
 }

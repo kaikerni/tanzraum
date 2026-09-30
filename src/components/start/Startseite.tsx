@@ -2,7 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Activity,
+  ArrowRight,
   Bell,
+  Car,
+  Music,
+  Newspaper,
+  Shirt,
+  Store,
+  Wallet,
   Building2,
   CalendarDays,
   Check,
@@ -25,9 +32,10 @@ import {
 } from "lucide-react";
 import { euro, gratisMonate, type Preise } from "@/lib/tarife";
 import { Einblenden } from "./Einblenden";
+import { AppInstallieren } from "./AppInstallieren";
 import { ChatScreen, DashboardScreen, InstallScreen, KalenderScreen, SpotlightScreen, Telefon, TrainingScreen, VereinScreen } from "./Telefon";
 
-// Oeffentliche Startseite fuer nicht angemeldete Besucher. Nur Demo-Inhalte, keine Datenbankdaten ausser den Preisen.
+// Oeffentliche Startseite (immer sichtbar, auch angemeldet). Nur Demo-Inhalte, keine Datenbankdaten ausser den Preisen.
 
 const BREITE = "mx-auto w-full max-w-[1200px] px-4 sm:px-6";
 const KNOPF_PRIMAER =
@@ -70,15 +78,19 @@ const ZIELGRUPPEN: { titel: string; claim: string; icon: LucideIcon; farbe: stri
   },
 ];
 
-const FUNKTIONEN: { titel: string; icon: LucideIcon; farbe: string; punkte: string[] }[] = [
+const FUNKTIONEN: { titel: string; icon: LucideIcon; farbe: string; punkte: string[]; bald?: boolean }[] = [
   { titel: "Training", icon: Activity, farbe: "text-brand-red bg-brand-red-wash", punkte: ["Trainingsübersicht", "An- und Abmeldung", "Anwesenheit", "Informationen"] },
   { titel: "Kalender", icon: CalendarDays, farbe: "text-brand-blue bg-brand-blue-wash", punkte: ["Training", "Veranstaltungen", "Turniere", "Termine"] },
-  { titel: "Chat", icon: MessageCircle, farbe: "text-brand-green bg-brand-green-wash", punkte: ["Nachrichten", "Gruppen", "Dateien und Bilder", "Emojis"] },
-  { titel: "TanzRaum Connect", icon: Globe, farbe: "text-brand-purple bg-brand-purple-wash", punkte: ["Netzwerk", "Kontakte", "Tanzsport-Community"] },
-  { titel: "Spotlight", icon: Sparkles, farbe: "text-brand-gold bg-brand-gold-wash", punkte: ["Story-ähnliche Beiträge", "Bilder und Videos", "Updates"] },
-  { titel: "Tanzgruppen", icon: Users, farbe: "text-brand-red bg-brand-red-wash", punkte: ["Gruppenorganisation", "Tänzer", "Trainer und Betreuer"] },
-  { titel: "Vereinsverwaltung", icon: Settings2, farbe: "text-brand-navy bg-brand-bg", punkte: ["Mitglieder und Gruppen", "Vereinsdaten", "Mitgliedsanträge", "Organisation"] },
-  { titel: "JuryRaum", icon: Gavel, farbe: "text-brand-gold bg-brand-gold-wash", punkte: ["Separater geschützter Bereich", "Juryfunktionen", "Bewertungen"] },
+  { titel: "Chat", icon: MessageCircle, farbe: "text-brand-green bg-brand-green-wash", punkte: ["Nachrichten", "Gruppen", "Dateien und Bilder", "TanzRaum-Smileys"] },
+  { titel: "News & Umfragen", icon: Newspaper, farbe: "text-brand-blue bg-brand-blue-wash", punkte: ["Vereinsnachrichten", "Lesebestätigung", "Abstimmungen"] },
+  { titel: "TanzRaum Connect", icon: Globe, farbe: "text-brand-purple bg-brand-purple-wash", punkte: ["Karte und Suche", "Kontakte", "Tanzsport-Community"] },
+  { titel: "Spotlight", icon: Sparkles, farbe: "text-brand-gold bg-brand-gold-wash", punkte: ["Fotos mit Text und Smileys", "24 Stunden sichtbar", "Für Kontakte oder alle"] },
+  { titel: "TanzRaum Börse", icon: Store, farbe: "text-brand-gold bg-brand-gold-wash", punkte: ["Kostüme, Schuhe, Requisiten", "Kaufen, tauschen, verschenken", "Kontakt über den Chat"] },
+  { titel: "Fahrgemeinschaften", icon: Car, farbe: "text-brand-green bg-brand-green-wash", punkte: ["Fahrten anbieten und suchen", "Zu Turnier und Training", "Nur im eigenen Verein"] },
+  { titel: "Kostüme & Requisiten", icon: Shirt, farbe: "text-brand-red bg-brand-red-wash", punkte: ["Inventar und Kostümsätze", "Ausgabe und Rückgabe", "Wer hat was – mit Rückgabedatum"] },
+  { titel: "Finanzen", icon: Wallet, farbe: "text-brand-navy bg-brand-bg", punkte: ["Kassenbuch mit Belegen", "Mitgliedsbeiträge", "Export für die Kassenprüfung"] },
+  { titel: "Vereinsverwaltung", icon: Settings2, farbe: "text-brand-navy bg-brand-bg", punkte: ["Mitglieder und Gruppen", "Mitgliedsanträge", "Rollen und Bereiche", "Statistiken"] },
+  { titel: "Musik", icon: Music, farbe: "text-brand-purple bg-brand-purple-wash", punkte: ["Musik für Training und Auftritte", "Direkt im Browser hören"], bald: true },
 ];
 
 const VORSCHAU = [
@@ -113,7 +125,7 @@ const DATENSCHUTZ: { icon: LucideIcon; titel: string; text: string }[] = [
 const FAQ: { frage: string; antwort: React.ReactNode }[] = [
   {
     frage: "Was ist TanzRaum?",
-    antwort: "TanzRaum ist eine digitale Plattform für den Tanzsport – besonders für den karnevalistischen Tanzsport. Sie verbindet Tänzer, Fans, Trainer, Betreuer und Vereine an einem Ort: mit Training, Kalender, Chat, Spotlight, TanzRaum Connect und Vereinsverwaltung.",
+    antwort: "TanzRaum ist eine digitale Plattform für den Tanzsport – besonders für den karnevalistischen Tanzsport. Sie verbindet Tänzer, Fans, Trainer, Betreuer und Vereine an einem Ort: mit Training, Kalender, Chat, Spotlight, TanzRaum Connect, der TanzRaum Börse und Vereinsverwaltung.",
   },
   { frage: "Für wen ist TanzRaum?", antwort: "Für Fans, Tänzerinnen und Tänzer, Trainer und Betreuer sowie für Vereine." },
   {
@@ -127,7 +139,7 @@ const FAQ: { frage: string; antwort: React.ReactNode }[] = [
   },
   {
     frage: "Was ist der Unterschied zwischen FREE und BASIC?",
-    antwort: "FREE ist die kostenlose persönliche Nutzung. BASIC erweitert sie um zusätzliche persönliche Funktionen, zum Beispiel TanzRaum Connect mit Karte und Suche, einen eigenen Kalender, Dateien und Musik. Beide Tarife enthalten keine Vereinsverwaltung.",
+    antwort: "FREE ist die kostenlose persönliche Nutzung. BASIC erweitert sie um zusätzliche persönliche Funktionen, zum Beispiel TanzRaum Connect mit Karte und Suche, einen eigenen Kalender und Dateien. Beide Tarife enthalten keine Vereinsverwaltung.",
   },
   {
     frage: "Was ist die Verein-Lizenz?",
@@ -153,8 +165,8 @@ const FAQ: { frage: string; antwort: React.ReactNode }[] = [
     frage: "Wie kann ich TanzRaum auf meinem Smartphone installieren?",
     antwort: (
       <>
-        Öffne www.tanzraum.app im Browser und füge TanzRaum zum Startbildschirm hinzu – auf dem iPhone über „Teilen“ → „Zum Home-Bildschirm“, auf Android
-        über das Browser-Menü → „App installieren“. Die Schritte findest du{" "}
+        Tippe auf dieser Seite auf „App installieren“ – oder füge TanzRaum selbst zum Startbildschirm hinzu: auf dem iPhone über „Teilen“ → „Zum
+        Home-Bildschirm“, auf Android über das Browser-Menü → „App installieren“. Einen App Store brauchst du nicht. Die Schritte findest du{" "}
         <a href="#app" className="font-semibold text-brand-red underline">
           weiter oben
         </a>
@@ -195,7 +207,7 @@ function Preiszeile({ preise, tarif }: { preise: Preise | null; tarif: "basic" |
   );
 }
 
-export function Startseite({ preise }: { preise: Preise | null }) {
+export function Startseite({ preise, angemeldet = null }: { preise: Preise | null; angemeldet?: { vorname: string | null } | null }) {
   const tarife = [
     {
       name: "FREE",
@@ -213,7 +225,7 @@ export function Startseite({ preise }: { preise: Preise | null }) {
       name: "BASIC",
       untertitel: "Für deinen persönlichen Tanzsport",
       preis: <Preiszeile preise={preise} tarif="basic" />,
-      punkte: ["Alle FREE-Funktionen", "TanzRaum Connect mit Karte und Suche", "Eigener Kalender, Dateien und Musik", "Freiwillige Profilangabe „Verein, in dem ich tanze“", "Keine Vereinsverwaltung"],
+      punkte: ["Alle FREE-Funktionen", "TanzRaum Connect mit Karte und Suche", "Eigener Kalender und Dateien", "Freiwillige Profilangabe „Verein, in dem ich tanze“", "Keine Vereinsverwaltung"],
       knopf: { text: "BASIC wählen", href: "/signup", primaer: false },
       hervorgehoben: false,
     },
@@ -225,8 +237,9 @@ export function Startseite({ preise }: { preise: Preise | null }) {
         "Vereinsverwaltung und Mitgliederverwaltung",
         "Tanzgruppen, Training, Kalender",
         "Kommunikation und Mitgliedsanträge",
-        "Vereinsstatistiken",
-        "Support und Fernwartung",
+        "Fahrgemeinschaften, Kostüme & Requisiten",
+        "Finanzen: Kassenbuch und Beiträge",
+        "Vereinsstatistiken, Support und Fernwartung",
         "Optional Turnierfunktionen",
       ],
       knopf: { text: "Verein-Lizenz entdecken", href: "/signup?ziel=verein", primaer: true },
@@ -258,12 +271,20 @@ export function Startseite({ preise }: { preise: Preise | null }) {
             </a>
           </nav>
           <div className="flex items-center gap-2">
-            <Link href="/login" className="inline-flex min-h-10 items-center rounded-xl px-3 text-[14px] font-semibold text-brand-ink hover:bg-brand-bg">
-              Anmelden
-            </Link>
-            <Link href="/signup" className="inline-flex min-h-10 items-center rounded-xl bg-brand-red px-4 text-[14px] font-bold text-white hover:bg-brand-red-deep">
-              Registrieren
-            </Link>
+            {angemeldet ? (
+              <Link href="/dashboard" className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-brand-red px-4 text-[14px] font-bold text-white hover:bg-brand-red-deep">
+                Zum Dashboard <ArrowRight size={16} />
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="inline-flex min-h-10 items-center rounded-xl px-3 text-[14px] font-semibold text-brand-ink hover:bg-brand-bg">
+                  Anmelden
+                </Link>
+                <Link href="/signup" className="inline-flex min-h-10 items-center rounded-xl bg-brand-red px-4 text-[14px] font-bold text-white hover:bg-brand-red-deep">
+                  Registrieren
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -287,13 +308,25 @@ export function Startseite({ preise }: { preise: Preise | null }) {
               <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-brand-ink-soft sm:text-[19px]">
                 Alles, was deinen Tanzsport, dein Team und deinen Verein digital verbindet – an einem Ort.
               </p>
-              <div className="mt-7 flex flex-wrap gap-3">
-                <Link href="/signup" className={KNOPF_PRIMAER}>
-                  Jetzt registrieren
-                </Link>
-                <Link href="/login" className={KNOPF_SEKUNDAER}>
-                  Anmelden
-                </Link>
+              {angemeldet && (
+                <p className="mt-5 text-[16px] font-semibold text-brand-ink">Schön, dass du da bist{angemeldet.vorname ? `, ${angemeldet.vorname}` : ""}! 👋</p>
+              )}
+              <div className="mt-7 flex flex-wrap items-start gap-3">
+                {angemeldet ? (
+                  <Link href="/dashboard" className={`${KNOPF_PRIMAER} gap-2`}>
+                    Zum Dashboard <ArrowRight size={18} />
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/signup" className={KNOPF_PRIMAER}>
+                      Jetzt registrieren
+                    </Link>
+                    <Link href="/login" className={KNOPF_SEKUNDAER}>
+                      Anmelden
+                    </Link>
+                  </>
+                )}
+                <AppInstallieren variante="klein" />
                 <a href="#was-ist-tanzraum" className="inline-flex min-h-12 items-center gap-1.5 px-2 text-[15px] font-semibold text-brand-ink-soft hover:text-brand-ink">
                   Mehr über TanzRaum <ChevronDown size={16} />
                 </a>
@@ -397,7 +430,10 @@ export function Startseite({ preise }: { preise: Preise | null }) {
                     <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${f.farbe} transition-transform group-hover:scale-105`}>
                       <f.icon size={24} />
                     </span>
-                    <h3 className="mt-4 text-[17px] font-extrabold text-brand-ink">{f.titel}</h3>
+                    <h3 className="mt-4 flex flex-wrap items-center gap-2 text-[17px] font-extrabold text-brand-ink">
+                      {f.titel}
+                      {f.bald && <span className="rounded-full bg-brand-gold-wash px-2 py-0.5 text-[11px] font-bold text-brand-gold">bald</span>}
+                    </h3>
                     <ul className="mt-2 flex flex-col gap-1 text-[13.5px] text-brand-ink-soft">
                       {f.punkte.map((p) => (
                         <li key={p}>{p}</li>
@@ -425,10 +461,12 @@ export function Startseite({ preise }: { preise: Preise | null }) {
                       Telefonnummer, ohne Gebühren, auch im kostenlosen FREE-Tarif.
                     </p>
                     <div className="mt-6 flex flex-wrap gap-3">
-                      <Link href="/signup" className="inline-flex min-h-12 items-center rounded-full bg-brand-red px-6 text-[15px] font-bold text-white hover:bg-brand-red-deep">
-                        Kostenlos mitmachen
-                      </Link>
-                      <Link href="/login?weiter=/dashboard/boerse" className="inline-flex min-h-12 items-center rounded-full border border-white/30 px-6 text-[15px] font-semibold text-white hover:bg-white/10">
+                      {!angemeldet && (
+                        <Link href="/signup" className="inline-flex min-h-12 items-center rounded-full bg-brand-red px-6 text-[15px] font-bold text-white hover:bg-brand-red-deep">
+                          Kostenlos mitmachen
+                        </Link>
+                      )}
+                      <Link href={angemeldet ? "/dashboard/boerse" : "/login?weiter=/dashboard/boerse"} className="inline-flex min-h-12 items-center rounded-full border border-white/30 px-6 text-[15px] font-semibold text-white hover:bg-white/10">
                         Zur Börse
                       </Link>
                     </div>
@@ -529,8 +567,8 @@ export function Startseite({ preise }: { preise: Preise | null }) {
                         </li>
                       ))}
                     </ul>
-                    <Link href={t.knopf.href} className={`mt-auto ${t.knopf.primaer ? KNOPF_PRIMAER : KNOPF_SEKUNDAER}`}>
-                      {t.knopf.text}
+                    <Link href={angemeldet ? "/dashboard/tarif" : t.knopf.href} className={`mt-auto ${t.knopf.primaer ? KNOPF_PRIMAER : KNOPF_SEKUNDAER}`}>
+                      {angemeldet ? "In „Mein Tarif“ ansehen" : t.knopf.text}
                     </Link>
                   </article>
                 </Einblenden>
@@ -568,8 +606,11 @@ export function Startseite({ preise }: { preise: Preise | null }) {
                   </li>
                 ))}
               </ul>
-              <Link href="/signup?ziel=verein" className="mt-8 inline-flex min-h-12 items-center rounded-xl bg-white px-6 text-[15px] font-bold text-brand-red hover:bg-brand-red-wash">
-                Verein registrieren
+              <Link
+                href={angemeldet ? "/dashboard/tarif" : "/signup?ziel=verein"}
+                className="mt-8 inline-flex min-h-12 items-center rounded-xl bg-white px-6 text-[15px] font-bold text-brand-red hover:bg-brand-red-wash"
+              >
+                {angemeldet ? "Vereinslizenz ansehen" : "Verein registrieren"}
               </Link>
             </Einblenden>
             <Einblenden verzoegerung={120} className="flex justify-center">
@@ -607,9 +648,13 @@ export function Startseite({ preise }: { preise: Preise | null }) {
               <Ueberschrift
                 oben="Dein TanzRaum – auch unterwegs"
                 titel="TanzRaum auf deinem Smartphone"
-                text="TanzRaum funktioniert direkt im Browser und kann auf deinem Smartphone wie eine App installiert werden."
+                text="TanzRaum funktioniert direkt im Browser und lässt sich wie eine App auf Smartphone, Tablet oder Computer installieren – ohne App Store, immer aktuell, mit Push-Benachrichtigungen."
               />
             </Einblenden>
+            <div className="mb-10 flex flex-col items-center gap-2 text-center">
+              <AppInstallieren />
+              <p className="text-[13px] text-brand-ink-soft">Kostenlos · kein App Store nötig · die App startet direkt in deinem Dashboard</p>
+            </div>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               {[
                 {
@@ -720,10 +765,10 @@ export function Startseite({ preise }: { preise: Preise | null }) {
           <Einblenden className="relative mx-auto max-w-[1200px] overflow-hidden rounded-[28px] bg-brand-navy px-6 py-14 text-center text-white sm:px-12">
             <Image src="/tanzraum-taenzer-illustration.webp" alt="" width={700} height={491} className="pointer-events-none absolute -bottom-10 -right-10 hidden w-[360px] opacity-30 md:block" />
             <h2 className="text-[28px] font-extrabold tracking-tight sm:text-[40px]">Bereit für deinen nächsten Schritt?</h2>
-            <p className="mt-2 text-[16px] text-white/80 sm:text-[18px]">Starte kostenlos mit TanzRaum.</p>
+            <p className="mt-2 text-[16px] text-white/80 sm:text-[18px]">{angemeldet ? "Dein TanzRaum wartet schon auf dich." : "Starte kostenlos mit TanzRaum."}</p>
             <div className="mt-7 flex flex-wrap justify-center gap-3">
-              <Link href="/signup" className={KNOPF_PRIMAER}>
-                Kostenlos registrieren
+              <Link href={angemeldet ? "/dashboard" : "/signup"} className={KNOPF_PRIMAER}>
+                {angemeldet ? "Zum Dashboard" : "Kostenlos registrieren"}
               </Link>
               <a href="#preise" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/30 px-6 text-[15px] font-bold text-white hover:bg-white/10">
                 Verein-Lizenz entdecken
@@ -793,16 +838,26 @@ export function Startseite({ preise }: { preise: Preise | null }) {
           <nav aria-label="Account">
             <p className="text-[12px] font-black uppercase tracking-[0.16em] text-brand-ink">Account</p>
             <ul className="mt-3 flex flex-col gap-2 text-[14px] text-brand-ink-soft">
-              <li>
-                <Link href="/login" className="hover:text-brand-ink">
-                  Anmelden
-                </Link>
-              </li>
-              <li>
-                <Link href="/signup" className="hover:text-brand-ink">
-                  Registrieren
-                </Link>
-              </li>
+              {angemeldet ? (
+                <li>
+                  <Link href="/dashboard" className="hover:text-brand-ink">
+                    Zum Dashboard
+                  </Link>
+                </li>
+              ) : (
+                <>
+                  <li>
+                    <Link href="/login" className="hover:text-brand-ink">
+                      Anmelden
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/signup" className="hover:text-brand-ink">
+                      Registrieren
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </nav>
         </div>

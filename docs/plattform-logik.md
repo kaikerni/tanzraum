@@ -104,7 +104,12 @@ Vollständig entfernt: Komponente, Datenschutzabschnitt, Edge Function `tanzraum
 
 ## Startseite `/`
 
-- Nicht angemeldet: öffentliche Startseite (`src/components/start/*`), angemeldet: Weiterleitung ins Dashboard.
+- Startseite immer sichtbar (`src/components/start/*`); angemeldet stehen statt „Anmelden/Registrieren“ „Zum Dashboard“,
+  Preis-/Börsen-/Vereinsknöpfe führen ins Dashboard. Die installierte App startet weiter direkt im Dashboard
+  (`manifest.webmanifest` → `start_url`).
+- „App installieren“ (`AppInstallieren.tsx`): Android/Chrome/Edge öffnen den Installationsdialog des Browsers
+  (`beforeinstallprompt`), iPhone/iPad zeigen die Schritte „Teilen → Zum Home-Bildschirm“, bereits installiert →
+  Hinweis. Kein App Store nötig (PWA).
   `/`, `/robots.txt`, `/sitemap.xml` sind in der Middleware öffentlich.
 - Preise aus `tarif_preise` (`getPreise`), Jahrespreis mit „x Monate gratis“ berechnet.
 - Nur Demo-Inhalte, keine Tracker, Animationen mit `prefers-reduced-motion`.
