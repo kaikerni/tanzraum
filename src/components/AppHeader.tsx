@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Search, Bell, MessageSquare, ChevronDown, LogOut } from "lucide-react";
 import { signOut } from "@/app/actions";
 
@@ -39,6 +40,21 @@ export function AppHeader({
 }) {
   const [menuOffen, setMenuOffen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const sucheRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  // Strg + K / Cmd + K springt ins Suchfeld (auf dem Handy: Suchseite)
+  useEffect(() => {
+    function taste(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        if (sucheRef.current && sucheRef.current.offsetParent !== null) sucheRef.current.focus();
+        else router.push("/dashboard/suche");
+      }
+    }
+    document.addEventListener("keydown", taste);
+    return () => document.removeEventListener("keydown", taste);
+  }, [router]);
 
   useEffect(() => {
     if (!menuOffen) return;
@@ -62,10 +78,19 @@ export function AppHeader({
         />
       </Link>
 
-      <div className="mx-auto hidden max-w-xl flex-1 items-center gap-2.5 rounded-xl border border-brand-line bg-white px-4 py-2.5 transition-all focus-within:border-brand-red focus-within:shadow-[var(--shadow)] md:flex">
+      <form
+        action="/dashboard/suche"
+        role="search"
+        className="mx-auto hidden max-w-xl flex-1 items-center gap-2.5 rounded-xl border border-brand-line bg-white px-4 py-2.5 transition-all focus-within:border-brand-red focus-within:shadow-[var(--shadow)] md:flex"
+      >
         <Search size={17} className="shrink-0 text-brand-ink-soft" />
         <input
+          ref={sucheRef}
           type="search"
+          name="q"
+          minLength={2}
+          maxLength={100}
+          autoComplete="off"
           placeholder="Suche nach Mitgliedern, Terminen, Dateien, Nachrichten …"
           aria-label="Suche"
           className="w-full bg-transparent text-[13.5px] outline-none placeholder:text-brand-ink-soft"
@@ -73,9 +98,17 @@ export function AppHeader({
         <kbd className="hidden shrink-0 rounded-md border border-brand-line bg-brand-bg px-1.5 py-0.5 text-[11px] font-medium text-brand-ink-soft lg:block">
           Strg + K
         </kbd>
-      </div>
+      </form>
 
       <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3 md:ml-0">
+        <Link
+          href="/dashboard/suche"
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-brand-ink transition-colors hover:bg-brand-bg md:hidden"
+          aria-label="Suche"
+          title="Suche"
+        >
+          <Search size={20} />
+        </Link>
         <Link
           href="/dashboard/benachrichtigungen"
           className="relative flex h-10 w-10 items-center justify-center rounded-xl text-brand-ink transition-colors hover:bg-brand-bg"
