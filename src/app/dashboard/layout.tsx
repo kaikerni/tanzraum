@@ -15,6 +15,7 @@ import { OnlineHerzschlag } from "@/components/online/OnlineHerzschlag";
 import { aktiveAnsicht } from "@/lib/admin/ansichtLesen";
 import { ANSICHT_LABEL, ansichtZugriff } from "@/lib/admin/ansicht";
 import { AnsichtLeiste } from "@/components/admin/AnsichtUmschalter";
+import { VorschauAufraeumen } from "@/components/admin/VorschauAufraeumen";
 
 export default async function DashboardLayout({
   children,
@@ -85,7 +86,7 @@ export default async function DashboardLayout({
   ];
 
   // TanzRaum-Administration: „Ansicht als …“ ersetzt nur Menue und Dashboard (Beispieldaten), keine Rechte
-  const ansicht = await aktiveAnsicht(daten.istPlattformAdmin);
+  const ansicht = await aktiveAnsicht();
   const navZugriff = ansicht ? { ...ansichtZugriff(ansicht), musikAn: zugriff.musikAn } : zugriff;
 
   const name = [daten.vorname, daten.nachname].filter(Boolean).join(" ") || "TanzRaum-Nutzer";
@@ -124,6 +125,7 @@ export default async function DashboardLayout({
       <MobileNav zugriff={navZugriff} ungeleseneNachrichten={ungeleseneNachrichten} />
       {popup.length > 0 && <WichtigPopup eintraege={popup} />}
       <OnlineHerzschlag />
+      {!ansicht && <VorschauAufraeumen />}
     </div>
     </AnrufProvider>
   );

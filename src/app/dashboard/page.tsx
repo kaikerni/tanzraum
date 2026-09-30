@@ -45,7 +45,7 @@ export default async function DashboardPage({
   if (daten.gesperrt) redirect("/gesperrt");
 
   // TanzRaum-Administration in „Ansicht als …“: Dashboard nur mit erfundenen Beispieldaten
-  const ansicht = await aktiveAnsicht(daten.istPlattformAdmin);
+  const ansicht = await aktiveAnsicht();
   if (ansicht) {
     const v = vorschauAls(ansicht);
     const { data: musikAn } = await supabase.rpc("musik_freigegeben");

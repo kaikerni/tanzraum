@@ -29,9 +29,9 @@ export default async function VorschauSeite({ searchParams }: { searchParams: Pr
           <Eye size={24} className="text-brand-red" /> Ansicht als …
         </h1>
         <p className="text-[13.5px] text-brand-ink-soft">
-          Schau dir TanzRaum so an, wie es ein Tarif oder eine Vereinsrolle sieht: Menü und Dashboard wechseln, du kannst dich frei
-          durchklicken. Das Dashboard zeigt erfundene Beispieldaten; echte Vereins- oder Mitgliederdaten werden nicht angezeigt und
-          deine Rechte ändern sich nicht. Oben erscheint eine Leiste zum Wechseln und Beenden.
+          Schau dir TanzRaum so an, wie es ein Tarif oder eine Vereinsrolle sieht – Menü, Dashboard und alle Bereiche mit einem erfundenen
+          Beispielverein. Du kannst dich frei durchklicken; es werden keine echten Daten gelesen und nichts gespeichert. Oben erscheint
+          eine Leiste zum Wechseln und Beenden.
         </p>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">

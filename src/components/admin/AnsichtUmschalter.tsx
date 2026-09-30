@@ -73,7 +73,7 @@ export function AnsichtLeiste({ aktiv }: { aktiv: Ansicht }) {
           <Eye size={17} className="text-brand-gold" /> Ansicht als {ANSICHT_LABEL[aktiv]}
         </span>
         <span className="hidden min-w-0 flex-1 text-[12.5px] text-brand-ink-soft lg:block">
-          Menü und Dashboard wie in diesem Tarif bzw. dieser Rolle (Beispieldaten). In den Bereichen siehst du den Aufbau – ohne echte Vereins- oder Mitgliederdaten.
+          So sieht TanzRaum in diesem Tarif bzw. dieser Rolle aus – mit einem erfundenen Beispielverein. Keine echten Daten, Änderungen werden nicht gespeichert.
         </span>
         <span className="flex w-full min-w-0 items-center gap-2 sm:ml-auto sm:w-auto">
           <AnsichtAuswahl aktiv={aktiv} className="min-w-0 flex-1 sm:flex-none" />

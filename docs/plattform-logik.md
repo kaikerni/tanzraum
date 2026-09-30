@@ -85,11 +85,14 @@ Stand: 29.09.2026 · Migrationen `20260929135109_plattform_logik`, `202609291356
   `fernwartung_vereinsdaten_setzen`, Bereiche und Antragsformular. Alles wird in `fernwartung_protokoll` vermerkt.
   Anfordern nur mit aktiver Verein-Lizenz.
 - **Ansicht als …** `/dashboard/admin/vorschau` – Umschalter FREE, BASIC, VEREIN · Vereinsadmin/Trainer/Betreuer/
-  Tänzer/Eltern. Server-Aktion `ansichtWaehlen` (nur mit `ist_plattform_admin_aktuell`) setzt das httpOnly-Cookie
-  `tr_ansicht` (8 h). Das Dashboard-Layout ersetzt dann Menü (`ansichtZugriff`, Bereiche wie `meine_bereiche` mit
-  Standard-Einstellungen) und Dashboard (`vorschauAls`, erfundene Beispieldaten); oben steht eine Leiste zum Wechseln
-  und Beenden. Reine Darstellung: Rechte, Datenbankabfragen und echte Daten ändern sich nicht – die Unterseiten zeigen
-  den Aufbau mit den eigenen (als Admin leeren) Daten. JuryRaum und die Admin-Ansicht gibt es zusätzlich als Bild.
+  Tänzer/Eltern. Server-Aktion `ansichtWaehlen` (echte Datenbank, nur mit `ist_plattform_admin_aktuell`) setzt das
+  httpOnly-Cookie `tr_ansicht` (8 h) und den Browser-Hinweis `tr_vorschau`. Solange die Ansicht aktiv ist, prüft
+  `vorschauStatus()` (`src/lib/supabase/server.ts`) pro Anfrage gegen die echte Datenbank, dass es die Plattform-Administration
+  ist; dann beantwortet `vorschauFetch` (`src/lib/admin/vorschauFetch.ts`) **alle** Datenbank-Anfragen des Servers aus dem
+  erfundenen Beispielverein (`src/lib/admin/vorschauDatenbank.ts`, je Rolle passend). Nur die Anmeldung geht an Supabase.
+  Schreibende Anfragen werden abgelehnt („Vorschau: Änderungen werden nicht gespeichert.“), auch im Browser (`client.ts`).
+  Es werden keine echten Daten gelesen. Beenden bzw. Abmelden löscht die Cookies; die Admin-Bereiche sind in der Vorschau
+  nicht erreichbar. JuryRaum und die Admin-Ansicht gibt es zusätzlich als Bild.
 - **Chat:** Der Admin nutzt den normalen Chat; Direktchats mit ihm tragen die Marke „TanzRaum Admin“ (`chat_liste`).
   Kein Zugriff auf Vereinschats ohne Mitgliedschaft.
 - Die Tarif-/Rechnungsübersichten bleiben (Abrechnung der eigenen Kunden).

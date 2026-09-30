@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { ANSICHT_COOKIE, istAnsicht } from "@/lib/admin/ansicht";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createRealClient } from "@/lib/supabase/server";
 import { freundlicherFehler } from "@/lib/fehler";
 import type { AktionsErgebnis } from "@/components/ui/SendenButton";
 
@@ -36,13 +36,20 @@ export async function spotlightsEinstellen(aktiv: boolean, tarife: string[]): Pr
 
 // „Ansicht als …“: nur fuer die Plattform-Administration; reine Darstellung (Cookie), keine Rechte
 export async function ansichtWaehlen(ansicht: string | null): Promise<AktionsErgebnis> {
-  const supabase = await createClient();
+  // Echte Datenbank – in der Vorschau beantwortet sonst der Beispiel-Datenbestand die Anfragen
+  const supabase = await createRealClient();
   const { data: istAdmin } = await supabase.rpc("ist_plattform_admin_aktuell");
   if (istAdmin !== true) return { error: "Nur für die TanzRaum-Administration." };
   const speicher = await cookies();
-  if (ansicht === null) speicher.delete(ANSICHT_COOKIE);
-  else if (istAnsicht(ansicht)) speicher.set(ANSICHT_COOKIE, ansicht, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 8 });
-  else return { error: "Unbekannte Ansicht." };
+  const optionen = { sameSite: "lax" as const, secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 8 };
+  if (ansicht === null) {
+    speicher.delete(ANSICHT_COOKIE);
+    speicher.delete("tr_vorschau");
+  } else if (istAnsicht(ansicht)) {
+    speicher.set(ANSICHT_COOKIE, ansicht, { ...optionen, httpOnly: true });
+    // Hinweis fuer den Browser: in der Vorschau nichts in die echte Datenbank schreiben
+    speicher.set("tr_vorschau", "1", { ...optionen, httpOnly: false });
+  } else return { error: "Unbekannte Ansicht." };
   revalidatePath("/dashboard", "layout");
   return { error: null, ok: ansicht ? "Ansicht gewechselt." : "Vorschau beendet." };
 }
