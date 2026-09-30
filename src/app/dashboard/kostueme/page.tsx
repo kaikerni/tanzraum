@@ -7,7 +7,7 @@ import { getMeineKinder } from "@/lib/dashboard/getDashboardUebersicht";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { SatzAktionen, SatzFormular, TeilAktionen, TeilFormular, type Person } from "@/components/kostueme/KostuemFormulare";
-import { ARTEN, ART_EMOJI, ART_LABEL, TEIL_SPALTEN, ZUSTAND_LABEL, datum, istUeberfaellig, type KostuemArt, type Kostuemsatz, type Teil } from "@/lib/kostueme";
+import { ARTEN, ART_EMOJI, ART_LABEL, KOSTUEM_BUCKET, TEIL_SPALTEN, ZUSTAND_LABEL, datum, istUeberfaellig, type KostuemArt, type Kostuemsatz, type Teil } from "@/lib/kostueme";
 
 export const metadata = { title: "Kostüme & Requisiten – TanzRaum" };
 
@@ -25,6 +25,32 @@ const STATUS = [
 function Marke({ children, ton = "neutral" }: { children: React.ReactNode; ton?: "neutral" | "rot" | "gruen" | "gold" }) {
   const stil = { neutral: "bg-brand-bg text-brand-ink-soft", rot: "bg-brand-red-wash text-brand-red", gruen: "bg-brand-green-wash text-brand-green", gold: "bg-brand-gold-wash text-brand-gold" }[ton];
   return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${stil}`}>{children}</span>;
+}
+
+// Foto (kurzlebiger Link) oder Symbol der Art
+function Vorschau({ url, art, gross = false }: { url: string | undefined; art: KostuemArt; gross?: boolean }) {
+  const masse = gross ? "h-14 w-14" : "h-11 w-11";
+  if (url)
+    return (
+      <a href={url} target="_blank" rel="noopener" className={`${masse} shrink-0 overflow-hidden rounded-xl bg-brand-bg ring-1 ring-brand-line`} title="Foto öffnen">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
+      </a>
+    );
+  return (
+    <span className={`flex ${masse} shrink-0 items-center justify-center rounded-xl bg-brand-bg text-[20px]`} aria-hidden>
+      {ART_EMOJI[art]}
+    </span>
+  );
+}
+
+async function fotoLinks(supabase: Awaited<ReturnType<typeof createClient>>, pfade: (string | null | undefined)[]): Promise<Map<string, string>> {
+  const liste = [...new Set(pfade.filter((p): p is string => !!p))].slice(0, 500);
+  const links = new Map<string, string>();
+  if (!liste.length) return links;
+  const { data } = await supabase.storage.from(KOSTUEM_BUCKET).createSignedUrls(liste, 3600);
+  for (const s of data ?? []) if (s.path && s.signedUrl) links.set(s.path, s.signedUrl);
+  return links;
 }
 
 function SatzPunkt({ farbe }: { farbe: string | null }) {
@@ -55,6 +81,7 @@ export default async function KostuemeSeite({ searchParams }: { searchParams: Pr
     ? await supabase.from("kostueme").select(`${TEIL_SPALTEN}, kostuem_gruppen(name, farbe)`).in("vereins_mitglied_id", meineIds).order("rueckgabe", { nullsFirst: false })
     : { data: [] };
   const beiMir = (beiMirRoh ?? []) as unknown as TeilMitSatz[];
+  const beiMirFotos = await fotoLinks(supabase, beiMir.map((t) => t.bild_pfad));
 
   const beiMirKarte = beiMir.length > 0 && (
     <section className={KARTE}>
@@ -62,9 +89,7 @@ export default async function KostuemeSeite({ searchParams }: { searchParams: Pr
       <ul className="flex flex-col divide-y divide-brand-line">
         {beiMir.map((t) => (
           <li key={t.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 text-[13.5px]">
-            <span className="text-[18px]" aria-hidden>
-              {ART_EMOJI[t.art]}
-            </span>
+            <Vorschau url={beiMirFotos.get(t.bild_pfad ?? "")} art={t.art} />
             <span className="min-w-0 flex-1">
               <strong className="text-brand-ink">{t.teil}</strong>
               {t.groesse && <span className="text-brand-ink-soft"> · Gr. {t.groesse}</span>}
@@ -157,6 +182,8 @@ export default async function KostuemeSeite({ searchParams }: { searchParams: Pr
       if (!sa !== !sb) return sa ? -1 : 1;
       return (sa ?? "").localeCompare(sb ?? "", "de") || a.teil.localeCompare(b.teil, "de");
     });
+
+  const fotos = tab === "inventar" ? await fotoLinks(supabase, gefiltert.map((t) => t.bild_pfad)) : new Map<string, string>();
 
   const link = (neu: Partial<Filter>) => {
     const p = new URLSearchParams();
@@ -299,9 +326,7 @@ export default async function KostuemeSeite({ searchParams }: { searchParams: Pr
                 return (
                   <li key={t.id} className={`${KARTE} flex flex-col gap-2 !py-3 lg:flex-row lg:items-start lg:justify-between`}>
                     <div className="flex min-w-0 gap-3">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-bg text-[20px]" aria-hidden>
-                        {ART_EMOJI[t.art as KostuemArt]}
-                      </span>
+                      <Vorschau url={fotos.get(t.bild_pfad ?? "")} art={t.art as KostuemArt} gross />
                       <div className="min-w-0">
                         <p className="break-words text-[15px] font-bold text-brand-ink">
                           {t.teil}

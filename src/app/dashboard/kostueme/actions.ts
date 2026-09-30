@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { freundlicherFehler } from "@/lib/fehler";
 import type { AktionsErgebnis } from "@/components/ui/SendenButton";
-import { ARTEN, ZUSTAENDE, type KostuemArt, type KostuemZustand } from "@/lib/kostueme";
+import { ARTEN, KOSTUEM_BUCKET, ZUSTAENDE, type KostuemArt, type KostuemZustand } from "@/lib/kostueme";
 
 // Alle Rechte prueft die Datenbank (darf_kostueme_verwalten: Vereinsadmin bzw. Bereich "Kostueme", Vereinslizenz).
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -144,4 +144,19 @@ export async function zuruecknehmen(_prev: AktionsErgebnis, fd: FormData): Promi
   if (error) return { error: fehler(error) };
   revalidatePath(PFAD);
   return { error: null, ok: "Zurückgenommen." };
+}
+
+// Foto setzen (nach dem Hochladen im Browser) oder entfernen; das alte Foto wird aus dem Speicher geloescht
+export async function fotoSetzen(id: string, pfad: string | null): Promise<AktionsErgebnis> {
+  if (!UUID.test(id)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { data: teil } = await supabase.from("kostueme").select("verein_id, bild_pfad").eq("id", id).maybeSingle();
+  if (!teil) return { error: "Teil nicht gefunden." };
+  if (pfad !== null && !new RegExp(`^${teil.verein_id}/${id}/[0-9a-f-]{36}\\.jpg$`, "i").test(pfad)) return { error: "Ungültiges Foto." };
+  const { data, error } = await supabase.from("kostueme").update({ bild_pfad: pfad }).eq("id", id).select("id");
+  if (error) return { error: fehler(error) };
+  if (!data?.length) return { error: "Dafür fehlt dir die Berechtigung." };
+  if (teil.bild_pfad && teil.bild_pfad !== pfad) await supabase.storage.from(KOSTUEM_BUCKET).remove([teil.bild_pfad]);
+  revalidatePath(PFAD);
+  return { error: null, ok: pfad ? "Foto gespeichert." : "Foto entfernt." };
 }

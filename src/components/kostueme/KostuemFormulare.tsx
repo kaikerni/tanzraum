@@ -1,10 +1,12 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
-import { ArrowDownToLine, ArrowUpFromLine, Pencil, Trash2, X } from "lucide-react";
-import { ausgeben, satzLoeschen, satzSpeichern, teilLoeschen, teilSpeichern, zuruecknehmen } from "@/app/dashboard/kostueme/actions";
+import { useActionState, useRef, useState, useTransition } from "react";
+import { ArrowDownToLine, ArrowUpFromLine, Camera, Pencil, Trash2, X } from "lucide-react";
+import { ausgeben, fotoSetzen, satzLoeschen, satzSpeichern, teilLoeschen, teilSpeichern, zuruecknehmen } from "@/app/dashboard/kostueme/actions";
 import { SendenButton, Meldung, LEERES_ERGEBNIS, type AktionsErgebnis } from "@/components/ui/SendenButton";
-import { ARTEN, ART_LABEL, ZUSTAENDE, ZUSTAND_LABEL, heuteBerlin, type Kostuemsatz, type Teil } from "@/lib/kostueme";
+import { ARTEN, ART_LABEL, KOSTUEM_BUCKET, ZUSTAENDE, ZUSTAND_LABEL, heuteBerlin, type Kostuemsatz, type Teil } from "@/lib/kostueme";
+import { bildVerkleinern } from "@/lib/medien/bild";
+import { createClient } from "@/lib/supabase/client";
 
 export type Person = { vmId: string; name: string };
 
@@ -181,9 +183,67 @@ function RuecknahmeFormular({ teil, fertig }: { teil: Teil; fertig: () => void }
   );
 }
 
+// Foto aufnehmen/auswaehlen: im Browser verkleinern (max. 1920 px, JPEG), privat hochladen, dann verknuepfen
+function FotoFormular({ teil, fertig }: { teil: Teil; fertig: () => void }) {
+  const [status, setStatus] = useState<string | null>(null);
+  const [meldung, setMeldung] = useState<AktionsErgebnis | null>(null);
+  const feld = useRef<HTMLInputElement>(null);
+
+  async function hochladen(datei: File | undefined) {
+    if (!datei) return;
+    setMeldung(null);
+    if (!datei.type.startsWith("image/") || datei.type === "image/gif") return setMeldung({ error: "Bitte ein Foto (JPG, PNG oder WebP) wählen." });
+    try {
+      setStatus("Foto wird vorbereitet …");
+      const blob = await bildVerkleinern(datei, 1920);
+      setStatus("Wird hochgeladen …");
+      const pfad = `${teil.verein_id}/${teil.id}/${crypto.randomUUID()}.jpg`;
+      const { error } = await createClient().storage.from(KOSTUEM_BUCKET).upload(pfad, blob, { contentType: "image/jpeg", upsert: false });
+      if (error) throw error;
+      const r = await fotoSetzen(teil.id, pfad);
+      setMeldung(r);
+      if (!r.error) fertig();
+    } catch {
+      setMeldung({ error: "Das Foto konnte nicht hochgeladen werden. Bitte versuche es erneut." });
+    } finally {
+      setStatus(null);
+      if (feld.current) feld.current.value = "";
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-[13px] text-brand-ink-soft">Ein Foto je Teil – z. B. zum Wiedererkennen bei der Ausgabe. Sichtbar nur für die Kostümverwaltung und die Person, die das Teil gerade hat.</p>
+      <input ref={feld} type="file" accept="image/jpeg,image/png,image/webp,image/heic" capture="environment" className="hidden" onChange={(e) => hochladen(e.target.files?.[0])} />
+      <div className="flex flex-wrap gap-2">
+        <button type="button" disabled={!!status} onClick={() => feld.current?.click()} className={`${KNOPF} min-h-10`}>
+          <Camera size={14} /> {status ?? (teil.bild_pfad ? "Neues Foto wählen" : "Foto aufnehmen oder wählen")}
+        </button>
+        {teil.bild_pfad && !status && (
+          <button
+            type="button"
+            className={`${KNOPF} min-h-10 text-brand-red`}
+            onClick={async () => {
+              const r = await fotoSetzen(teil.id, null);
+              setMeldung(r);
+              if (!r.error) fertig();
+            }}
+          >
+            <Trash2 size={14} /> Foto entfernen
+          </button>
+        )}
+        <button type="button" onClick={fertig} className={`${KNOPF} min-h-10`}>
+          Abbrechen
+        </button>
+      </div>
+      {meldung && <Meldung ergebnis={meldung} />}
+    </div>
+  );
+}
+
 // Aktionen je Teil in der Inventarliste
 export function TeilAktionen({ teil, vereinId, saetze, personen }: { teil: Teil; vereinId: string; saetze: Kostuemsatz[]; personen: Person[] }) {
-  const [offen, setOffen] = useState<"bearbeiten" | "ausgeben" | "zurueck" | null>(null);
+  const [offen, setOffen] = useState<"bearbeiten" | "ausgeben" | "zurueck" | "foto" | null>(null);
   const [laeuft, starte] = useTransition();
   const [meldung, setMeldung] = useState<AktionsErgebnis | null>(null);
   const zu = () => setOffen(null);
@@ -203,6 +263,10 @@ export function TeilAktionen({ teil, vereinId, saetze, personen }: { teil: Teil;
           <Pencil size={14} />
           <span className="hidden sm:inline">Bearbeiten</span>
         </button>
+        <button type="button" className={KNOPF} onClick={() => setOffen(offen === "foto" ? null : "foto")} aria-label="Foto">
+          <Camera size={14} />
+          <span className="hidden sm:inline">Foto</span>
+        </button>
         {!teil.vereins_mitglied_id && (
           <button
             type="button"
@@ -221,6 +285,7 @@ export function TeilAktionen({ teil, vereinId, saetze, personen }: { teil: Teil;
           {offen === "bearbeiten" && <TeilFormular vereinId={vereinId} saetze={saetze} teil={teil} fertig={zu} />}
           {offen === "ausgeben" && <AusgabeFormular teil={teil} personen={personen} fertig={zu} />}
           {offen === "zurueck" && <RuecknahmeFormular teil={teil} fertig={zu} />}
+          {offen === "foto" && <FotoFormular teil={teil} fertig={zu} />}
         </div>
       )}
     </div>

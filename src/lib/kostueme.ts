@@ -31,10 +31,14 @@ export type Teil = {
   vergabe_datum: string | null;
   rueckgabe: string | null;
   notiz: string | null;
+  bild_pfad?: string | null;
 };
 
+// Fotos: privater Speicher, Pfad <verein_id>/<teil_id>/<zufall>.jpg (Rechte: Speicher-Policies + RLS von kostueme)
+export const KOSTUEM_BUCKET = "kostueme";
+
 export const TEIL_SPALTEN =
-  "id, verein_id, kostuem_gruppe_id, vereins_mitglied_id, teil, art, anzahl, groesse, zustand, lagerort, vergabe_datum, rueckgabe, notiz";
+  "id, verein_id, kostuem_gruppe_id, vereins_mitglied_id, teil, art, anzahl, groesse, zustand, lagerort, vergabe_datum, rueckgabe, notiz, bild_pfad";
 
 export function heuteBerlin(): string {
   return new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" });
