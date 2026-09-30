@@ -1,6 +1,6 @@
 // Supabase Edge Function: chat-push
 // GET  -> { publicKey } (oeffentlicher VAPID-Schluessel zum Abonnieren im Browser)
-// POST -> { nachricht_id } bzw. { anruf_id } bzw. { admin_push: true } (neuer Kauf) vom Datenbank-Trigger (Header x-tanzraum-geheimnis). Empfaenger bestimmt
+// POST -> { nachricht_id } bzw. { anruf_id } bzw. { admin_push: true } (neuer Kauf) bzw. { benachrichtigung_id } (Fahrgemeinschaft) vom Datenbank-Trigger (Header x-tanzraum-geheimnis). Empfaenger bestimmt
 //         ausschliesslich die DB-Funktion chat_push_ziele (gleiche Zugriffsregeln wie die App, ohne Absender,
 //         ohne Stummschaltung). Gesendet wird ein Push OHNE Inhalt; der Service Worker holt Titel/Text
 //         anschliessend angemeldet ueber /api/chat/push-info.
@@ -86,10 +86,11 @@ Deno.serve(async (req) => {
 
   try {
     const geheimnis = req.headers.get("x-tanzraum-geheimnis");
-    const { nachricht_id, anruf_id, admin_push, news_id, ankuendigung_id } = await req.json();
+    const { nachricht_id, anruf_id, admin_push, news_id, ankuendigung_id, benachrichtigung_id } = await req.json();
     if (
       !geheimnis ||
-      (typeof nachricht_id !== "string" && typeof anruf_id !== "string" && admin_push !== true && typeof news_id !== "string" && typeof ankuendigung_id !== "string")
+      (typeof nachricht_id !== "string" && typeof anruf_id !== "string" && admin_push !== true && typeof news_id !== "string" &&
+        typeof ankuendigung_id !== "string" && typeof benachrichtigung_id !== "string")
     )
       return new Response("Ungültige Anfrage", { status: 400 });
     const paar = await vapidPaar(admin);
@@ -98,6 +99,8 @@ Deno.serve(async (req) => {
     const { data: ziele, error } =
       typeof news_id === "string"
         ? await admin.rpc("news_push_ziele", { p_geheimnis: geheimnis, p_news_id: news_id })
+        : typeof benachrichtigung_id === "string"
+        ? await admin.rpc("benachrichtigung_push_ziele", { p_geheimnis: geheimnis, p_benachrichtigung_id: benachrichtigung_id })
         : typeof ankuendigung_id === "string"
         ? await admin.rpc("ankuendigung_push_ziele", { p_geheimnis: geheimnis, p_ankuendigung_id: ankuendigung_id })
         : admin_push === true

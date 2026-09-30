@@ -95,7 +95,7 @@ export async function onlineSichtbarSetzen(sichtbar: boolean): Promise<AktionsEr
 }
 
 // Push-Kategorien (welche Benachrichtigungen dieses Konto bekommt); RLS: nur eigene Zeilen
-const PUSH_KATEGORIEN = ["chat", "anrufe", "training", "trainingsaenderung", "abmeldung", "news", "wichtige_news", "turniere"];
+const PUSH_KATEGORIEN = ["chat", "anrufe", "training", "trainingsaenderung", "abmeldung", "news", "wichtige_news", "turniere", "fahrgemeinschaften"];
 
 export async function pushKategorieSetzen(kategorie: string, aktiv: boolean): Promise<AktionsErgebnis> {
   if (!PUSH_KATEGORIEN.includes(kategorie)) return { error: "Unbekannte Kategorie." };

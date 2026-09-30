@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Flag, ShieldCheck, CreditCard, Medal, Building2, Receipt, Megaphone, BarChart3, LifeBuoy, Eye } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
+import { DashboardStatus } from "@/components/dashboard/DashboardStatus";
 
 export const metadata = { title: "TanzRaum-Administration" };
 
@@ -37,6 +38,7 @@ export default async function AdminSeite() {
       <h1 className="flex items-center gap-2 text-[26px] font-extrabold tracking-tight text-brand-ink">
         <ShieldCheck size={24} className="text-brand-red" /> TanzRaum-Administration
       </h1>
+      <DashboardStatus className={`${KARTE} !py-3`} />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {kacheln.map((k) => (
           <Link key={k.href} href={k.href} className={`${KARTE} flex items-center gap-4 hover:border-brand-red`}>

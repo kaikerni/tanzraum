@@ -47,6 +47,17 @@ export async function GET() {
     );
   }
 
+  // Fahrgemeinschaft: Reaktion auf die eigene Fahrt, Absage oder Aenderung (nur eigene, frische Benachrichtigung)
+  const { data: fg } = await supabase.rpc("meine_push_fahrgemeinschaft");
+  // deno-lint-ignore no-explicit-any
+  const fahrt = ((fg ?? []) as any[])[0];
+  if (fahrt) {
+    return NextResponse.json(
+      { titel: "🚗 Fahrgemeinschaft", text: fahrt.text, url: "/dashboard/fahrgemeinschaften", tag: `fahrt-${fahrt.id}` },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
   // Plattformadmin: neuer Kauf (BASIC-Abo oder Vereinslizenz) -- nur eigene, frische Benachrichtigung
   const { data: kauf } = await supabase
     .from("benachrichtigungen")

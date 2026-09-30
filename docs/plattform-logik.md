@@ -60,6 +60,14 @@ Stand: 29.09.2026 · Migrationen `20260929135109_plattform_logik`, `202609291356
 - `online_uebersicht()` – Zahlen für alle (gesamt, eigener Verein) und Namen nur von Kontakten/Vereinsmitgliedern mit
   Opt-in (`online_sichtbar`), nie unter 16, nie blockierte Personen, max. 12.
 - Opt-in in den Einstellungen („Online-Status“), Standard aus.
+- Zentrale Anzeige in allen Dashboards (Free/Basic/Verein, Administration, JuryRaum): `OnlineUsers`
+  („🟢 N TanzRaum-Nutzer online“, anklickbar) und `DatumUhrzeit`; Administration und JuryRaum über `DashboardStatus`.
+  - `online_anzahl()` – dieselbe Zahl für alle (online = aktiv in den letzten 3 Minuten, nicht gesperrt); die Anzeige
+    fragt sie höchstens alle 60 s ab und nur bei sichtbarem Tab.
+  - `online_liste(p_suche, p_limit)` – erst beim Öffnen: nur Opt-in, nie unter 16, nie blockiert; FREE sieht nur
+    Kontakte/Vereinsbeziehungen, ab BASIC zusätzlich öffentliche Profile. Keine Sonderrechte für die Administration,
+    keine Vereins- oder JuryRaum-Angaben. Profil-Link (und darüber der Chat nach den bestehenden Regeln) ab BASIC.
+  - JuryRaum-Layout sendet ebenfalls den Herzschlag.
 
 ## TanzRaum-Administration (keine Personendaten)
 
@@ -113,7 +121,7 @@ Der Admin hat immer Zugriff; Einzelrechte pro Mitglied gelten zusätzlich.
 
 | Bereich | Recht | Standard |
 |---|---|---|
-| Fahrgemeinschaften (nur Verein-Lizenz) | `fahrgemeinschaften` | alle Mitglieder |
+| Fahrgemeinschaften (nur Verein-Lizenz) | `fahrgemeinschaften` | immer alle Mitglieder (nicht einschränkbar) |
 | Kostüme & Requisiten | `material` | Betreuer |
 | Finanzen (nur Verein-Lizenz) | `beitraege` | nur Admin |
 | Statistiken | `statistiken` | nur Admin |
@@ -122,4 +130,4 @@ Musik: ab BASIC (unverändert). Statistik-Inhalte wählt der Admin (`vereine.sta
 Rollen, Altersklassen, Tanzgruppen, Trainingsbeteiligung, Turnierergebnisse); Seite `/dashboard/statistiken` zeigt nur
 zusammengefasste Zahlen (`verein_statistik`).
 
-Noch in Arbeit (Hinweisseite): Fahrgemeinschaften, Musik, Kostüme & Requisiten, Finanzen.
+Noch in Arbeit (Hinweisseite): Musik, Kostüme & Requisiten, Finanzen. Fahrgemeinschaften: siehe `docs/fahrgemeinschaften.md`.

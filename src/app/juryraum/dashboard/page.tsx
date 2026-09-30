@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getJuryKontext } from "@/lib/juryraum/getJuryContext";
 import { getJuryDashboardData } from "@/lib/juryraum/getJuryDashboard";
 import { EinladungAntwort } from "./EinladungAntwort";
+import { DashboardStatus } from "@/components/dashboard/DashboardStatus";
 
 const STATUS_LABEL: Record<string, string> = {
   offen: "Einladung offen",
@@ -33,6 +34,7 @@ export default async function JuryDashboardPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 720 }}>
       <h1 className="brand-font page-title">JuryRaum</h1>
+      <DashboardStatus className="card" />
 
       {daten.offeneEinladungen.length > 0 && (
         <section className="card">

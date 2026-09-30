@@ -65,8 +65,8 @@ export async function fernwartungWiderrufen(formData: FormData) {
   revalidatePath("/dashboard/vereinsverwaltung/fernwartung");
 }
 
-// Zugriff je Bereich nach Rolle (Admin hat immer Zugriff)
-const ZUGANG_BEREICHE = ["fahrgemeinschaften", "kostueme", "finanzen", "statistiken"];
+// Zugriff je Bereich nach Rolle (Admin hat immer Zugriff). Fahrgemeinschaften stehen immer allen Mitgliedern offen.
+const ZUGANG_BEREICHE = ["kostueme", "finanzen", "statistiken"];
 const ROLLEN = ["trainer", "betreuer", "mitglied", "eltern", "sonstige"];
 
 export async function zugangSpeichern(_vorher: AktionsErgebnis, formData: FormData): Promise<AktionsErgebnis> {

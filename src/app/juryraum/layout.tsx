@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getJuryKontext } from "@/lib/juryraum/getJuryContext";
+import { OnlineHerzschlag } from "@/components/online/OnlineHerzschlag";
 
 const NAV = [
   { href: "/juryraum/dashboard", label: "Dashboard" },
@@ -39,6 +40,7 @@ export default async function JuryraumLayout({
 
   return (
     <div style={{ display: "flex", minHeight: "100%" }}>
+      <OnlineHerzschlag />
       <aside
         style={{
           width: 220,

@@ -33,6 +33,7 @@ import type { DashboardDaten } from "@/lib/dashboard/getDashboardData";
 import { darf, hatTarif, modulAn, type Zugriff } from "@/lib/navigation";
 import type { OnlineUebersicht } from "@/lib/online/getOnline";
 import { OnlineAnzeige } from "@/components/online/OnlineAnzeige";
+import { DatumUhrzeit } from "@/components/dashboard/DatumUhrzeit";
 import type {
   DashboardKennzahlen,
   Termin,
@@ -208,29 +209,28 @@ export function DashboardAnsicht({
             className="-z-10 object-cover object-[78%_center] sm:object-right"
           />
           <div className="absolute inset-0 -z-10 bg-gradient-to-r from-white via-white/90 to-white/55 sm:to-transparent sm:via-white/60 lg:via-white/30" />
-          <div className="flex h-full flex-col justify-center px-5 py-6 sm:px-8 sm:py-8">
-            <h1 className="text-[26px] font-extrabold leading-tight tracking-tight text-brand-ink sm:text-[34px]">
-              {begruessung()}, {daten.vorname ?? "willkommen"}! <span aria-hidden="true">👋</span>
+          {/* Text bleibt links vom Bildmotiv (Taenzer ab ca. 60 % der Breite): feste Maximalbreite, Umbruch statt Ueberlauf,
+              Schriftgroesse passt sich an Breite und Namenslaenge an */}
+          <div className="flex h-full min-w-0 flex-col justify-center px-5 py-6 sm:max-w-[60%] sm:px-8 sm:py-8 lg:max-w-[56%] 2xl:max-w-[52%]">
+            <h1
+              className={`break-words font-extrabold leading-[1.15] tracking-tight text-brand-ink [hyphens:auto] [text-wrap:balance] ${
+                (daten.vorname ?? "").length > 14 ? "text-[22px] sm:text-[26px] xl:text-[30px]" : "text-[26px] sm:text-[30px] xl:text-[34px]"
+              }`}
+              lang="de"
+            >
+              {begruessung()}, <span className="whitespace-normal">{daten.vorname ?? "willkommen"}</span>! <span aria-hidden="true">👋</span>
             </h1>
             <p className="mt-2 max-w-md text-[14px] text-brand-ink-soft sm:text-[16px]">
               Hier ist dein Überblick über alles Wichtige in TanzRaum.
             </p>
-            <p className="mt-4 font-[family-name:var(--font-script)] text-[20px] leading-snug text-brand-red sm:mt-5 sm:text-[26px]">
+            <p className="mt-4 font-[family-name:var(--font-script)] text-[20px] leading-snug text-brand-red sm:mt-5 sm:text-[24px] xl:text-[26px]">
               „Tanz verbindet – und du machst es möglich!“
             </p>
           </div>
         </section>
 
         <section className={`${KARTE} flex flex-col justify-between`}>
-            <div className="text-[13px] font-medium text-brand-ink-soft">
-              {new Date().toLocaleDateString("de-DE", {
-                weekday: "long",
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-                timeZone: "Europe/Berlin",
-              })}
-            </div>
+            <DatumUhrzeit />
             <p className="mt-4 text-[18px] font-semibold leading-snug text-brand-ink">
               „Disziplin heute – Erfolg morgen.“
             </p>

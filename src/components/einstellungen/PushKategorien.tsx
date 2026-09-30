@@ -13,6 +13,7 @@ const KATEGORIEN: { key: string; label: string; aktivImSystem: boolean }[] = [
   { key: "wichtige_news", label: "Wichtige News und TanzRaum-Hinweise", aktivImSystem: true },
   { key: "news", label: "Alle News und TanzRaum-Neuigkeiten", aktivImSystem: true },
   { key: "turniere", label: "Turniere", aktivImSystem: false },
+  { key: "fahrgemeinschaften", label: "Fahrgemeinschaften (Reaktionen auf deine Fahrten, Absagen)", aktivImSystem: true },
 ];
 
 export function PushKategorien({ stand }: { stand: Record<string, boolean> }) {

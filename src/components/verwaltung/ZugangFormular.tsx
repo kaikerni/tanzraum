@@ -6,7 +6,6 @@ import { LEERES_ERGEBNIS, Meldung, SendenButton } from "@/components/ui/SendenBu
 import { STATISTIK_INHALTE } from "@/lib/verein/statistik";
 
 const BEREICHE = [
-  { id: "fahrgemeinschaften", label: "Fahrgemeinschaften" },
   { id: "kostueme", label: "Kostüme & Requisiten" },
   { id: "finanzen", label: "Finanzen" },
   { id: "statistiken", label: "Statistiken" },
@@ -64,6 +63,7 @@ export function ZugangFormular({ vereinId, zugaenge }: { vereinId: string; zugae
       </div>
       <p className="text-[12px] text-brand-ink-soft">
         Einzelne Personen könnt ihr zusätzlich in der Mitgliederliste freischalten (Bereichsrechte, z. B. „Beiträge &amp; Finanzen“).
+        Fahrgemeinschaften stehen immer allen Mitgliedern offen.
       </p>
       <Meldung ergebnis={ergebnis} />
       <div>

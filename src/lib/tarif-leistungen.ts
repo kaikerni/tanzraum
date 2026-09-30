@@ -33,6 +33,7 @@ export const TARIF_LEISTUNGEN: Record<"free" | "basic" | "verein", Leistung[]> =
     { text: "Trainer-Netzwerk & Vereinsstatistiken" },
     { text: "Bereiche und Zugriffe selbst einstellen" },
     { text: "Support & Fernwartung" },
-    { text: "Fahrgemeinschaften, Kostüme & Requisiten, Finanzen", bald: true },
+    { text: "Fahrgemeinschaften für alle Mitglieder" },
+    { text: "Kostüme & Requisiten, Finanzen", bald: true },
   ],
 };
