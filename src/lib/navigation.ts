@@ -95,6 +95,8 @@ export type Zugriff = {
   istPlattformAdmin: boolean;
   // Trainer-Netzwerk (Vereinslizenz, Trainer/Admin) bzw. TanzRaum-Netzwerk (Basic ohne Verein) – DB: netzwerk_modus()
   netzwerk?: NetzwerkModus | null;
+  // Musikbereich plattformweit von der TanzRaum-Administration eingeschaltet (DB: musik_freigegeben())
+  musikAn?: boolean;
 };
 
 export type NavEintrag = {
@@ -193,6 +195,7 @@ export function sichtbareNav(zugriff: Zugriff): NavEintrag[] {
   if (zugriff.istPlattformAdmin) return ADMIN_NAV;
   return NAV.filter(
     (n) =>
+      (n.href !== "/dashboard/musik" || zugriff.musikAn !== false) &&
       (n.netzwerk ? zugriff.netzwerk === n.netzwerk : darf(zugriff, n.tarif, n.recht)) &&
       modulAn(zugriff, n.modul) &&
       (zugriff.istPlattformAdmin || !n.nichtNurFuer || !nurAusgeschlosseneRollen(zugriff, n.nichtNurFuer)),

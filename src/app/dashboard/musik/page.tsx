@@ -37,6 +37,25 @@ export default async function MusikSeite({ searchParams }: { searchParams: Promi
   if (!daten) redirect("/login");
   const f = await searchParams;
 
+  // Plattformweit von der TanzRaum-Administration ausgeschaltet (z. B. bis genug Speicher gebucht ist)
+  const { data: musikAn } = await supabase.rpc("musik_freigegeben");
+  if (musikAn !== true) {
+    return (
+      <div className="mx-auto flex max-w-[720px] flex-col gap-4">
+        <h1 className="flex items-center gap-2 text-[26px] font-extrabold tracking-tight text-brand-ink">
+          <Music size={24} className="text-brand-red" /> Musik
+        </h1>
+        <section className={`${KARTE} flex flex-col items-center gap-2 py-10 text-center`}>
+          <p className="text-[16px] font-bold text-brand-ink">Der Musikbereich ist gerade nicht verfügbar</p>
+          <p className="max-w-md text-[14px] text-brand-ink-soft">Er wird in einem der nächsten Updates freigeschaltet.</p>
+          <Link href="/dashboard" className="mt-2 text-[13.5px] font-semibold text-brand-red">
+            Zurück zum Dashboard
+          </Link>
+        </section>
+      </div>
+    );
+  }
+
   const verein = daten.vereine.find((v) => !v.vereinGesperrt && v.vereinTarif === "verein") ?? null;
   const [{ data: eigeneErlaubt }, verwaltenRes] = await Promise.all([
     supabase.rpc("darf_eigene_dateien"),

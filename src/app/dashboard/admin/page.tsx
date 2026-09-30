@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 import { DashboardStatus } from "@/components/dashboard/DashboardStatus";
 import { SpotlightSchalter } from "@/components/admin/SpotlightSchalter";
+import { MusikSchalter } from "@/components/admin/MusikSchalter";
 
 export const metadata = { title: "TanzRaum-Administration" };
 
@@ -22,7 +23,7 @@ export default async function AdminSeite() {
   const aktiveFernwartungen = ((fernwartungen ?? []) as { aktiv: boolean }[]).filter((f) => f.aktiv).length;
   const { data: boerse } = await supabase.rpc("admin_boerse_meldungen");
   const boerseMeldungen = Number((boerse as { zahlen?: { offene_meldungen?: number } } | null)?.zahlen?.offene_meldungen ?? 0);
-  const { data: spotlightEinstellung } = await supabase.from("plattform_einstellungen").select("spotlights_aktiv, spotlights_tarife").eq("id", true).maybeSingle();
+  const { data: spotlightEinstellung } = await supabase.from("plattform_einstellungen").select("spotlights_aktiv, spotlights_tarife, musik_aktiv").eq("id", true).maybeSingle();
   const kacheln = [
     { href: "/dashboard/admin/statistik", icon: BarChart3, farbe: "bg-brand-blue-wash text-brand-blue", titel: "Plattform-Statistik", text: "Nutzer, Tarife, Vereine, Aktivität – nur zusammengefasste Zahlen" },
     { href: "/dashboard/admin/vereine", icon: Building2, farbe: "bg-brand-gold-wash text-brand-gold", titel: "Vereine", text: "Vereinskarten mit Lizenzstatus, Mitgliederzahl, Gruppen und Online-Zahl" },
@@ -53,6 +54,9 @@ export default async function AdminSeite() {
       <DashboardStatus className={`${KARTE} !py-3`} />
       <section className={KARTE} aria-label="Spotlights">
         <SpotlightSchalter aktiv={spotlightEinstellung?.spotlights_aktiv ?? false} tarife={spotlightEinstellung?.spotlights_tarife ?? ["free", "basic", "verein"]} />
+      </section>
+      <section className={KARTE} aria-label="Musikbereich">
+        <MusikSchalter aktiv={spotlightEinstellung?.musik_aktiv ?? false} />
       </section>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {kacheln.map((k) => (

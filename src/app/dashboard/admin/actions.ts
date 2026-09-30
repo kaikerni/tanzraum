@@ -46,3 +46,12 @@ export async function ansichtWaehlen(ansicht: string | null): Promise<AktionsErg
   revalidatePath("/dashboard", "layout");
   return { error: null, ok: ansicht ? "Ansicht gewechselt." : "Vorschau beendet." };
 }
+
+// Musikbereich plattformweit an/aus (Pruefung in der Datenbank: nur Plattform-Administration)
+export async function musikEinstellen(aktiv: boolean): Promise<AktionsErgebnis> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_musik_setzen", { p_aktiv: aktiv === true });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath("/dashboard", "layout");
+  return { error: null, ok: aktiv ? "Musikbereich ist eingeschaltet." : "Musikbereich ist für alle ausgeschaltet." };
+}

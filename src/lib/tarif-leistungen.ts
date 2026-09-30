@@ -19,7 +19,7 @@ export const TARIF_LEISTUNGEN: Record<"free" | "basic" | "verein", Leistung[]> =
     { text: "Trainingszeiten im Überblick" },
     { text: "TeamCloud: 100 MB eigener Speicher für Dokumente & Musik" },
     { text: "Nachrichten im ganzen TanzRaum-Netzwerk" },
-    { text: "Eigene Musik: 200 MB, im Browser abspielen" },
+    { text: "Eigene Musik: 200 MB, im Browser abspielen", bald: true },
   ],
   verein: [
     { text: "Alles aus BASIC – für alle Mitglieder deines Vereins" },
@@ -37,6 +37,6 @@ export const TARIF_LEISTUNGEN: Record<"free" | "basic" | "verein", Leistung[]> =
     { text: "Fahrgemeinschaften für alle Mitglieder" },
     { text: "Kostüme & Requisiten: Inventar, Ausgabe, Rückgabe" },
     { text: "Finanzen: Kassenbuch mit Belegen, Mitgliedsbeiträge" },
-    { text: "Musik für Training und Auftritte (1 GB)" },
+    { text: "Musik für Training und Auftritte (1 GB)", bald: true },
   ],
 };

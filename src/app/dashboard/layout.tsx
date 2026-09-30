@@ -86,7 +86,7 @@ export default async function DashboardLayout({
 
   // TanzRaum-Administration: „Ansicht als …“ ersetzt nur Menue und Dashboard (Beispieldaten), keine Rechte
   const ansicht = await aktiveAnsicht(daten.istPlattformAdmin);
-  const navZugriff = ansicht ? ansichtZugriff(ansicht) : zugriff;
+  const navZugriff = ansicht ? { ...ansichtZugriff(ansicht), musikAn: zugriff.musikAn } : zugriff;
 
   const name = [daten.vorname, daten.nachname].filter(Boolean).join(" ") || "TanzRaum-Nutzer";
   const ersterVerein = daten.vereine.find((v) => !v.vereinGesperrt) ?? daten.vereine[0];

@@ -61,7 +61,7 @@ const ADMIN_AKTIONEN: Aktion[] = [
 
 export function QuickActions({ zugriff, breit = false }: { zugriff: Zugriff; breit?: boolean }) {
   const sichtbar = zugriff.istPlattformAdmin ? ADMIN_AKTIONEN : AKTIONEN.filter((a) =>
-    !modulAn(zugriff, a.modul) ? false : a.rechte === undefined ? darf(zugriff, a.tarif) : a.rechte.some((r) => darf(zugriff, a.tarif, r)),
+    !modulAn(zugriff, a.modul) || (a.modul === "musik" && zugriff.musikAn === false) ? false : a.rechte === undefined ? darf(zugriff, a.tarif) : a.rechte.some((r) => darf(zugriff, a.tarif, r)),
   );
   if (sichtbar.length === 0) return null;
 

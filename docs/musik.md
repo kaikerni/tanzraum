@@ -1,6 +1,12 @@
 # Musik
 
-Menüpunkt „Musik“ (ab BASIC; Modul `musik`, vom Verein abschaltbar). Migration `20260930053721_musik`.
+Menüpunkt „Musik“ (ab BASIC; Modul `musik`, vom Verein abschaltbar). Migrationen `20260930053721_musik`,
+`20260930075130_musik_schalter`.
+
+**Plattform-Schalter:** Die TanzRaum-Administration schaltet den Musikbereich unter Administration → „Musikbereich“ für
+alle ein oder aus (`plattform_einstellungen.musik_aktiv`, Standard **aus**; `admin_musik_setzen`, `musik_freigegeben`).
+Aus = kein Menüpunkt, keine Schnellaktion, Hinweisseite statt Musik, keine Uploads (DB), keine Wiedergabe (RLS/Speicher).
+Gespeicherte Titel und Dateien bleiben erhalten.
 
 ## Wo liegt die Musik?
 

@@ -46,7 +46,11 @@ export default async function DashboardPage({
 
   // TanzRaum-Administration in „Ansicht als …“: Dashboard nur mit erfundenen Beispieldaten
   const ansicht = await aktiveAnsicht(daten.istPlattformAdmin);
-  if (ansicht) return <DashboardAnsicht {...vorschauAls(ansicht)} />;
+  if (ansicht) {
+    const v = vorschauAls(ansicht);
+    const { data: musikAn } = await supabase.rpc("musik_freigegeben");
+    return <DashboardAnsicht {...v} zugriff={{ ...v.zugriff, musikAn: musikAn === true }} />;
+  }
 
   const { wochen: wochenParam } = await searchParams;
   const wochen = ZEITRAEUME.find((w) => String(w) === wochenParam) ?? 8;
