@@ -9,7 +9,7 @@ export const KAI_FRAGEN: KaiFrage[] = [
     antwort: "Unter „Turniere“. Oben siehst du „Deine nächsten Starts“ und kannst deinem Verein Bescheid geben, ob du dabei bist.",
     aktion: { label: "Zu den Turnieren", href: "/dashboard/turniere" } },
   { id: "training-abmelden", bereiche: ["/dashboard/training"], frage: "Wie melde ich mich vom Training ab?", stichworte: ["abmelden", "abmeldung", "training", "krank", "absagen", "fehlen", "nicht kommen"],
-    antwort: "Unter „Training“ beim jeweiligen Termin auf „Abmelden“ tippen und optional einen Grund angeben. Eltern melden dort auch ihre Kinder ab.",
+    antwort: "Du bist automatisch eingeplant. Kannst du nicht kommen, tippe unter „Training“ beim jeweiligen Termin auf „Vom Training abmelden“, wähle einen Grund und bestätige – der zuständige Trainer wird informiert. Die Abmeldung gilt nur für diesen einen Termin; „Wieder anmelden“ macht sie rückgängig.",
     aktion: { label: "Zum Training", href: "/dashboard/training" } },
   { id: "einstellungen", bereiche: ["/dashboard/einstellungen"], frage: "Wie ändere ich meine Einstellungen?", stichworte: ["einstellung", "einstellungen", "profil", "passwort", "email", "e-mail", "konto"],
     antwort: "Über „Einstellungen“ im Menü: E-Mail, Passwort, Profil-Angaben, Privatsphäre, Benachrichtigungen und Datenschutz.",
@@ -59,7 +59,7 @@ export const KAI_FRAGEN: KaiFrage[] = [
     antwort: "Unter „Training“ oben auf „Training anlegen“ – für einmalige oder wöchentliche Trainings. Das dürfen Vereinsadmin und Trainer ihrer Gruppen.",
     aktion: { label: "Zum Training", href: "/dashboard/training" } },
   { id: "kind-abmelden", bereiche: ["/dashboard/training"], frage: "Wie melde ich mein Kind vom Training ab?", stichworte: ["kind", "tochter", "sohn", "eltern"],
-    antwort: "Unter „Training“ siehst du die Trainings deiner Kinder – beim Namen des Kindes auf „Abmelden“ tippen.",
+    antwort: "Unter „Training“ siehst du die Trainings aller deiner Kinder, jedes Kind einzeln. Beim Kind auf „… abmelden“ tippen, Grund wählen und bestätigen – nur für diesen Termin.",
     aktion: { label: "Zum Training", href: "/dashboard/training" } },
   // Mitglieder
   { id: "mitglied-finden", bereiche: ["/dashboard/mitglieder"], frage: "Wie finde ich ein bestimmtes Mitglied?", stichworte: ["mitglied finden", "suchen", "filter", "mitgliederliste"],

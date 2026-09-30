@@ -108,12 +108,13 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
   });
 
   // Trainings der naechsten Wochen aus den Gruppenzeiten
+  // wie training_kalender: Vereinsadmin alle Gruppen, sonst eigene, betreute und die Gruppen der Kinder
   const meineGruppen = new Set(
-    istAdmin || zugriff.bereiche.includes("anwesenheit")
+    istAdmin
       ? GRUPPEN.map((g) => g.id)
       : ansicht === "verein_eltern"
         ? GRUPPEN.filter((g) => mitglieder.some((p) => KINDER.includes(vm(p.n)) && inGruppe(p, g.id))).map((g) => g.id)
-        : (ich?.g ?? []),
+        : [...(ich?.g ?? []), ...betreueGruppen],
   );
   const meine = mitglieder.filter((p) => (p.n === 0 && funktionVon(p) === "mitglied" && ansicht !== "verein_eltern") || (ansicht === "verein_eltern" && KINDER.includes(vm(p.n))));
   // Abmeldungen im Beispiel: jeweils die dritte Person einer Gruppe an den naechsten drei Tagen
@@ -137,7 +138,17 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
           // ist_gruppen_betreuung (Trainer) bzw. _erweitert (Trainer/Betreuer) + Bereich „anwesenheit“
           darf_verwalten: istAdmin || (istTrainer && betreueGruppen.has(g.id)),
           darf_anwesenheit: istAdmin || (betreueGruppen.has(g.id) && zugriff.bereiche.includes("anwesenheit")),
-          personen: leute.map((p) => ({ vm_id: vm(p.n), name: p.name, ich: p.n === 0, abgemeldet: weg?.n === p.n, grund: weg?.n === p.n ? "Krank" : null })),
+          personen: leute.map((p) => ({
+            vm_id: vm(p.n), name: p.name, ich: p.n === 0, abgemeldet: weg?.n === p.n, grund: weg?.n === p.n ? "Krank" : null,
+            kategorie: weg?.n === p.n ? "krankheit" : null, hinweis: null,
+          })),
+          // Trainer/Betreuer der Gruppe: Abmeldungen mit Name, Grund und Zeitpunkt
+          abmeldungen:
+            istAdmin || betreueGruppen.has(g.id)
+              ? weg
+                ? [{ vm_id: vm(weg.n), name: weg.name, kategorie: "krankheit", hinweis: null, grund: "Krank", erstellt_am: `${tag(Math.min(i, 0))}T12:32:00Z` }]
+                : []
+              : null,
         });
       }
     }
@@ -453,6 +464,15 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
     training_kalender: (b: Json) => trainingsTage(b.p_von ?? tag(-7), b.p_bis ?? tag(28)),
     // ist_gruppen_betreuung(): Admin alle Gruppen, Trainer/in die eigenen (Betreuer/innen nicht)
     meine_betreuten_gruppen: GRUPPEN.filter((g) => istAdmin || (istTrainer && betreueGruppen.has(g.id))).map((g) => ({ gruppe_id: g.id, gruppe_name: g.name, verein_id: V, verein_name: verein.name })),
+    // Teilnehmer fuer „Abmeldung eintragen“ (nur Trainer der Gruppe bzw. Vereinsadmin)
+    training_teilnehmer: (b: Json) => {
+      if (!(istAdmin || (istTrainer && betreueGruppen.has(b.p_gruppe_id)))) return [];
+      const i = Math.round((Date.parse(`${b.p_datum}T12:00:00Z`) - Date.parse(`${tag(0)}T12:00:00Z`)) / 86400000);
+      const weg = abgemeldet(b.p_gruppe_id, i);
+      return mitglieder
+        .filter((p) => inGruppe(p, b.p_gruppe_id) && funktionVon(p) === "mitglied")
+        .map((p) => ({ vm_id: vm(p.n), name: p.name, abgemeldet: p === weg, kategorie: p === weg ? "krankheit" : null, hinweis: null }));
+    },
     anwesenheit_liste: (b: Json) => {
       const weg = mitglieder.filter((p) => inGruppe(p, b.p_gruppe_id) && funktionVon(p) === "mitglied")[2];
       return mitglieder

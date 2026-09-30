@@ -1,6 +1,25 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type TrainingPerson = { vmId: string; name: string; ich: boolean; abgemeldet: boolean; grund: string | null };
+// Eigene Person bzw. eigenes Kind in diesem Training (Standard: eingeplant; abgemeldet nur mit Abmeldung)
+export type TrainingPerson = {
+  vmId: string;
+  name: string;
+  ich: boolean;
+  abgemeldet: boolean;
+  grund: string | null;
+  kategorie: string | null;
+  hinweis: string | null;
+};
+
+// Abmeldung fuer die Trainer-/Betreuer-Sicht (nur fuer betreute Gruppen, siehe training_kalender)
+export type TrainingsAbmeldung = {
+  vmId: string;
+  name: string;
+  kategorie: string | null;
+  hinweis: string | null;
+  grund: string | null;
+  erstelltAm: string;
+};
 
 export type TrainingsTag = {
   terminId: string;
@@ -17,7 +36,11 @@ export type TrainingsTag = {
   darfVerwalten: boolean;
   darfAnwesenheit: boolean;
   personen: TrainingPerson[];
+  // null = keine Trainer-/Betreuer-Sicht auf diese Gruppe
+  abmeldungen: TrainingsAbmeldung[] | null;
 };
+
+export type TrainingsTeilnehmer = { vmId: string; name: string; abgemeldet: boolean; kategorie: string | null; hinweis: string | null };
 
 export type AnwesenheitsEintrag = {
   vmId: string;
@@ -77,7 +100,20 @@ export async function getTrainingKalender(supabase: SupabaseClient, von: string,
       ich: p.ich,
       abgemeldet: p.abgemeldet,
       grund: p.grund,
+      kategorie: p.kategorie ?? null,
+      hinweis: p.hinweis ?? null,
     })),
+    abmeldungen: Array.isArray(t.abmeldungen)
+      ? // deno-lint-ignore no-explicit-any
+        (t.abmeldungen as any[]).map((a) => ({
+          vmId: a.vm_id,
+          name: a.name,
+          kategorie: a.kategorie ?? null,
+          hinweis: a.hinweis ?? null,
+          grund: a.grund ?? null,
+          erstelltAm: a.erstellt_am,
+        }))
+      : null,
   }));
 }
 

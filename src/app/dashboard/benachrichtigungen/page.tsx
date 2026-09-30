@@ -12,6 +12,7 @@ function ziel(typ: string): string | null {
   if (typ === "termin_erinnerung" || typ === "termin") return "/dashboard/kalender";
   if (typ === "tarif_kauf") return "/dashboard/admin/tarife";
   if (typ === "fahrgemeinschaft") return "/dashboard/fahrgemeinschaften";
+  if (typ === "training_abmeldung") return "/dashboard/training";
   if (typ === "boerse") return "/dashboard/boerse/meine";
   if (typ === "kostuem") return "/dashboard/kostueme";
   if (typ === "beitrag") return "/dashboard/verein#beitraege";

@@ -23,6 +23,7 @@ import { TarifZaehler, type TarifZaehlerDaten } from "@/components/admin/TarifZa
 import { getAnkuendigungen, getMeineNews, getMeineUmfragen } from "@/lib/news/getNews";
 import { AnkuendigungenLeiste } from "@/components/news/AnkuendigungenLeiste";
 import { NewsDashboardKarte } from "@/components/news/NewsDashboardKarte";
+import { getTrainingKalender, heuteBerlin } from "@/lib/training/getTraining";
 
 export default async function DashboardPage({
   searchParams,
@@ -62,11 +63,14 @@ export default async function DashboardPage({
       getMeineKinder(supabase),
     ]);
   // TanzRaum-Ankuendigungen (alle Nutzer) und relevante Vereins-News/offene Umfragen
-  const [ankuendigungen, news, umfragen, online] = await Promise.all([
+  const heuteDatum = heuteBerlin();
+  const [ankuendigungen, news, umfragen, online, trainingHeute] = await Promise.all([
     getAnkuendigungen(supabase),
     getMeineNews(supabase, 5),
     getMeineUmfragen(supabase, 10),
     getOnline(supabase, daten.istPlattformAdmin),
+    // Nur mit Vereinslizenz liefert die Datenbank Termine (training_kalender)
+    daten.istPlattformAdmin || zugriff.tarif !== "verein" ? Promise.resolve([]) : getTrainingKalender(supabase, heuteDatum, heuteDatum),
   ]);
   // Spotlights prominent oben (ansehen: alle, erstellen: ab Basic bzw. mit Vereinslizenz)
   const [spotlightIch, spotlights] = spotlightsAn
@@ -125,6 +129,8 @@ export default async function DashboardPage({
       kinder={kinder}
       wochen={wochen}
       online={online}
+      trainingHeute={trainingHeute}
+      heuteDatum={heuteDatum}
     />
     </>
   );

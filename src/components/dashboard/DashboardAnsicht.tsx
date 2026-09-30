@@ -45,6 +45,8 @@ import type {
   MeinKind,
 } from "@/lib/dashboard/getDashboardUebersicht";
 import type { AktuelleNachricht } from "@/lib/dashboard/getNachrichten";
+import type { TrainingsTag } from "@/lib/training/getTraining";
+import { TrainingKarte } from "@/components/training/TrainingKarte";
 
 const TARIF_LABEL: Record<string, string> = {
   free: "Free",
@@ -78,6 +80,9 @@ export type DashboardAnsichtProps = {
   kinder: MeinKind[];
   wochen: number;
   online?: OnlineUebersicht | null;
+  // Trainings heute (Vereinslizenz): eigene Teilnahme/Kinder und fuer Trainer die Abmeldungen
+  trainingHeute?: TrainingsTag[];
+  heuteDatum?: string;
 };
 
 export function DashboardAnsicht({
@@ -94,6 +99,8 @@ export function DashboardAnsicht({
   kinder,
   wochen,
   online = null,
+  trainingHeute = [],
+  heuteDatum = "",
 }: DashboardAnsichtProps) {
   // TanzRaum-Administration: nur Plattform-Karten (keine Vereins-, Trainings- oder Mitgliederkarten)
   const admin = daten.istPlattformAdmin;
@@ -244,6 +251,27 @@ export function DashboardAnsicht({
             )}
           </section>
       </div>
+
+      {/* Training heute: gross und direkt erreichbar (abmelden bzw. Abmeldungen der eigenen Gruppen) */}
+      {!admin && mitTraining && zugriff.tarif === "verein" && trainingHeute.length > 0 && (
+        <section aria-labelledby="dashboard-training-heute" className="flex flex-col gap-2.5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="dashboard-training-heute" className="text-[13px] font-extrabold uppercase tracking-[0.08em] text-brand-red">
+              Training heute
+            </h2>
+            <Link href="/dashboard/training" className="text-[13px] font-semibold text-brand-ink-soft hover:text-brand-ink">
+              Alle Trainings
+            </Link>
+          </div>
+          <ul className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+            {trainingHeute.map((t) => (
+              <li key={`${t.terminId}-${t.datum}`} className="min-w-0">
+                <TrainingKarte t={t} heute={heuteDatum} zeigeVerein={new Set(trainingHeute.map((x) => x.vereinId)).size > 1} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Kennzahlen */}
       {kpis.length > 0 && (

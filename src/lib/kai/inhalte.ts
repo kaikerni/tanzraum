@@ -92,7 +92,7 @@ export const KONTEXT_TIPPS: KaiTipp[] = [
     schritte: ["Oben auf „Termin anlegen“ tippen – oder im Monat auf „+ Termin an diesem Tag“.", "Titel, Datum und Uhrzeit eintragen.", "Speichern – fertig."],
     aktion: { label: "Termin anlegen", href: "/dashboard/kalender/neu" } },
   { pfad: "/dashboard/training", zeile: "👀 Hier kannst du deine Teilnahme verwalten.", titel: "Training", pose: "erklaeren",
-    text: "Kannst du nicht kommen? Tippe beim Training auf „Abmelden“ und gib optional einen Grund an – dein Trainerteam sieht es sofort. Eltern melden hier auch ihre Kinder ab." },
+    text: "Du bist automatisch eingeplant. Kannst du nicht kommen? Tippe auf „Vom Training abmelden“, wähle einen Grund und bestätige – dein Trainer sieht es sofort. Eltern melden hier auch ihre Kinder ab. Trainer sehen je Training die Abmeldungen und können selbst welche eintragen." },
   { pfad: "/dashboard/anwesenheit", zeile: "✅ Anwesenheit in Sekunden.", titel: "Anwesenheit", pose: "erklaeren",
     text: "Tippe „Alle Anwesenden markieren“ und korrigiere nur die Ausnahmen – auch nachträglich für die letzten 7 Tage." },
   { pfad: "/dashboard/mitglieder", zeile: "💡 So findest du jedes Mitglied schnell.", titel: "Mitglieder", pose: "idee",

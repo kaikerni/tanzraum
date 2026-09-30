@@ -16,10 +16,13 @@ export function AppSidebar({
   kontext,
   zugriff,
   ungeleseneNachrichten,
+  neueAbmeldungen = 0,
 }: {
   kontext: SidebarKontext;
   zugriff: Zugriff;
   ungeleseneNachrichten: number;
+  // Ungelesene Hinweise „Neue Abmeldung“ (Trainer) -> Badge am Menuepunkt Training
+  neueAbmeldungen?: number;
 }) {
   const pathname = usePathname();
   const eintraege = sichtbareNav(zugriff);
@@ -45,7 +48,7 @@ export function AppSidebar({
           {eintraege.map((item) => {
             const aktiv = pathname === item.href;
             const Icon = item.icon;
-            const zaehler = item.href === "/dashboard/nachrichten" ? ungeleseneNachrichten : 0;
+            const zaehler = item.href === "/dashboard/nachrichten" ? ungeleseneNachrichten : item.href === "/dashboard/training" ? neueAbmeldungen : 0;
             return (
               <Link
                 key={item.href}

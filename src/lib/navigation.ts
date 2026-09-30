@@ -121,7 +121,7 @@ export const NAV: NavEintrag[] = [
   { href: "/dashboard/verein", label: "Mein Verein", icon: Building2, tarif: "basic" },
   { href: "/dashboard/news", label: "News & Umfragen", kurz: "News", icon: Newspaper, tarif: "verein", modul: "news" },
   { href: "/dashboard/kalender", label: "Kalender", icon: Calendar, tarif: "basic", modul: "kalender" },
-  { href: "/dashboard/training", label: "Training", icon: Activity, tarif: "basic", modul: "training" },
+  { href: "/dashboard/training", label: "Training", icon: Activity, tarif: "verein", modul: "training" },
   { href: "/dashboard/anwesenheit", label: "Anwesenheit", icon: ClipboardCheck, tarif: "verein", recht: "anwesenheit", modul: "anwesenheit" },
   { href: "/dashboard/turniere", label: "Turniere", icon: Trophy, tarif: "free", modul: "turniere" },
   { href: "/dashboard/saisonplanung", label: "Saisonplanung", icon: CalendarRange, tarif: "verein", recht: "saison", modul: "saisonplanung" },

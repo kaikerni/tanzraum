@@ -58,6 +58,22 @@ export async function GET() {
     );
   }
 
+  // Trainer: neue Abmeldung in einer eigenen Gruppe (Push-Kategorie „abmeldung“, nur eigene, frische Benachrichtigung)
+  const { data: abm } = await supabase.rpc("meine_push_training_abmeldung");
+  // deno-lint-ignore no-explicit-any
+  const abmeldung = ((abm ?? []) as any[])[0];
+  if (abmeldung) {
+    return NextResponse.json(
+      {
+        titel: "🔴 Neue Abmeldung",
+        text: String(abmeldung.text).replace(/^🔴 Neue Abmeldung:\s*/, ""),
+        url: "/dashboard/training",
+        tag: `abmeldung-${abmeldung.id}`,
+      },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
   // Plattformadmin: neuer Kauf (BASIC-Abo oder Vereinslizenz) -- nur eigene, frische Benachrichtigung
   const { data: kauf } = await supabase
     .from("benachrichtigungen")

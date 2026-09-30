@@ -8,7 +8,7 @@ import { ABMELDEGRUENDE } from "@/lib/training/abmeldegruende";
 const KNOPF =
   "inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border px-3 text-[13px] font-semibold disabled:opacity-60";
 
-// Abmeldung mit festem Grund + optionalem Hinweis. Wer eintraegt (selbst/Eltern/Trainer), bestimmt die Datenbank.
+// Abmeldung mit festem Grund + optionalem Hinweis (kompakt, z. B. in der Anwesenheitsliste). Die Quelle wird nirgends angezeigt.
 export function AbmeldeFormular({
   vereinId,
   gruppeId,
@@ -75,7 +75,7 @@ export function AbmeldeFormular({
           </option>
           {ABMELDEGRUENDE.map((g) => (
             <option key={g.wert} value={g.wert}>
-              {g.label}
+              {g.emoji} {g.label}
             </option>
           ))}
         </select>
@@ -87,11 +87,7 @@ export function AbmeldeFormular({
           value={hinweis}
           onChange={(e) => setHinweis(e.target.value)}
           maxLength={200}
-          placeholder={
-            manuell
-              ? "Hinweis (optional), z. B. per WhatsApp"
-              : "Hinweis (optional)"
-          }
+          placeholder="Hinweis (optional)"
           className="min-h-10 flex-1 rounded-xl border border-brand-line bg-white px-3 text-[13.5px] outline-none focus:border-brand-red"
         />
       </div>

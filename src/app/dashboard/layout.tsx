@@ -56,7 +56,7 @@ export default async function DashboardLayout({
   const { data: rechtstexteOffen } = await supabase.rpc("rechtstexte_offen");
   if (rechtstexteOffen === true) redirect("/rechtstexte");
 
-  const [{ data: ungelesen }, { count: benachrichtigungen }, zugriff, wichtigeNews, ankuendigungen, meineAntraege] = await Promise.all([
+  const [{ data: ungelesen }, { count: benachrichtigungen }, zugriff, wichtigeNews, ankuendigungen, meineAntraege, { count: neueAbmeldungen }] = await Promise.all([
     supabase.rpc("eigene_ungelesene_nachrichten_anzahl"),
     supabase
       .from("benachrichtigungen")
@@ -67,6 +67,13 @@ export default async function DashboardLayout({
     getOffeneWichtigeNews(supabase),
     getAnkuendigungen(supabase),
     getMeineAntraege(supabase),
+    // Badge am Menuepunkt Training: neue Abmeldungen (bestehende Benachrichtigungen, Typ training_abmeldung)
+    supabase
+      .from("benachrichtigungen")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("typ", "training_abmeldung")
+      .eq("gelesen", false),
   ]);
   const offeneAntraege = meineAntraege.filter((a) => a.status === "offen");
   // Wichtige News und wichtige TanzRaum-Ankuendigungen erscheinen als Popup, bis sie bestaetigt sind
@@ -127,7 +134,7 @@ export default async function DashboardLayout({
         kai={kai}
       />
       <div className="flex min-h-0 flex-1">
-        <AppSidebar kontext={kontext} zugriff={navZugriff} ungeleseneNachrichten={ungeleseneNachrichten} />
+        <AppSidebar kontext={kontext} zugriff={navZugriff} ungeleseneNachrichten={ungeleseneNachrichten} neueAbmeldungen={neueAbmeldungen ?? 0} />
         <main className="flex flex-1 flex-col overflow-y-auto px-3 pb-28 pt-4 sm:px-5 md:pb-8 md:pt-5 xl:px-6">
           {ansicht && <AnsichtLeiste aktiv={ansicht} />}
           {offeneAntraege.length > 0 && <AntragHinweis antraege={offeneAntraege} />}
@@ -135,7 +142,7 @@ export default async function DashboardLayout({
           <AppFusszeile className="mx-auto mt-10 w-full max-w-[1200px]" />
         </main>
       </div>
-      <MobileNav zugriff={navZugriff} ungeleseneNachrichten={ungeleseneNachrichten} />
+      <MobileNav zugriff={navZugriff} ungeleseneNachrichten={ungeleseneNachrichten} neueAbmeldungen={neueAbmeldungen ?? 0} />
       {popup.length > 0 && <WichtigPopup eintraege={popup} />}
       <OnlineHerzschlag />
       {!ansicht && <VorschauAufraeumen />}

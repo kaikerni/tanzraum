@@ -171,3 +171,8 @@ Rollen, Altersklassen, Tanzgruppen, Trainingsbeteiligung, Turnierergebnisse); Se
 zusammengefasste Zahlen (`verein_statistik`).
 
 Vereinsbereiche: siehe `docs/musik.md`, `docs/kostueme.md`, `docs/finanzen.md`, `docs/fahrgemeinschaften.md`.
+
+## Training & Abmeldung
+
+Nur mit Vereinslizenz; Standard „eingeplant“, Abmeldung je Termin mit festem Grund, keine Quellenanzeige,
+Trainer sehen nur betreute Gruppen. Details: `docs/training-abmeldung.md`.

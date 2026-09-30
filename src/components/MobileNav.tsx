@@ -6,15 +6,19 @@ import { usePathname } from "next/navigation";
 import { MoreHorizontal, X, HelpCircle } from "lucide-react";
 import { sichtbareNav, type Zugriff } from "@/lib/navigation";
 
-const BEVORZUGT = ["/dashboard", "/dashboard/netzwerk", "/dashboard/training", "/dashboard/kalender"];
+// Training steht fuer Vereinsmitglieder direkt in der Leiste (nicht nur unter „Mehr“)
+const BEVORZUGT = ["/dashboard", "/dashboard/training", "/dashboard/kalender", "/dashboard/netzwerk"];
 const ADMIN_BEVORZUGT = ["/dashboard", "/dashboard/admin", "/dashboard/admin/meldungen", "/dashboard/admin/statistik"];
 
 export function MobileNav({
   zugriff,
   ungeleseneNachrichten,
+  neueAbmeldungen = 0,
 }: {
   zugriff: Zugriff;
   ungeleseneNachrichten: number;
+  // Ungelesene Hinweise „Neue Abmeldung“ (Trainer) -> Badge am Menuepunkt Training
+  neueAbmeldungen?: number;
 }) {
   const pathname = usePathname();
   const [offen, setOffen] = useState(false);
@@ -98,7 +102,7 @@ export function MobileNav({
           {leiste.map((item) => {
             const Icon = item.icon;
             const aktiv = pathname === item.href;
-            const zaehler = item.href === "/dashboard/nachrichten" ? ungeleseneNachrichten : 0;
+            const zaehler = item.href === "/dashboard/nachrichten" ? ungeleseneNachrichten : item.href === "/dashboard/training" ? neueAbmeldungen : 0;
             return (
               <Link
                 key={item.href}
