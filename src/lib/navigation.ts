@@ -22,6 +22,13 @@ import {
   CreditCard,
   Newspaper,
   Store,
+  Flag,
+  Receipt,
+  Megaphone,
+  LifeBuoy,
+  Medal,
+  Eye,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -126,12 +133,34 @@ export const NAV: NavEintrag[] = [
   { href: "/dashboard/boerse", label: "TanzRaum Börse", kurz: "Börse", icon: Store, tarif: "free" },
   { href: "/dashboard/fahrgemeinschaften", label: "Fahrgemeinschaften", icon: Car, tarif: "verein", recht: "fahrgemeinschaften", modul: "fahrgemeinschaften" },
   { href: "/dashboard/musik", label: "Musik", icon: Music, tarif: "basic", nichtNurFuer: ["rolle_betreuer", "rolle_eltern"], modul: "musik" },
-  { href: "/dashboard/kostueme", label: "Kostüme & Requisiten", icon: Shirt, tarif: "verein", recht: "material", modul: "kostueme" },
+  // Verwalten: Bereich "Kostueme" (Vereinsverwaltung); alle anderen sehen hier, was ihnen ausgegeben ist
+  { href: "/dashboard/kostueme", label: "Kostüme & Requisiten", kurz: "Kostüme", icon: Shirt, tarif: "verein", modul: "kostueme" },
   { href: "/dashboard/finanzen", label: "Finanzen", icon: Wallet, tarif: "verein", recht: "beitraege", modul: "finanzen" },
   { href: "/dashboard/statistiken", label: "Statistiken", icon: BarChart3, tarif: "verein", recht: "statistiken", modul: "statistiken" },
   { href: "/dashboard/vereinsverwaltung", label: "Vereinsverwaltung", icon: Settings2, tarif: "verein", recht: "rolle_admin" },
   { href: "/dashboard/admin", label: "TanzRaum-Administration", icon: ShieldCheck, tarif: "free", recht: "plattform_admin" },
   { href: "/dashboard/tarif", label: "Mein Tarif", kurz: "Tarif", icon: CreditCard, tarif: "free" },
+  { href: "/dashboard/einstellungen", label: "Einstellungen", icon: Settings, tarif: "free" },
+];
+
+// Eigene Navigation der TanzRaum-Administration: nur Plattform-Aufgaben – keine Vereins-, Trainings- oder
+// Mitgliederbereiche (die sieht die Administration ueber „Ansicht als …“ mit Beispieldaten).
+export const ADMIN_NAV: NavEintrag[] = [
+  { href: "/dashboard", label: "Dashboard", icon: Home, tarif: "free" },
+  { href: "/dashboard/admin", label: "Administration", kurz: "Admin", icon: ShieldCheck, tarif: "free" },
+  { href: "/dashboard/admin/meldungen", label: "Meldungen", icon: Flag, tarif: "free" },
+  { href: "/dashboard/admin/statistik", label: "Plattform-Statistik", kurz: "Statistik", icon: BarChart3, tarif: "free" },
+  { href: "/dashboard/admin/vereine", label: "Vereine", icon: Building2, tarif: "free" },
+  { href: "/dashboard/admin/tarife", label: "Tarife & Lizenzen", kurz: "Tarife", icon: CreditCard, tarif: "free" },
+  { href: "/dashboard/admin/rechnungen", label: "Rechnungen", icon: Receipt, tarif: "free" },
+  { href: "/dashboard/admin/boerse", label: "Börse-Moderation", kurz: "Börse", icon: Store, tarif: "free" },
+  { href: "/dashboard/admin/ankuendigungen", label: "Ankündigungen", icon: Megaphone, tarif: "free" },
+  { href: "/dashboard/admin/fernwartung", label: "Fernwartung", icon: LifeBuoy, tarif: "free" },
+  { href: "/dashboard/admin/ehrungen", label: "Ehrungskatalog", kurz: "Ehrungen", icon: Medal, tarif: "free" },
+  { href: "/dashboard/turniere", label: "Turnierkalender", kurz: "Turniere", icon: Trophy, tarif: "free" },
+  { href: "/dashboard/netzwerk", label: "TanzRaum Connect", kurz: "Connect", icon: Globe, tarif: "free" },
+  { href: "/dashboard/admin/vorschau", label: "Ansicht als …", kurz: "Ansicht", icon: Eye, tarif: "free" },
+  { href: "/dashboard/admin/anbieter", label: "Anbieterangaben", icon: FileText, tarif: "free" },
   { href: "/dashboard/einstellungen", label: "Einstellungen", icon: Settings, tarif: "free" },
 ];
 
@@ -160,6 +189,8 @@ function nurAusgeschlosseneRollen(zugriff: Zugriff, ausgeschlossen: RollenMarker
 }
 
 export function sichtbareNav(zugriff: Zugriff): NavEintrag[] {
+  // Plattform-Admin (ohne „Ansicht als …“): nur die Admin-Navigation
+  if (zugriff.istPlattformAdmin) return ADMIN_NAV;
   return NAV.filter(
     (n) =>
       (n.netzwerk ? zugriff.netzwerk === n.netzwerk : darf(zugriff, n.tarif, n.recht)) &&
@@ -169,7 +200,7 @@ export function sichtbareNav(zugriff: Zugriff): NavEintrag[] {
 }
 
 // Nur fuer diese Seiten werden "Alle anzeigen"-Links gesetzt; waechst mit jedem fertigen Modul.
-export const FERTIGE_SEITEN = new Set<string>(["/dashboard", "/dashboard/verein", "/dashboard/mitglieder", "/dashboard/training", "/dashboard/anwesenheit", "/dashboard/kalender", "/dashboard/nachrichten", "/dashboard/einstellungen", "/dashboard/turniere", "/dashboard/saisonplanung", "/dashboard/trainer-netzwerk", "/dashboard/netzwerk", "/dashboard/admin", "/dashboard/tarif", "/dashboard/vereinsverwaltung", "/dashboard/news", "/dashboard/dateien", "/dashboard/statistiken"]);
+export const FERTIGE_SEITEN = new Set<string>(["/dashboard", "/dashboard/verein", "/dashboard/mitglieder", "/dashboard/training", "/dashboard/anwesenheit", "/dashboard/kalender", "/dashboard/nachrichten", "/dashboard/einstellungen", "/dashboard/turniere", "/dashboard/saisonplanung", "/dashboard/trainer-netzwerk", "/dashboard/netzwerk", "/dashboard/admin", "/dashboard/tarif", "/dashboard/vereinsverwaltung", "/dashboard/news", "/dashboard/dateien", "/dashboard/statistiken", "/dashboard/kostueme", "/dashboard/fahrgemeinschaften", "/dashboard/boerse"]);
 
 export function istFertig(href: string): boolean {
   return FERTIGE_SEITEN.has(href);

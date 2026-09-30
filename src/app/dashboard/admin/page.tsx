@@ -42,7 +42,7 @@ export default async function AdminSeite() {
       text: "Moderation: gemeldete Angebote, Deaktivieren, Einschränkungen",
       marke: boerseMeldungen > 0 ? `${boerseMeldungen} gemeldet` : null,
     },
-    { href: "/dashboard/admin/vorschau", icon: Eye, farbe: "bg-brand-purple-wash text-brand-purple", titel: "Oberflächen-Vorschau", text: "FREE, BASIC, VEREIN, ADMIN und JuryRaum mit Beispieldaten ansehen" },
+    { href: "/dashboard/admin/vorschau", icon: Eye, farbe: "bg-brand-purple-wash text-brand-purple", titel: "Ansicht als …", text: "TanzRaum als FREE, BASIC oder VEREIN (Vereinsadmin, Trainer, Betreuer, Tänzer, Eltern) ansehen" },
   ];
 
   return (

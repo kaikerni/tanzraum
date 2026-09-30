@@ -42,7 +42,11 @@ Stand: 29.09.2026 · Migrationen `20260929135109_plattform_logik`, `202609291356
     (unsichtbar, nicht beschreibbar; Nachrichten bleiben gespeichert).
   - Turnier-Benachrichtigungen: Es gibt derzeit keine automatischen Turnier-Pushes; sobald welche entstehen, müssen
     sie `module_aus` prüfen.
-- Plattform-Admins sehen immer alles (für Support).
+- Plattform-Admins haben eine eigene Navigation (`ADMIN_NAV` in `src/lib/navigation.ts`): nur Plattform-Aufgaben
+  (Administration, Meldungen, Statistik, Vereine, Tarife, Rechnungen, Börse-Moderation, Ankündigungen, Fernwartung,
+  Ehrungskatalog, Turnierkalender, TanzRaum Connect, „Ansicht als …“, Anbieterangaben, Einstellungen). Vereins-,
+  Trainings-, Musik- oder Kostümbereiche erscheinen dort nicht. Auch das Admin-Dashboard zeigt nur Plattform-Karten
+  und Admin-Schnellaktionen.
 
 ## Mitgliedsantrag – weitere Verfahren
 
@@ -80,8 +84,12 @@ Stand: 29.09.2026 · Migrationen `20260929135109_plattform_logik`, `202609291356
   Protokoll). Admin: `/dashboard/admin/fernwartung` → nur bei aktiver Freigabe `fernwartung_vereinsdaten` /
   `fernwartung_vereinsdaten_setzen`, Bereiche und Antragsformular. Alles wird in `fernwartung_protokoll` vermerkt.
   Anfordern nur mit aktiver Verein-Lizenz.
-- **Oberflächen-Vorschau** `/dashboard/admin/vorschau` – FREE, BASIC, VEREIN, ADMIN, JuryRaum mit erfundenen Daten
-  (`src/lib/admin/vorschauDaten.ts`).
+- **Ansicht als …** `/dashboard/admin/vorschau` – Umschalter FREE, BASIC, VEREIN · Vereinsadmin/Trainer/Betreuer/
+  Tänzer/Eltern. Server-Aktion `ansichtWaehlen` (nur mit `ist_plattform_admin_aktuell`) setzt das httpOnly-Cookie
+  `tr_ansicht` (8 h). Das Dashboard-Layout ersetzt dann Menü (`ansichtZugriff`, Bereiche wie `meine_bereiche` mit
+  Standard-Einstellungen) und Dashboard (`vorschauAls`, erfundene Beispieldaten); oben steht eine Leiste zum Wechseln
+  und Beenden. Reine Darstellung: Rechte, Datenbankabfragen und echte Daten ändern sich nicht – die Unterseiten zeigen
+  den Aufbau mit den eigenen (als Admin leeren) Daten. JuryRaum und die Admin-Ansicht gibt es zusätzlich als Bild.
 - **Chat:** Der Admin nutzt den normalen Chat; Direktchats mit ihm tragen die Marke „TanzRaum Admin“ (`chat_liste`).
   Kein Zugriff auf Vereinschats ohne Mitgliedschaft.
 - Die Tarif-/Rechnungsübersichten bleiben (Abrechnung der eigenen Kunden).

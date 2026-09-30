@@ -12,6 +12,12 @@ import {
   Zap,
   type LucideIcon,
   Store,
+  Flag,
+  Megaphone,
+  Building2,
+  BarChart3,
+  Eye,
+  Receipt,
 } from "lucide-react";
 import { darf, modulAn, type Tarif, type VereinsModul, type Zugriff } from "@/lib/navigation";
 
@@ -40,8 +46,21 @@ const AKTIONEN: Aktion[] = [
   { href: "/dashboard/verein/bearbeiten", zeile1: "Vereinsdaten", zeile2: "bearbeiten", icon: Settings, tarif: "verein", rechte: ["rolle_admin"] },
 ];
 
-export function QuickActions({ zugriff }: { zugriff: Zugriff }) {
-  const sichtbar = AKTIONEN.filter((a) =>
+// TanzRaum-Administration: nur Plattform-Aufgaben
+const ADMIN_AKTIONEN: Aktion[] = [
+  { href: "/dashboard/admin/meldungen", zeile1: "Meldungen", zeile2: "prüfen", icon: Flag, tarif: "free", iconKlasse: "text-brand-red" },
+  { href: "/dashboard/admin/ankuendigungen", zeile1: "Ankündigung", zeile2: "schreiben", icon: Megaphone, tarif: "free" },
+  { href: "/dashboard/turniere/neu", zeile1: "Turnier", zeile2: "erfassen", icon: Trophy, tarif: "free", iconKlasse: "text-brand-gold" },
+  { href: "/dashboard/admin/vereine", zeile1: "Vereine", zeile2: "ansehen", icon: Building2, tarif: "free" },
+  { href: "/dashboard/admin/statistik", zeile1: "Plattform-", zeile2: "Statistik", icon: BarChart3, tarif: "free" },
+  { href: "/dashboard/admin/boerse", zeile1: "Börse", zeile2: "moderieren", icon: Store, tarif: "free", iconKlasse: "text-brand-gold" },
+  { href: "/dashboard/admin/rechnungen", zeile1: "Rechnungen", zeile2: "ansehen", icon: Receipt, tarif: "free" },
+  { href: "/dashboard/nachrichten/neu", zeile1: "Nachricht", zeile2: "schreiben", icon: Mail, tarif: "free" },
+  { href: "/dashboard/admin/vorschau", zeile1: "Ansicht als …", zeile2: "Tarife & Rollen", icon: Eye, tarif: "free" },
+];
+
+export function QuickActions({ zugriff, breit = false }: { zugriff: Zugriff; breit?: boolean }) {
+  const sichtbar = zugriff.istPlattformAdmin ? ADMIN_AKTIONEN : AKTIONEN.filter((a) =>
     !modulAn(zugriff, a.modul) ? false : a.rechte === undefined ? darf(zugriff, a.tarif) : a.rechte.some((r) => darf(zugriff, a.tarif, r)),
   );
   if (sichtbar.length === 0) return null;
@@ -52,7 +71,7 @@ export function QuickActions({ zugriff }: { zugriff: Zugriff }) {
         <Zap size={20} strokeWidth={1.9} className="text-brand-ink" />
         <h2 className="text-[15.5px] font-bold text-brand-ink">Schnellaktionen</h2>
       </div>
-      <div className="grid flex-1 grid-cols-3 gap-2">
+      <div className={`grid flex-1 grid-cols-3 gap-2 ${breit ? "sm:grid-cols-5 xl:grid-cols-9" : ""}`}>
         {sichtbar.map((a) => {
           const Icon = a.icon;
           return (

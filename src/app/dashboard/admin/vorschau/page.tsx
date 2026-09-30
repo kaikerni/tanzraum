@@ -5,16 +5,18 @@ import { DashboardAnsicht } from "@/components/dashboard/DashboardAnsicht";
 import { sichtbareNav } from "@/lib/navigation";
 import { adminSitzung } from "@/lib/admin/zugang";
 import { JURY_BEISPIEL, VORSCHAU_LABEL, vorschau, type VorschauAnsicht } from "@/lib/admin/vorschauDaten";
+import { ANSICHTEN, ANSICHT_LABEL, ANSICHT_TEXT } from "@/lib/admin/ansicht";
+import { AnsichtKnopf } from "@/components/admin/AnsichtUmschalter";
 
-export const metadata = { title: "Oberflächen-Vorschau – TanzRaum-Administration" };
+export const metadata = { title: "Ansicht als … – TanzRaum-Administration" };
 
-const ANSICHTEN = Object.keys(VORSCHAU_LABEL) as VorschauAnsicht[];
+const STATISCH: VorschauAnsicht[] = ["juryraum", "admin"];
 
 // So sieht TanzRaum je nach Tarif bzw. Rolle aus – ausschliesslich mit erfundenen Beispieldaten
 export default async function VorschauSeite({ searchParams }: { searchParams: Promise<{ ansicht?: string }> }) {
   await adminSitzung("/dashboard/admin/vorschau");
   const { ansicht: roh } = await searchParams;
-  const ansicht: VorschauAnsicht = ANSICHTEN.includes(roh as VorschauAnsicht) ? (roh as VorschauAnsicht) : "free";
+  const ansicht: VorschauAnsicht = STATISCH.includes(roh as VorschauAnsicht) ? (roh as VorschauAnsicht) : "juryraum";
   const v = ansicht === "juryraum" ? null : vorschau(ansicht);
 
   return (
@@ -24,12 +26,25 @@ export default async function VorschauSeite({ searchParams }: { searchParams: Pr
           <ArrowLeft size={14} /> Administration
         </Link>
         <h1 className="flex items-center gap-2 text-[26px] font-extrabold tracking-tight text-brand-ink">
-          <Eye size={24} className="text-brand-red" /> Oberflächen-Vorschau
+          <Eye size={24} className="text-brand-red" /> Ansicht als …
         </h1>
-        <p className="text-[13.5px] text-brand-ink-soft">Beispieldaten – keine echten Personen oder Vereine.</p>
+        <p className="text-[13.5px] text-brand-ink-soft">
+          Schau dir TanzRaum so an, wie es ein Tarif oder eine Vereinsrolle sieht: Menü und Dashboard wechseln, du kannst dich frei
+          durchklicken. Das Dashboard zeigt erfundene Beispieldaten; echte Vereins- oder Mitgliederdaten werden nicht angezeigt und
+          deine Rechte ändern sich nicht. Oben erscheint eine Leiste zum Wechseln und Beenden.
+        </p>
       </div>
-      <nav className="flex flex-wrap gap-2" aria-label="Ansicht wählen">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {ANSICHTEN.map((a) => (
+          <AnsichtKnopf key={a} ansicht={a} className={`${KARTE} flex flex-col items-start gap-1 text-left hover:border-brand-red`}>
+            <span className="rounded-full bg-brand-red-wash px-2.5 py-0.5 text-[12px] font-bold tracking-wide text-brand-red">{ANSICHT_LABEL[a]}</span>
+            <span className="text-[13px] text-brand-ink-soft">{ANSICHT_TEXT[a]}</span>
+          </AnsichtKnopf>
+        ))}
+      </div>
+      <h2 className="mt-2 text-[13px] font-bold uppercase tracking-wide text-brand-ink-soft">Weitere Vorschauen (nur Bild)</h2>
+      <nav className="flex flex-wrap gap-2" aria-label="Weitere Vorschauen">
+        {STATISCH.map((a) => (
           <Link
             key={a}
             href={`/dashboard/admin/vorschau?ansicht=${a}`}

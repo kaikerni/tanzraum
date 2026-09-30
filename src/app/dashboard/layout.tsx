@@ -12,6 +12,9 @@ import { getAnkuendigungen, getOffeneWichtigeNews } from "@/lib/news/getNews";
 import { getMeineAntraege } from "@/lib/antraege/getAntraege";
 import { AntragHinweis } from "@/components/antraege/AntragHinweis";
 import { OnlineHerzschlag } from "@/components/online/OnlineHerzschlag";
+import { aktiveAnsicht } from "@/lib/admin/ansichtLesen";
+import { ANSICHT_LABEL, ansichtZugriff } from "@/lib/admin/ansicht";
+import { AnsichtLeiste } from "@/components/admin/AnsichtUmschalter";
 
 export default async function DashboardLayout({
   children,
@@ -81,10 +84,16 @@ export default async function DashboardLayout({
     ...wichtigeNews.map((n) => ({ art: "news" as const, id: n.id, titel: n.titel, text: n.text, quelle: n.autor ? `${n.vereinName} · ${n.autor}` : n.vereinName, zeit: n.erstelltAm })),
   ];
 
+  // TanzRaum-Administration: „Ansicht als …“ ersetzt nur Menue und Dashboard (Beispieldaten), keine Rechte
+  const ansicht = await aktiveAnsicht(daten.istPlattformAdmin);
+  const navZugriff = ansicht ? ansichtZugriff(ansicht) : zugriff;
+
   const name = [daten.vorname, daten.nachname].filter(Boolean).join(" ") || "TanzRaum-Nutzer";
   const ersterVerein = daten.vereine.find((v) => !v.vereinGesperrt) ?? daten.vereine[0];
   const rolle = daten.istPlattformAdmin ? "TanzRaum Admin" : (ersterVerein?.rolleName ?? "Mitglied");
-  const kontext = daten.istPlattformAdmin
+  const kontext = ansicht
+    ? { titel: ansicht.startsWith("verein") ? "TSC Beispielstadt" : "Beispielkonto", untertitel: ANSICHT_LABEL[ansicht], istPlattformAdmin: false }
+    : daten.istPlattformAdmin
     ? { titel: "TanzRaum Admin", untertitel: "Administrator", istPlattformAdmin: true }
     : {
         titel: ersterVerein?.vereinName || name,
@@ -104,14 +113,15 @@ export default async function DashboardLayout({
         ungeleseneBenachrichtigungen={benachrichtigungen ?? 0}
       />
       <div className="flex min-h-0 flex-1">
-        <AppSidebar kontext={kontext} zugriff={zugriff} ungeleseneNachrichten={ungeleseneNachrichten} />
+        <AppSidebar kontext={kontext} zugriff={navZugriff} ungeleseneNachrichten={ungeleseneNachrichten} />
         <main className="flex flex-1 flex-col overflow-y-auto px-3 pb-28 pt-4 sm:px-5 md:pb-8 md:pt-5 xl:px-6">
+          {ansicht && <AnsichtLeiste aktiv={ansicht} />}
           {offeneAntraege.length > 0 && <AntragHinweis antraege={offeneAntraege} />}
           <div className="flex-1">{children}</div>
           <AppFusszeile className="mx-auto mt-10 w-full max-w-[1200px]" />
         </main>
       </div>
-      <MobileNav zugriff={zugriff} ungeleseneNachrichten={ungeleseneNachrichten} />
+      <MobileNav zugriff={navZugriff} ungeleseneNachrichten={ungeleseneNachrichten} />
       {popup.length > 0 && <WichtigPopup eintraege={popup} />}
       <OnlineHerzschlag />
     </div>

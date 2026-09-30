@@ -7,6 +7,7 @@ import { MoreHorizontal, X, HelpCircle } from "lucide-react";
 import { sichtbareNav, type Zugriff } from "@/lib/navigation";
 
 const BEVORZUGT = ["/dashboard", "/dashboard/netzwerk", "/dashboard/training", "/dashboard/kalender"];
+const ADMIN_BEVORZUGT = ["/dashboard", "/dashboard/admin", "/dashboard/admin/meldungen", "/dashboard/admin/statistik"];
 
 export function MobileNav({
   zugriff,
@@ -19,9 +20,10 @@ export function MobileNav({
   const [offen, setOffen] = useState(false);
   const alle = sichtbareNav(zugriff);
 
+  const bevorzugt = zugriff.istPlattformAdmin ? ADMIN_BEVORZUGT : BEVORZUGT;
   const leiste = [
-    ...BEVORZUGT.map((href) => alle.find((n) => n.href === href)).filter((n) => n !== undefined),
-    ...alle.filter((n) => !BEVORZUGT.includes(n.href)),
+    ...bevorzugt.map((href) => alle.find((n) => n.href === href)).filter((n) => n !== undefined),
+    ...alle.filter((n) => !bevorzugt.includes(n.href)),
   ].slice(0, 4);
   const rest = alle.filter((n) => !leiste.includes(n));
 

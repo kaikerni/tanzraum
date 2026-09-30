@@ -8,7 +8,6 @@ import { ModulAusHinweis, modulAusgeschaltet } from "@/components/verein/ModulSc
 // Menuepunkte, deren Modul noch nicht fertig ist, zeigen statt einer Fehlerseite einen Hinweis.
 const BESCHREIBUNG: Record<string, string> = {
   "/dashboard/musik": "Musikstücke und Schnitte für Tänze verwalten und mit der Gruppe teilen.",
-  "/dashboard/kostueme": "Kostüme, Requisiten, Größen und Ausgaben im Blick behalten.",
   "/dashboard/finanzen": "Beiträge, Kassenbuch und Zahlungen des Vereins.",
   "/dashboard/vereinsverwaltung": "Rechte, Rollen, Lizenz und Einstellungen des Vereins.",
   "/dashboard/admin": "Verwaltung der Plattform: Vereine, Personen, Turnierkalender und Support.",

@@ -94,7 +94,9 @@ export function DashboardAnsicht({
   wochen,
   online = null,
 }: DashboardAnsichtProps) {
-  const hatVerein = daten.istPlattformAdmin || (hatTarif(zugriff, "basic") && daten.vereine.length > 0);
+  // TanzRaum-Administration: nur Plattform-Karten (keine Vereins-, Trainings- oder Mitgliederkarten)
+  const admin = daten.istPlattformAdmin;
+  const hatVerein = !admin && hatTarif(zugriff, "basic") && daten.vereine.length > 0;
   const k = kennzahlen;
   // Vom Verein ausgeschaltete Bereiche erscheinen nirgends im Dashboard
   const mitTraining = modulAn(zugriff, "training");
@@ -131,7 +133,7 @@ export function DashboardAnsicht({
         verlauf={k.trainingsHeute.verlauf}
       />
     ),
-    mitTraining && k?.abmeldungenHeute && (
+    !admin && mitTraining && k?.abmeldungenHeute && (
       <KpiKarte
         key="abmeldungen"
         id="abmeldungen"
@@ -171,7 +173,7 @@ export function DashboardAnsicht({
         verlauf={k.nachrichten.verlauf}
       />
     ),
-    b && modulAn(zugriff, "anwesenheit") && (
+    !admin && b && modulAn(zugriff, "anwesenheit") && (
       <KpiKarte
         key="beteiligung"
         id="beteiligung"
@@ -192,8 +194,8 @@ export function DashboardAnsicht({
     ),
   ].filter(Boolean);
 
-  const zeigeBeteiligung = darf(zugriff, "verein", "anwesenheit") && modulAn(zugriff, "anwesenheit");
-  const zeigeAltersklassen = darf(zugriff, "verein", "mitglieder");
+  const zeigeBeteiligung = !admin && darf(zugriff, "verein", "anwesenheit") && modulAn(zugriff, "anwesenheit");
+  const zeigeAltersklassen = !admin && darf(zugriff, "verein", "mitglieder");
 
   return (
     <div className="mx-auto flex max-w-[1560px] flex-col gap-4">
@@ -251,10 +253,10 @@ export function DashboardAnsicht({
 
       {/* Heute / Radar / Schnellaktionen */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {hatVerein && mitTraining && <HeuteKarte eintraege={heute} mehrereVereine={daten.istPlattformAdmin || daten.vereine.length > 1} />}
-        <RadarKarte eintraege={radarSichtbar} />
-        <div className="md:col-span-2 xl:col-span-1">
-          <QuickActions zugriff={zugriff} />
+        {hatVerein && mitTraining && <HeuteKarte eintraege={heute} mehrereVereine={daten.vereine.length > 1} />}
+        {!admin && <RadarKarte eintraege={radarSichtbar} />}
+        <div className={admin ? "md:col-span-2 xl:col-span-3" : "md:col-span-2 xl:col-span-1"}>
+          <QuickActions zugriff={zugriff} breit={admin} />
         </div>
       </div>
 
@@ -281,7 +283,7 @@ export function DashboardAnsicht({
 
       {/* Bestehende Karten */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {mitKalender && (
+        {mitKalender && !admin && (
           <div className={zeigeAltersklassen ? "lg:col-span-2" : "lg:col-span-3"}>
             <TermineKarte termine={termineSichtbar} />
           </div>
@@ -293,6 +295,7 @@ export function DashboardAnsicht({
         )}
       </div>
 
+      {!admin && (
       <section className={KARTE}>
         <KarteKopf icon={Building2} titel="Deine Vereine" alleHref="/dashboard/verein" />
         {daten.vereine.length === 0 ? (
@@ -316,6 +319,7 @@ export function DashboardAnsicht({
           </ul>
         )}
       </section>
+      )}
 
       {daten.istJuryMitglied && (
         <Link

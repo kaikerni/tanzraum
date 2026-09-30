@@ -23,6 +23,8 @@ import { TarifZaehler, type TarifZaehlerDaten } from "@/components/admin/TarifZa
 import { getAnkuendigungen, getMeineNews, getMeineUmfragen } from "@/lib/news/getNews";
 import { AnkuendigungenLeiste } from "@/components/news/AnkuendigungenLeiste";
 import { NewsDashboardKarte } from "@/components/news/NewsDashboardKarte";
+import { aktiveAnsicht } from "@/lib/admin/ansichtLesen";
+import { vorschauAls } from "@/lib/admin/vorschauDaten";
 
 export default async function DashboardPage({
   searchParams,
@@ -41,6 +43,10 @@ export default async function DashboardPage({
   const daten = await getDashboardData(supabase, user.id);
   if (!daten) redirect("/login");
   if (daten.gesperrt) redirect("/gesperrt");
+
+  // TanzRaum-Administration in „Ansicht als …“: Dashboard nur mit erfundenen Beispieldaten
+  const ansicht = await aktiveAnsicht(daten.istPlattformAdmin);
+  if (ansicht) return <DashboardAnsicht {...vorschauAls(ansicht)} />;
 
   const { wochen: wochenParam } = await searchParams;
   const wochen = ZEITRAEUME.find((w) => String(w) === wochenParam) ?? 8;
