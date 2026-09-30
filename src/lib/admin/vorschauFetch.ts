@@ -26,6 +26,11 @@ function passt(zeile: any, schluessel: string, bedingung: string): boolean {
   if (op === "lte") return String(wert) <= w;
   if (op === "gt") return String(wert) > w;
   if (op === "lt") return String(wert) < w;
+  if (op === "ilike" || op === "like") {
+    // SQL-Muster (% und *) als einfache Teilstring-Suche
+    const teil = w.replace(/[%*]/g, " ").trim().toLowerCase();
+    return !teil || String(wert ?? "").toLowerCase().includes(teil);
+  }
   return true;
 }
 

@@ -30,7 +30,18 @@ Migration `20260930012831_kostueme_requisiten`.
 Kennzahlen (gesamt, im Lager, ausgegeben, überfällig, Reparatur), „Bei mir“, Reiter Inventar (Suche, Filter nach Art,
 Satz, Status; neues Teil – auch mehrere Größen auf einmal), Kostümsätze, Verlauf (letzte 100 Vorgänge).
 
+## Fotos
+
+Ein Foto je Teil (Knopf „Foto“): im Browser auf max. 1920 px verkleinert (JPEG), privater Bucket `kostueme`
+(5 MB, Pfad `<verein_id>/<teil_id>/<zufall>.jpg`), Spalte `kostueme.bild_pfad` (Trigger prüft den Vereinsordner).
+Hochladen/Löschen: `darf_kostueme_verwalten`; Ansehen: wer das Teil sieht (Verwaltung bzw. Person/Eltern, die es haben).
+Ersetzen/Entfernen löscht das alte Foto (`fotoSetzen`).
+
+## Erinnerungen
+
+Täglich (`vereins_erinnerungen_taeglich`, Cron `vereins-erinnerungen` 07:05 UTC, nur mit Vereinslizenz): 3 Tage vor dem
+Rückgabedatum und nach Ablauf je einmal an Person und verknüpfte Eltern (`kostuem_ausgaben.hinweis_*`).
+
 ## Später möglich
 
-Fotos je Teil, Größenvorschlag aus dem Mitgliederprofil, Erinnerung vor dem Rückgabedatum, Ausgabe eines ganzen Satzes
-an eine Gruppe.
+Größenvorschlag aus dem Mitgliederprofil, Ausgabe eines ganzen Satzes an eine Gruppe.

@@ -17,7 +17,11 @@ Menüpunkt „Finanzen“ (Vereinslizenz, Modul `finanzen`). Migration `20260930
 - **Kassenbuch:** Einnahmen/Ausgaben mit Datum, Betrag, Kategorie, Zahlungsart, Beschreibung und Beleg (PDF/Bild,
   max. 10 MB, privater Bucket `kassenbuch-belege`, Pfad `<verein_id>/…`). CSV-Export je Jahr für die Kassenprüfung
   (`/dashboard/finanzen/export`, Semikolon, deutsches Zahlenformat, Schutz vor Tabellen-Formeln).
-- **Beitragsarten:** Name, Betrag, Rhythmus, aktiv.
+- **Beitragsarten:** Name, Betrag, Rhythmus, aktiv; optional **automatisch** mit „nächster Fälligkeit“: der tägliche
+  Lauf `vereins_erinnerungen_taeglich` (Cron 07:05 UTC, nur mit Vereinslizenz) legt 14 Tage vorher die Sollstellung für
+  alle aktiven Mitglieder (ohne Eltern-Rolle) an und rückt im Rhythmus weiter (einmalig: Automatik endet).
+- **Automatische Erinnerungen:** am Fälligkeitstag und – falls noch offen – 7 Tage später je einmal an Mitglied und
+  verknüpfte Eltern (`beitraege.hinweis_faellig_am` / `hinweis_ueberfaellig_am`).
 - **Beiträge (Sollstellung):** `beitraege_erzeugen` für alle aktiven Mitglieder (ohne Eltern-Konten) oder ausgewählte
   Personen; keine Doppelten je Person/Art/Fälligkeit. „Bezahlt“ (`beitrag_bezahlt`) legt auf Wunsch die Einnahme im
   Kassenbuch an; „Wieder offen“ entfernt sie. „Erinnern“ (`beitrag_erinnern`) schickt eine Benachrichtigung an die

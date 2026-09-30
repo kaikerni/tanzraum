@@ -219,6 +219,77 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: {
   const onlineKontakte = [{ id: uid(2), name: "Lena Muster", avatar_url: null }, { id: uid(5), name: "Jonas Wagner", avatar_url: null }];
   const darfKostueme = mitVerein && kostuemeVerwalten;
 
+  // Nachrichten: Vereinschat, Gruppenchat und eine Direktnachricht (erfundene Texte)
+  const C_VEREIN = "0e000000-0000-4000-8000-000000000701";
+  const C_GRUPPE = "0e000000-0000-4000-8000-000000000702";
+  const C_DM = "0e000000-0000-4000-8000-000000000703";
+  const eigeneGruppe = GRUPPEN.find((g) => r?.gruppen.includes(g.id)) ?? GRUPPEN[0];
+  const chatEintrag = (id: string, typ: string, bereich: string, name: string, untertitel: string | null, letzte: string, sender: string, minuten: number, ungelesen: number, partner: string | null = null) => ({
+    id, typ, bereich, name, untertitel, partner_id: partner, partner_rolle: null, avatar_url: null, letzte_nachricht: letzte,
+    letzte_zeit: new Date(Date.now() - minuten * 60_000).toISOString(), letzter_sender: sender, ungelesen, darf_schreiben: true,
+    ist_leitung: istAdmin || istTrainer, nur_leitung_schreibt: false, blockiert: false,
+  });
+  const chats = [
+    ...(mitVerein
+      ? [
+          chatEintrag(C_GRUPPE, "trainingsgruppe", "gruppe", eigeneGruppe.name, verein.name, "Denkt bitte an die weißen Stiefel am Samstag 👢", "Sabine Keller", 25, 2),
+          chatEintrag(C_VEREIN, "verein", "verein", verein.name, "Alle Mitglieder", "Die Hallenzeiten in den Herbstferien stehen im Kalender.", "Thomas Weber", 180, 0),
+        ]
+      : []),
+    ...(tarif === "free" && !mitVerein ? [] : [chatEintrag(C_DM, "dm", mitVerein ? "verein" : "netzwerk", "Jonas Wagner", mitVerein ? verein.name : "TanzRaum Connect", "Klingt gut, bis Donnerstag!", "Jonas Wagner", 60 * 26, 0, uid(5))]),
+  ];
+  const nachricht = (i: number, gespraech: string, von: number, text: string, minuten: number) => ({
+    id: `0e000000-0000-4000-8000-0000000007${gespraech.slice(-1)}${i}`, sender_id: von === 0 ? userId : uid(von), sender_name: von === 0 ? ichName : PERSONEN.find((p) => p.n === von)?.name ?? "Mitglied",
+    eigene: von === 0, inhalt: text, bild_pfad: null, umfrage: null, anhang: null, standort: null, sticker: null, reaktionen: [], antwort_auf: null, antwort_sender: null,
+    antwort_text: null, antwort_sticker: null, gesendet_am: new Date(Date.now() - minuten * 60_000).toISOString(), geloescht: false, darf_loeschen: von === 0, bearbeitet: false, weitergeleitet: false,
+  });
+  const verlaeufe: Record<string, ReturnType<typeof nachricht>[]> = {
+    [C_GRUPPE]: [
+      nachricht(1, C_GRUPPE, 1, "Hallo zusammen! Am Samstag ist Generalprobe für den Auftritt beim Stadtfest.", 60 * 20),
+      nachricht(2, C_GRUPPE, 4, "Um wie viel Uhr sollen wir da sein?", 60 * 19),
+      nachricht(3, C_GRUPPE, 1, "Treffpunkt 13:30 Uhr an der Sporthalle Nord, Fahrgemeinschaften stehen in TanzRaum.", 60 * 19 - 5),
+      nachricht(4, C_GRUPPE, 0, "Super, ich bin dabei 👍", 60 * 18),
+      nachricht(5, C_GRUPPE, 1, "Denkt bitte an die weißen Stiefel am Samstag 👢", 25),
+    ],
+    [C_VEREIN]: [
+      nachricht(1, C_VEREIN, 9, "Liebe Mitglieder, die Hallenzeiten in den Herbstferien stehen im Kalender.", 180),
+    ],
+    [C_DM]: [
+      nachricht(1, C_DM, 5, "Hi! Hast du Lust, nächste Woche die neue Showtanz-Choreo zu üben?", 60 * 27),
+      nachricht(2, C_DM, 0, "Ja gern – Donnerstag nach dem Training?", 60 * 26 + 10),
+      nachricht(3, C_DM, 5, "Klingt gut, bis Donnerstag!", 60 * 26),
+    ],
+  };
+  const chatKopf = (id: string) => {
+    const c = chats.find((x) => x.id === id);
+    return c
+      ? [{ id: c.id, typ: c.typ, name: c.name, untertitel: c.untertitel, partner_id: c.partner_id, avatar_url: null, darf_schreiben: true, ist_leitung: c.ist_leitung, nur_leitung_schreibt: false,
+           partner_gelesen_bis: null, partner_rolle: null, ich_habe_blockiert: false, partner_blockiert: false, sperrgrund: null }]
+      : [];
+  };
+
+  // Ehrungen (nur Vereins-Admin): erkannte und laufende Vorgaenge
+  const ehrung = (i: number, person: number, name: string, status: string, faellig: string, org: string | null, typ = "verband") => ({
+    id: `0e000000-0000-4000-8000-00000000075${i}`, verein_id: V, vereins_mitglied_id: vm(person), person_name: PERSONEN.find((p) => p.n === person)?.name ?? "Mitglied",
+    ehrungsart_id: `0e000000-0000-4000-8000-00000000076${i}`, art: { name, typ, serie: null, stufe: null, kategorie: "Treue", bestellung_erforderlich: typ === "verband", pruefstatus: "geprueft", ehrungs_organisationen: org ? { name: org } : null },
+    auto: null, herkunft: "automatisch", auto_ehrungsart_id: null, auto_faellig_am: null, auto_grundlage: null, faellig_am: faellig, faellig_jahr: Number(faellig.slice(0, 4)),
+    grundlage: i === 1
+      ? { verknuepfung: "eine", faellig_am: faellig, regeln: [{ berechnung: "funktion", jahre: 11, funktion: "Trainerin", punkte_min: null, punkte_gewichte: null, ununterbrochen: false, beginn: `${Number(faellig.slice(0, 4)) - 11}${faellig.slice(4)}`, korrektur_von: null, faellig_am: faellig }] }
+      : null,
+    grundlage_text: null, korrektur: null, status, begruendung: null, interne_notiz: null, wunsch_datum: null, anlass: status === "eingeplant" ? "Jahreshauptversammlung" : null,
+    veranstaltung: null, bestellung_id: null, bestellt_am: status === "bestellt" ? tag(-12) : null, erhalten_am: null, eingeplant_am: status === "eingeplant" ? tag(45) : null,
+    verliehen_am: status === "verliehen" ? tag(-120) : null, verliehen_durch: null, verleihung_bemerkung: null, snapshot: null, updated_at: vor(3),
+  });
+  const ehrungen = istAdmin
+    ? [
+        ehrung(1, 1, "Verdienstorden in Silber", "moeglich", tag(20), "Bund Deutscher Karneval"),
+        ehrung(2, 8, "Vereinsnadel in Gold (25 Jahre)", "vorgemerkt", tag(60), null, "verein"),
+        ehrung(3, 9, "Ehrennadel des Landesverbands", "bestellt", tag(-5), "Landesverband Beispielland"),
+        ehrung(4, 4, "Jugendehrennadel", "eingeplant", tag(45), "Bund Deutscher Karneval"),
+        ehrung(5, 10, "Vereinsnadel in Silber (10 Jahre)", "verliehen", tag(-120), null, "verein"),
+      ]
+    : [];
+
   const rpc: VorschauDaten["rpc"] = {
     // Konto, Tarif, Rechte
     ist_plattform_admin_aktuell: false,
@@ -234,7 +305,7 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: {
     musik_freigegeben: einstellungen.musikAn,
     spotlights_fuer_mich: false,
     spotlight_leiste: [],
-    eigene_ungelesene_nachrichten_anzahl: 0,
+    eigene_ungelesene_nachrichten_anzahl: mitVerein ? 2 : 0,
     meine_ankuendigungen: [],
     meine_offenen_wichtigen_news: [],
     meine_mitgliedsantraege: [],
@@ -335,9 +406,15 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: {
       { art: "person", id: uid(1), name: "Sabine Keller", zeile1: "Trainerin", zeile2: verein.name, avatar_url: null, verein_id: V, status: "verbunden" },
       { art: "person", id: uid(5), name: "Jonas Wagner", zeile1: "Tänzer", zeile2: verein.name, avatar_url: null, verein_id: V, status: null },
     ],
-    // Chat
-    chat_liste: [],
+    // Chat (Beispielverlaeufe; Schreiben ist in der Vorschau gesperrt)
+    chat_liste: chats,
+    chat_kopf: (b: Json) => chatKopf(b.p_gespraech_id),
+    chat_nachrichten: (b: Json) => verlaeufe[b.p_gespraech_id] ?? [],
+    chat_ist_stumm: false,
+    chat_suchen: [],
     chat_kontakte: [],
+    // Ehrungen
+    ehrungen_aktualisieren: 0,
     meine_netzwerk_kontakte: [],
     meine_kontaktanfragen: [],
     anzeige_namen: [],
@@ -363,7 +440,7 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: {
     kostuem_ausgaben: [],
     beitraege: istAdmin ? beitraege : [],
     beitragstypen: istAdmin
-      ? [{ id: "0e000000-0000-4000-8000-000000000891", verein_id: V, name: "Jahresbeitrag Aktive", betrag: 120, rhythmus: "jährlich", aktiv: true }, { id: "0e000000-0000-4000-8000-000000000892", verein_id: V, name: "Jahresbeitrag Kinder", betrag: 60, rhythmus: "jährlich", aktiv: true }]
+      ? [{ id: "0e000000-0000-4000-8000-000000000891", verein_id: V, name: "Jahresbeitrag Aktive", betrag: 120, rhythmus: "jährlich", aktiv: true, automatisch: true, naechste_faelligkeit: `${Number(jahr) + 1}-01-31` }, { id: "0e000000-0000-4000-8000-000000000892", verein_id: V, name: "Jahresbeitrag Kinder", betrag: 60, rhythmus: "jährlich", aktiv: true }]
       : [],
     kassenbuch_eintraege: kassenbuch,
     musik_titel: [],
@@ -384,6 +461,12 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: {
     verbaende: [],
     einladungen: [],
     juryraum_mitglieder: [],
+    mitglied_ehrungen: ehrungen,
+    ehrungsarten: [],
+    verein_ehrungs_organisationen: [],
+    ehrungs_organisationen: [],
+    ehrungs_bestellungen: [],
+    mitglied_zeitraeume: [],
   };
   return { rpc, tab };
 }

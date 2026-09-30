@@ -81,7 +81,10 @@ export function BenutzerZeile({ b }: { b: Benutzer }) {
               <Undo2 size={15} /> Löschung abbrechen
             </button>
           ) : null}
-          {!b.ist_admin && !offen && (!b.loeschen_ab || geplant) && (
+          {b.verein && !b.loeschen_ab && (
+            <span className="max-w-[220px] text-[12px] sm:text-right text-brand-ink-soft">Vereinsmitglied – zuerst muss der Verein die Person entfernen.</span>
+          )}
+          {!b.ist_admin && !b.verein && !offen && (!b.loeschen_ab || geplant) && (
             <button type="button" onClick={() => setOffen(true)} className={`${KNOPF} border-brand-red/40 bg-white text-brand-red hover:bg-brand-red-wash`}>
               <Trash2 size={15} /> {geplant ? "Sofort löschen" : "Konto löschen"}
             </button>

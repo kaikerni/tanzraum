@@ -84,7 +84,7 @@ export async function globaleSuche(supabase: SupabaseClient, eingabe: string, zu
       return angebote.map((a) => ({
         id: a.id,
         titel: a.titel,
-        zeile: [a.preis_cent != null ? `${(a.preis_cent / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR" })}` : null, a.ort].filter(Boolean).join(" · ") || null,
+        zeile: [a.preis_cent ? (a.preis_cent / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR" }) : a.preis_cent === 0 ? "kostenlos" : null, a.ort].filter(Boolean).join(" · ") || null,
         href: `/dashboard/boerse/${a.id}`,
       }));
     }, [] as SuchTreffer[]),
