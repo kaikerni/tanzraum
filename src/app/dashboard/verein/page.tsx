@@ -12,6 +12,7 @@ import { OhneVerein } from "@/components/verein/OhneVerein";
 import { VereinAnsicht } from "@/components/verein/VereinAnsicht";
 import type { VereinslizenzStatus } from "@/components/verein/VereinslizenzKarte";
 import { MeineBeitraege } from "@/components/finanzen/MeineBeitraege";
+import { TanzRaumAssistant } from "@/components/kai/TanzRaumAssistant";
 
 export default async function MeinVereinSeite({
   searchParams,
@@ -33,6 +34,13 @@ export default async function MeinVereinSeite({
           <h1 className="text-[26px] font-extrabold tracking-tight text-brand-ink">Mein Verein</h1>
           <p className="text-[14px] text-brand-ink-soft">Du bist noch in keinem Verein Mitglied.</p>
         </div>
+        <TanzRaumAssistant
+          variant="setup"
+          title="So kommst du in deinen Verein"
+          message="Es gibt zwei Wege: Hat dein Verein dir einen Einladungslink geschickt, löst du ihn bei „Einladung einlösen“ ein. Möchtest du deinen Verein neu in TanzRaum anlegen, nutzt du „Verein registrieren“ – du wirst dann Vereinsadmin."
+        >
+          Die Vereinsbereiche (Training, Kalender, Mitglieder …) schaltet anschließend die Verein-Lizenz frei.
+        </TanzRaumAssistant>
         <OhneVerein />
       </div>
     );

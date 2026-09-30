@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Bell, MessageSquare, ChevronDown, LogOut } from "lucide-react";
 import { signOut } from "@/app/actions";
+import { KaiBegleiter } from "@/components/kai/KaiBegleiter";
+import type { KaiKontext } from "@/lib/kai/typen";
 
 function initialen(name: string) {
   return name
@@ -31,12 +33,14 @@ export function AppHeader({
   untertitel,
   ungeleseneNachrichten,
   ungeleseneBenachrichtigungen,
+  kai,
 }: {
   name: string;
   anzeigeName: string;
   untertitel: string;
   ungeleseneNachrichten: number;
   ungeleseneBenachrichtigungen: number;
+  kai?: KaiKontext;
 }) {
   const [menuOffen, setMenuOffen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -109,6 +113,7 @@ export function AppHeader({
         >
           <Search size={20} />
         </Link>
+        {kai && <KaiBegleiter kontext={kai} />}
         <Link
           href="/dashboard/benachrichtigungen"
           className="relative flex h-10 w-10 items-center justify-center rounded-xl text-brand-ink transition-colors hover:bg-brand-bg"

@@ -16,6 +16,8 @@ import { aktiveAnsicht } from "@/lib/admin/ansichtLesen";
 import { ANSICHT_LABEL, ansichtZugriff } from "@/lib/admin/ansicht";
 import { AnsichtLeiste } from "@/components/admin/AnsichtUmschalter";
 import { VorschauAufraeumen } from "@/components/admin/VorschauAufraeumen";
+import { sichtbareNav } from "@/lib/navigation";
+import type { KaiKontext } from "@/lib/kai/typen";
 
 export default async function DashboardLayout({
   children,
@@ -102,6 +104,16 @@ export default async function DashboardLayout({
         istPlattformAdmin: false,
       };
   const ungeleseneNachrichten = Number(ungelesen ?? 0);
+  // Kai (Begleiter in der Kopfzeile): nur Anzeige-Angaben, die hier ohnehin vorliegen
+  const kai: KaiKontext = {
+    vorname: daten.vorname ?? "",
+    istPlattformAdmin: navZugriff.istPlattformAdmin,
+    hatVerein: navZugriff.tarif === "verein" && navZugriff.bereiche.some((b) => b.startsWith("rolle_")),
+    istVereinsadmin: navZugriff.bereiche.includes("rolle_admin"),
+    tarif: navZugriff.tarif,
+    bereiche: sichtbareNav(navZugriff).map((n) => n.href),
+    vorschau: !!ansicht,
+  };
 
   return (
     <AnrufProvider userId={user.id}>
@@ -112,6 +124,7 @@ export default async function DashboardLayout({
         untertitel={rolle}
         ungeleseneNachrichten={ungeleseneNachrichten}
         ungeleseneBenachrichtigungen={benachrichtigungen ?? 0}
+        kai={kai}
       />
       <div className="flex min-h-0 flex-1">
         <AppSidebar kontext={kontext} zugriff={navZugriff} ungeleseneNachrichten={ungeleseneNachrichten} />

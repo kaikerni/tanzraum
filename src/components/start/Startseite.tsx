@@ -14,6 +14,7 @@ import {
   CalendarDays,
   Check,
   ChevronDown,
+  ClipboardCheck,
   Gavel,
   Globe,
   Heart,
@@ -34,6 +35,9 @@ import { euro, gratisMonate, type Preise } from "@/lib/tarife";
 import { Einblenden } from "./Einblenden";
 import { AppInstallieren } from "./AppInstallieren";
 import { ChatScreen, DashboardScreen, InstallScreen, KalenderScreen, SpotlightScreen, Telefon, TrainingScreen, VereinScreen } from "./Telefon";
+import { TanzRaumAssistant } from "@/components/kai/TanzRaumAssistant";
+import { KaiBuehne } from "@/components/kai/KaiBuehne";
+import { KaiFigur } from "@/components/kai/KaiFigur";
 
 // Oeffentliche Startseite (immer sichtbar, auch angemeldet). Nur Demo-Inhalte, keine Datenbankdaten ausser den Preisen.
 
@@ -282,6 +286,21 @@ export function Startseite({ preise, angemeldet = null }: { preise: Preise | nul
             </a>
           </nav>
           <div className="flex items-center gap-2">
+            {/* Hilfe-Einstieg wie im eingeloggten Bereich: „Wenn du Hilfe brauchst → frag Kai.“ */}
+            <a
+              href="#faq"
+              aria-label="Kai – Hilfe? Zu den häufigen Fragen"
+              title="Kai – Hilfe?"
+              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full sm:border sm:border-brand-line sm:bg-white sm:pl-0.5 sm:pr-3.5 sm:hover:border-brand-gold sm:hover:bg-brand-gold-wash"
+            >
+              <span className="relative">
+                <KaiFigur form="portrait" alt="" className="h-9 w-9" sizes="36px" />
+                <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-brand-ink px-1.5 py-px text-[9px] font-bold leading-tight text-white sm:hidden" aria-hidden>
+                  Hilfe?
+                </span>
+              </span>
+              <span className="hidden whitespace-nowrap text-[13px] font-semibold text-brand-ink sm:inline">✨ Kai – Hilfe?</span>
+            </a>
             {angemeldet ? (
               <Link href="/dashboard" className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-brand-red px-4 text-[14px] font-bold text-white hover:bg-brand-red-deep">
                 Zum Dashboard <ArrowRight size={16} />
@@ -425,6 +444,58 @@ export function Startseite({ preise, angemeldet = null }: { preise: Preise | nul
                 </Einblenden>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Kai – der TanzRaum-Begleiter (freigestellt, ohne Hintergrundflaeche) */}
+        <section id="kai" className="relative isolate scroll-mt-20 overflow-hidden py-16 sm:py-24" aria-labelledby="kai-titel">
+          <div className="pointer-events-none absolute inset-x-0 top-1/2 -z-10 h-[70%] -translate-y-1/2 bg-gradient-to-r from-transparent via-brand-gold-wash to-brand-red-wash/70" aria-hidden />
+          <div className={`${BREITE} grid grid-cols-1 items-center gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-12`}>
+            <Einblenden className="order-2 lg:order-1">
+              <p className="mb-2 text-[12.5px] font-bold uppercase tracking-[0.18em] text-brand-red">Dein Begleiter</p>
+              <h2 id="kai-titel" className="text-[28px] font-extrabold leading-tight tracking-tight text-brand-ink sm:text-[38px]">
+                Das ist Kai.
+                <span className="mt-1 block font-[family-name:var(--font-script)] text-[26px] font-normal text-brand-red sm:text-[34px]">
+                  Er zeigt dir TanzRaum.
+                </span>
+              </h2>
+              <p className="mt-4 max-w-xl text-[15.5px] leading-relaxed text-brand-ink-soft sm:text-[17px]">
+                Kai begleitet dich durch TanzRaum – vom ersten Anmelden bis zum eingerichteten Verein. Er erklärt, gibt Tipps und zeigt dir, wo
+                du was findest. Entscheiden und handeln tust immer du: Kai ändert nichts und verschickt nichts von selbst.
+              </p>
+              <ul className="mt-6 flex flex-col gap-3">
+                {(
+                  [
+                    [Sparkles, "Begrüßt dich", "und gibt dir einen schnellen Überblick über dein Dashboard."],
+                    [ClipboardCheck, "Führt dich durch die Einrichtung", "deines Kontos und deines Vereins – Schritt für Schritt."],
+                    [MessageCircle, "Erklärt und gibt Hinweise", "genau dort, wo du sie brauchst – ohne dich zu stören."],
+                  ] as [LucideIcon, string, string][]
+                ).map(([Icon, titel, text]) => (
+                  <li key={titel} className="flex gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-brand-red shadow-[var(--shadow)] ring-1 ring-brand-line">
+                      <Icon size={19} />
+                    </span>
+                    <span className="text-[15px] leading-snug text-brand-ink-soft">
+                      <strong className="text-brand-ink">{titel}</strong> {text}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-7 flex flex-wrap gap-3">
+                {angemeldet ? (
+                  <Link href="/dashboard" className={`${KNOPF_PRIMAER} gap-2`}>
+                    Mit Kai loslegen <ArrowRight size={18} />
+                  </Link>
+                ) : (
+                  <Link href="/signup" className={`${KNOPF_PRIMAER} gap-2`}>
+                    Mit Kai loslegen <ArrowRight size={18} />
+                  </Link>
+                )}
+              </div>
+            </Einblenden>
+            <Einblenden className="order-1 lg:order-2">
+              <KaiBuehne spruch={<>👋 Hallo, ich bin Kai! Schön, dass du da bist.</>} />
+            </Einblenden>
           </div>
         </section>
 
@@ -783,6 +854,21 @@ export function Startseite({ preise, angemeldet = null }: { preise: Preise | nul
                 </details>
               ))}
             </div>
+            <Einblenden className="mt-6">
+              <TanzRaumAssistant
+                variant="help"
+                animated={false}
+                message={
+                  <>
+                    Deine Frage ist nicht dabei? Schreib dem TanzRaum-Team an{" "}
+                    <a href="mailto:info@tanzraum.app" className="font-semibold text-brand-red">
+                      info@tanzraum.app
+                    </a>{" "}
+                    – wir helfen gern weiter.
+                  </>
+                }
+              />
+            </Einblenden>
           </div>
         </section>
 

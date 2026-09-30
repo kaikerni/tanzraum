@@ -15,6 +15,8 @@ import { ElternCode, KindVerknuepfen, MeineKinder } from "@/components/familie/F
 import { alterAm, getMeineEltern, getMeineKinder, getMeineSchutzEinstellungen } from "@/lib/familie/getFamilie";
 import { heuteBerlin } from "@/lib/training/getTraining";
 import { KINDERKONTO_BIS, VOLLJAEHRIG_AB } from "@/lib/auth/alter";
+import { TanzRaumAssistant } from "@/components/kai/TanzRaumAssistant";
+import { KaiStarten } from "@/components/kai/KaiStarten";
 
 export const metadata = { title: "Einstellungen – TanzRaum" };
 
@@ -75,6 +77,14 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
 
       {hinweis && <p className="rounded-lg bg-brand-green-wash px-3 py-2 text-[13px] text-brand-green">{hinweis}</p>}
 
+      <TanzRaumAssistant
+        variant="setup"
+        size="kompakt"
+        dismissKey="einstellungen-hinweis"
+        message="Nicht sicher, was du hier einstellen solltest? Ich gehe die wichtigsten Punkte Schritt für Schritt mit dir durch – du entscheidest."
+        actions={<KaiStarten />}
+      />
+
       <section className={KARTE}>
         <KarteKopf
           icon={Mail}
@@ -84,7 +94,7 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
         <EmailAendern aktuell={user.email ?? "–"} ausstehend={user.new_email ?? null} />
       </section>
 
-      <section className={KARTE}>
+      <section className={`${KARTE} scroll-mt-4`} id="profil">
         <KarteKopf icon={UserRound} titel="Geschlecht" untertitel="Für die Bezeichnung in deinem Profil und in Mitgliederlisten, z. B. Tänzerin oder Tänzer." />
         <GeschlechtAuswahl modus="aendern" aktuell={(geschlecht as string | null) ?? null} />
       </section>
@@ -94,7 +104,7 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
         <VereinAngabe wert={angaben.verein_angabe ?? null} />
       </section>
 
-      <section className={KARTE}>
+      <section className={`${KARTE} scroll-mt-4`} id="privatsphaere">
         <KarteKopf icon={EyeOff} titel="Privatsphäre" />
         <PrivatSchalter privat={!!profil?.konto_privat} />
       </section>

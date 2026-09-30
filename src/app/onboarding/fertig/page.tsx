@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { onboardingAbschliessen } from "../actions";
+import { TanzRaumAssistant } from "@/components/kai/TanzRaumAssistant";
 
 export default async function OnboardingFertigPage() {
   const supabase = await createClient();
@@ -23,7 +24,7 @@ export default async function OnboardingFertigPage() {
   return (
     <div className="card text-center">
       <div className="mb-1 text-[12px] font-semibold text-brand-ink-soft">Schritt 3 von 3</div>
-      <div className="mb-3 text-4xl">🎉</div>
+      <TanzRaumAssistant variant="success" size="kompakt" className="mb-4 text-left" message="Super – dein TanzRaum-Konto ist eingerichtet! 🎉" />
       <h1 className="mb-2 font-display text-2xl font-bold text-brand-ink">Alles bereit!</h1>
       <div className="mb-5 flex flex-col gap-1 text-[13.5px] text-brand-ink-soft">
         <span>

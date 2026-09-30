@@ -323,6 +323,17 @@ button.card:hover {
 }
 
 /* Startseite: dezente Animationen (bei "Bewegung reduzieren" aus) */
+/* Kai (TanzRaum-Begleiter): dezentes Einblenden, nur wenn „Bewegung reduzieren“ aus ist (motion-safe) */
+@keyframes kai-rein {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 @keyframes tr-schweben {
   0%,
   100% {

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LifeBuoy, Mail, KeyRound, MessageSquare, Trophy } from "lucide-react";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
+import { TanzRaumAssistant } from "@/components/kai/TanzRaumAssistant";
 
 export const metadata = { title: "Support & Hilfe – TanzRaum" };
 
@@ -43,6 +44,10 @@ export default function HilfeSeite() {
   return (
     <div className="mx-auto flex max-w-[720px] flex-col gap-4">
       <h1 className="text-[26px] font-extrabold tracking-tight text-brand-ink">Support &amp; Hilfe</h1>
+      <TanzRaumAssistant
+        variant="help"
+        message="Hallo, ich bin Kai! Unten findest du Antworten auf die häufigsten Fragen. Passt nichts davon, schreib dem TanzRaum-Team – wir melden uns so schnell wie möglich."
+      />
       <section className={KARTE}>
         <KarteKopf icon={LifeBuoy} titel="Häufige Fragen" />
         <div className="flex flex-col divide-y divide-brand-line">
