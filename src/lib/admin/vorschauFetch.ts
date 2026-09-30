@@ -1,4 +1,5 @@
 import type { Ansicht } from "@/lib/admin/ansicht";
+import type { VorschauEinstellungen } from "@/lib/supabase/server";
 import { vorschauDaten } from "@/lib/admin/vorschauDatenbank";
 
 // Datenbank-Anfragen in „Ansicht als …“ werden hier mit Beispieldaten beantwortet (nur die Anmeldung geht an Supabase).
@@ -34,7 +35,7 @@ function passt(zeile: any, schluessel: string, bedingung: string): boolean {
   return true;
 }
 
-export function vorschauFetch(ansicht: Ansicht, userId: string, einstellungen: { musikAn: boolean }, echt: typeof fetch = fetch): typeof fetch {
+export function vorschauFetch(ansicht: Ansicht, userId: string, einstellungen: VorschauEinstellungen, echt: typeof fetch = fetch): typeof fetch {
   const daten = vorschauDaten(ansicht, userId, einstellungen);
   return async (eingabe: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(typeof eingabe === "string" ? eingabe : eingabe instanceof URL ? eingabe.href : eingabe.url);

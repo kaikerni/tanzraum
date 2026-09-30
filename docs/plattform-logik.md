@@ -93,6 +93,10 @@ Stand: 29.09.2026 · Migrationen `20260929135109_plattform_logik`, `202609291356
   Schreibende Anfragen werden abgelehnt („Vorschau: Änderungen werden nicht gespeichert.“), auch im Browser (`client.ts`).
   Es werden keine echten Daten gelesen. Beenden bzw. Abmelden löscht die Cookies; die Admin-Bereiche sind in der Vorschau
   nicht erreichbar. JuryRaum und die Admin-Ansicht gibt es zusätzlich als Bild.
+  Auch das Dashboard läuft in der Vorschau über den echten Code; der Beispielverein bildet dabei die Datenbankregeln
+  je Rolle nach (meine_bereiche mit Standard-Zugängen, netzwerk_modus nur Trainer/in, ist_relevantes_mitglied,
+  training_kalender, meine_betreuten_gruppen nur Admin/Trainer, Gruppentermine/-News nur für Empfänger,
+  TeamCloud-Limits 500 MB/100 MB). Plattform-Schalter (Musik, Spotlights) werden aus der echten Datenbank übernommen.
 - **Benutzer** `/dashboard/admin/benutzer` – Suche nach Name, @Name oder E-Mail (`admin_benutzer_suche`, E-Mail nur
   gekürzt). „Konto löschen“ mit Pflicht-Grund: in 14 Tagen (sofort gesperrt, hier abbrechbar) oder sofort endgültig
   (`admin_konto_loeschen` → bestehender Lösch-Ablauf `konto_loeschungen` + Edge Function `konto-loeschung`). Es gelten

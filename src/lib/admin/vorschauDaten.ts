@@ -1,6 +1,5 @@
 import type { DashboardAnsichtProps } from "@/components/dashboard/DashboardAnsicht";
 import type { Zugriff } from "@/lib/navigation";
-import { ansichtZugriff, type Ansicht } from "@/lib/admin/ansicht";
 
 // Beispieldaten fuer die Oberflaechen-Vorschau der TanzRaum-Administration.
 // Ausschliesslich erfundene Werte – keine echten Personen, Vereine oder Nutzerdaten.
@@ -129,49 +128,3 @@ export const JURY_BEISPIEL = [
   { turnier: "Frühjahrsturnier", ort: "Beispielstadt", datum: tag(23), rolle: "Protokoll", status: "angefragt" },
   { turnier: "Herbstpokal", ort: "Nachbarort", datum: tag(61), rolle: "Wertungsrichterin", status: "offen" },
 ];
-
-// „Ansicht als …“: Dashboard-Beispieldaten je Tarif bzw. Vereinsrolle (Navigation: ansichtZugriff)
-export function vorschauAls(ansicht: Ansicht): DashboardAnsichtProps {
-  if (ansicht === "free" || ansicht === "basic") return { ...vorschau(ansicht).props, zugriff: ansichtZugriff(ansicht) };
-  const v = vorschau("verein").props;
-  const zugriff = ansichtZugriff(ansicht);
-  const rolle = { verein_admin: "Vereinsadmin", verein_trainer: "Trainerin", verein_betreuer: "Betreuerin", verein_mitglied: "Tänzerin", verein_eltern: "Elternteil" }[ansicht];
-  const vorname = { verein_admin: "Sophie", verein_trainer: "Lena", verein_betreuer: "Katrin", verein_mitglied: "Emma", verein_eltern: "Markus" }[ansicht];
-  const daten = { ...v.daten, vorname, vereine: [{ ...BEISPIELVEREIN, istAdmin: ansicht === "verein_admin", rolleName: rolle }] };
-  if (ansicht === "verein_admin") return { ...v, daten, zugriff };
-  if (ansicht === "verein_trainer" || ansicht === "verein_betreuer") {
-    return {
-      ...v,
-      daten,
-      zugriff,
-      kennzahlen: v.kennzahlen && { ...v.kennzahlen, mitglieder: v.kennzahlen.mitglieder && { ...v.kennzahlen.mitglieder, wert: 29, neuWoche: 1 } },
-      radar: [v.radar[0]],
-    };
-  }
-  // Taenzer/in und Eltern: eigene Termine, keine Vereinskennzahlen
-  const kennzahlen = v.kennzahlen && {
-    mitglieder: null,
-    trainingsHeute: v.kennzahlen.trainingsHeute,
-    abmeldungenHeute: null,
-    turniereWoche: v.kennzahlen.turniereWoche,
-    nachrichten: { ungelesen: 2, verlauf: [1, 0, 2, 1, 1, 3, 0, 2] },
-    beteiligung: null,
-  };
-  return {
-    ...v,
-    daten,
-    zugriff,
-    kennzahlen: kennzahlen as DashboardAnsichtProps["kennzahlen"],
-    altersklassen: [],
-    verlauf: [],
-    heute: [v.heute[0]],
-    radar: [{ typ: "turnier", dringlichkeit: "info", titel: "Turnier in 9 Tagen", untertitel: TURNIERE[0].name }],
-    kinder:
-      ansicht === "verein_eltern"
-        ? [
-            { kindVmId: "00000000-0000-4000-8000-0000000000c1", name: "Mila Beispiel", vereinName: BEISPIELVEREIN.vereinName, gruppen: "Juniorengarde", trainingHeute: "18:00", heuteAbgemeldet: false },
-            { kindVmId: "00000000-0000-4000-8000-0000000000c2", name: "Paul Beispiel", vereinName: BEISPIELVEREIN.vereinName, gruppen: "Minis", trainingHeute: null, heuteAbgemeldet: false },
-          ]
-        : [],
-  };
-}

@@ -23,8 +23,6 @@ import { TarifZaehler, type TarifZaehlerDaten } from "@/components/admin/TarifZa
 import { getAnkuendigungen, getMeineNews, getMeineUmfragen } from "@/lib/news/getNews";
 import { AnkuendigungenLeiste } from "@/components/news/AnkuendigungenLeiste";
 import { NewsDashboardKarte } from "@/components/news/NewsDashboardKarte";
-import { aktiveAnsicht } from "@/lib/admin/ansichtLesen";
-import { vorschauAls } from "@/lib/admin/vorschauDaten";
 
 export default async function DashboardPage({
   searchParams,
@@ -44,13 +42,8 @@ export default async function DashboardPage({
   if (!daten) redirect("/login");
   if (daten.gesperrt) redirect("/gesperrt");
 
-  // TanzRaum-Administration in „Ansicht als …“: Dashboard nur mit erfundenen Beispieldaten
-  const ansicht = await aktiveAnsicht();
-  if (ansicht) {
-    const v = vorschauAls(ansicht);
-    const { data: musikAn } = await supabase.rpc("musik_freigegeben");
-    return <DashboardAnsicht {...v} zugriff={{ ...v.zugriff, musikAn: musikAn === true }} />;
-  }
+  // „Ansicht als …“ der TanzRaum-Administration: derselbe Code wie fuer echte Nutzer – die Datenbankanfragen
+  // beantwortet dann der Beispielverein (vorschauFetch), Rechte und Karten ergeben sich wie in echt.
 
   const { wochen: wochenParam } = await searchParams;
   const wochen = ZEITRAEUME.find((w) => String(w) === wochenParam) ?? 8;

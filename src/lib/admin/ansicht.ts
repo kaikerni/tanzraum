@@ -22,7 +22,7 @@ export const ANSICHT_LABEL: Record<Ansicht, string> = {
 export const ANSICHT_TEXT: Record<Ansicht, string> = {
   free: "Kostenloses Konto ohne Verein",
   basic: "Persönliches BASIC – eigener Kalender, Training, TanzRaum Connect",
-  verein_admin: "Verein mit Lizenz – alle Vereinsbereiche und die Vereinsverwaltung",
+  verein_admin: "Verein mit Lizenz – alle Vereinsbereiche und die Vereinsverwaltung (ohne Trainer-Netzwerk)",
   verein_trainer: "Mitglieder, Anwesenheit, Saisonplanung, Trainer-Netzwerk",
   verein_betreuer: "Mitglieder, Anwesenheit, Kostüme & Requisiten",
   verein_mitglied: "Tänzerin/Tänzer im Verein – Training, Termine, News, Fahrgemeinschaften",
@@ -49,6 +49,7 @@ export function ansichtZugriff(ansicht: Ansicht): Zugriff {
     bereiche: ROLLEN_BEREICHE[ansicht],
     istPlattformAdmin: false,
     moduleAus: [],
-    netzwerk: ansicht === "verein_admin" || ansicht === "verein_trainer" ? "trainer" : null,
+    // DB netzwerk_modus(): nur die Vereinsrolle Trainer/in (Vereinsadmins nur, wenn sie zusaetzlich Trainer sind)
+    netzwerk: ansicht === "verein_trainer" ? "trainer" : null,
   };
 }

@@ -41,7 +41,9 @@ export async function createRealClient() {
 }
 
 // „Ansicht als …“ der TanzRaum-Administration: nur wirksam, wenn die echte Datenbank die Plattform-Administration bestaetigt
-export const vorschauStatus = cache(async (): Promise<{ ansicht: Ansicht; userId: string; musikAn: boolean } | null> => {
+export type VorschauEinstellungen = { musikAn: boolean; spotlightsAktiv: boolean; spotlightsTarife: string[] };
+
+export const vorschauStatus = cache(async (): Promise<({ ansicht: Ansicht; userId: string } & VorschauEinstellungen) | null> => {
   const wert = (await cookies()).get(ANSICHT_COOKIE)?.value;
   if (!istAnsicht(wert)) return null;
   const echt = await baueClient();
@@ -49,14 +51,25 @@ export const vorschauStatus = cache(async (): Promise<{ ansicht: Ansicht; userId
     data: { user },
   } = await echt.auth.getUser();
   if (!user) return null;
-  const [{ data: admin }, { data: musik }] = await Promise.all([echt.rpc("ist_plattform_admin_aktuell"), echt.rpc("musik_freigegeben")]);
+  // Plattform-Schalter (Musik, Spotlights) wie in echt – damit die Vorschau zeigt, was Nutzer gerade sehen
+  const [{ data: admin }, { data: musik }, { data: e }] = await Promise.all([
+    echt.rpc("ist_plattform_admin_aktuell"),
+    echt.rpc("musik_freigegeben"),
+    echt.from("plattform_einstellungen").select("spotlights_aktiv, spotlights_tarife").eq("id", true).maybeSingle(),
+  ]);
   if (admin !== true) return null;
-  return { ansicht: wert, userId: user.id, musikAn: musik === true };
+  return {
+    ansicht: wert,
+    userId: user.id,
+    musikAn: musik === true,
+    spotlightsAktiv: e?.spotlights_aktiv === true,
+    spotlightsTarife: Array.isArray(e?.spotlights_tarife) ? (e.spotlights_tarife as string[]) : [],
+  };
 });
 
 // In der Vorschau beantwortet ein Beispiel-Datenbestand alle Datenbank-Anfragen (nichts Echtes wird gelesen oder geschrieben)
 export async function createClient() {
   const vorschau = await vorschauStatus();
   if (!vorschau) return baueClient();
-  return baueClient(vorschauFetch(vorschau.ansicht, vorschau.userId, { musikAn: vorschau.musikAn }));
+  return baueClient(vorschauFetch(vorschau.ansicht, vorschau.userId, vorschau));
 }
