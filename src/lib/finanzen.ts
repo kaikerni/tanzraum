@@ -23,7 +23,16 @@ export type Buchung = {
 };
 export const BUCHUNG_SPALTEN = "id, verein_id, datum, typ, kategorie, betrag, beschreibung, zahlungsart, beleg_pfad, beleg_name, beitrag_id";
 
-export type Beitragsart = { id: string; name: string; betrag: number; rhythmus: string; aktiv: boolean };
+export type Beitragsart = {
+  id: string;
+  name: string;
+  betrag: number;
+  rhythmus: string;
+  aktiv: boolean;
+  // Wiederkehrend: Sollstellung legt TanzRaum 14 Tage vor naechste_faelligkeit automatisch an (DB: vereins_erinnerungen_taeglich)
+  automatisch?: boolean;
+  naechste_faelligkeit?: string | null;
+};
 export type Beitrag = {
   id: string;
   vereins_mitglied_id: string;

@@ -67,7 +67,7 @@ export default async function FinanzenSeite({ searchParams }: { searchParams: Pr
       .limit(5000),
     supabase.from("kassenbuch_eintraege").select("typ, betrag, datum").eq("verein_id", vereinId).lt("datum", `${jahr}-01-01`).limit(50000),
     supabase.from("beitraege").select(BEITRAG_SPALTEN).eq("verein_id", vereinId).order("faellig", { ascending: false }).limit(5000),
-    supabase.from("beitragstypen").select("id, name, betrag, rhythmus, aktiv").eq("verein_id", vereinId).order("name"),
+    supabase.from("beitragstypen").select("id, name, betrag, rhythmus, aktiv, automatisch, naechste_faelligkeit").eq("verein_id", vereinId).order("name"),
     tab === "beitraege" ? supabase.rpc("finanzen_personen", { p_verein_id: vereinId }) : Promise.resolve({ data: [] }),
     supabase.rpc("finanzen_namen", { p_verein_id: vereinId }),
   ]);
@@ -378,6 +378,11 @@ export default async function FinanzenSeite({ searchParams }: { searchParams: Pr
                       <p className="text-[13px] text-brand-ink-soft">
                         {euro(a.betrag)} · {a.rhythmus} · {beitraege.filter((b) => b.beitragstyp_id === a.id).length} Beiträge
                       </p>
+                      {a.automatisch && a.naechste_faelligkeit && (
+                        <p className="mt-1 inline-flex rounded-full bg-brand-green-wash px-2 py-0.5 text-[11.5px] font-semibold text-brand-green">
+                          automatisch · nächste Fälligkeit {datumDe(a.naechste_faelligkeit)}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <BeitragsartAktionen art={a} vereinId={vereinId} />

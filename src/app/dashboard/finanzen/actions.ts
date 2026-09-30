@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { freundlicherFehler } from "@/lib/fehler";
 import type { AktionsErgebnis } from "@/components/ui/SendenButton";
-import { BELEG_BUCKET, RHYTHMEN, ZAHLUNGSARTEN, betragLesen } from "@/lib/finanzen";
+import { BELEG_BUCKET, RHYTHMEN, ZAHLUNGSARTEN, betragLesen, heuteBerlin } from "@/lib/finanzen";
 
 // Alle Rechte prueft die Datenbank (darf_finanzen: Vereinsadmin bzw. Bereich "Finanzen", Vereinslizenz).
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -88,6 +88,12 @@ export async function beitragsartSpeichern(_prev: AktionsErgebnis, fd: FormData)
   };
   if (!werte.name) return { error: "Bitte einen Namen angeben." };
   if (!Number.isFinite(werte.betrag)) return { error: "Bitte einen gültigen Betrag angeben." };
+  // Wiederkehrende Sollstellung (taeglicher Lauf in der Datenbank)
+  const naechste = text(fd, "naechste_faelligkeit", 10);
+  const automatisch = fd.get("automatisch") === "1";
+  if (automatisch && !/^\d{4}-\d{2}-\d{2}$/.test(naechste)) return { error: "Für „Automatisch anlegen“ bitte die nächste Fälligkeit angeben." };
+  if (automatisch && naechste < heuteBerlin()) return { error: "Die nächste Fälligkeit darf nicht in der Vergangenheit liegen." };
+  Object.assign(werte, { automatisch, naechste_faelligkeit: /^\d{4}-\d{2}-\d{2}$/.test(naechste) ? naechste : null });
   const { error } = UUID.test(id)
     ? await supabase.from("beitragstypen").update(werte).eq("id", id)
     : await supabase.from("beitragstypen").insert({ ...werte, verein_id: text(fd, "verein_id") });

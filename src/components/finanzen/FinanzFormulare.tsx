@@ -204,6 +204,20 @@ export function BeitragsartFormular({ vereinId, art, fertig }: { vereinId: strin
           </select>
         </label>
       </div>
+      <fieldset className="flex flex-col gap-2 rounded-xl border border-brand-line p-3">
+        <label className="inline-flex items-start gap-2 text-[13px] text-brand-ink">
+          <input type="checkbox" name="automatisch" value="1" defaultChecked={art?.automatisch ?? false} className="mt-0.5" />
+          <span>
+            <strong>Automatisch anlegen</strong> – TanzRaum legt die Beiträge für alle aktiven Mitglieder (ohne Eltern-Rolle) 14 Tage vor der
+            Fälligkeit an und rückt danach im gewählten Rhythmus weiter.
+          </span>
+        </label>
+        <label className="field sm:max-w-[240px]">
+          <span>Nächste Fälligkeit</span>
+          <input name="naechste_faelligkeit" type="date" defaultValue={art?.naechste_faelligkeit ?? ""} />
+        </label>
+        <p className="text-[12px] text-brand-ink-soft">Mitglieder und verknüpfte Eltern werden am Fälligkeitstag und – falls noch offen – 7 Tage später automatisch erinnert.</p>
+      </fieldset>
       {art && (
         <label className="inline-flex items-center gap-2 text-[13px] text-brand-ink">
           <input type="hidden" name="aktiv_gesetzt" value="1" />
