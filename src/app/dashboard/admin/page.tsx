@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Flag, ShieldCheck, CreditCard, Medal, Building2, Receipt, Megaphone, BarChart3, LifeBuoy, Eye } from "lucide-react";
+import { Flag, ShieldCheck, CreditCard, Medal, Building2, Receipt, Megaphone, BarChart3, LifeBuoy, Eye, Store } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 import { DashboardStatus } from "@/components/dashboard/DashboardStatus";
@@ -19,6 +19,8 @@ export default async function AdminSeite() {
   const anzahl = ((offen ?? []) as unknown[]).length;
   const { data: fernwartungen } = await supabase.rpc("admin_fernwartungen");
   const aktiveFernwartungen = ((fernwartungen ?? []) as { aktiv: boolean }[]).filter((f) => f.aktiv).length;
+  const { data: boerse } = await supabase.rpc("admin_boerse_meldungen");
+  const boerseMeldungen = Number((boerse as { zahlen?: { offene_meldungen?: number } } | null)?.zahlen?.offene_meldungen ?? 0);
   const kacheln = [
     { href: "/dashboard/admin/statistik", icon: BarChart3, farbe: "bg-brand-blue-wash text-brand-blue", titel: "Plattform-Statistik", text: "Nutzer, Tarife, Vereine, Aktivität – nur zusammengefasste Zahlen" },
     { href: "/dashboard/admin/vereine", icon: Building2, farbe: "bg-brand-gold-wash text-brand-gold", titel: "Vereine", text: "Vereinskarten mit Lizenzstatus, Mitgliederzahl, Gruppen und Online-Zahl" },
@@ -29,6 +31,14 @@ export default async function AdminSeite() {
       titel: "Fernwartung",
       text: "Support-Anfragen der Vereine – nur mit Freigabe, protokolliert",
       marke: aktiveFernwartungen > 0 ? `${aktiveFernwartungen} aktiv` : null,
+    },
+    {
+      href: "/dashboard/admin/boerse",
+      icon: Store,
+      farbe: "bg-brand-gold-wash text-brand-gold",
+      titel: "TanzRaum Börse",
+      text: "Moderation: gemeldete Angebote, Deaktivieren, Einschränkungen",
+      marke: boerseMeldungen > 0 ? `${boerseMeldungen} gemeldet` : null,
     },
     { href: "/dashboard/admin/vorschau", icon: Eye, farbe: "bg-brand-purple-wash text-brand-purple", titel: "Oberflächen-Vorschau", text: "FREE, BASIC, VEREIN, ADMIN und JuryRaum mit Beispieldaten ansehen" },
   ];

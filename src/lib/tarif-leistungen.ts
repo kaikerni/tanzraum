@@ -9,6 +9,7 @@ export const TARIF_LEISTUNGEN: Record<"free" | "basic" | "verein", Leistung[]> =
     { text: "Spotlights" },
     { text: "Eigenes Profil & Einstellungen" },
     { text: "Nachrichten mit deinen Kontakten" },
+    { text: "TanzRaum Börse: kaufen, verkaufen, tauschen, verschenken, suchen" },
     { text: "Freiwillige Angabe „Verein, in dem ich tanze“" },
   ],
   basic: [

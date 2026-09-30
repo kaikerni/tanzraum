@@ -410,6 +410,52 @@ export function Startseite({ preise }: { preise: Preise | null }) {
           </div>
         </section>
 
+        {/* TanzRaum Boerse (Community-Funktion fuer alle Tarife) */}
+        <section id="boerse" className="scroll-mt-20 py-16 sm:py-24">
+          <div className={BREITE}>
+            <Einblenden>
+              <div className="relative isolate overflow-hidden rounded-[28px] bg-brand-ink px-6 py-10 text-white shadow-[var(--shadow)] sm:px-12 sm:py-14">
+                <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_85%_15%,rgba(201,146,31,0.35),transparent_45%),radial-gradient(circle_at_5%_110%,rgba(225,29,46,0.5),transparent_55%)]" />
+                <div className="grid items-center gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+                  <div>
+                    <p className="mb-2 text-[12.5px] font-bold uppercase tracking-[0.18em] text-brand-gold">TanzRaum Börse · für alle</p>
+                    <h2 className="text-[28px] font-extrabold leading-tight tracking-tight sm:text-[40px]">Dein Kostüm sucht einen neuen Auftritt?</h2>
+                    <p className="mt-3 max-w-xl text-[15.5px] text-white/80 sm:text-[17px]">
+                      Kaufen, verkaufen, tauschen oder verschenken – direkt innerhalb der TanzRaum-Community. Kontakt über den TanzRaum-Chat, ohne
+                      Telefonnummer, ohne Gebühren, auch im kostenlosen FREE-Tarif.
+                    </p>
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <Link href="/signup" className="inline-flex min-h-12 items-center rounded-full bg-brand-red px-6 text-[15px] font-bold text-white hover:bg-brand-red-deep">
+                        Kostenlos mitmachen
+                      </Link>
+                      <Link href="/login?weiter=/dashboard/boerse" className="inline-flex min-h-12 items-center rounded-full border border-white/30 px-6 text-[15px] font-semibold text-white hover:bg-white/10">
+                        Zur Börse
+                      </Link>
+                    </div>
+                  </div>
+                  <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {[
+                      ["👗", "Kostüme"],
+                      ["👠", "Tanzschuhe"],
+                      ["🎀", "Accessoires"],
+                      ["🎭", "Requisiten"],
+                      ["👕", "Trainingsbekleidung"],
+                      ["🧳", "Zubehör"],
+                    ].map(([e, t]) => (
+                      <li key={t} className="flex flex-col items-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 px-3 py-4 text-center backdrop-blur">
+                        <span className="text-[30px]" aria-hidden>
+                          {e}
+                        </span>
+                        <span className="text-[13.5px] font-semibold">{t}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </Einblenden>
+          </div>
+        </section>
+
         {/* Smartphone-Vorschau */}
         <section className="py-16 sm:py-24" aria-labelledby="vorschau-titel">
           <div className={BREITE}>

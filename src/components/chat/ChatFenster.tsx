@@ -80,11 +80,16 @@ function tagesTrenner(iso: string) {
 
 // Text mit klickbaren Links, Zeilenumbrueche bleiben erhalten.
 function MitLinks({ text }: { text: string }) {
-  const teile = text.split(/(https?:\/\/[^\s]+)/g);
+  // zusaetzlich interne Verweise auf Boerse-Angebote (Kontaktanfrage aus der TanzRaum Boerse)
+  const teile = text.split(/(https?:\/\/[^\s]+|\/dashboard\/boerse\/[0-9a-f-]{36})/g);
   return (
     <>
       {teile.map((t, i) =>
-        /^https?:\/\//.test(t) ? (
+        /^\/dashboard\/boerse\/[0-9a-f-]{36}$/.test(t) ? (
+          <a key={i} href={t} className="font-semibold text-brand-blue underline" onClick={(e) => e.stopPropagation()}>
+            Angebot ansehen
+          </a>
+        ) : /^https?:\/\//.test(t) ? (
           <a key={i} href={t} target="_blank" rel="noopener noreferrer" className="text-brand-blue underline [overflow-wrap:anywhere]" onClick={(e) => e.stopPropagation()}>
             {t}
           </a>

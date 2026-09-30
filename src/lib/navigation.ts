@@ -21,6 +21,7 @@ import {
   Settings,
   CreditCard,
   Newspaper,
+  Store,
   type LucideIcon,
 } from "lucide-react";
 
@@ -121,6 +122,8 @@ export const NAV: NavEintrag[] = [
   { href: "/dashboard/netzwerk", label: "TanzRaum Connect", kurz: "Connect", icon: Globe, tarif: "basic" },
   { href: "/dashboard/trainer-netzwerk", label: "Trainer-Netzwerk", icon: Handshake, tarif: "verein", netzwerk: "trainer", modul: "trainer_netzwerk" },
   { href: "/dashboard/dateien", label: "TeamCloud", icon: Folder, tarif: "basic", modul: "dateien" },
+  // Community-Marktplatz fuer alle (keine Vereinsfunktion)
+  { href: "/dashboard/boerse", label: "TanzRaum Börse", kurz: "Börse", icon: Store, tarif: "free" },
   { href: "/dashboard/fahrgemeinschaften", label: "Fahrgemeinschaften", icon: Car, tarif: "verein", recht: "fahrgemeinschaften", modul: "fahrgemeinschaften" },
   { href: "/dashboard/musik", label: "Musik", icon: Music, tarif: "basic", nichtNurFuer: ["rolle_betreuer", "rolle_eltern"], modul: "musik" },
   { href: "/dashboard/kostueme", label: "Kostüme & Requisiten", icon: Shirt, tarif: "verein", recht: "material", modul: "kostueme" },
