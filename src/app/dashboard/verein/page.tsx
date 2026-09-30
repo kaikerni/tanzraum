@@ -11,6 +11,7 @@ import { basisUrl } from "@/lib/url";
 import { OhneVerein } from "@/components/verein/OhneVerein";
 import { VereinAnsicht } from "@/components/verein/VereinAnsicht";
 import type { VereinslizenzStatus } from "@/components/verein/VereinslizenzKarte";
+import { MeineBeitraege } from "@/components/finanzen/MeineBeitraege";
 
 export default async function MeinVereinSeite({
   searchParams,
@@ -55,6 +56,7 @@ export default async function MeinVereinSeite({
   if (!verein || !uebersicht) redirect("/dashboard");
 
   return (
+    <>
     <VereinAnsicht
       vereine={daten.vereine}
       vereinId={vereinId}
@@ -67,5 +69,10 @@ export default async function MeinVereinSeite({
       darfGruppen={darfGruppen}
       lizenz={lizenz}
     />
+      {/* Eigene Beitraege (nur wenn der Verein welche erfasst hat) */}
+      <div className="mx-auto mt-4 max-w-[1200px]">
+        <MeineBeitraege />
+      </div>
+    </>
   );
 }

@@ -14,6 +14,7 @@ function ziel(typ: string): string | null {
   if (typ === "fahrgemeinschaft") return "/dashboard/fahrgemeinschaften";
   if (typ === "boerse") return "/dashboard/boerse/meine";
   if (typ === "kostuem") return "/dashboard/kostueme";
+  if (typ === "beitrag") return "/dashboard/verein#beitraege";
   if (typ === "news" || typ === "umfrage") return "/dashboard/news";
   if (typ.includes("netzwerk") || typ === "kontaktanfrage") return "/dashboard/netzwerk";
   return null;

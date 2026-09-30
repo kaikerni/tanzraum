@@ -217,6 +217,45 @@ export default async function DatenschutzSeite() {
         </p>
       </Abschnitt>
 
+      <Abschnitt titel="7d. TanzRaum Börse">
+        <p>
+          Für die Börse verarbeiten wir die Angaben deiner Angebote (Titel, Beschreibung, Preis, Zustand, Größe, Ort als Ortsname und auf
+          etwa 1 km gerundete Ortsmitte für die Umkreissuche, Bilder), deine Favoriten, Meldungen und die Verknüpfung zwischen Angebot und
+          Chat-Kontakt. Angebote sind für angemeldete Nutzerinnen und Nutzer sichtbar; Bilder werden nicht öffentlich abgelegt und nur über
+          kurzlebige Links angezeigt. Bei gemeldeten Angeboten sieht die TanzRaum-Administration nur das Angebot, die Meldegründe und den
+          Namen der anbietenden Person – nicht, wer gemeldet hat, und keine Chats. Beim Löschen eines Angebots werden Angaben und Bilder
+          gelöscht. Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Nutzungsvertrag) bzw. lit. f (Missbrauchsschutz).
+        </p>
+      </Abschnitt>
+
+      <Abschnitt titel="7e. Vereinsbereiche: Musik, Kostüme, Finanzen, Fahrgemeinschaften">
+        <ul>
+          <li>
+            <strong>Musik:</strong> hochgeladene Musikdateien mit Titel, Interpret, Verwendung und zugeordneten Gruppen. Dateien liegen in
+            einem nicht öffentlichen Speicher und sind nur über kurzlebige Links abspielbar – Vereinsmusik für Vereinsadmin, Trainer und die
+            Mitglieder der zugeordneten Gruppen (sowie deren Eltern), eigene Musik nur für dich.
+          </li>
+          <li>
+            <strong>Kostüme &amp; Requisiten:</strong> welches Teil (mit Größe) wann an wen ausgegeben wurde, Rückgabedatum und Zustand bei
+            Rückgabe. Sichtbar für die vom Verein berechtigten Personen und für dich bzw. verknüpfte Eltern (eigene Teile).
+          </li>
+          <li>
+            <strong>Finanzen:</strong> Beiträge je Mitglied (Beitragsart, Betrag, Fälligkeit, bezahlt am, Zahlungsweg, Erinnerungen) sowie
+            das Kassenbuch des Vereins mit Belegen. Einsehen können sie nur Vereinsadmin und vom Verein berechtigte Rollen; du bzw.
+            verknüpfte Eltern sehen die eigenen Beiträge. Bankverbindungen werden hier nicht gespeichert.
+          </li>
+          <li>
+            <strong>Fahrgemeinschaften:</strong> angebotene und gesuchte Fahrten (Anlass, Ziel, Datum, Plätze, Treffpunkt) und die Antworten
+            darauf – nur innerhalb des eigenen Vereins sichtbar.
+          </li>
+        </ul>
+        <p>
+          Verantwortlich für diese Vereinsdaten ist der jeweilige Verein; TanzRaum stellt die Technik bereit. Die TanzRaum-Administration hat
+          keinen Zugriff auf diese Inhalte. Rechtsgrundlage: Vereinsmitgliedschaft bzw. Nutzungsvertrag (Art. 6 Abs. 1 lit. b DSGVO); für
+          Kassenbuch und Belege zusätzlich die gesetzlichen Pflichten des Vereins (Art. 6 Abs. 1 lit. c DSGVO).
+        </p>
+      </Abschnitt>
+
       <Abschnitt titel="8. Push-Benachrichtigungen">
         <p>
           Wenn du Benachrichtigungen erlaubst, speichern wir die Push-Adresse deines Browsers. Die Benachrichtigung wird über den
@@ -270,6 +309,12 @@ export default async function DatenschutzSeite() {
           <li>Vereinsdaten: solange der Verein sie benötigt bzw. bis der Verein sie entfernt.</li>
           <li>Rechnungen: 10 Jahre ab Ende des Rechnungsjahres (§ 147 Abgabenordnung), in dieser Zeit unverändert. Danach werden die Empfängerangaben automatisch anonymisiert, sofern keine andere gesetzliche Aufbewahrungspflicht besteht. Rechnungen bleiben auch nach einer Kontolöschung bis zum Fristende erhalten.</li>
           <li>E-Mail-Versandprotokolle: 90 Tage.</li>
+          <li>Börse-Angebote, Favoriten und eigene Musik: bis du sie löschst bzw. bis zur Löschung deines Kontos.</li>
+          <li>Fahrgemeinschaften: automatisch 30 Tage nach dem Fahrtdatum.</li>
+          <li>
+            Kassenbuch, Belege und Beiträge: solange der Verein sie benötigt; die gesetzlichen Aufbewahrungsfristen (z. B. 10 Jahre für
+            Buchungsbelege) beachtet der Verein.
+          </li>
           <li>Nicht bestätigte neue Kinderkonten: 14 Tage ab Registrierung, danach automatische Löschung.</li>
           <li>Nachweis der Elternzustimmung: solange das Kinderkonto besteht.</li>
           <li>

@@ -190,6 +190,43 @@ export default async function NutzungsbedingungenSeite() {
         </p>
       </Abschnitt>
 
+      <Abschnitt titel="7a. TanzRaum Börse">
+        <ul>
+          <li>
+            Die Börse ist ein Kontaktangebot zwischen Nutzerinnen und Nutzern. Verträge (z. B. Kauf, Tausch, Schenkung) kommen
+            ausschließlich zwischen den Beteiligten zustande; TanzRaum ist nicht Vertragspartei, wickelt keine Zahlungen ab und übernimmt
+            keine Gewähr für Angebote, Beschreibungen, Zustand oder Lieferung.
+          </li>
+          <li>
+            Verboten sind rechtswidrige, gefälschte, gefährliche oder anstößige Angebote sowie Angebote, die Rechte Dritter verletzen.
+            Bilder dürfen nur verwendet werden, wenn die nötigen Rechte bestehen; erkennbare Personen nur mit deren Einwilligung.
+          </li>
+          <li>Private Kontaktdaten gehören nicht in Angebote; die Kontaktaufnahme erfolgt über den TanzRaum-Chat.</li>
+          <li>Gewerbliche Anbieter müssen ihre gesetzlichen Informationspflichten selbst erfüllen.</li>
+          <li>TanzRaum kann Angebote bei Verstößen deaktivieren oder löschen und die Nutzung der Börse einschränken.</li>
+          <li>Angebote einstellen und Anbietende kontaktieren ist ab 16 Jahren möglich.</li>
+        </ul>
+      </Abschnitt>
+
+      <Abschnitt titel="7b. Vereinsbereiche">
+        <ul>
+          <li>
+            Musik, Kostüme &amp; Requisiten, Finanzen und Fahrgemeinschaften sind Werkzeuge für den eigenen Verein. Welche Daten dort
+            erfasst werden und wer welche Bereiche nutzen darf, legt der Verein fest; er ist für diese Daten verantwortlich.
+          </li>
+          <li>
+            Musik darf nur hochgeladen werden, wenn der Verein bzw. du die dafür nötigen Rechte hat (z. B. eigene Aufnahmen, lizenzierte
+            Schnitte). Vereinsmusik ist nur für die zugeordneten Gruppen des eigenen Vereins bestimmt und darf nicht öffentlich
+            weiterverbreitet werden.
+          </li>
+          <li>
+            Finanzen dienen der Übersicht des Vereins (Kassenbuch, Belege, Mitgliedsbeiträge). TanzRaum wickelt keine Beitragszahlungen ab;
+            gezahlt wird wie bisher direkt an den Verein. Gesetzliche Aufbewahrungspflichten erfüllt der Verein selbst.
+          </li>
+          <li>Fahrgemeinschaften organisieren die Beteiligten selbst und auf eigene Verantwortung; TanzRaum vermittelt nur den Kontakt.</li>
+        </ul>
+      </Abschnitt>
+
       <Abschnitt titel="8. Verfügbarkeit und Haftung">
         <ul>
           <li>

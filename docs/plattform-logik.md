@@ -138,4 +138,4 @@ Musik: ab BASIC (unverändert). Statistik-Inhalte wählt der Admin (`vereine.sta
 Rollen, Altersklassen, Tanzgruppen, Trainingsbeteiligung, Turnierergebnisse); Seite `/dashboard/statistiken` zeigt nur
 zusammengefasste Zahlen (`verein_statistik`).
 
-Noch in Arbeit (Hinweisseite): Musik, Kostüme & Requisiten, Finanzen. Fahrgemeinschaften: siehe `docs/fahrgemeinschaften.md`.
+Vereinsbereiche: siehe `docs/musik.md`, `docs/kostueme.md`, `docs/finanzen.md`, `docs/fahrgemeinschaften.md`.

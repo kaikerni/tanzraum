@@ -41,22 +41,7 @@ verschenken, suchen. Keine Vereinsfunktion, keine Verbindung zur Vereinsverwaltu
 Suchaufträge/Benachrichtigungen bei neuen Treffern, Preisänderungs-Hinweise, „ähnliche Angebote“, Kostüm-Sets/
 Gruppenkostüme als eigene Unterkategorien, Bewertungen.
 
-## Vorschlag Rechtstexte (noch NICHT eingebaut – Freigabe nötig)
+## Rechtstexte
 
-**Nutzungsbedingungen, neuer Abschnitt „TanzRaum Börse“**
-1. Die Börse ist ein Kontaktangebot zwischen Nutzerinnen und Nutzern. Verträge kommen ausschließlich zwischen den
-   Beteiligten zustande; TanzRaum ist nicht Vertragspartei, wickelt keine Zahlungen ab und übernimmt keine Gewähr
-   für Angebote, Beschreibungen, Zustand oder Lieferung.
-2. Verboten sind rechtswidrige, gefälschte, gefährliche oder anstößige Angebote sowie Angebote, die Rechte Dritter
-   verletzen. Bilder dürfen nur verwendet werden, wenn die nötigen Rechte bestehen; erkennbare Personen nur mit
-   deren Einwilligung.
-3. Private Kontaktdaten gehören nicht in Angebote; die Kontaktaufnahme erfolgt über den TanzRaum-Chat.
-4. Gewerbliche Anbieter müssen ihre gesetzlichen Informationspflichten selbst erfüllen.
-5. TanzRaum kann Angebote bei Verstößen deaktivieren oder löschen und die Nutzung der Börse einschränken.
-6. Angebote einstellen und Anbietende kontaktieren ist ab 16 Jahren möglich.
-
-**Datenschutzerklärung, Ergänzung**
-Für die Börse verarbeiten wir die Angaben deiner Angebote (Titel, Beschreibung, Preis, Zustand, Größe, Ort als
-Ortsname und gerundete Ortsmitte, Bilder), Favoriten, Meldungen und die Verknüpfung zwischen Angebot und
-Chat-Kontakt (Art. 6 Abs. 1 lit. b DSGVO). Angebote sind für angemeldete Nutzerinnen und Nutzer sichtbar.
-Bilder werden nicht öffentlich abgelegt. Beim Löschen eines Angebots werden Angaben und Bilder gelöscht.
+Eingebaut mit der Fassung vom 30.09.2026: Nutzungsbedingungen Abschnitt 7a „TanzRaum Börse“, Datenschutzerklärung
+Abschnitt 7d und Speicherdauer (Migration `20260930054657_rechtstexte_30_09`).
