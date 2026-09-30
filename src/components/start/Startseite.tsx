@@ -102,6 +102,17 @@ const VORSCHAU = [
   { titel: "Verein", screen: <VereinScreen /> },
 ];
 
+const APP_HINWEISE: [string, string][] = [
+  ["Kein App Store nötig", "Kostenlos, ohne Apple- oder Google-Konto – TanzRaum wird direkt von tanzraum.app installiert."],
+  ["Immer aktuell", "Updates kommen automatisch beim nächsten Öffnen – du musst nichts nachinstallieren."],
+  ["iPhone & iPad", "Am besten über Safari installieren. Push-Benachrichtigungen gibt es auf dem iPhone nur in der installierten App (ab iOS 16.4)."],
+  ["Android", "Chrome, Edge, Samsung Internet oder Firefox: „App installieren“ bzw. „Zum Startbildschirm hinzufügen“."],
+  ["Computer", "In Chrome oder Edge über das Installations-Symbol in der Adressleiste, in Safari am Mac über „Ablage → Zum Dock hinzufügen“."],
+  ["Anmeldung", "Ein Konto für alle Geräte. Nach dem Installieren musst du dich eventuell einmal neu anmelden."],
+  ["Wenig Speicher", "Die App braucht nur wenige MB; deine Daten liegen sicher auf dem Server, nicht auf dem Gerät."],
+  ["Entfernen", "Wie jede andere App löschen – dein TanzRaum-Konto bleibt dabei bestehen."],
+];
+
 const WARUM = [
   { titel: "Weniger Chaos", text: "Keine Informationen mehr verteilt über WhatsApp, Zettel, Kalender und verschiedene Apps." },
   { titel: "Alles an einem Ort", text: "Training, Termine, Kommunikation und Vereinsorganisation in einer Plattform." },
@@ -660,7 +671,7 @@ export function Startseite({ preise, angemeldet = null }: { preise: Preise | nul
                 {
                   titel: "iPhone & iPad",
                   farbe: "bg-brand-navy",
-                  schritte: ["www.tanzraum.app in Safari öffnen.", "Teilen-Symbol öffnen.", "„Zum Home-Bildschirm“ auswählen.", "„Hinzufügen“ tippen.", "TanzRaum erscheint auf dem Startbildschirm."],
+                  schritte: ["www.tanzraum.app in Safari öffnen (ab iOS 16.4 geht es auch in Chrome oder Edge).", "Teilen-Symbol öffnen.", "„Zum Home-Bildschirm“ auswählen.", "„Hinzufügen“ tippen.", "TanzRaum erscheint auf dem Startbildschirm."],
                   ablauf: ["Safari", "Teilen", "Zum Home-Bildschirm", "TanzRaum"],
                   hinweis: "Beschriftungen können je nach iOS-Version leicht abweichen.",
                 },
@@ -703,6 +714,21 @@ export function Startseite({ preise, angemeldet = null }: { preise: Preise | nul
                 </Einblenden>
               ))}
             </div>
+            <Einblenden>
+              <div className="mt-8 rounded-[22px] border border-brand-line bg-brand-bg p-6">
+                <h3 className="text-[18px] font-extrabold text-brand-ink">Gut zu wissen</h3>
+                <ul className="mt-3 grid grid-cols-1 gap-x-8 gap-y-2.5 text-[14px] leading-relaxed text-brand-ink md:grid-cols-2">
+                  {APP_HINWEISE.map(([titel, text]) => (
+                    <li key={titel} className="flex gap-2.5">
+                      <Check size={16} className="mt-1 shrink-0 text-brand-green" />
+                      <span>
+                        <strong>{titel}:</strong> {text}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Einblenden>
             <div className="mt-8 hidden items-center justify-center gap-5 rounded-[22px] border border-dashed border-brand-line p-5 lg:flex">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/tanzraum-qr.svg" alt="QR-Code zu www.tanzraum.app" width={120} height={120} className="h-[120px] w-[120px]" />
