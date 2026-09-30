@@ -7,6 +7,9 @@ Vereinsübergreifendes Kontaktsystem – „LinkedIn für Karnevalstanz-Trainer�
 **Nur** Mitglieder, die der Verein als **Trainer/Trainerin** zugeordnet hat, in Vereinen mit **Vereinslizenz**
 (`ist_netzwerk_trainer`), sowie die Plattform-Administration. Vereins-Admins ohne Trainerrolle, Tänzer/innen, Eltern
 und Betreuer/innen sehen den Menüpunkt nicht. Gefunden werden ebenfalls nur solche Trainer.
+Bestätigt am 30.09.2026: Das bleibt so – auch nicht per Bereich freischaltbar (der frühere Haken „Trainer-Netzwerk“
+in der Mitgliederverwaltung ist entfallen). Das Netzwerkprofil zeigt nur Vereine, in denen die Person Trainer/in ist;
+die älteren Funktionen `suche_netzwerk_trainer` / `trainer_profil_info` gelten ebenfalls nur für Trainer/innen.
 
 Das frühere „TanzRaum-Netzwerk für Basic-Solo“ ist im neuen **TanzRaum-Netzwerk** (Map, Liste, Spotlights, ab Basic)
 aufgegangen – siehe `docs/soziale-struktur.md`.

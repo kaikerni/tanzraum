@@ -25,7 +25,7 @@ const BEREICHE: { key: string; label: string }[] = [
   { key: "beitraege", label: "Beiträge & Finanzen" },
   { key: "material", label: "Kostüme & Requisiten" },
   { key: "saison", label: "Saisonplanung" },
-  { key: "netzwerk", label: "Trainer-Netzwerk" },
+  // Trainer-Netzwerk: kein freischaltbarer Bereich – nur fuer die Vereinsrolle Trainer/in (DB netzwerk_modus)
   { key: "beitritt", label: "Mitgliedsanträge" },
 ];
 

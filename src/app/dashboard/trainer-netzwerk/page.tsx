@@ -24,7 +24,7 @@ export default async function NetzwerkSeite() {
       <div className="mx-auto flex max-w-[720px] flex-col gap-4">
         <h1 className="text-[26px] font-extrabold tracking-tight text-brand-ink">Trainer-Netzwerk</h1>
         <p className={`${KARTE} text-[14px] text-brand-ink-soft`}>
-          Das Trainer-Netzwerk steht Trainerinnen, Trainern und Vereins-Admins in Vereinen mit Vereinslizenz zur Verfügung. Mit dem
+          Das Trainer-Netzwerk steht Trainerinnen und Trainern in Vereinen mit Vereinslizenz zur Verfügung (Vereinsrolle Trainer/in). Mit dem
           persönlichen Basic-Tarif (ohne Verein) nutzt du TanzRaum Connect.
         </p>
       </div>
@@ -43,7 +43,7 @@ export default async function NetzwerkSeite() {
         <h1 className="text-[26px] font-extrabold tracking-tight text-brand-ink">{titel}</h1>
         <p className="text-[14px] text-brand-ink-soft">
           {modus === "trainer"
-            ? "Vernetze dich mit Trainerinnen, Trainern und Vereins-Admins anderer TanzRaum-Vereine – ohne private Handynummern auszutauschen."
+            ? "Vernetze dich mit Trainerinnen und Trainern anderer TanzRaum-Vereine – ohne private Handynummern auszutauschen."
             : "Vernetze dich mit anderen TanzRaum-Mitgliedern – ohne private Handynummern auszutauschen."}
         </p>
       </div>
@@ -54,7 +54,7 @@ export default async function NetzwerkSeite() {
           titel={modus === "trainer" ? "Trainer finden" : "Mitglieder finden"}
           untertitel={
             modus === "trainer"
-              ? "Gefunden werden nur Trainer/innen und Vereins-Admins aus Vereinen mit Vereinslizenz, deren Konto nicht privat ist."
+              ? "Gefunden werden nur Trainer/innen aus Vereinen mit Vereinslizenz, deren Konto nicht privat ist."
               : "Gefunden werden TanzRaum-Mitglieder, deren Konto nicht privat ist."
           }
         />

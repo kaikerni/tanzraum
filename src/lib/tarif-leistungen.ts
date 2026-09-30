@@ -31,7 +31,7 @@ export const TARIF_LEISTUNGEN: Record<"free" | "basic" | "verein", Leistung[]> =
     { text: "News & Umfragen, Vereinschat" },
     { text: "TeamCloud: 500 MB Vereinsspeicher" },
     { text: "Turniere & Starterlisten (abschaltbar)" },
-    { text: "Trainer-Netzwerk & Vereinsstatistiken" },
+    { text: "Trainer-Netzwerk für eure Trainer/innen & Vereinsstatistiken" },
     { text: "Bereiche und Zugriffe selbst einstellen" },
     { text: "Support & Fernwartung" },
     { text: "Fahrgemeinschaften für alle Mitglieder" },
