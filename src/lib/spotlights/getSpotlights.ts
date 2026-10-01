@@ -9,17 +9,31 @@ export async function spotlightsFuerMich(supabase: SupabaseClient): Promise<bool
 }
 
 export async function getSpotlightLeiste(supabase: SupabaseClient): Promise<SpotlightPerson[]> {
-  const { data } = await supabase.rpc("spotlight_leiste");
+  const [{ data }, { data: vorschau }] = await Promise.all([supabase.rpc("spotlight_leiste"), supabase.rpc("spotlight_vorschaubilder")]);
+  // Vorschaubild der Story-Kachel: neuestes Foto (signierter Link, privater Bucket) bzw. Text-Hintergrund
   // deno-lint-ignore no-explicit-any
-  return ((data ?? []) as any[]).map((p) => ({
-    userId: p.user_id,
-    name: p.name,
-    avatarUrl: p.avatar_url,
-    anzahl: p.anzahl,
-    ungesehen: p.ungesehen,
-    neuestes: p.neuestes,
-    ich: p.ich,
-  }));
+  const vor = new Map(((vorschau ?? []) as any[]).map((v) => [v.user_id as string, v]));
+  const pfade = [...vor.values()].map((v) => v.media_path).filter(Boolean) as string[];
+  const urls = new Map<string, string>();
+  if (pfade.length > 0) {
+    const { data: signiert } = await supabase.storage.from("spotlights").createSignedUrls(pfade, 60 * 60);
+    for (const x of signiert ?? []) if (x.path && x.signedUrl) urls.set(x.path, x.signedUrl);
+  }
+  // deno-lint-ignore no-explicit-any
+  return ((data ?? []) as any[]).map((p) => {
+    const v = vor.get(p.user_id);
+    return {
+      userId: p.user_id,
+      name: p.name,
+      avatarUrl: p.avatar_url,
+      anzahl: p.anzahl,
+      ungesehen: p.ungesehen,
+      neuestes: p.neuestes,
+      ich: p.ich,
+      vorschauUrl: v?.media_path ? (urls.get(v.media_path) ?? null) : null,
+      vorschauHintergrund: v?.media_typ === "text" ? v.hintergrund : null,
+    };
+  });
 }
 
 // Angaben fuer "+ Spotlight": Name/Bild der Person selbst, Tarif, Jugendschutz-Voreinstellung

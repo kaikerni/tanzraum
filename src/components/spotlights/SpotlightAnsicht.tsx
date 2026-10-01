@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, X, Eye, Trash2, Users, Globe } from "lucide-react";
-import { spotlightGesehen, spotlightLoeschen, spotlightReagieren, spotlightsVon } from "@/app/dashboard/netzwerk/spotlight-actions";
+import { ChevronLeft, ChevronRight, X, Eye, Trash2, Users, Globe, Music } from "lucide-react";
+import { spotlightGesehen, spotlightLoeschen, spotlightMusikUrl, spotlightReagieren, spotlightsVon } from "@/app/dashboard/spotlight/actions";
+import { StoryEbenen, useBuehnenGroesse } from "./StoryEbenen";
 import { HINTERGRUENDE, vorZeit, type Spotlight, type SpotlightPerson } from "@/lib/spotlights/typen";
 import { SCHNELL_REAKTIONEN, stickerInfo, stickerUrl } from "@/lib/chat/sticker";
 import { farbeFuer, initialen } from "@/components/chat/ChatAvatar";
@@ -30,8 +31,17 @@ export function SpotlightAnsicht({
   const [, starte] = useTransition();
   const geaendert = useRef(false);
   const video = useRef<HTMLVideoElement>(null);
+  const audio = useRef<HTMLAudioElement>(null);
+  const [musikUrl, setMusikUrl] = useState<string | null>(null);
+  const rahmen = useRef<HTMLDivElement>(null);
+  const platz = useBuehnenGroesse(rahmen);
+  const breite = Math.max(0, Math.min(platz.breite, (platz.hoehe * 9) / 16));
+  const hoehe = (breite * 16) / 9;
+  const wisch = useRef<{ x: number; y: number } | null>(null);
   const person = personen[personIndex];
   const aktuell = liste?.[index] ?? null;
+  // Mit Musik laufen Foto-/Text-Seiten so lange wie der Ausschnitt (hoechstens 15 Sekunden)
+  const dauerMs = aktuell?.musik ? Math.min(15000, Math.max(DAUER_MS, aktuell.musik.dauer * 1000)) : DAUER_MS;
 
   const schliessen = useCallback(() => onSchliessen(geaendert.current), [onSchliessen]);
 
@@ -84,7 +94,7 @@ export function SpotlightAnsicht({
     const schritt = 50;
     const t = setInterval(() => {
       setFortschritt((f) => {
-        const neu = f + schritt / DAUER_MS;
+        const neu = f + schritt / dauerMs;
         if (neu >= 1) {
           clearInterval(t);
           setTimeout(weiter, 0);
@@ -94,7 +104,34 @@ export function SpotlightAnsicht({
       });
     }, schritt);
     return () => clearInterval(t);
-  }, [aktuell, pause, weiter]);
+  }, [aktuell, pause, weiter, dauerMs]);
+
+  // Story-Musik (bestehende TanzRaum-Musik; Zugriff prueft die Speicherregel)
+  const musikPfad = aktuell?.musik?.pfad ?? null;
+  useEffect(() => {
+    setMusikUrl(null);
+    if (!musikPfad) return;
+    let aktiv = true;
+    spotlightMusikUrl(musikPfad).then((u) => aktiv && setMusikUrl(u));
+    return () => {
+      aktiv = false;
+    };
+  }, [musikPfad]);
+  useEffect(() => {
+    const a = audio.current;
+    const m = aktuell?.musik;
+    if (!a || !m || !musikUrl) return;
+    a.currentTime = m.start;
+    a.volume = m.lautstaerke;
+    a.play().catch(() => {});
+    return () => a.pause();
+  }, [musikUrl, aktuell]);
+  useEffect(() => {
+    const a = audio.current;
+    if (!a || !musikUrl) return;
+    if (pause) a.pause();
+    else a.play().catch(() => {});
+  }, [pause, musikUrl]);
 
   useEffect(() => {
     const v = video.current;
@@ -164,49 +201,78 @@ export function SpotlightAnsicht({
           </button>
         </div>
 
-        {/* Inhalt */}
+        {/* Inhalt: 9:16-Buehne mit Medium und Story-Ebenen */}
         <div
+          ref={rahmen}
           className="relative flex flex-1 items-center justify-center"
-          onPointerDown={() => setPause(true)}
-          onPointerUp={() => setPause(false)}
+          onPointerDown={(e) => {
+            wisch.current = { x: e.clientX, y: e.clientY };
+            setPause(true);
+          }}
+          onPointerUp={(e) => {
+            setPause(false);
+            const w = wisch.current;
+            wisch.current = null;
+            if (!w) return;
+            const dx = e.clientX - w.x;
+            const dy = e.clientY - w.y;
+            // Wischen: links/rechts = naechste/vorherige, nach unten = schliessen
+            if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) (dx < 0 ? weiter : zurueck)();
+            else if (dy > 90 && Math.abs(dy) > Math.abs(dx)) schliessen();
+          }}
           onPointerLeave={() => setPause(false)}
         >
           {!aktuell ? (
             <span className="h-10 w-10 animate-spin rounded-full border-4 border-white/20 border-t-white" aria-label="Lädt" />
-          ) : aktuell.mediaTyp === "text" ? (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-5 p-8 text-center" style={{ background: HINTERGRUENDE[aktuell.hintergrund ?? "rot"] ?? HINTERGRUENDE.rot }}>
-              {aktuell.text && (
-                <p className={`whitespace-pre-wrap break-words text-[26px] font-extrabold leading-tight ${aktuell.hintergrund === "rosa" || aktuell.hintergrund === "gold" ? "text-brand-ink" : "text-white"}`}>
+          ) : (
+            <div
+              className="relative overflow-hidden"
+              style={{ width: breite, height: hoehe, background: aktuell.mediaTyp === "text" ? (HINTERGRUENDE[aktuell.hintergrund ?? "rot"] ?? HINTERGRUENDE.rot) : undefined }}
+            >
+              {aktuell.mediaTyp === "text" && aktuell.ebenen.length === 0 && aktuell.text && (
+                <p className={`absolute inset-x-8 top-1/2 -translate-y-1/2 whitespace-pre-wrap break-words text-center text-[26px] font-extrabold leading-tight ${aktuell.hintergrund === "rosa" || aktuell.hintergrund === "gold" ? "text-brand-ink" : "text-white"}`}>
                   {aktuell.text}
                 </p>
               )}
+              {aktuell.mediaTyp === "foto" && aktuell.url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={aktuell.url} alt="" className="absolute inset-0 h-full w-full object-contain" />
+              )}
+              {aktuell.mediaTyp === "video" && aktuell.url && (
+                <video
+                  ref={video}
+                  key={aktuell.id}
+                  src={aktuell.url}
+                  autoPlay
+                  playsInline
+                  muted={!!aktuell.musik}
+                  controls={false}
+                  className="absolute inset-0 h-full w-full object-contain"
+                  onTimeUpdate={(e) => setFortschritt(e.currentTarget.duration ? e.currentTarget.currentTime / e.currentTarget.duration : 0)}
+                  onEnded={weiter}
+                />
+              )}
+              <StoryEbenen ebenen={aktuell.ebenen} breite={breite} hoehe={hoehe} links />
+              {/* aeltere Spotlights (vor dem Story-Editor): Smiley und Text an fester Stelle */}
+              {aktuell.ebenen.length === 0 && aktuell.sticker && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={stickerUrl(aktuell.sticker)} alt={stickerInfo(aktuell.sticker)?.name ?? ""} className={`pointer-events-none absolute h-32 w-32 object-contain drop-shadow-xl ${aktuell.mediaTyp === "text" ? "bottom-[22%] left-1/2 -translate-x-1/2" : "bottom-24 right-4"}`} />
+              )}
+              {aktuell.ebenen.length === 0 && aktuell.mediaTyp !== "text" && aktuell.text && (
+                <p className="pointer-events-none absolute inset-x-4 bottom-24 rounded-xl bg-black/45 px-3 py-2 text-center text-[15px] font-semibold text-white">{aktuell.text}</p>
+              )}
+              {aktuell.musik && (
+                <span className="pointer-events-none absolute left-3 top-16 z-20 inline-flex max-w-[75%] items-center gap-1.5 truncate rounded-full bg-black/55 px-2.5 py-1 text-[12px] font-semibold text-white">
+                  <Music size={13} /> {aktuell.musik.titel}
+                  {aktuell.musik.interpret ? ` · ${aktuell.musik.interpret}` : ""}
+                </span>
+              )}
+              {musikUrl && <audio ref={audio} src={musikUrl} preload="auto" />}
             </div>
-          ) : aktuell.mediaTyp === "foto" ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            aktuell.url ? <img src={aktuell.url} alt="" className="max-h-full w-full object-contain" /> : null
-          ) : aktuell.url ? (
-            <video
-              ref={video}
-              key={aktuell.id}
-              src={aktuell.url}
-              autoPlay
-              playsInline
-              controls={false}
-              className="max-h-full w-full object-contain"
-              onTimeUpdate={(e) => setFortschritt(e.currentTarget.duration ? e.currentTarget.currentTime / e.currentTarget.duration : 0)}
-              onEnded={weiter}
-            />
-          ) : null}
-          {aktuell?.sticker && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={stickerUrl(aktuell.sticker)} alt={stickerInfo(aktuell.sticker)?.name ?? ""} className={`pointer-events-none absolute h-32 w-32 object-contain drop-shadow-xl ${aktuell.mediaTyp === "text" ? "bottom-[22%]" : "bottom-24 right-4"}`} />
           )}
-          {aktuell?.mediaTyp !== "text" && aktuell?.text && (
-            <p className="pointer-events-none absolute inset-x-4 bottom-24 rounded-xl bg-black/45 px-3 py-2 text-center text-[15px] font-semibold text-white">{aktuell.text}</p>
-          )}
-          {/* Tippzonen */}
-          <button type="button" aria-label="Vorheriges" onClick={zurueck} className="absolute inset-y-16 left-0 w-1/3" />
-          <button type="button" aria-label="Nächstes" onClick={weiter} className="absolute inset-y-16 right-0 w-1/3" />
+          {/* Tippzonen: links zurueck, rechts weiter */}
+          <button type="button" aria-label="Vorheriges" onClick={zurueck} className="absolute inset-y-16 left-0 z-10 w-1/3" />
+          <button type="button" aria-label="Nächstes" onClick={weiter} className="absolute inset-y-16 right-0 z-10 w-1/3" />
         </div>
 
         {/* Aktionen */}

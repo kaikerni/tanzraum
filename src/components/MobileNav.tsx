@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MoreHorizontal, X, HelpCircle } from "lucide-react";
-import { sichtbareNav, type Zugriff } from "@/lib/navigation";
+import { navGruppen, sichtbareNav, type Zugriff } from "@/lib/navigation";
 
 // Training steht fuer Vereinsmitglieder direkt in der Leiste (nicht nur unter „Mehr“)
 const BEVORZUGT = ["/dashboard", "/dashboard/training", "/dashboard/nachrichten", "/dashboard/netzwerk", "/dashboard/kalender"];
@@ -29,10 +29,14 @@ export function MobileNav({
   const alle = sichtbareNav(zugriff).filter((n) => !n.nurSeitenleiste);
 
   const bevorzugt = zugriff.istPlattformAdmin ? ADMIN_BEVORZUGT : BEVORZUGT;
-  const leiste = [
-    ...bevorzugt.map((href) => alle.find((n) => n.href === href)).filter((n) => n !== undefined),
-    ...alle.filter((n) => !bevorzugt.includes(n.href)),
-  ].slice(0, 4);
+  // „Meine Navigation“: die ersten vier Hauptpunkte der persoenlichen Reihenfolge stehen in der Leiste
+  const persoenlich = !!zugriff.reihenfolge?.length;
+  const leiste = persoenlich
+    ? navGruppen(zugriff, alle).map((g) => g.eintrag).slice(0, 4)
+    : [
+        ...bevorzugt.map((href) => alle.find((n) => n.href === href)).filter((n) => n !== undefined),
+        ...alle.filter((n) => !bevorzugt.includes(n.href)),
+      ].slice(0, 4);
   const rest = alle.filter((n) => !leiste.includes(n));
 
   useEffect(() => setOffen(false), [pathname]);

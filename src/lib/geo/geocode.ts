@@ -91,3 +91,23 @@ export async function ortFinden(eingabe: string): Promise<Ortsangabe | null> {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
   return { ort: [plz, name].filter(Boolean).join(" "), lat, lng };
 }
+
+// Spotlight-Standort: nur ein Ortsname (z. B. „Mannheim“ oder „Sporthalle Nord, Mannheim“) – nie Koordinaten oder Hausnummer
+export async function storyOrtSuchen(eingabe: string): Promise<string[]> {
+  const q = eingabe.trim();
+  if (q.length < 2) return [];
+  const treffer = (await google({ address: q })) ?? [];
+  const namen = treffer.slice(0, 5).map((t) => {
+    const ort = teil(t, "locality", "postal_town", "administrative_area_level_3", "sublocality", "administrative_area_level_2")?.long_name;
+    const ziel = teil(t, "establishment", "point_of_interest", "premise", "park")?.long_name;
+    return [ziel && ziel !== ort ? ziel : null, ort].filter(Boolean).join(", ");
+  });
+  return [...new Set(namen.filter(Boolean))];
+}
+
+export async function storyOrtAusPosition(lat: number, lng: number): Promise<string | null> {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  const t = (await google({ latlng: `${lat.toFixed(5)},${lng.toFixed(5)}`, result_type: "locality|postal_town|administrative_area_level_3" }))?.[0];
+  if (!t) return null;
+  return teil(t, "locality", "postal_town", "administrative_area_level_3", "administrative_area_level_2")?.long_name ?? null;
+}

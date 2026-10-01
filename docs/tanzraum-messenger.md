@@ -64,7 +64,7 @@ In Vereins- und Gruppenchats können Vorstand, Trainer und Betreuer den Modus �
 
 Direktnachrichten sind möglich, wenn **keine Blockierung** und **keine elterliche Nachrichtensperre** besteht und
 mindestens eines gilt (Prüfung ausschließlich serverseitig in `darf_direkt_schreiben`, Stand Migration
-`20261001090000_netzwerk_buddys_messenger`):
+`20261001115152_netzwerk_buddys_messenger`):
 
 - beide sind aktive Mitglieder **desselben Vereins mit Vereinslizenz** (gleiche oder andere Gruppe; Trainer/Betreuer
   eingeschlossen) – das gilt auch für Kinder unter 16,

@@ -8,7 +8,25 @@ export type SpotlightPerson = {
   ungesehen: number;
   neuestes: string;
   ich: boolean;
+  // Vorschau fuer die Story-Kachel (neuestes Foto bzw. Text-Hintergrund)
+  vorschauUrl?: string | null;
+  vorschauHintergrund?: string | null;
 };
+
+// Story-Ebenen: frei positionierbar ueber Foto/Video/Hintergrund. x/y relativ (0–1, Mittelpunkt), skala, drehung in Grad.
+export type TextStil = "klassisch" | "kraeftig" | "schrift" | "neon" | "schreibmaschine";
+export type Strich = { farbe: string; breite: number; punkte: [number, number][] };
+type EbeneBasis = { id: string; x: number; y: number; skala: number; drehung: number };
+export type Ebene = EbeneBasis &
+  (
+    | { typ: "text"; text: string; stil: TextStil; farbe: string; hinterlegt: boolean; ausrichtung: "links" | "mitte" | "rechts" }
+    | { typ: "sticker"; sticker: string }
+    | { typ: "emoji"; emoji: string }
+    | { typ: "standort"; ort: string }
+    | { typ: "erwaehnung"; user_id: string; name: string }
+    | { typ: "zeichnung"; striche: Strich[] }
+  );
+export type StoryMusik = { pfad: string; titel: string; interpret: string | null; start: number; dauer: number; lautstaerke: number };
 
 export type Spotlight = {
   id: string;
@@ -24,6 +42,9 @@ export type Spotlight = {
   meineReaktion: string | null;
   ansichten: number | null;
   reaktionen: { name: string; sticker: string }[] | null;
+  ebenen: Ebene[];
+  musik: StoryMusik | null;
+  storyId: string | null;
 };
 
 export const HINTERGRUENDE: Record<string, string> = {

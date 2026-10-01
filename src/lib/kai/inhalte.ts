@@ -114,7 +114,8 @@ export const KONTEXT_TIPPS: KaiTipp[] = [
   { pfad: "/dashboard/vereinsverwaltung", zeile: "🛠️ Hier richtest du deinen Verein ein.", titel: "Vereinsverwaltung", pose: "erklaeren",
     text: "Vereinsdaten, Bereiche und Zugriffe je Rolle, Mitgliedsanträge, Ehrungen und mehr." },
   { pfad: "/dashboard/nachrichten", zeile: "💬 Alle Chats an einem Ort.", titel: "Nachrichten", pose: "erklaeren",
-    text: "Direktnachrichten sowie Vereins- und Gruppenchats. ✓ gesendet · ✓✓ zugestellt · blaue ✓✓ gelesen. Stummschalten kannst du jeden Chat einzeln." },
+    text: "Hier findest du deine Chats und Gruppenchats. ✓ gesendet · ✓✓ zugestellt · blaue ✓✓ gelesen. Stummschalten kannst du jeden Chat einzeln.",
+    ohne: { bereich: "/dashboard/nachrichten", zeile: "💬 Direkt schreiben.", text: "Du kannst einzelne Nutzer direkt anschreiben: Person suchen, Profil öffnen, „Nachricht senden“. Chatübersicht und Gruppenchats gibt es ab BASIC." } },
   { pfad: "/dashboard/fahrgemeinschaften", zeile: "🚗 Gemeinsam hin und zurück.", titel: "Fahrgemeinschaften", pose: "hinweis",
     text: "Biete freie Plätze an oder suche eine Mitfahrt – nur innerhalb deines Vereins." },
   { pfad: "/dashboard/kostueme", zeile: "👗 Alles rund um Kostüme.", titel: "Kostüme & Requisiten", pose: "hinweis",
@@ -124,11 +125,13 @@ export const KONTEXT_TIPPS: KaiTipp[] = [
   { pfad: "/dashboard/boerse", zeile: "🛍️ Kaufen, verkaufen, tauschen.", titel: "TanzRaum Börse", pose: "hinweis",
     text: "Kostüme, Schuhe und Zubehör – der Kontakt läuft sicher über den TanzRaum-Chat." },
   { pfad: "/dashboard/netzwerk", zeile: "🌍 Entdecke die TanzRaum-Welt.", titel: "TanzRaum-Netzwerk", pose: "erklaeren",
-    text: "Nutzer suchen, Profile ansehen und eine Nachricht senden. Ab BASIC: Buddys, Spotlights, Map und Vereine. Ob du selbst sichtbar bist, stellst du in den Einstellungen ein." },
+    text: "Hier kannst du TanzRaum-Nutzer entdecken und deine Buddys verwalten. Ob du selbst sichtbar bist, stellst du in den Einstellungen ein.",
+    ohne: { bereich: "/dashboard/netzwerk/buddys", text: "Hier kannst du TanzRaum-Nutzer suchen, freigegebene Profile ansehen und eine Nachricht senden. Buddys, Map und Vereine gibt es ab BASIC." } },
   { pfad: "/dashboard/netzwerk/buddys", zeile: "🤝 Deine Buddys auf einen Blick.", titel: "Meine Buddys", pose: "erklaeren",
     text: "Der grüne Punkt zeigt, wer gerade online ist (sofern die Person das erlaubt). Über „Nachricht“ geht es direkt in den Chat." },
-  { pfad: "/dashboard/netzwerk/spotlight", zeile: "✨ Was teilen die anderen gerade?", titel: "Spotlight", pose: "hinweis",
-    text: "Persönliche Fotos, 24 Stunden sichtbar. Antippen zum Ansehen – eigene Spotlights erstellst du ab BASIC." },
+  { pfad: "/dashboard/spotlight", zeile: "✨ Was teilen die anderen gerade?", titel: "Spotlight", pose: "hinweis",
+    text: "Hier kannst du Spotlights ansehen oder – ab BASIC – deine eigene Story erstellen.",
+    ohne: { bereich: "/dashboard/nachrichten", text: "Du kannst Spotlights ansehen. Eigene Spotlights kannst du ab BASIC erstellen." } },
   { pfad: "/dashboard/news", zeile: "📣 Neues aus deinem Verein.", titel: "News & Umfragen", pose: "hinweis",
     text: "Wichtige Informationen und Abstimmungen aus deinem Verein – und Ankündigungen von TanzRaum." },
   { pfad: "/dashboard/dateien", zeile: "📁 Eure Dateien, sicher abgelegt.", titel: "TeamCloud", pose: "erklaeren",
@@ -141,9 +144,12 @@ export const KONTEXT_TIPPS: KaiTipp[] = [
     text: "Ohne Vereins- oder Mitgliederdaten. Mit „Ansicht als …“ siehst du TanzRaum aus Sicht jeder Rolle." },
 ];
 
-export function tippFuer(pfad: string): KaiTipp | null {
+export function tippFuer(pfad: string, erlaubt?: (href: string) => boolean): KaiTipp | null {
   const passend = KONTEXT_TIPPS.filter((t) => (t.exakt ? pfad === t.pfad : pfad === t.pfad || pfad.startsWith(`${t.pfad}/`)));
-  return passend.sort((a, b) => b.pfad.length - a.pfad.length)[0] ?? null;
+  const tipp = passend.sort((a, b) => b.pfad.length - a.pfad.length)[0] ?? null;
+  // Tarifabhaengig: ohne den genannten Bereich die passende Variante (Kai bietet nie Unerlaubtes an)
+  if (tipp?.ohne && erlaubt && !erlaubt(tipp.ohne.bereich)) return { ...tipp, zeile: tipp.ohne.zeile ?? tipp.zeile, text: tipp.ohne.text, aktion: undefined };
+  return tipp;
 }
 
 // Hinweise auf neue Funktionen (neueste zuerst)

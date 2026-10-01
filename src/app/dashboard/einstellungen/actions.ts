@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient as createPlainClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { authFehlerText } from "@/lib/auth/fehler";
@@ -142,4 +143,17 @@ export async function kontoLoeschenBeantragen(_prev: AktionsErgebnis, formData: 
   }
   await supabase.auth.signOut({ scope: "local" });
   redirect(`/konto/geloescht?ab=${encodeURIComponent(String(loeschenAb ?? ""))}`);
+}
+
+// „Meine Navigation“: speichert nur die Reihenfolge (Menue-Kennungen). Was angezeigt und geoeffnet werden darf,
+// entscheidet weiterhin allein die Berechtigungslogik – die Datenbank prueft nur das Format.
+export async function navigationSpeichern(reihenfolge: string[] | null): Promise<AktionsErgebnis> {
+  const { supabase } = await sitzung();
+  const liste = reihenfolge
+    ? reihenfolge.filter((x) => typeof x === "string" && /^\/[a-z0-9/#_-]{1,80}$/.test(x)).slice(0, 100)
+    : null;
+  const { error } = await supabase.rpc("navigation_speichern", { p_reihenfolge: liste && liste.length ? liste : null });
+  if (error) return { error: "Die Navigation konnte nicht gespeichert werden." };
+  revalidatePath("/dashboard", "layout");
+  return { error: null, ok: liste && liste.length ? "Deine Navigation ist gespeichert – auf allen Geräten." : "Die TanzRaum-Standardreihenfolge gilt wieder." };
 }

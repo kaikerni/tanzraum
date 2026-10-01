@@ -53,7 +53,7 @@ export function KaiBegleiter({ kontext, oeffentlich = false }: { kontext: KaiKon
 
   const erlaubt = useMemo(() => erlaubtFuer(kontext), [kontext]);
   const schritte = useMemo(() => einrichtungsSchritte(kontext), [kontext]);
-  const tipp = oeffentlich ? null : tippFuer(pfad);
+  const tipp = oeffentlich ? null : tippFuer(pfad, erlaubt);
   // Neuigkeiten: zuerst die zentral gepflegten Updates (mit Kai-Hinweis), danach Kais feste Hinweise
   const neuigkeiten = useMemo(() => [...(kontext.neuigkeiten ?? []), ...NEUIGKEITEN], [kontext.neuigkeiten]);
   const ungelesen = speicher ? neuigkeiten.filter((n) => !speicher.gelesen.includes(n.id)) : [];

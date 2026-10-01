@@ -10,7 +10,7 @@
 | 🔎 Nutzer suchen | Wen gibt es? | `/dashboard/netzwerk/suche` | FREE (Name/@Nutzername), ab BASIC mit Kategorien + Ort |
 | 🤝 Meine Buddys | Mit wem bin ich verbunden? | `/dashboard/netzwerk/buddys` (Online-Status) | ab BASIC |
 | ✉️ Buddy-Anfragen | Wer möchte Buddy werden? | `/dashboard/netzwerk/anfragen` | ab BASIC |
-| ✨ Spotlight | Was teilen die Menschen gerade? | `/dashboard/netzwerk/spotlight` (nur im Netzwerk) | ansehen alle (Admin-Schalter), erstellen ab BASIC |
+| ✨ Spotlight | Was teilen die Menschen gerade? | eigener Hauptbereich `/dashboard/spotlight` (`docs/spotlight-story-editor.md`) | ansehen alle (Admin-Schalter), erstellen ab BASIC |
 | 🗺️ Map | Wo ist TanzRaum? | `/dashboard/netzwerk/map` (Standardansicht, `/dashboard/netzwerk` leitet dorthin) | ab BASIC |
 | 🏠 Vereine | Welche Vereine/Gruppen gibt es? | `/dashboard/netzwerk/vereine` | ab BASIC |
 | 👤 Profile | Wer ist diese Person / dieser Verein? | `/dashboard/netzwerk/person/[id]`, `/dashboard/netzwerk/verein/[id]` | Personenprofile alle |

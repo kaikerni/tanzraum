@@ -2,76 +2,126 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
-import type { SpotlightPerson } from "@/lib/spotlights/typen";
+import { Plus, Sparkles } from "lucide-react";
+import { HINTERGRUENDE, type SpotlightPerson } from "@/lib/spotlights/typen";
 import { farbeFuer, initialen } from "@/components/chat/ChatAvatar";
 import { SpotlightAnsicht } from "./SpotlightAnsicht";
 import { SpotlightErstellen } from "./SpotlightErstellen";
 
 export type Ich = { userId: string; name: string; avatarUrl: string | null; darfErstellen: boolean; standardSichtbarkeit: "netzwerk" | "kontakte"; nurKontakte: boolean };
 
-function Kreis({ name, avatarUrl, ring, groesse }: { name: string; avatarUrl: string | null; ring: "neu" | "gesehen" | "keiner"; groesse: number }) {
-  const rahmen =
-    ring === "neu" ? "bg-[conic-gradient(from_200deg,#e11d2e,#c9921f,#e11d2e)] p-[3px]" : ring === "gesehen" ? "bg-brand-line p-[3px]" : "p-[3px]";
+// TanzRaum-Story-Kachel: leicht abgerundetes Hochformat mit eigenem Spotlight-Rahmen (Schwarz/Rot/Gold) –
+// bewusst keine runden Story-Kreise. Neue Spotlights: Rahmen leuchtet dezent, ✨-Marke.
+export function SpotlightKachel({
+  name,
+  bildUrl,
+  hintergrund,
+  neu,
+  onClick,
+  label,
+  plus = false,
+}: {
+  name: string;
+  bildUrl: string | null;
+  hintergrund?: string | null;
+  neu: boolean;
+  onClick: () => void;
+  label: string;
+  plus?: boolean;
+}) {
   return (
-    <span className={`block rounded-full ${rahmen}`} style={{ width: groesse, height: groesse }}>
-      <span className="block h-full w-full rounded-full bg-white p-[2px]">
-        {avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={avatarUrl} alt="" className="h-full w-full rounded-full object-cover" />
-        ) : (
-          <span className={`flex h-full w-full items-center justify-center rounded-full text-[16px] font-bold text-white ${farbeFuer(name)}`}>{initialen(name)}</span>
-        )}
+    <button type="button" onClick={onClick} aria-label={label} className="group flex w-full flex-col gap-1.5 text-left">
+      <span className={`spotlight-kachel ${neu ? "spotlight-kachel-neu" : ""} block w-full`}>
+        <span
+          className="relative block aspect-[3/4] w-full overflow-hidden rounded-[14px] bg-brand-navy"
+          style={!bildUrl && hintergrund ? { background: HINTERGRUENDE[hintergrund] ?? HINTERGRUENDE.rot } : undefined}
+        >
+          {bildUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={bildUrl} alt="" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]" />
+          ) : (
+            <span className={`flex h-full w-full items-center justify-center text-[26px] font-extrabold text-white ${hintergrund ? "" : farbeFuer(name)}`}>
+              {plus ? <Sparkles size={34} className="text-[#f2d58c]" /> : initialen(name)}
+            </span>
+          )}
+          <span className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 to-transparent" />
+          {neu && (
+            <span className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-lg bg-black/55 text-[#f2d58c] backdrop-blur" aria-hidden>
+              <Sparkles size={14} />
+            </span>
+          )}
+          {plus && (
+            <span className="absolute bottom-2 left-1/2 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-xl border-2 border-white bg-brand-red text-white shadow-lg">
+              <Plus size={18} strokeWidth={3} />
+            </span>
+          )}
+        </span>
       </span>
-    </span>
+      <span className="w-full truncate px-0.5 text-center text-[12.5px] font-semibold text-brand-ink">{name}</span>
+    </button>
   );
 }
 
-// Spotlight-Leiste: ausschliesslich Personen (Profilbild + persoenlicher Name)
-export function SpotlightLeiste({ personen, ich, gross = false }: { personen: SpotlightPerson[]; ich: Ich; gross?: boolean }) {
+// Spotlight-Uebersicht: Story-Kacheln (eigene + alle sichtbaren). raster = Gitter auf der Spotlight-Seite, sonst Reihe.
+export function SpotlightLeiste({ personen, ich, raster = false }: { personen: SpotlightPerson[]; ich: Ich; raster?: boolean; gross?: boolean }) {
   const router = useRouter();
   const [ansicht, setAnsicht] = useState<number | null>(null);
   const [erstellen, setErstellen] = useState(false);
   const eigene = personen.find((p) => p.ich);
   const andere = personen.filter((p) => !p.ich);
   const reihenfolge = [...(eigene ? [eigene] : []), ...andere];
-  const groesse = gross ? 72 : 62;
+  const zelle = raster ? "" : "w-[104px] shrink-0 sm:w-[118px]";
 
   return (
     <>
-      <div className="flex gap-3 overflow-x-auto pb-1" role="list" aria-label="Spotlights">
+      <div
+        className={raster ? "grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6" : "flex gap-3 overflow-x-auto pb-1"}
+        role="list"
+        aria-label="Spotlights"
+      >
         {ich.darfErstellen && (
-          <div role="listitem" className="flex w-[76px] shrink-0 flex-col items-center gap-1">
-            <div className="relative">
-              <button type="button" onClick={() => (eigene ? setAnsicht(0) : setErstellen(true))} aria-label={eigene ? "Deine Spotlights ansehen" : "Spotlight erstellen"}>
-                <Kreis name={ich.name} avatarUrl={ich.avatarUrl} ring={eigene ? "gesehen" : "keiner"} groesse={groesse} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setErstellen(true)}
-                aria-label="Neues Spotlight"
-                className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-brand-red text-white"
-              >
-                <Plus size={14} strokeWidth={3} />
-              </button>
-            </div>
-            <span className="w-full truncate text-center text-[11.5px] font-semibold text-brand-ink">+ Spotlight</span>
+          <div role="listitem" className={zelle}>
+            <SpotlightKachel
+              name="Neue Story"
+              bildUrl={ich.avatarUrl}
+              hintergrund="navy"
+              neu={false}
+              plus
+              label="Spotlight erstellen"
+              onClick={() => setErstellen(true)}
+            />
+          </div>
+        )}
+        {eigene && (
+          <div role="listitem" className={zelle}>
+            <SpotlightKachel
+              name="Deine Story"
+              bildUrl={eigene.vorschauUrl ?? eigene.avatarUrl}
+              hintergrund={eigene.vorschauHintergrund}
+              neu={false}
+              label="Deine Spotlights ansehen"
+              onClick={() => setAnsicht(0)}
+            />
           </div>
         )}
         {andere.map((p) => (
-          <div key={p.userId} role="listitem" className="flex w-[76px] shrink-0 flex-col items-center gap-1">
-            <button type="button" onClick={() => setAnsicht(reihenfolge.indexOf(p))} aria-label={`Spotlights von ${p.name}${p.ungesehen ? " (neu)" : ""}`}>
-              <Kreis name={p.name} avatarUrl={p.avatarUrl} ring={p.ungesehen > 0 ? "neu" : "gesehen"} groesse={groesse} />
-            </button>
-            <span className="w-full truncate text-center text-[11.5px] text-brand-ink">{p.name.split(" ")[0]}</span>
+          <div key={p.userId} role="listitem" className={zelle}>
+            <SpotlightKachel
+              name={p.name.split(" ")[0]}
+              bildUrl={p.vorschauUrl ?? p.avatarUrl}
+              hintergrund={p.vorschauHintergrund}
+              neu={p.ungesehen > 0}
+              label={`Spotlights von ${p.name}${p.ungesehen ? " (neu)" : ""}`}
+              onClick={() => setAnsicht(reihenfolge.indexOf(p))}
+            />
           </div>
         ))}
-        {andere.length === 0 && (
-          <p className="self-center text-[13px] text-brand-ink-soft">
-            {ich.darfErstellen ? "Gerade teilt niemand ein Spotlight. Sei die/der Erste!" : "Gerade teilt niemand ein Spotlight."}
-          </p>
-        )}
       </div>
+      {andere.length === 0 && (
+        <p className="mt-2 text-[13px] text-brand-ink-soft">
+          {ich.darfErstellen ? "Gerade teilt niemand ein Spotlight. Sei die/der Erste!" : "Gerade teilt niemand ein Spotlight."}
+        </p>
+      )}
 
       {ansicht !== null && reihenfolge.length > 0 && (
         <SpotlightAnsicht

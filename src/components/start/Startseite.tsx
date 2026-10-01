@@ -92,7 +92,7 @@ const FUNKTIONEN: { titel: string; icon: LucideIcon; farbe: string; punkte: stri
   { titel: "Messenger", icon: MessageCircle, farbe: "text-brand-green bg-brand-green-wash", punkte: ["Chats und Gruppenchats", "Gesendet, zugestellt, gelesen", "Bilder, Videos, Sprachnachrichten", "TanzRaum-Smileys"] },
   { titel: "News & Umfragen", icon: Newspaper, farbe: "text-brand-blue bg-brand-blue-wash", punkte: ["Vereinsnachrichten", "Lesebestätigung", "Abstimmungen"] },
   { titel: "TanzRaum-Netzwerk", icon: Globe, farbe: "text-brand-purple bg-brand-purple-wash", punkte: ["Nutzer suchen und Profile", "Buddys, Map und Vereine", "Tanzsport-Community"] },
-  { titel: "Spotlight", icon: Sparkles, farbe: "text-brand-gold bg-brand-gold-wash", punkte: ["Im TanzRaum-Netzwerk", "Fotos mit Text und Smileys", "24 Stunden sichtbar"] },
+  { titel: "Spotlight", icon: Sparkles, farbe: "text-brand-gold bg-brand-gold-wash", punkte: ["Eigene Story-Kacheln", "Foto, Video, Text, Musik", "24 Stunden sichtbar"] },
   { titel: "TanzRaum Börse", icon: Store, farbe: "text-brand-gold bg-brand-gold-wash", punkte: ["Kostüme, Schuhe, Requisiten", "Kaufen, tauschen, verschenken", "Kontakt über den Chat"] },
   { titel: "Fahrgemeinschaften", icon: Car, farbe: "text-brand-green bg-brand-green-wash", punkte: ["Fahrten anbieten und suchen", "Zu Turnier und Training", "Nur im eigenen Verein"] },
   { titel: "Kostüme & Requisiten", icon: Shirt, farbe: "text-brand-red bg-brand-red-wash", punkte: ["Inventar und Kostümsätze", "Ausgabe und Rückgabe", "Wer hat was – mit Rückgabedatum"] },

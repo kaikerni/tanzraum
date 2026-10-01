@@ -110,6 +110,8 @@ export type Zugriff = {
   spotlightsAn?: boolean;
   // JuryRaum global eingeschaltet UND aktive JuryRaum-Mitgliedschaft (DB: juryraum_fuer_mich())
   juryraum?: boolean;
+  // „Meine Navigation“: nur die persoenliche Reihenfolge (DB: meine_navigation()) – vergibt nie Rechte
+  reihenfolge?: string[] | null;
 };
 
 export type NavEintrag = {
@@ -141,7 +143,7 @@ export const NETZWERK = "/dashboard/netzwerk";
 export const NACHRICHTEN = "/dashboard/nachrichten";
 const VEREIN = "/dashboard/verein";
 
-// Hauptstruktur: Dashboard · Mein Verein · TanzRaum-Netzwerk · Nachrichten · Turniere · JuryRaum (danach persoenliche Bereiche)
+// Hauptstruktur: Dashboard · Mein Verein · TanzRaum-Netzwerk · Spotlight · Nachrichten · Turniere · JuryRaum (danach persoenliche Bereiche)
 export const NAV: NavEintrag[] = [
   { href: "/dashboard", label: "Dashboard", icon: Home, tarif: "free" },
   // 🏢 Mein Verein (Vereinsbereiche ab Vereinslizenz)
@@ -160,14 +162,15 @@ export const NAV: NavEintrag[] = [
   { href: "/dashboard/finanzen", label: "Finanzen", icon: Wallet, tarif: "verein", recht: "beitraege", modul: "finanzen", eltern: VEREIN },
   { href: "/dashboard/statistiken", label: "Statistiken", icon: BarChart3, tarif: "verein", recht: "statistiken", modul: "statistiken", eltern: VEREIN },
   { href: "/dashboard/vereinsverwaltung", label: "Vereinsverwaltung", icon: Settings2, tarif: "verein", recht: "rolle_admin", eltern: VEREIN },
-  // 🌐 TanzRaum-Netzwerk: FREE nur „Nutzer suchen“ (+ Spotlights ansehen), alles weitere ab BASIC
+  // 🌐 TanzRaum-Netzwerk: FREE nur „Nutzer suchen“, alles weitere ab BASIC
   { href: NETZWERK, label: "TanzRaum-Netzwerk", kurz: "Netzwerk", icon: Globe, tarif: "free" },
   { href: `${NETZWERK}/suche`, label: "Nutzer suchen", icon: Search, tarif: "free", eltern: NETZWERK, nurSeitenleiste: true },
   { href: `${NETZWERK}/buddys`, label: "Meine Buddys", icon: UserCheck, tarif: "basic", eltern: NETZWERK, nurSeitenleiste: true },
   { href: `${NETZWERK}/anfragen`, label: "Buddy-Anfragen", icon: UserPlus, tarif: "basic", eltern: NETZWERK, nurSeitenleiste: true },
-  { href: `${NETZWERK}/spotlight`, label: "Spotlight", icon: Sparkles, tarif: "free", eltern: NETZWERK, nurSeitenleiste: true, spotlights: true },
   { href: `${NETZWERK}/map`, label: "Map", icon: MapIcon, tarif: "basic", eltern: NETZWERK, nurSeitenleiste: true },
   { href: `${NETZWERK}/vereine`, label: "Vereine", icon: Building2, tarif: "basic", eltern: NETZWERK, nurSeitenleiste: true },
+  // ✨ Spotlight: eigener Story-Bereich (ansehen alle Tarife laut Schalter, erstellen ab BASIC)
+  { href: "/dashboard/spotlight", label: "Spotlight", icon: Sparkles, tarif: "free", spotlights: true },
   // 💬 Nachrichten: vollstaendiger Messenger ab BASIC (FREE: einzelne Direktnachricht aus dem Profil, keine Chatuebersicht)
   { href: NACHRICHTEN, label: "Nachrichten", icon: MessageCircle, tarif: "basic" },
   { href: `${NACHRICHTEN}/chats`, label: "Chats", icon: MessageCircle, tarif: "basic", eltern: NACHRICHTEN, nurSeitenleiste: true },
@@ -203,6 +206,7 @@ export const ADMIN_NAV: NavEintrag[] = [
   { href: "/dashboard/admin/ehrungen", label: "Ehrungskatalog", kurz: "Ehrungen", icon: Medal, tarif: "free" },
   { href: "/dashboard/turniere", label: "Turnierkalender", kurz: "Turniere", icon: Trophy, tarif: "free" },
   { href: "/dashboard/netzwerk", label: "TanzRaum-Netzwerk", kurz: "Netzwerk", icon: Globe, tarif: "free" },
+  { href: "/dashboard/spotlight", label: "Spotlight", icon: Sparkles, tarif: "free", spotlights: true },
   { href: "/dashboard/admin/vorschau", label: "Ansicht als …", kurz: "Ansicht", icon: Eye, tarif: "free" },
   { href: "/dashboard/admin/anbieter", label: "Anbieterangaben", icon: FileText, tarif: "free" },
   { href: "/dashboard/einstellungen", label: "Einstellungen", icon: Settings, tarif: "free" },
@@ -232,9 +236,10 @@ function nurAusgeschlosseneRollen(zugriff: Zugriff, ausgeschlossen: RollenMarker
   return rollen.length > 0 && rollen.every((r) => (ausgeschlossen as string[]).includes(r));
 }
 
-export function sichtbareNav(zugriff: Zugriff): NavEintrag[] {
+// Erlaubte Menuepunkte (ohne persoenliche Reihenfolge) – Grundlage fuer alle Rechte-Pruefungen der Anzeige
+export function erlaubteNav(zugriff: Zugriff): NavEintrag[] {
   // Plattform-Admin (ohne „Ansicht als …“): nur die Admin-Navigation
-  if (zugriff.istPlattformAdmin) return ADMIN_NAV;
+  if (zugriff.istPlattformAdmin) return ADMIN_NAV.filter((n) => !n.spotlights || zugriff.spotlightsAn === true);
   return NAV.filter(
     (n) =>
       (n.href !== "/dashboard/musik" || zugriff.musikAn !== false) &&
@@ -244,6 +249,31 @@ export function sichtbareNav(zugriff: Zugriff): NavEintrag[] {
       modulAn(zugriff, n.modul) &&
       (zugriff.istPlattformAdmin || !n.nichtNurFuer || !nurAusgeschlosseneRollen(zugriff, n.nichtNurFuer)),
   );
+}
+
+// Systembereiche bleiben fest am Ende (nicht sortierbar)
+export const SYSTEM_NAV = new Set(["/dashboard/tarif", "/dashboard/einstellungen"]);
+
+// Persoenliche Reihenfolge anwenden: sortiert NUR die bereits erlaubten Punkte. Unbekannte oder nicht (mehr)
+// erlaubte Eintraege der gespeicherten Liste werden ignoriert; neu freigeschaltete Punkte erscheinen an ihrer
+// Standardposition (direkt nach ihrem Vorgaenger in der Standardreihenfolge) und koennen dann verschoben werden.
+export function inReihenfolge(eintraege: NavEintrag[], reihenfolge?: string[] | null): NavEintrag[] {
+  const sortierbar = eintraege.filter((n) => !SYSTEM_NAV.has(n.href));
+  const system = eintraege.filter((n) => SYSTEM_NAV.has(n.href));
+  if (!reihenfolge || reihenfolge.length === 0) return [...sortierbar, ...system];
+  const pos = new Map(reihenfolge.map((h, i) => [h, i]));
+  let vorher = -1;
+  const mitSchluessel = sortierbar.map((n, i) => {
+    const p = pos.get(n.href);
+    if (p !== undefined) vorher = p;
+    return { n, k: p ?? vorher + 0.001 * (i + 1), i };
+  });
+  mitSchluessel.sort((a, b) => a.k - b.k || a.i - b.i);
+  return [...mitSchluessel.map((x) => x.n), ...system];
+}
+
+export function sichtbareNav(zugriff: Zugriff): NavEintrag[] {
+  return inReihenfolge(erlaubteNav(zugriff), zugriff.reihenfolge);
 }
 
 // Seitenleiste: Hauptpunkte mit ihren sichtbaren Unterpunkten. Die Vereinsbereiche erscheinen nur bei einer

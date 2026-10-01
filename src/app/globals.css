@@ -537,3 +537,39 @@ button.card:hover {
     opacity: 0.8;
   }
 }
+
+/* Spotlight: eigener TanzRaum-Rahmen um die Story-Kacheln (Schwarz/Rot/Gold) – keine runden Story-Kreise */
+@property --spotlight-winkel {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.spotlight-kachel {
+  padding: 3px;
+  border-radius: 17px;
+  background: linear-gradient(145deg, #d9d4ca, #ece8df);
+  transition: transform 0.2s ease;
+}
+.spotlight-kachel:hover {
+  transform: translateY(-2px);
+}
+.spotlight-kachel-neu {
+  background: conic-gradient(from var(--spotlight-winkel), #1b2130, #e11d2e, #c9921f, #f2d58c, #c9921f, #e11d2e, #1b2130);
+  box-shadow: 0 6px 18px -8px rgba(225, 29, 46, 0.55);
+  animation: spotlight-leuchten 6s linear infinite;
+}
+@keyframes spotlight-leuchten {
+  to {
+    --spotlight-winkel: 360deg;
+  }
+}
+.spotlight-kachel-rahmen {
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 0 0 0 2px rgba(201, 146, 31, 0.55);
+}
+@media (prefers-reduced-motion: reduce) {
+  .spotlight-kachel-neu {
+    animation: none;
+  }
+}

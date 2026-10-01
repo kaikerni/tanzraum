@@ -442,6 +442,9 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
     // spotlights_fuer_mich(): eingeschaltet und fuer den eigenen Tarif freigegeben
     spotlights_fuer_mich: einstellungen.spotlightsAktiv && einstellungen.spotlightsTarife.includes(tarif),
     spotlight_leiste: [],
+    spotlight_vorschaubilder: [],
+    spotlight_musik_auswahl: [],
+    meine_navigation: null,
     eigene_ungelesene_nachrichten_anzahl: ungelesenGesamt,
     // Dashboard
     dashboard_kennzahlen: dashboardKennzahlen,

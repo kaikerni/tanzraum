@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Globe, Sparkles, ChevronRight } from "lucide-react";
 
-// Dezenter Dashboard-Hinweis auf das TanzRaum-Netzwerk (Spotlights selbst gibt es nur im Netzwerk)
+// Dezenter Dashboard-Hinweis: neue Spotlights (eigener Bereich) bzw. das TanzRaum-Netzwerk – kein Spotlight-Modul auf dem Dashboard
 export function NetzwerkHinweis({ tarif, neueSpotlights }: { tarif: "free" | "basic" | "verein"; neueSpotlights: number }) {
   const spotlight = neueSpotlights > 0;
-  const href = spotlight ? "/dashboard/netzwerk/spotlight" : tarif === "free" ? "/dashboard/netzwerk/suche" : "/dashboard/netzwerk";
+  const href = spotlight ? "/dashboard/spotlight" : tarif === "free" ? "/dashboard/netzwerk/suche" : "/dashboard/netzwerk";
   return (
     <Link
       href={href}
@@ -14,13 +14,13 @@ export function NetzwerkHinweis({ tarif, neueSpotlights }: { tarif: "free" | "ba
         {spotlight ? <Sparkles size={19} /> : <Globe size={19} />}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[14.5px] font-bold text-brand-ink">TanzRaum-Netzwerk</span>
+        <span className="block text-[14.5px] font-bold text-brand-ink">{spotlight ? "Spotlight" : "TanzRaum-Netzwerk"}</span>
         <span className="block truncate text-[13px] text-brand-ink-soft">
           {spotlight
-            ? `${neueSpotlights} ${neueSpotlights === 1 ? "neues Spotlight" : "neue Spotlights"} – jetzt im Netzwerk ansehen`
+            ? `${neueSpotlights} ${neueSpotlights === 1 ? "neue Story" : "neue Stories"} – jetzt ansehen`
             : tarif === "free"
               ? "Nutzer suchen, Profile ansehen und eine Nachricht senden"
-              : "Buddys, Spotlights, Map und Vereine entdecken"}
+              : "Buddys, Map und Vereine entdecken"}
         </span>
       </span>
       <ChevronRight size={18} className="shrink-0 text-brand-ink-faint" />

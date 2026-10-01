@@ -44,6 +44,9 @@ export const KAI_FRAGEN: KaiFrage[] = [
   { id: "einstellungen", bereiche: ["/dashboard/einstellungen"], frage: "Wie ändere ich meine Einstellungen?", stichworte: ["einstellung", "einstellungen", "profil", "passwort", "email", "e-mail", "konto"],
     antwort: "Über „Einstellungen“ im Menü: E-Mail, Passwort, Profil-Angaben, Privatsphäre, Benachrichtigungen und Datenschutz.",
     aktion: { label: "Einstellungen öffnen", href: "/dashboard/einstellungen" } },
+  { id: "navigation", bereiche: ["/dashboard/einstellungen"], frage: "Kann ich meine Navigation anpassen?", stichworte: ["navigation", "menue", "menü", "reihenfolge", "sortieren", "anordnen", "seitenleiste", "leiste"],
+    antwort: "Du kannst deine TanzRaum-Navigation ganz einfach an deine eigenen Gewohnheiten anpassen: Einstellungen → Meine Navigation. Bereiche am Griff ziehen (am Handy kurz gedrückt halten) oder mit den Pfeilen verschieben und speichern – die Reihenfolge gilt auf all deinen Geräten. Welche Bereiche du siehst, ändert sich dadurch nicht.",
+    aktion: { label: "Meine Navigation öffnen", href: "/dashboard/einstellungen#navigation" } },
   { id: "benachrichtigungen", bereiche: ["/dashboard/einstellungen"], frage: "Wie stelle ich Benachrichtigungen ein?", stichworte: ["benachrichtigung", "benachrichtigungen", "push", "mitteilung", "ton", "handy"],
     antwort: "In den Einstellungen unter „Push-Benachrichtigungen“ – für dieses Gerät und je Thema.",
     aktion: { label: "Benachrichtigungen öffnen", href: "/dashboard/einstellungen#push" } },
@@ -80,9 +83,12 @@ export const KAI_FRAGEN: KaiFrage[] = [
   { id: "buddys-free", nurOhne: "/dashboard/netzwerk/buddys", bereiche: ["/dashboard/netzwerk"], frage: "Was sind Buddys?", stichworte: ["buddy", "buddys", "freund", "freunde", "vernetzen", "kontaktanfrage", "anfrage"],
     antwort: "Buddys sind TanzRaum-Kontakte mit eigener Liste und Anfragen. Sie sind ab BASIC verfügbar – oder automatisch über einen Verein mit Vereinslizenz. Mit FREE kannst du Nutzer suchen und ihnen eine Nachricht senden.",
     aktion: { label: "Tarife ansehen", href: "/dashboard/tarif" } },
-  { id: "spotlight", bereiche: ["/dashboard/netzwerk"], frage: "Wo finde ich Spotlights?", stichworte: ["spotlight", "spotlights", "story", "stories", "foto teilen"],
-    antwort: "Spotlights findest du im TanzRaum-Netzwerk unter „Spotlight“: persönliche Fotos, 24 Stunden sichtbar. Ansehen geht mit jedem Tarif, eigene Spotlights erstellen ab BASIC.",
-    aktion: { label: "Zu den Spotlights", href: "/dashboard/netzwerk/spotlight" } },
+  { id: "spotlight", nurMit: "/dashboard/nachrichten", bereiche: ["/dashboard/spotlight"], frage: "Wie erstelle ich eine Spotlight-Story?", stichworte: ["spotlight", "spotlights", "story", "stories", "foto teilen", "video teilen"],
+    antwort: "Unter „Spotlight“ auf „Neue Story“ tippen, Foto, Video oder Text wählen und mit Text, TanzRaum-Smileys, Emojis, Standort, @Erwähnungen, #Hashtags, Zeichnung und Musik gestalten. Jedes Element kannst du verschieben, mit zwei Fingern vergrößern und drehen oder löschen. Mehrere Seiten sind möglich; vor dem Veröffentlichen siehst du eine Vorschau.",
+    aktion: { label: "Zu Spotlight", href: "/dashboard/spotlight" } },
+  { id: "spotlight-free", nurOhne: "/dashboard/nachrichten", bereiche: ["/dashboard/spotlight"], frage: "Wie erstelle ich eine Spotlight-Story?", stichworte: ["spotlight", "spotlights", "story", "stories", "foto teilen"],
+    antwort: "Du kannst Spotlights ansehen. Eigene Spotlights kannst du ab BASIC erstellen – oder automatisch über einen Verein mit Vereinslizenz.",
+    aktion: { label: "Zu Spotlight", href: "/dashboard/spotlight" } },
   { id: "juryraum", bereiche: ["/juryraum"], frage: "Was ist der JuryRaum?", stichworte: ["jury", "juryraum", "juror", "wertungsrichter", "besetzung"],
     antwort: "Im JuryRaum organisierst du deine Jury-Einsätze: Turniere, Besetzungen, Verfügbarkeit, Anreise und Unterkunft.",
     aktion: { label: "JuryRaum öffnen", href: "/juryraum/dashboard" } },
@@ -184,7 +190,7 @@ function quelle(oeffentlich: boolean) {
 }
 
 export function kaiThemen(pfad: string, erlaubt?: (href: string) => boolean, max = 4, oeffentlich = false): KaiFrage[] {
-  const nutzbar = quelle(oeffentlich).filter((f) => (!f.aktion || !erlaubt || erlaubt(f.aktion.href)) && (!f.nurOhne || !erlaubt || !erlaubt(f.nurOhne)));
+  const nutzbar = quelle(oeffentlich).filter((f) => (!f.aktion || !erlaubt || erlaubt(f.aktion.href)) && (!f.nurOhne || !erlaubt || !erlaubt(f.nurOhne)) && (!f.nurMit || !erlaubt || erlaubt(f.nurMit)));
   const passend = nutzbar.filter((f) => f.bereiche?.some((b) => pfad === b || pfad.startsWith(`${b}/`)));
   return (passend.length ? passend : nutzbar.filter((f) => ["turniere", "training-abmelden", "einstellungen", "hilfe"].includes(f.id))).slice(0, max);
 }
@@ -194,7 +200,7 @@ export function kaiFragen(eingabe: string, erlaubt?: (href: string) => boolean, 
   const q = normal(eingabe);
   if (q.length < 2) return [];
   const woerter = q.split(" ").filter((w) => w.length > 2);
-  return quelle(oeffentlich).filter((f) => (!f.aktion || !erlaubt || erlaubt(f.aktion.href)) && (!f.nurOhne || !erlaubt || !erlaubt(f.nurOhne)))
+  return quelle(oeffentlich).filter((f) => (!f.aktion || !erlaubt || erlaubt(f.aktion.href)) && (!f.nurOhne || !erlaubt || !erlaubt(f.nurOhne)) && (!f.nurMit || !erlaubt || erlaubt(f.nurMit)))
     .map((f) => {
       const fr = normal(f.frage);
       let punkte = fr.includes(q) ? 5 : 0;

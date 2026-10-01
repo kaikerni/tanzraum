@@ -1,6 +1,6 @@
 # Verbindliche Struktur FREE / BASIC / VEREIN – TanzRaum-Netzwerk, Buddys, Spotlight, Messenger
 
-Stand 01.10.2026 · Migration `20261001090000_netzwerk_buddys_messenger.sql` · Test `supabase/tests/netzwerk_buddys_messenger_test.sql`
+Stand 01.10.2026 · Migration `20261001115152_netzwerk_buddys_messenger.sql` · Test `supabase/tests/netzwerk_buddys_messenger_test.sql`
 
 „TanzRaum Connect“ gibt es nicht mehr. Der eine soziale Bereich heißt **TanzRaum-Netzwerk**. Es gibt weiterhin genau
 eine Chat-, eine Spotlight- und eine Netzwerkarchitektur – alles baut auf den bestehenden Tabellen und Funktionen auf.
@@ -11,7 +11,8 @@ eine Chat-, eine Spotlight- und eine Netzwerkarchitektur – alles baut auf den 
 |---|---|---|
 | 🏠 Dashboard | – | FREE |
 | 🏢 Mein Verein | Mitglieder, Gruppen, Training, Anwesenheit, Kalender, Saisonplanung, News, Mitgliedsanträge, Fahrgemeinschaften, Kostüme, Finanzen, Statistiken, Vereinsverwaltung (je nach Rolle/Recht/Modul) | Vereinsbereiche ab VEREIN |
-| 🌐 TanzRaum-Netzwerk | Nutzer suchen · Meine Buddys · Buddy-Anfragen · Spotlight · Map · Vereine | FREE: nur Nutzer suchen (+ Spotlight ansehen) |
+| 🌐 TanzRaum-Netzwerk | Nutzer suchen · Meine Buddys · Buddy-Anfragen · Map · Vereine | FREE: nur Nutzer suchen |
+| ✨ Spotlight | eigener Story-Bereich (siehe `docs/spotlight-story-editor.md`) | ansehen FREE (Schalter), erstellen ab BASIC |
 | 💬 Nachrichten | Chats · Gruppenchats | BASIC |
 | 🏆 Turniere | – | FREE (Verein kann das Modul ausschalten) |
 | 🧑‍⚖️ JuryRaum | – | nur wenn global eingeschaltet **und** berechtigt |
@@ -78,3 +79,7 @@ BASIC verfügbar.“ Links nur auf Bereiche, die die Person selbst im Menü hat 
 
 Die Migration muss in Supabase eingespielt werden (SQL-Editor oder MCP), **bevor** die neue App-Version installiert
 wird – die App ruft die neuen Funktionen (`juryraum_fuer_mich`, `meine_buddys`, `nachrichten_zugestellt` …) auf.
+
+
+> Aktualisierung: Spotlight ist seit dem Story-Editor ein **eigener Hauptbereich** (`/dashboard/spotlight`). Die
+> Reihenfolge der Menüpunkte kann jede Person selbst festlegen (`docs/meine-navigation.md`).

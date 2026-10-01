@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Mail, KeyRound, EyeOff, Users, Map as MapIcon, UserRound, Bell, ShieldCheck, Building2, Radio } from "lucide-react";
+import { Mail, KeyRound, EyeOff, Users, Map as MapIcon, UserRound, Bell, ShieldCheck, Building2, Radio, ListOrdered } from "lucide-react";
+import { MeineNavigation, type NaviPunkt } from "@/components/einstellungen/MeineNavigation";
+import { getZugriff } from "@/lib/dashboard/getBereiche";
+import { aktiveAnsicht } from "@/lib/admin/ansichtLesen";
+import { ansichtZugriff } from "@/lib/admin/ansicht";
+import { erlaubteNav, navGruppen, SYSTEM_NAV } from "@/lib/navigation";
 import { PushSchalter } from "@/components/chat/PushSchalter";
 import { PushKategorien } from "@/components/einstellungen/PushKategorien";
 import { EinwilligungsVerlauf, type Einwilligung } from "@/components/einstellungen/EinwilligungsVerlauf";
@@ -68,6 +73,19 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
   ]);
   const hinweis = email ? HINWEISE[email] : undefined;
 
+  // „Meine Navigation“: nur die Bereiche, die diese Person ohnehin sehen darf (gleiche Logik wie das Menue)
+  const { data: istAdmin } = await supabase.rpc("ist_plattform_admin_aktuell");
+  const echterZugriff = await getZugriff(supabase, istAdmin === true);
+  // „Ansicht als …“ der Administration: dieselbe Menue-Grundlage wie das Layout (Beispielrechte, Standardreihenfolge)
+  const ansicht = await aktiveAnsicht();
+  const zugriff = ansicht
+    ? { ...ansichtZugriff(ansicht), musikAn: echterZugriff.musikAn, spotlightsAn: echterZugriff.spotlightsAn, juryraum: false, reihenfolge: null }
+    : echterZugriff;
+  const naviPunkte: NaviPunkt[] = navGruppen(zugriff)
+    .filter((g) => !SYSTEM_NAV.has(g.eintrag.href))
+    .map((g) => ({ href: g.eintrag.href, label: g.eintrag.label, unterpunkte: g.unterpunkte.map((u) => ({ href: u.href, label: u.label })) }));
+  const naviSystem = erlaubteNav(zugriff).filter((n) => SYSTEM_NAV.has(n.href)).map((n) => ({ href: n.href, label: n.label }));
+
   return (
     <div className="mx-auto flex max-w-[720px] flex-col gap-4">
       <div>
@@ -92,6 +110,11 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
           untertitel="Zur Sicherheit bestätigst du die Änderung per Link – an deine bisherige und an deine neue Adresse."
         />
         <EmailAendern aktuell={user.email ?? "–"} ausstehend={user.new_email ?? null} />
+      </section>
+
+      <section className={`${KARTE} scroll-mt-4`} id="navigation">
+        <KarteKopf icon={ListOrdered} titel="Meine Navigation" untertitel="Personalisierung – Reihenfolge deiner Menüpunkte" />
+        <MeineNavigation start={naviPunkte} system={naviSystem} angepasst={!!zugriff.reihenfolge?.length} />
       </section>
 
       <section className={`${KARTE} scroll-mt-4`} id="profil">

@@ -18,7 +18,7 @@ export async function netzwerkZugang(supabase: SupabaseClient) {
   return {
     zugriff,
     erlaubt,
-    darf: (bereich: "suche" | "buddys" | "anfragen" | "spotlight" | "map" | "vereine") => erlaubt.includes(`${NETZWERK}/${bereich}`),
+    darf: (bereich: "suche" | "buddys" | "anfragen" | "map" | "vereine") => erlaubt.includes(`${NETZWERK}/${bereich}`),
     voll: erlaubt.includes(`${NETZWERK}/map`),
   };
 }
