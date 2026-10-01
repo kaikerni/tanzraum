@@ -9,6 +9,7 @@ import { VERFAHREN_LABEL } from "@/lib/antraege/vorlage";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { DruckKnopf, FreigabeKnoepfe, PersonHinzufuegen } from "@/components/antraege/VereinsAktionen";
+import { BeitrittsanfragenListe, type Beitrittsanfrage } from "@/components/antraege/BeitrittsanfragenListe";
 
 export const metadata = { title: "Mitgliedsanträge – TanzRaum" };
 
@@ -36,12 +37,18 @@ export default async function MitgliedsantraegeSeite({ searchParams }: { searchP
   const sp = await searchParams;
   const verein = vereine.find((v) => v.vereinId === sp.verein) ?? vereine[0];
   const filter: Filter = sp.filter === "offen" || sp.filter === "erledigt" ? sp.filter : "eingang";
-  const [antraege, anfragen, listen, { data: gruppen }] = await Promise.all([
+  const [antraege, anfragen, listen, { data: gruppen }, { data: beitrittRoh }] = await Promise.all([
     getAntraegeListe(supabase, verein.vereinId),
     getFreigabeAnfragen(supabase, verein.vereinId),
     getAuswahllisten(supabase),
     supabase.from("gruppen").select("id, name").eq("verein_id", verein.vereinId).order("name"),
+    supabase.rpc("beitrittsanfragen_liste", { p_verein_id: verein.vereinId }),
   ]);
+  // Selbst gestellte Beitrittsanfragen (Verein suchen → Beitritt anfragen)
+  // deno-lint-ignore no-explicit-any
+  const beitrittsanfragen: Beitrittsanfrage[] = ((beitrittRoh ?? []) as any[]).map((b) => ({ id: b.id, name: b.name, geschlecht: b.geschlecht, nachricht: b.nachricht, erstelltAm: b.erstellt_am }));
+  // Vereinsadmin wird man nur per Einladung/Mitgliederverwaltung, nicht über eine Anfrage
+  const anfrageRollen = listen.rollen.filter((r) => !/admin/i.test(r.name));
   const anzahl = {
     eingang: antraege.filter((a) => a.status === "eingereicht").length,
     offen: antraege.filter((a) => a.status === "offen").length,
@@ -85,6 +92,13 @@ export default async function MitgliedsantraegeSeite({ searchParams }: { searchP
             </Link>
           ))}
         </nav>
+      )}
+
+      {beitrittsanfragen.length > 0 && (
+        <section className={`${KARTE} border-brand-gold/40`}>
+          <KarteKopf icon={UserPlus} titel={`Beitrittsanfragen (${beitrittsanfragen.length})`} untertitel="Diese Personen haben euren Verein in TanzRaum gefunden und möchten beitreten. Mitglied werden sie erst, wenn ihr annehmt." />
+          <BeitrittsanfragenListe anfragen={beitrittsanfragen} rollen={anfrageRollen} />
+        </section>
       )}
 
       {eingehend.length > 0 && (

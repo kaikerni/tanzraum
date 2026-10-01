@@ -457,6 +457,16 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
     meine_ankuendigungen: [],
     meine_offenen_wichtigen_news: [],
     meine_mitgliedsantraege: [],
+    // Verein suchen / Beitritt anfragen (nur Beispielvereine, nichts wird gesendet)
+    meine_beitrittsanfragen: [],
+    vereine_suchen: [
+      { verein_id: "00000000-0000-4000-8000-0000000000b1", name: "TSV Beispielstadt", ort: "Beispielstadt", logo_url: null },
+      { verein_id: "00000000-0000-4000-8000-0000000000b2", name: "Tanzsportclub Musterhausen", ort: "Musterhausen", logo_url: null },
+    ],
+    beitrittsanfragen_liste:
+      ansicht === "verein_admin"
+        ? [{ id: "00000000-0000-4000-8000-0000000000b3", name: "Mia Beispiel", geschlecht: "weiblich", nachricht: "Ich tanze seit zwei Jahren und würde gern bei euch mitmachen.", erstellt_am: new Date().toISOString() }]
+        : [],
     offene_eltern_bestaetigungen: [],
     mein_tarif_status: {
       abos: ansicht === "basic" ? [{ id: "0e000000-0000-4000-8000-000000000a01", tarif: "basic", status: "active", periode: "jahr", anbieter: "stripe", laeuft_bis: tag(200), preis_cent: 2990, pause_grund: null, pausiert_am: null, pause_verein: null, gekuendigt_zum: null }] : [],

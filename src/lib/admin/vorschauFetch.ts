@@ -7,7 +7,7 @@ import { vorschauDaten } from "@/lib/admin/vorschauDatenbank";
 
 const JSON_KOPF = { "content-type": "application/json; charset=utf-8" };
 export const VORSCHAU_NUR_LESEN = "Vorschau: Änderungen werden nicht gespeichert.";
-const SCHREIBEND = /(speichern|anlegen|loeschen|setzen|senden|erstellen|aendern|veroeffentlichen|annehmen|ablehnen|entscheiden|einloesen|verknuepfen|aktivieren|erzeugen|widerrufen|beantworten|reagieren|ausgeben|zuruecknehmen|bestaetigen|einladen|beitreten)/;
+const SCHREIBEND = /(speichern|anlegen|loeschen|setzen|senden|erstellen|aendern|veroeffentlichen|annehmen|ablehnen|entscheiden|einloesen|verknuepfen|aktivieren|erzeugen|widerrufen|beantworten|reagieren|ausgeben|zuruecknehmen|bestaetigen|einladen|beitreten|anfragen|zurueckziehen)/;
 
 function antwort(status: number, wert: unknown, kopf: Record<string, string> = {}): Response {
   return new Response(wert === undefined ? null : JSON.stringify(wert), { status, headers: { ...JSON_KOPF, ...kopf } });

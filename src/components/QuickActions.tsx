@@ -17,8 +17,7 @@ import {
   Building2,
   BarChart3,
   Eye,
-  Receipt,
-} from "lucide-react";
+  Receipt, Layers } from "lucide-react";
 import { darf, modulAn, type Tarif, type VereinsModul, type Zugriff } from "@/lib/navigation";
 
 type Aktion = {
@@ -35,6 +34,7 @@ type Aktion = {
 
 const AKTIONEN: Aktion[] = [
   { href: "/dashboard/training/neu", zeile1: "Training", zeile2: "anlegen", icon: Plus, tarif: "verein", rechte: ["rolle_admin", "rolle_trainer"], modul: "training" },
+  { href: "/dashboard/verein#gruppen", zeile1: "Gruppe", zeile2: "anlegen", icon: Layers, tarif: "verein", rechte: ["rolle_admin", "rolle_trainer"] },
   { href: "/dashboard/mitglieder/neu", zeile1: "Mitglied", zeile2: "hinzufügen", icon: UserPlus, tarif: "verein", rechte: ["rolle_admin"] },
   { href: "/dashboard/nachrichten/neu", zeile1: "Nachricht", zeile2: "schreiben", icon: Mail, tarif: "free" },
   { href: "/dashboard/boerse/neu", zeile1: "Börse", zeile2: "Angebot einstellen", icon: Store, tarif: "free", iconKlasse: "text-brand-gold" },

@@ -21,7 +21,7 @@ export const KAI_FRAGEN: KaiFrage[] = [
     antwort: "In den Einstellungen unter „Privatsphäre“, „Online-Status“ und „TanzRaum Map“ bestimmst du, was andere von dir sehen.",
     aktion: { label: "Privatsphäre öffnen", href: "/dashboard/einstellungen#privatsphaere" } },
   { id: "verein-beitreten", bereiche: ["/dashboard/verein"], frage: "Wie komme ich in meinen Verein?", stichworte: ["verein", "beitreten", "einladung", "code", "mitglied werden"],
-    antwort: "Mit dem Einladungslink deines Vereins: unter „Mein Verein“ bei „Einladung einlösen“ einfügen.",
+    antwort: "Zwei Wege: Mit dem Einladungslink deines Vereins (Link öffnen, registrieren bzw. anmelden, Einladung annehmen) – oder unter „Mein Verein“ bei „Verein suchen“ deinen Verein finden und den Beitritt anfragen. Mitglied wirst du, sobald der Verein annimmt.",
     aktion: { label: "Mein Verein öffnen", href: "/dashboard/verein" } },
   { id: "termin", bereiche: ["/dashboard/kalender"], frage: "Wie lege ich einen Termin an?", stichworte: ["termin", "kalender", "eintragen", "anlegen", "datum"],
     antwort: "Im Kalender auf „Termin anlegen“ tippen, Titel, Datum und Uhrzeit eintragen und speichern.",

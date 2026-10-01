@@ -176,3 +176,9 @@ Vereinsbereiche: siehe `docs/musik.md`, `docs/kostueme.md`, `docs/finanzen.md`, 
 
 Nur mit Vereinslizenz; Standard „eingeplant“, Abmeldung je Termin mit festem Grund, keine Quellenanzeige,
 Trainer sehen nur betreute Gruppen. Details: `docs/training-abmeldung.md`.
+
+## Vereinsanlage durch die Administration, manuelle Lizenz, Beitrittsanfragen
+
+Siehe `docs/vereinsanlage-pilot.md`: Verein anlegen (ohne Mitgliedschaft), manuelle Vereinslizenz als normales
+`abos`-Abo (`anbieter = 'manuell'`), Vereinsadmin-Einladung per persönlichem Link (Registrierung immer selbst),
+Verein suchen → Beitritt anfragen → Vereinsadmin entscheidet. Keine Sonderlogik für einzelne Vereine.

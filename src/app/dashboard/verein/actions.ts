@@ -281,3 +281,42 @@ export async function gruppeAssistentSpeichern(e: GruppeEingabe): Promise<Aktion
   revalidatePath("/dashboard/training");
   return { error: null, ok: e.gruppeId ? "Gruppe gespeichert." : "Gruppe erstellt.", gruppeId: String(data) };
 }
+
+// ---------- Verein suchen + Beitritt anfragen (Nutzer ohne Verein) ----------
+
+export type VereinTreffer = { vereinId: string; name: string; ort: string | null; logoUrl: string | null };
+
+export async function vereineSuchen(suche: string): Promise<VereinTreffer[]> {
+  if (suche.trim().length < 2) return [];
+  const { supabase } = await sitzung();
+  const { data } = await supabase.rpc("vereine_suchen", { p_suche: suche.trim().slice(0, 60) });
+  // deno-lint-ignore no-explicit-any
+  return ((data ?? []) as any[]).map((v) => ({ vereinId: v.verein_id, name: v.name, ort: v.ort, logoUrl: v.logo_url }));
+}
+
+// Anfrage an den Verein – Mitglied wird man erst, wenn der Vereinsadmin annimmt
+export async function beitrittAnfragen(vereinId: string, nachricht: string): Promise<AktionsErgebnis> {
+  const { supabase } = await sitzung();
+  const { error } = await supabase.rpc("beitritt_anfragen", { p_verein_id: vereinId, p_nachricht: nachricht.trim().slice(0, 500) || null });
+  if (error) return { error: error.code === "P0001" ? error.message : "Die Anfrage konnte nicht gesendet werden." };
+  revalidatePath("/dashboard/verein");
+  return { error: null, ok: "Anfrage gesendet – der Verein entscheidet über deine Aufnahme." };
+}
+
+export async function beitrittZurueckziehen(id: string): Promise<AktionsErgebnis> {
+  const { supabase } = await sitzung();
+  const { error } = await supabase.rpc("beitritt_anfrage_zurueckziehen", { p_id: id });
+  if (error) return { error: "Das hat nicht geklappt." };
+  revalidatePath("/dashboard/verein");
+  return { error: null, ok: "Anfrage zurückgezogen." };
+}
+
+// Vereinsadmin bzw. Bereich „Beitritt“: Anfrage annehmen (Person wird Mitglied) oder ablehnen
+export async function beitrittsanfrageEntscheiden(id: string, annehmen: boolean, rolleId: string | null): Promise<AktionsErgebnis> {
+  const { supabase } = await sitzung();
+  const { error } = await supabase.rpc("beitrittsanfrage_entscheiden", { p_id: id, p_annehmen: annehmen, p_rolle_id: rolleId || null });
+  if (error) return { error: error.code === "P0001" || error.code === "42501" ? error.message : "Das hat nicht geklappt." };
+  revalidatePath("/dashboard/mitgliedsantraege");
+  revalidatePath("/dashboard/mitglieder");
+  return { error: null, ok: annehmen ? "Angenommen – die Person ist jetzt Mitglied." : "Abgelehnt." };
+}

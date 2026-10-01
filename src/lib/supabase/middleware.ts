@@ -4,8 +4,9 @@ import { NextResponse, type NextRequest } from "next/server";
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
 // "/neu": oeffentliche Neuigkeiten (Landingpage „Mehr erfahren“), "/api/version": laufende Version (Update-Hinweis)
+// "/einladung": Einladungslink zeigt ohne Anmeldung nur Verein + Rolle und fuehrt zu Registrierung/Anmeldung
 // "/eltern": Zustimmung eines Elternteils ohne eigenes TanzRaum-Konto (nur mit einmaligem Link)
-const OEFFENTLICHE_PFADE = ["/login", "/signup", "/gesperrt", "/auth", "/passwort-vergessen", "/passwort-neu", "/impressum", "/datenschutz", "/nutzungsbedingungen", "/eltern", "/kontakt", "/lizenz", "/konto", "/neu", "/api/version"];
+const OEFFENTLICHE_PFADE = ["/login", "/signup", "/gesperrt", "/auth", "/passwort-vergessen", "/passwort-neu", "/impressum", "/datenschutz", "/nutzungsbedingungen", "/eltern", "/kontakt", "/lizenz", "/konto", "/neu", "/api/version", "/einladung"];
 
 // "/" = oeffentliche Startseite (angemeldet leitet die Seite selbst ins Dashboard weiter)
 function istOeffentlich(pathname: string) {

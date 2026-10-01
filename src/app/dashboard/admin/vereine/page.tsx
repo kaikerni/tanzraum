@@ -3,14 +3,27 @@ import { ArrowLeft, Building2, Radio, Users, UsersRound } from "lucide-react";
 import { KARTE } from "@/components/dashboard/Karten";
 import { VEREINS_MODULE } from "@/lib/navigation";
 import { adminSitzung, type Vereinskarte } from "@/lib/admin/zugang";
+import { VereinAnlegenAdmin } from "@/components/admin/VereinVerwaltungAdmin";
 
 export const metadata = { title: "Vereine – TanzRaum-Administration" };
 
 // Vereinskarten nur mit Zahlen (Mitglieder, Gruppen, online) – keine Namen von Mitgliedern
 export default async function AdminVereineSeite() {
   const { supabase } = await adminSitzung("/dashboard/admin/vereine");
-  const { data } = await supabase.rpc("admin_vereinskarten");
+  const [{ data }, { data: lizenzen }] = await Promise.all([supabase.rpc("admin_vereinskarten"), supabase.rpc("admin_vereinslizenzen")]);
   const vereine = (data ?? []) as Vereinskarte[];
+  // Lizenzstatus je Verein (Lizenztyp Verein): Aktiv / Test (mit Enddatum) bzw. Abgelaufen / Deaktiviert / ohne Lizenz
+  const lizenzInfo = new Map(
+    ((lizenzen ?? []) as { verein_id: string; lizenz?: boolean; bis?: string | null; abo_status?: string | null }[]).map((l) => [l.verein_id, l]),
+  );
+  const statusText = (id: string, aktiv: boolean) => {
+    const l = lizenzInfo.get(id);
+    const bis = l?.bis ? ` bis ${new Date(`${l.bis}T12:00:00Z`).toLocaleDateString("de-DE", { timeZone: "UTC" })}` : "";
+    if (aktiv) return `Verein · ${l?.abo_status === "trialing" ? "Test" : "Aktiv"}${bis}`;
+    if (l?.bis) return "Abgelaufen";
+    if (l?.abo_status === "expired") return "Deaktiviert";
+    return "ohne Lizenz";
+  };
   const label = (id: string) => VEREINS_MODULE.find((m) => m.id === id)?.label ?? id;
 
   return (
@@ -24,6 +37,7 @@ export default async function AdminVereineSeite() {
         </h1>
         <p className="text-[13.5px] text-brand-ink-soft">{vereine.length} Vereine · nur zusammengefasste Zahlen, keine Mitgliederdaten.</p>
       </div>
+      <VereinAnlegenAdmin />
       {vereine.length === 0 ? (
         <p className={`${KARTE} text-[14px] text-brand-ink-soft`}>Noch keine Vereine registriert.</p>
       ) : (
@@ -46,7 +60,7 @@ export default async function AdminVereineSeite() {
                 <span
                   className={`shrink-0 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${v.lizenz_aktiv ? "bg-brand-green-wash text-brand-green" : "bg-brand-bg text-brand-ink-soft"}`}
                 >
-                  {v.lizenz_aktiv ? "Lizenz aktiv" : "ohne Lizenz"}
+                  {statusText(v.verein_id, v.lizenz_aktiv)}
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2 text-center">

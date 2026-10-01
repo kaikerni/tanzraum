@@ -4,15 +4,17 @@ import { useActionState } from "react";
 import { Ticket, Building2 } from "lucide-react";
 import { einladungEinloesen, vereinNeuAnlegen } from "@/app/dashboard/verein/actions";
 import { SendenButton, Meldung, LEERES_ERGEBNIS } from "@/components/ui/SendenButton";
+import { VereinSuchen, type MeineAnfrage } from "./VereinSuchen";
 
 const KARTE = "rounded-[var(--radius-l)] border border-brand-line bg-white p-5 shadow-[var(--shadow)]";
 
-export function OhneVerein() {
+export function OhneVerein({ anfragen = [] }: { anfragen?: MeineAnfrage[] }) {
   const [einladung, einloesen] = useActionState(einladungEinloesen, LEERES_ERGEBNIS);
   const [neu, anlegen] = useActionState(vereinNeuAnlegen, LEERES_ERGEBNIS);
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <VereinSuchen anfragen={anfragen} />
       <section className={KARTE}>
         <div className="mb-3 flex items-center gap-2.5">
           <Ticket size={20} className="text-brand-red" />

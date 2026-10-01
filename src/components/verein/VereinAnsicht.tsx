@@ -238,7 +238,7 @@ export function VereinAnsicht({
         </section>
       </div>
 
-      <section className={KARTE}>
+      <section id="gruppen" className={KARTE}>
         <KarteKopf
           icon={Layers}
           titel="Gruppen"
