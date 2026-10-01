@@ -73,3 +73,15 @@ src/components/kai/
 - `kai.webp` (512 × 768) und `kai-portrait.webp` (256 × 256) – nur verkleinert/zugeschnitten: `python3 scripts/kai-bilder.py`.
 
 Keine Datenbankänderungen.
+
+## Kai auf den öffentlichen Seiten (Anmeldung, Registrierung, Passwort)
+
+Derselbe Kai: `KaiBegleiter` mit `oeffentlich` (eingebunden über `src/components/auth/AuthSeite.tsx`). Auslöser ist die
+Kai-Figur (`KaiFigur`, Original-Bild `public/images/assistant/kai.webp`) mit der bestehenden Sprechblase (`KaiSprechblase`
+aus `KaiBuehne.tsx`) – „Fragen? Kai hilft dir gerne!“. Öffnet sich nur auf Klick, verdeckt nie das Formular
+(auf kleinen Bildschirmen unter der Karte, ab 1200 px unten rechts).
+
+Inhalte nur für nicht angemeldete Besucher: Fragen mit `oeffentlich: true` in `src/lib/kai/fragen.ts` (Was ist TanzRaum,
+Registrierung, Anmeldung, Passwort vergessen, Verein beitreten, Vereinszuordnung, Vereinslizenz, Tarife). Öffentlich
+werden nie interne Themen gezeigt und angemeldet nie die öffentlichen. Keine Einrichtung, keine Neuigkeiten, keine
+Links in den angemeldeten Bereich; unten „Kontakt“ und „TanzRaum entdecken“. Keine KI, keine Daten.

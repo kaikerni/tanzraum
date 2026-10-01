@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, ChevronRight, HelpCircle, Lightbulb, MessageCircleQuestion, Sparkles, Wrench, X } from "lucide-react";
 import { KaiFigur } from "@/components/kai/KaiFigur";
+import { KaiSprechblase } from "@/components/kai/KaiBuehne";
 import { BEGRUESSUNG, einrichtungsSchritte, KAI_UNTERTITEL, NEUIGKEITEN, tippFuer } from "@/lib/kai/inhalte";
 import { KAI_FRAGEN, kaiFragen, kaiThemen } from "@/lib/kai/fragen";
 import { kaiLesen, kaiSchreiben, type KaiSpeicher } from "@/lib/kai/speicher";
@@ -33,7 +34,9 @@ function erlaubtFuer(k: KaiKontext) {
   };
 }
 
-export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
+// oeffentlich: Anmeldung/Registrierung/Passwort – derselbe Kai, aber nur allgemeine Themen fuer nicht angemeldete
+// Besucher (keine Einrichtung, keine Neuigkeiten, keine Links in den angemeldeten Bereich). Ausloeser: Kai-Figur mit Sprechblase.
+export function KaiBegleiter({ kontext, oeffentlich = false }: { kontext: KaiKontext; oeffentlich?: boolean }) {
   const pfad = usePathname() ?? "/dashboard";
   const [offen, setOffen] = useState(false);
   const [modus, setModus] = useState<KaiModus>("start");
@@ -45,7 +48,7 @@ export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
 
   const erlaubt = useMemo(() => erlaubtFuer(kontext), [kontext]);
   const schritte = useMemo(() => einrichtungsSchritte(kontext), [kontext]);
-  const tipp = tippFuer(pfad);
+  const tipp = oeffentlich ? null : tippFuer(pfad);
   // Neuigkeiten: zuerst die zentral gepflegten Updates (mit Kai-Hinweis), danach Kais feste Hinweise
   const neuigkeiten = useMemo(() => [...(kontext.neuigkeiten ?? []), ...NEUIGKEITEN], [kontext.neuigkeiten]);
   const ungelesen = speicher ? neuigkeiten.filter((n) => !speicher.gelesen.includes(n.id)) : [];
@@ -54,7 +57,7 @@ export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
   const aktuellerSchritt = offeneSchritte[0] ?? null;
   const schrittNr = aktuellerSchritt ? schritte.findIndex((s) => s.id === aktuellerSchritt.id) + 1 : schritte.length;
   // Proaktiver Hinweis nur als Punkt: erster Besuch oder ungelesene wichtige Neuigkeit
-  const markierung = !!speicher && !kontext.vorschau && (!speicher.begruesst || ungelesen.some((n) => n.wichtig));
+  const markierung = !oeffentlich && !!speicher && !kontext.vorschau && (!speicher.begruesst || ungelesen.some((n) => n.wichtig));
 
   const oeffnen = useCallback((m: KaiModus = "start") => {
     setModus(m);
@@ -113,9 +116,9 @@ export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
     setSpeicher(kaiSchreiben((s) => ({ ...s, gelesen: [...new Set([...s.gelesen, ...neuigkeiten.map((n) => n.id)])] })));
   }
 
-  const treffer = frage.trim().length >= 2 ? kaiFragen(frage, erlaubt) : [];
+  const treffer = frage.trim().length >= 2 ? kaiFragen(frage, erlaubt, 3, oeffentlich) : [];
   // Hilfethemen passend zum aktuell geoeffneten Bereich (nur die Route zaehlt – keine KI, keine Schnittstelle)
-  const themen = kaiThemen(pfad, erlaubt);
+  const themen = kaiThemen(pfad, erlaubt, oeffentlich ? 8 : 4, oeffentlich);
   const gewaehlt = thema ? KAI_FRAGEN.find((f) => f.id === thema) ?? null : null;
 
   const aktionLink = (a: KaiAktion | undefined, primaer = false) =>
@@ -126,10 +129,32 @@ export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
     ) : null;
 
   const erstesMal = speicher && !speicher.begruesst;
-  const gruss = erstesMal ? BEGRUESSUNG.erstes : BEGRUESSUNG.wieder(kontext.vorname);
+  const gruss = oeffentlich ? BEGRUESSUNG.oeffentlich : erstesMal ? BEGRUESSUNG.erstes : BEGRUESSUNG.wieder(kontext.vorname);
 
   return (
     <div className="relative">
+      {oeffentlich ? (
+        <button
+          ref={knopf}
+          type="button"
+          onClick={() => (offen ? schliessen() : oeffnen("start"))}
+          aria-expanded={offen}
+          aria-haspopup="dialog"
+          aria-label="Fragen? Kai hilft dir gerne!"
+          className="group flex items-end gap-1.5 rounded-2xl text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-red"
+        >
+          <KaiSprechblase spitze="rechts" className="mb-8 transition-colors group-hover:border-brand-gold sm:mb-12">
+            <span className="flex items-center gap-2">
+              <span>
+                <span className="block text-[15px] font-extrabold">Fragen?</span>
+                <span className="block text-[13px] font-medium text-brand-ink-soft">Kai hilft dir gerne!</span>
+              </span>
+              <ChevronRight size={16} className="text-brand-ink-soft" aria-hidden />
+            </span>
+          </KaiSprechblase>
+          <KaiFigur pose="begruessung" alt="" className="h-36 w-24 transition-transform group-hover:-translate-y-0.5 sm:h-48 sm:w-32 xl:h-56 xl:w-[149px]" sizes="(min-width: 1280px) 149px, 128px" />
+        </button>
+      ) : (
       <button
         ref={knopf}
         type="button"
@@ -150,6 +175,7 @@ export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
         </span>
         <span className="hidden whitespace-nowrap text-[13px] font-semibold text-brand-ink lg:inline">✨ Kai – Hilfe?</span>
       </button>
+      )}
 
       {offen &&
         typeof document !== "undefined" &&
@@ -162,7 +188,11 @@ export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
             role="dialog"
             aria-label="Kai – dein TanzRaum-Begleiter"
             tabIndex={-1}
-            className="fixed inset-x-2 top-[68px] z-[61] flex max-h-[calc(100dvh-160px)] flex-col overflow-hidden rounded-2xl border border-brand-line bg-white shadow-[var(--shadow-hover)] outline-none motion-safe:animate-[kai-rein_240ms_ease-out_both] md:inset-x-auto md:right-4 md:top-[84px] md:max-h-[calc(100dvh-104px)] md:w-[400px]"
+            className={`fixed z-[61] flex flex-col overflow-hidden rounded-2xl border border-brand-line bg-white shadow-[var(--shadow-hover)] outline-none motion-safe:animate-[kai-rein_240ms_ease-out_both] md:inset-x-auto md:right-4 md:w-[400px] ${
+              oeffentlich
+                ? "inset-x-2 bottom-2 max-h-[calc(100dvh-24px)] md:bottom-4 md:max-h-[calc(100dvh-32px)]"
+                : "inset-x-2 top-[68px] max-h-[calc(100dvh-160px)] md:top-[84px] md:max-h-[calc(100dvh-104px)]"
+            }`}
           >
             {/* Kopf mit Original-TanzRaum-Logo */}
             <div className="flex items-center gap-3 border-b border-brand-line px-4 py-3">
@@ -262,12 +292,12 @@ export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
                     <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md bg-brand-bg px-3.5 py-2.5">
                       <p className="break-words text-[15px] font-extrabold text-brand-ink [overflow-wrap:anywhere]">{gruss.titel}</p>
                       <p className="mt-1 text-[13.5px] leading-relaxed text-brand-ink">{gruss.text}</p>
-                      {erstesMal && <p className="mt-1.5 text-[12.5px] leading-relaxed text-brand-ink-soft">{BEGRUESSUNG.erstes.hinweis}</p>}
+                      {erstesMal && !oeffentlich && <p className="mt-1.5 text-[12.5px] leading-relaxed text-brand-ink-soft">{BEGRUESSUNG.erstes.hinweis}</p>}
                     </div>
                   </div>
 
                   {/* Einrichtung */}
-                  {(erstesMal || offeneSchritte.length > 0) && (
+                  {!oeffentlich && (erstesMal || offeneSchritte.length > 0) && (
                     <div className="flex flex-wrap items-center gap-2">
                       <button type="button" onClick={() => setModus("einrichtung")} className={LINK_PRIMAER}>
                         <Wrench size={15} /> {offeneSchritte.length === schritte.length ? "Einrichtung starten" : "Einrichtung fortsetzen"}
@@ -286,7 +316,7 @@ export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
                   )}
 
                   {/* Neues TanzRaum-Update: Kai weist nur darauf hin und fuehrt zur Funktion (aendert nichts) */}
-                  {neuesUpdate && (
+                  {!oeffentlich && neuesUpdate && (
                     <section className="rounded-2xl border border-brand-red/25 bg-brand-red-wash/50 px-3.5 py-3">
                       <p className="text-[14px] leading-snug text-brand-ink [overflow-wrap:anywhere]">
                         <strong>✨ Neu bei TanzRaum:</strong> {neuesUpdate.titel}. {neuesUpdate.text}
@@ -365,12 +395,21 @@ export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
                       id="kai-frage"
                       value={frage}
                       onChange={(e) => setFrage(e.target.value)}
-                      placeholder="z. B. Wie melde ich mich vom Training ab?"
+                      placeholder={oeffentlich ? "z. B. Wie registriere ich mich?" : "z. B. Wie melde ich mich vom Training ab?"}
                       autoComplete="off"
                       maxLength={120}
                       className="mt-1.5 min-h-11 w-full rounded-xl border border-brand-line bg-white px-3 text-[14px] text-brand-ink outline-none placeholder:text-brand-ink-faint focus:border-brand-red"
                     />
                     {frage.trim().length < 2 ? null : treffer.length === 0 ? (
+                      oeffentlich ? (
+                        <p className="mt-2 rounded-xl bg-brand-bg px-3 py-2.5 text-[13px] text-brand-ink-soft">
+                          Dazu habe ich noch keine Antwort. Schreib dem TanzRaum-Team gern über{" "}
+                          <Link href="/kontakt" onClick={() => setOffen(false)} className="font-semibold text-brand-red">
+                            Kontakt
+                          </Link>
+                          .
+                        </p>
+                      ) : (
                       <p className="mt-2 rounded-xl bg-brand-bg px-3 py-2.5 text-[13px] text-brand-ink-soft">
                         Dazu habe ich noch keine Antwort. Schau in{" "}
                         <Link href="/dashboard/hilfe" onClick={() => setOffen(false)} className="font-semibold text-brand-red">
@@ -378,6 +417,7 @@ export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
                         </Link>{" "}
                         oder nutze die Suche oben.
                       </p>
+                      )
                     ) : (
                       <ul className="mt-2 flex flex-col gap-2">
                         {treffer.map((f) => (
@@ -395,7 +435,23 @@ export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
                     )}
                   </section>
 
-                  {/* Neuigkeiten + Hilfe */}
+                  {/* Oeffentlich: Kontakt + Startseite statt Neuigkeiten/Support (angemeldeter Bereich) */}
+                  {oeffentlich ? (
+                    <div className="flex flex-col gap-1 border-t border-brand-line pt-3">
+                      <Link href="/kontakt" onClick={() => setOffen(false)} className="flex min-h-11 items-center justify-between gap-2 rounded-xl px-2 text-[13.5px] font-semibold text-brand-ink hover:bg-brand-bg">
+                        <span className="inline-flex items-center gap-2">
+                          <HelpCircle size={16} className="text-brand-red" /> Kontakt zum TanzRaum-Team
+                        </span>
+                        <ChevronRight size={16} className="text-brand-ink-soft" />
+                      </Link>
+                      <Link href="/" onClick={() => setOffen(false)} className="flex min-h-11 items-center justify-between gap-2 rounded-xl px-2 text-[13.5px] font-semibold text-brand-ink hover:bg-brand-bg">
+                        <span className="inline-flex items-center gap-2">
+                          <Sparkles size={16} className="text-brand-gold" /> TanzRaum entdecken
+                        </span>
+                        <ChevronRight size={16} className="text-brand-ink-soft" />
+                      </Link>
+                    </div>
+                  ) : (
                   <div className="flex flex-col gap-1 border-t border-brand-line pt-3">
                     <button
                       type="button"
@@ -421,6 +477,7 @@ export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
                       <ChevronRight size={16} className="text-brand-ink-soft" />
                     </Link>
                   </div>
+                  )}
                 </div>
               )}
             </div>

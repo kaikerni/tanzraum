@@ -49,7 +49,9 @@ export type KaiTipp = {
 
 // „Frag Kai“: feste Fragen und Antworten (keine KI, keine Schnittstelle) – Treffer ueber Suchwoerter
 // bereiche: Routen, auf denen Kai diese Frage direkt als Hilfethema anbietet (Praefix, z. B. "/dashboard/kalender")
-export type KaiFrage = { id: string; frage: string; stichworte: string[]; antwort: string; schritte?: string[]; aktion?: KaiAktion; bereiche?: string[] };
+// oeffentlich: Thema fuer nicht angemeldete Besucher (Anmeldung/Registrierung) – nur allgemeine Infos, keine Vereins- oder Kontodaten.
+// Oeffentliche Themen erscheinen nur dort, interne Themen nie auf den oeffentlichen Seiten.
+export type KaiFrage = { id: string; frage: string; stichworte: string[]; antwort: string; schritte?: string[]; aktion?: KaiAktion; bereiche?: string[]; oeffentlich?: boolean };
 
 // Hinweis auf eine neue Funktion (id bleibt fest, damit „gelesen“ auf dem Geraet gemerkt werden kann)
 // wichtig: Kai bietet dafuer proaktiv einen Hinweis an (roter Punkt am „Kai – Hilfe?“-Knopf) – er oeffnet sich nie von selbst

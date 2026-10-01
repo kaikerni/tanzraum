@@ -2,6 +2,7 @@ import Link from "next/link";
 import { RechtsLinks } from "@/components/recht/RechtsLinks";
 import { LoginForm } from "./LoginForm";
 import { internerPfad } from "@/lib/url";
+import { AuthSeite } from "@/components/auth/AuthSeite";
 
 const HINWEISE: Record<string, string> = {
   bestaetigt: "Deine E-Mail-Adresse ist bestätigt. Du kannst dich jetzt anmelden.",
@@ -19,7 +20,7 @@ export default async function LoginPage({
   const text = hinweis ? HINWEISE[hinweis] : undefined;
 
   return (
-    <div className="auth-page">
+    <AuthSeite>
       <div className="auth-card">
         <h1 className="brand-font">Willkommen zurück</h1>
         <p className="subtitle">Melde dich bei TanzRaum an.</p>
@@ -31,6 +32,6 @@ export default async function LoginPage({
         </p>
         <RechtsLinks className="mt-4 justify-center" />
       </div>
-    </div>
+    </AuthSeite>
   );
 }

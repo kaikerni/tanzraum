@@ -6,6 +6,11 @@ export const KAI_NAME = "Kai";
 export const KAI_UNTERTITEL = "Dein TanzRaum-Begleiter";
 
 export const BEGRUESSUNG = {
+  // Oeffentliche Seiten (nicht angemeldet)
+  oeffentlich: {
+    titel: "👋 Hallo, ich bin Kai!",
+    text: "Ich beantworte dir Fragen rund um TanzRaum – auch ohne Anmeldung. Tippe ein Thema an oder frag mich einfach.",
+  },
   erstes: {
     titel: "👋 Hallo, ich bin Kai!",
     text: "Ich helfe dir dabei, TanzRaum einzurichten. Lass uns gemeinsam die wichtigsten Einstellungen durchgehen.",

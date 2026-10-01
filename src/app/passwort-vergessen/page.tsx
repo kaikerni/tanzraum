@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { EinmalFormular } from "@/components/ui/EinmalFormular";
 import { authFehlerText, MAIL_FEHLER } from "@/lib/auth/fehler";
+import { AuthSeite } from "@/components/auth/AuthSeite";
 
 export const metadata = { title: "Passwort vergessen – TanzRaum" };
 
@@ -19,7 +20,7 @@ export default async function PasswortVergessenSeite({
 }) {
   const { gesendet, fehler } = await searchParams;
   return (
-    <div className="auth-page">
+    <AuthSeite>
       <div className="auth-card">
         <h1 className="brand-font">Passwort vergessen?</h1>
         {gesendet ? (
@@ -47,6 +48,6 @@ export default async function PasswortVergessenSeite({
           Doch wieder eingefallen? <Link href="/login">Zur Anmeldung</Link>
         </p>
       </div>
-    </div>
+    </AuthSeite>
   );
 }

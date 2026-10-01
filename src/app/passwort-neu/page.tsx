@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { EinmalFormular } from "@/components/ui/EinmalFormular";
 import { authFehlerText } from "@/lib/auth/fehler";
+import { AuthSeite } from "@/components/auth/AuthSeite";
 
 export const metadata = { title: "Neues Passwort – TanzRaum" };
 
@@ -23,7 +24,7 @@ export default async function PasswortNeuSeite({ searchParams }: { searchParams:
   const { data: recovery } = user ? await supabase.rpc("ist_recovery_sitzung") : { data: false };
 
   return (
-    <div className="auth-page">
+    <AuthSeite>
       <div className="auth-card">
         {recovery === true && fehler !== "abgelaufen" ? (
           <>
@@ -60,6 +61,6 @@ export default async function PasswortNeuSeite({ searchParams }: { searchParams:
           </>
         )}
       </div>
-    </div>
+    </AuthSeite>
   );
 }

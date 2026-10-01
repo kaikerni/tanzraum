@@ -97,22 +97,148 @@ input {
 }
 
 @layer components {
+/* Oeffentliche Auth-Seiten: helle TanzRaum-Welt (verblasstes Marken-Bild public/tanzraum-hero.webp) statt grauer Flaeche.
+   Das Bild ist reine Dekoration – Formular, Texte und Kai sind echtes HTML. Auf kleinen Bildschirmen stark reduziert. */
 .auth-page {
+  position: relative;
+  isolation: isolate;
   min-height: 100%;
+  min-height: 100dvh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 24px;
+  overflow-x: clip;
+  background: linear-gradient(165deg, #fffdfb 0%, #fff8f4 55%, #fffaf6 100%);
+}
+.auth-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: url("/tanzraum-hero.webp") 72% 55% / cover no-repeat;
+  opacity: 0.4;
+  pointer-events: none;
+}
+.auth-page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 46% 62% at 50% 50%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.7) 48%, rgba(255, 255, 255, 0.18) 85%),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.05) 40%, rgba(255, 255, 255, 0.45));
+  pointer-events: none;
+}
+@media (max-width: 767px) {
+  .auth-page {
+    padding: 16px 12px 24px;
+  }
+  .auth-page::before {
+    background-size: auto 46%;
+    background-position: 78% 100%;
+    opacity: 0.26;
+  }
+  .auth-page::after {
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.35) 55%, rgba(255, 255, 255, 0.15));
+  }
 }
 
 .auth-card {
   width: 100%;
-  max-width: 380px;
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-l);
-  box-shadow: var(--shadow);
-  padding: 32px;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  backdrop-filter: blur(14px) saturate(1.1);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
+  box-shadow: 0 28px 64px -28px rgba(27, 33, 48, 0.32), 0 2px 8px rgba(27, 33, 48, 0.06);
+  padding: 36px 36px 28px;
+}
+/* Eingabefelder auf den Auth-Karten: dezente Fuellung wie in der Designvorlage */
+.auth-card .field input:not([type="checkbox"]):not([type="radio"]),
+.auth-card .field select {
+  background-color: #f3f6fb;
+  border-color: #e3e8f1;
+}
+.auth-card .field input:not([type="checkbox"]):not([type="radio"]):focus,
+.auth-card .field select:focus {
+  background-color: #fff;
+}
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 26px 20px 22px;
+    border-radius: 20px;
+  }
+}
+
+/* Rahmen mit Logo, Werten und Kai (src/components/auth/AuthSeite.tsx) */
+.auth-buehne .auth-logo {
+  display: block;
+  width: min(300px, 78vw);
+  margin: 4px auto 18px;
+  mix-blend-mode: multiply; /* weisser Logo-Hintergrund verschmilzt mit der hellen Flaeche */
+}
+.auth-buehne .auth-mitte {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+.auth-buehne .auth-werte {
+  display: none;
+}
+.auth-buehne .auth-kai {
+  align-self: flex-end;
+  margin-top: 18px;
+  margin-right: 4px;
+}
+@media (min-width: 1200px) {
+  .auth-buehne {
+    padding: 120px 24px 150px;
+  }
+  .auth-buehne .auth-logo {
+    position: absolute;
+    top: 32px;
+    left: 40px;
+    width: 440px;
+    margin: 0;
+  }
+  .auth-buehne .auth-kai {
+    position: absolute;
+    right: 28px;
+    bottom: 20px;
+    margin: 0;
+  }
+}
+@media (min-width: 1440px) {
+  .auth-buehne .auth-werte {
+    position: absolute;
+    left: 50%;
+    bottom: 34px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .auth-buehne .auth-werte li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px;
+  }
+  .auth-buehne .auth-werte li + li {
+    border-left: 1px solid rgba(27, 33, 48, 0.15);
+  }
 }
 
 .auth-card h1 {
@@ -201,6 +327,7 @@ input {
 
 .field-row .field {
   flex: 1;
+  min-width: 0; /* sonst ragen Eingabefelder bei schmalen Karten heraus */
 }
 
 h1.page-title {

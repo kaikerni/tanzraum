@@ -1,7 +1,7 @@
 import Link from "next/link";
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { EinladungAnnehmen } from "./EinladungAnnehmen";
+import { AuthSeite } from "@/components/auth/AuthSeite";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -19,9 +19,8 @@ export default async function EinladungSeite({ params }: { params: Promise<{ tok
     const vorschau = v as any;
     const weiter = encodeURIComponent(`/einladung/${token}`);
     return (
-      <div className="auth-page">
+      <AuthSeite>
         <div className="auth-card flex flex-col gap-4">
-          <Image src="/tanzraum-logo-header.webp" alt="TanzRaum" width={1392} height={207} className="h-10 w-auto self-start" />
           {!vorschau ? (
             <>
               <h1>Einladung nicht gefunden</h1>
@@ -80,7 +79,7 @@ export default async function EinladungSeite({ params }: { params: Promise<{ tok
             </>
           )}
         </div>
-      </div>
+      </AuthSeite>
     );
   }
 
@@ -96,9 +95,8 @@ export default async function EinladungSeite({ params }: { params: Promise<{ tok
   const gruppeName = info?.gruppe_name ?? (vor as any)?.gruppe_name ?? null;
 
   return (
-    <div className="auth-page">
+    <AuthSeite>
       <div className="auth-card flex flex-col gap-4">
-        <Image src="/tanzraum-logo-header.webp" alt="TanzRaum" width={1392} height={207} className="h-10 w-auto self-start" />
         {!info ? (
           <>
             <h1>Einladung nicht gefunden</h1>
@@ -161,6 +159,6 @@ export default async function EinladungSeite({ params }: { params: Promise<{ tok
           Zum Dashboard
         </Link>
       </div>
-    </div>
+    </AuthSeite>
   );
 }

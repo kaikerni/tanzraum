@@ -2,6 +2,7 @@ import Link from "next/link";
 import { EinmalFormular } from "@/components/ui/EinmalFormular";
 import { internerPfad } from "@/lib/url";
 import { LINK_TYPEN } from "./typen";
+import { AuthSeite } from "@/components/auth/AuthSeite";
 
 export const metadata = { title: "Bestätigen – TanzRaum" };
 
@@ -98,7 +99,7 @@ export default async function BestaetigenSeite({
   const texte = typGueltig ? TEXTE[type!] : null;
 
   return (
-    <div className="auth-page">
+    <AuthSeite>
       <div className="auth-card">
         {status && texte ? (
           <>
@@ -128,6 +129,6 @@ export default async function BestaetigenSeite({
           </>
         )}
       </div>
-    </div>
+    </AuthSeite>
   );
 }

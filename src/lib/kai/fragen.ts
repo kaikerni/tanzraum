@@ -4,7 +4,37 @@ import type { KaiFrage } from "./typen";
 // Kai sucht die passende Antwort ueber Stichwoerter und fuehrt per Link zum richtigen Bereich.
 // Neue Fragen einfach hier ergaenzen (Stichwoerter klein, ohne Umlaut-Sonderfaelle – die Suche vereinheitlicht selbst).
 
+// Oeffentliche Seiten (Anmeldung, Registrierung, Passwort) – hier bietet Kai nur diese Themen an
+export const KAI_OEFFENTLICHE_SEITEN = ["/login", "/signup", "/passwort-vergessen", "/passwort-neu", "/auth", "/einladung"];
+const OEFF = KAI_OEFFENTLICHE_SEITEN;
+
 export const KAI_FRAGEN: KaiFrage[] = [
+  // Oeffentlich (nicht angemeldet)
+  { id: "o-was-ist-tanzraum", oeffentlich: true, bereiche: OEFF, frage: "Was ist TanzRaum?", stichworte: ["tanzraum", "was ist", "plattform", "app", "wofuer"],
+    antwort: "TanzRaum ist die digitale Plattform für den Tanzsport – besonders für den karnevalistischen Tanzsport. Tänzerinnen und Tänzer, Fans, Trainer, Betreuer und Vereine finden hier Training, Kalender, Chat, Turniere, Spotlights und die Vereinsverwaltung an einem Ort.",
+    aktion: { label: "TanzRaum entdecken", href: "/#was-ist-tanzraum" } },
+  { id: "o-registrieren", oeffentlich: true, bereiche: OEFF, frage: "Wie registriere ich mich?", stichworte: ["registrieren", "registrierung", "konto anlegen", "anmelden neu", "konto erstellen", "mitmachen"],
+    antwort: "Tippe auf „Jetzt registrieren“, gib deine Daten und ein Passwort ein und bestätige anschließend deine E-Mail-Adresse über den Link, den wir dir schicken. Die Registrierung ist kostenlos. Für Personen unter 16 Jahren richtet ein Elternteil das Konto ein bzw. stimmt zu.",
+    aktion: { label: "Jetzt registrieren", href: "/signup" } },
+  { id: "o-anmelden", oeffentlich: true, bereiche: OEFF, frage: "Wie funktioniert die Anmeldung?", stichworte: ["anmelden", "anmeldung", "login", "einloggen", "geht nicht", "bestaetigen"],
+    antwort: "Du meldest dich mit deiner E-Mail-Adresse und deinem Passwort an. Klappt es nicht, prüfe, ob du deine E-Mail-Adresse schon über den Link in der Bestätigungs-E-Mail bestätigt hast.",
+    aktion: { label: "Zur Anmeldung", href: "/login" } },
+  { id: "o-passwort", oeffentlich: true, bereiche: OEFF, frage: "Ich habe mein Passwort vergessen – was mache ich?", stichworte: ["passwort", "vergessen", "zuruecksetzen", "neues passwort", "kennwort"],
+    antwort: "Tippe auf „Passwort vergessen?“ und gib deine E-Mail-Adresse ein. Du bekommst eine E-Mail mit einem Link, über den du ein neues Passwort festlegst. Der Link ist nur begrenzte Zeit gültig und kann nur einmal verwendet werden.",
+    aktion: { label: "Passwort zurücksetzen", href: "/passwort-vergessen" } },
+  { id: "o-verein-beitreten", oeffentlich: true, bereiche: OEFF, frage: "Wie kann ich einem Verein beitreten?", stichworte: ["verein", "beitreten", "beitritt", "mitglied werden", "einladung", "einladungslink"],
+    antwort: "Dafür brauchst du ein eigenes TanzRaum-Konto. Hat dir dein Verein einen Einladungslink geschickt, öffne ihn, registriere dich bzw. melde dich an und nimm die Einladung an. Ohne Link kannst du nach der Anmeldung unter „Mein Verein“ deinen Verein suchen und den Beitritt anfragen – Mitglied wirst du, sobald der Verein annimmt.",
+    aktion: { label: "Jetzt registrieren", href: "/signup" } },
+  { id: "o-vereinszuordnung", oeffentlich: true, bereiche: OEFF, frage: "Wie funktioniert die Vereinszuordnung?", stichworte: ["vereinszuordnung", "zuordnung", "offiziell", "verein angeben", "mehrere vereine"],
+    antwort: "Offiziell gehörst du einem Verein an, wenn dich ein Verein mit Vereinslizenz aufnimmt – per Einladung oder auf deine Beitrittsanfrage. Jede Person gehört offiziell genau einem Verein an. Im Profil kannst du zusätzlich freiwillig angeben, in welchem Verein du tanzst; das ist keine offizielle Zuordnung.",
+    aktion: { label: "Mehr in den häufigen Fragen", href: "/#faq" } },
+  { id: "o-vereinslizenz", oeffentlich: true, bereiche: OEFF, frage: "Wie funktioniert eine Vereinslizenz?", stichworte: ["vereinslizenz", "verein-lizenz", "verein lizenz", "lizenz", "verein verwalten"],
+    antwort: "Die Vereinslizenz wird für einen Verein abgeschlossen und gilt für alle aktiven Mitglieder, die diesem Verein in TanzRaum zugeordnet sind – ohne Begrenzung der Mitgliederzahl. Abgedeckte Mitglieder brauchen keine eigene BASIC-Lizenz. Abgeschlossen wird sie von einem Vereinsadmin für seinen Verein.",
+    aktion: { label: "Lizenzen ansehen", href: "/lizenz" } },
+  { id: "o-tarife", oeffentlich: true, bereiche: OEFF, frage: "Welche Tarife gibt es?", stichworte: ["tarif", "tarife", "preis", "preise", "kosten", "kostenlos", "free", "basic"],
+    antwort: "Es gibt FREE (kostenlos), BASIC (persönlicher Tarif mit zusätzlichen Funktionen) und VEREIN (Lizenz für einen ganzen Verein). Preise und Leistungen findest du in der Lizenzübersicht.",
+    aktion: { label: "Lizenzen ansehen", href: "/lizenz" } },
+  // Angemeldet
   { id: "turniere", bereiche: ["/dashboard/turniere", "/dashboard/saisonplanung"], frage: "Wo finde ich meine Turniere?", stichworte: ["turnier", "turniere", "wettkampf", "start", "starts", "meisterschaft"],
     antwort: "Unter „Turniere“. Oben siehst du „Deine nächsten Starts“ und kannst deinem Verein Bescheid geben, ob du dabei bist.",
     aktion: { label: "Zu den Turnieren", href: "/dashboard/turniere" } },
@@ -124,18 +154,23 @@ function normal(text: string): string {
 }
 
 // Hilfethemen fuer den aktuellen Bereich (Route) – zuerst die passenden, sonst allgemeine Fragen
-export function kaiThemen(pfad: string, erlaubt?: (href: string) => boolean, max = 4): KaiFrage[] {
-  const nutzbar = KAI_FRAGEN.filter((f) => !f.aktion || !erlaubt || erlaubt(f.aktion.href));
+// oeffentlich: nur die Themen fuer nicht angemeldete Besucher (und nie interne Themen)
+function quelle(oeffentlich: boolean) {
+  return KAI_FRAGEN.filter((f) => !!f.oeffentlich === oeffentlich);
+}
+
+export function kaiThemen(pfad: string, erlaubt?: (href: string) => boolean, max = 4, oeffentlich = false): KaiFrage[] {
+  const nutzbar = quelle(oeffentlich).filter((f) => !f.aktion || !erlaubt || erlaubt(f.aktion.href));
   const passend = nutzbar.filter((f) => f.bereiche?.some((b) => pfad === b || pfad.startsWith(`${b}/`)));
   return (passend.length ? passend : nutzbar.filter((f) => ["turniere", "training-abmelden", "einstellungen", "hilfe"].includes(f.id))).slice(0, max);
 }
 
 // Beste Treffer fuer eine Frage (einfaches Stichwort-Punkten, keine KI)
-export function kaiFragen(eingabe: string, erlaubt?: (href: string) => boolean, max = 3): KaiFrage[] {
+export function kaiFragen(eingabe: string, erlaubt?: (href: string) => boolean, max = 3, oeffentlich = false): KaiFrage[] {
   const q = normal(eingabe);
   if (q.length < 2) return [];
   const woerter = q.split(" ").filter((w) => w.length > 2);
-  return KAI_FRAGEN.filter((f) => !f.aktion || !erlaubt || erlaubt(f.aktion.href))
+  return quelle(oeffentlich).filter((f) => !f.aktion || !erlaubt || erlaubt(f.aktion.href))
     .map((f) => {
       const fr = normal(f.frage);
       let punkte = fr.includes(q) ? 5 : 0;
