@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { RechtsSeite, Abschnitt, Todo, AnbieterNichtVerfuegbar } from "@/components/recht/RechtsSeite";
+import { RechtsSeite, Abschnitt, AnbieterNichtVerfuegbar } from "@/components/recht/RechtsSeite";
 import { anbieterZeile, getAnbieter } from "@/lib/recht/anbieter";
 import { RECHTSTEXT_VERSION } from "@/lib/recht/versionen";
 import { createClient } from "@/lib/supabase/server";
@@ -84,8 +84,8 @@ export default async function NutzungsbedingungenSeite() {
             läuft nach dem Ende der Vereinsabdeckung automatisch weiter. Es wird dabei weder gelöscht noch neu abgeschlossen.
           </li>
           <li>
-            Einzelne Bereiche, die als „In Arbeit“ gekennzeichnet sind, sind noch nicht Teil des Leistungsumfangs.
-            <Todo>Leistungsbeschreibung je Tarif verbindlich festlegen</Todo>
+            Die Leistungen je Tarif sind in der <Link href="/lizenz">Lizenzübersicht</Link> aufgeführt. Bereiche, die als „bald“ gekennzeichnet
+            sind, sind noch nicht Teil des Leistungsumfangs.
           </li>
         </ul>
         <p>Alle Preise sind Endpreise.{a.kleinunternehmer ? ` ${a.kleinunternehmerHinweis}` : " Sie enthalten die gesetzliche Umsatzsteuer."}</p>

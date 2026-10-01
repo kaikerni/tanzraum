@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { tarifWaehlen } from "../actions";
-import { euro, type Preise } from "@/lib/tarife";
+import { euro, jahrKurz, type Preise } from "@/lib/tarife";
 
 type Tarif = "free" | "basic" | "verein";
 type Periode = "monat" | "jahr";
@@ -41,7 +41,7 @@ export function TarifForm({ preise }: { preise: Preise | null }) {
             onClick={() => setPeriode("jahr")}
             className={`rounded-full px-3 py-1 font-medium ${periode === "jahr" ? "bg-brand-red text-white" : "text-brand-ink-soft"}`}
           >
-            Jährlich · 🎁 2 Monate gratis
+            Jährlich{preise && jahrKurz(preise, "basic") ? ` · ${jahrKurz(preise, "basic")}` : ""}
           </button>
         </div>
       </div>

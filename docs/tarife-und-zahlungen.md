@@ -160,3 +160,15 @@ Der Supabase-Free-Plan hat **keine automatischen Backups**. Empfehlung: regelmä
 größeren Änderungen) einen Dump ziehen, z. B. `supabase db dump --db-url "<Verbindungs-URL>" -f backup.sql`
 (und `--data-only` für die Daten), sicher und verschlüsselt außerhalb von Supabase ablegen. Dateien in Storage
 separat sichern. Mit einem bezahlten Plan gibt es tägliche Backups.
+
+## Darstellung von Tarifen und Leistungsumfang (zentral)
+
+- **Preise:** nur aus `tarif_preise` (`getPreise`, `src/lib/tarife.ts`) – dieselben Werte nutzt der Kauf. Stand: BASIC 2,99 €/Monat
+  bzw. 29,90 €/Jahr, VEREIN 29,90 €/Monat bzw. 299 €/Jahr. Jahreshinweis über `jahrKurz` („2 Monate inklusive“) und
+  `jahrHinweis` („Bei jährlicher Zahlung sind zwei Monate gegenüber der monatlichen Zahlung enthalten.“) – keine Prozentangaben.
+- **Leistungen und Tarifregeln:** `src/lib/tarif-leistungen.ts` (`TARIF_LEISTUNGEN`, `TARIF_KURZ`, `VEREIN_UEBERSICHT`,
+  `VEREINSLIZENZ_TEXT`, `KEIN_BASIC_NOETIG_TEXT`, `BASIC_PAUSE_TEXT`, `ABDECKUNG_ENDE_TEXT`, `MITGLIEDERIMPORT_TEXT`).
+  Verwendet von Startseite (Preise, „VEREIN enthält unter anderem“, FAQ), Lizenzübersicht, „Mein Tarif“ und Kai.
+- Aufgeführt wird nur, was produktiv verfügbar ist. Musik ist gebaut, aber plattformweit ausgeschaltet und deshalb nicht Teil
+  des Leistungsumfangs (auf der Startseite als „bald“ markiert).
+- Preishinweis „Alle Preise sind Endpreise …“ kommt aus den Anbieterangaben (`kleinunternehmer_hinweis`).

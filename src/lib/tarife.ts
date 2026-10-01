@@ -53,9 +53,25 @@ export function ersparnis(preise: Preise, tarif: BezahlTarif): number {
   return Math.max(0, preise[tarif].monat * 12 - preise[tarif].jahr);
 }
 
-// Wie viele Monatsbeitraege die Ersparnis ausmacht (fuer "2 MONATE GRATIS")
+// Wie viele Monatsbeitraege bei Jahreszahlung enthalten sind (fuer „2 Monate inklusive“)
 export function gratisMonate(preise: Preise, tarif: BezahlTarif): number {
   return Math.round(ersparnis(preise, tarif) / preise[tarif].monat);
+}
+
+const ZAHLWORT = ["", "ein", "zwei", "drei", "vier"];
+
+// „2 Monate inklusive“ – kurz fuer Preisangaben (Jahrespreis = 10 Monatsbeitraege)
+export function jahrKurz(preise: Preise, tarif: BezahlTarif): string | null {
+  const n = gratisMonate(preise, tarif);
+  return n > 0 ? `${n} ${n === 1 ? "Monat" : "Monate"} inklusive` : null;
+}
+
+// Ausfuehrlicher Hinweis zur Jahreszahlung (ohne Prozentangaben)
+export function jahrHinweis(preise: Preise, tarif: BezahlTarif): string | null {
+  const n = gratisMonate(preise, tarif);
+  if (n <= 0) return null;
+  const wort = ZAHLWORT[n] ?? String(n);
+  return `Bei jährlicher Zahlung ${n === 1 ? "ist ein Monat" : `sind ${wort} Monate`} gegenüber der monatlichen Zahlung enthalten.`;
 }
 
 export function datum(iso: string | null | undefined): string {

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPreise } from "@/lib/tarife";
 import { Startseite } from "@/components/start/Startseite";
 import { getOeffentlicheUpdates } from "@/lib/updates/getUpdates";
+import { getAnbieter } from "@/lib/recht/anbieter";
 
 export const metadata: Metadata = {
   title: "TanzRaum – Die digitale Plattform für den Tanzsport",
@@ -35,11 +36,16 @@ export default async function Home() {
     },
     preise,
     neuigkeiten,
-  ] = await Promise.all([supabase.auth.getUser(), getPreise(supabase), getOeffentlicheUpdates(supabase, 3)]);
+    anbieter,
+  ] = await Promise.all([supabase.auth.getUser(), getPreise(supabase), getOeffentlicheUpdates(supabase, 3), getAnbieter()]);
+  // Gleicher Preishinweis wie in Lizenzübersicht und Nutzungsbedingungen
+  const preisHinweis = anbieter
+    ? `Alle Preise sind Endpreise.${anbieter.kleinunternehmer ? ` ${anbieter.kleinunternehmerHinweis}` : " Sie enthalten die gesetzliche Umsatzsteuer."}`
+    : null;
   let vorname: string | null = null;
   if (user) {
     const { data } = await supabase.from("profiles").select("vorname").eq("id", user.id).maybeSingle();
     vorname = (data?.vorname as string | null) ?? "";
   }
-  return <Startseite preise={preise} angemeldet={user ? { vorname } : null} neuigkeiten={neuigkeiten} />;
+  return <Startseite preise={preise} angemeldet={user ? { vorname } : null} neuigkeiten={neuigkeiten} preisHinweis={preisHinweis} />;
 }

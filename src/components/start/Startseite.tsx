@@ -32,7 +32,8 @@ import {
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
-import { euro, gratisMonate, type Preise } from "@/lib/tarife";
+import { euro, jahrHinweis, jahrKurz, type Preise } from "@/lib/tarife";
+import { BASIC_PAUSE_TEXT, KEIN_BASIC_NOETIG_TEXT, TARIF_KURZ, VEREIN_UEBERSICHT, VEREINSLIZENZ_TEXT } from "@/lib/tarif-leistungen";
 import { Einblenden } from "./Einblenden";
 import { AppInstallieren } from "./AppInstallieren";
 import { ChatScreen, DashboardScreen, InstallScreen, KalenderScreen, SpotlightScreen, Telefon, TrainingScreen, VereinScreen } from "./Telefon";
@@ -160,17 +161,29 @@ const FAQ: { frage: string; antwort: React.ReactNode; id?: string }[] = [
     antwort: "FREE ist die kostenlose persönliche Nutzung. BASIC erweitert sie um zusätzliche persönliche Funktionen, zum Beispiel TanzRaum Connect mit Karte und Suche, einen eigenen Kalender und Dateien. Beide Tarife enthalten keine Vereinsverwaltung.",
   },
   {
-    frage: "Was ist die Verein-Lizenz?",
-    antwort: "Die Verein-Lizenz ist der einzige Weg, einen Verein in TanzRaum zu verwalten: Mitglieder, Tanzgruppen, Training, Kalender, Kommunikation, Mitgliedsanträge, Statistiken, Support und Fernwartung. Aufgenommene Mitglieder nutzen die Vereinsfunktionen über die Lizenz ihres Vereins.",
+    frage: "Was ist die VEREIN-Lizenz?",
+    antwort: `${VEREINSLIZENZ_TEXT} Sie ist der Weg, einen Verein in TanzRaum zu verwalten: Mitglieder, Tanzgruppen, Training, Kalender, Kommunikation, Mitgliedsanträge, Statistiken, Support und Fernwartung.`,
+  },
+  {
+    frage: "Müssen Vereinsmitglieder zusätzlich BASIC bezahlen?",
+    antwort: "Nein. Aktive Mitglieder eines Vereins, der eine VEREIN-Lizenz besitzt, sind über diese Vereinslizenz abgedeckt.",
+  },
+  {
+    frage: "Was passiert mit meiner BASIC-Lizenz, wenn mein Verein eine VEREIN-Lizenz hat?",
+    antwort: `${BASIC_PAUSE_TEXT} Endet deine Zuordnung zum Verein (z. B. weil du entfernt wirst), endet nur die Abdeckung durch die Vereinslizenz – deine BASIC-Lizenz läuft dann weiter.`,
+  },
+  {
+    frage: "Wie viele Mitglieder kann ein Verein mit der VEREIN-Lizenz verwalten?",
+    antwort: "Die Anzahl der aktiven Mitglieder ist nicht begrenzt.",
   },
   {
     id: "faq-mitgliederimport",
-    frage: "Muss ich alle Vereinsmitglieder manuell anlegen?",
+    frage: "Kann ich meine bestehenden Vereinsmitglieder importieren?",
     antwort: (
       <>
-        Nein. Wenn dein Verein bereits eine Mitgliederverwaltung verwendet, kannst du deine Mitgliederliste als CSV- oder Excel-Datei in TanzRaum
-        importieren. Vor dem Import entscheidest du selbst, welche Daten übernommen werden; die Spalten können beim Import geprüft und angepasst
-        werden. Anschließend kannst du deine Mitglieder per E-Mail oder persönlichem Einladungslink zu TanzRaum einladen.{" "}
+        Ja. Vereinsadministratoren können bestehende Mitgliederlisten aus einer anderen Vereinssoftware per CSV oder Excel importieren und
+        anschließend Mitglieder zu TanzRaum einladen. Vor dem Import entscheidest du selbst, welche Daten übernommen werden; die Spalten können beim
+        Import geprüft und angepasst werden. Eingeladen wird per E-Mail oder persönlichem Einladungslink.{" "}
         <strong>Wichtig:</strong> Der Import erstellt nicht automatisch TanzRaum-Konten. Jedes Mitglied registriert sich selbst.
       </>
     ),
@@ -225,18 +238,19 @@ const FAQ: { frage: string; antwort: React.ReactNode; id?: string }[] = [
   },
 ];
 
+// Monats- und Jahrespreis gleichwertig nebeneinander – keine Prozentangaben
 function Preiszeile({ preise, tarif }: { preise: Preise | null; tarif: "basic" | "verein" }) {
   if (!preise) return <p className="text-[14px] text-brand-ink-soft">Preise siehe Lizenzen</p>;
-  const gratis = gratisMonate(preise, tarif);
+  const kurz = jahrKurz(preise, tarif);
   return (
     <div>
-      <p className="text-[34px] font-extrabold leading-none tracking-tight text-brand-ink">
+      <p className="text-[32px] font-extrabold leading-none tracking-tight text-brand-ink">
         {euro(preise[tarif].monat)}
         <span className="text-[14px] font-semibold text-brand-ink-soft"> / Monat</span>
       </p>
-      <p className="mt-1.5 text-[13px] text-brand-ink-soft">
-        oder {euro(preise[tarif].jahr)} / Jahr
-        {gratis > 0 && <span className="ml-1.5 rounded-full bg-brand-green-wash px-2 py-0.5 text-[11.5px] font-bold text-brand-green">{gratis} Monate gratis</span>}
+      <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[15px] font-semibold text-brand-ink">
+        <span className="font-normal text-brand-ink-soft">oder</span> {euro(preise[tarif].jahr)} / Jahr
+        {kurz && <span className="rounded-full bg-brand-green-wash px-2 py-0.5 text-[11.5px] font-bold text-brand-green">{kurz}</span>}
       </p>
     </div>
   );
@@ -246,22 +260,36 @@ export function Startseite({
   preise,
   angemeldet = null,
   neuigkeiten = [],
+  preisHinweis = null,
 }: {
   preise: Preise | null;
+  // „Alle Preise sind Endpreise …“ aus den zentralen Anbieterangaben
+  preisHinweis?: string | null;
   angemeldet?: { vorname: string | null } | null;
   // Von der TanzRaum-Administration fuer die Landingpage freigegebene Neuheiten (Updates & Neuigkeiten)
   neuigkeiten?: UpdateAnzeige[];
 }) {
+  // „Was kostet TanzRaum?“ mit den aktuellen Preisen aus der Datenbank (vor der Frage zu FREE/BASIC)
+  const kosten: (typeof FAQ)[number] = {
+    frage: "Was kostet TanzRaum?",
+    antwort: preise
+      ? `FREE ist kostenlos. BASIC kostet ${euro(preise.basic.monat)} pro Monat oder ${euro(preise.basic.jahr)} pro Jahr. Die VEREIN-Lizenz kostet ${euro(preise.verein.monat)} pro Monat oder ${euro(preise.verein.jahr)} pro Jahr – für den ganzen Verein. ${jahrHinweis(preise, "basic") ?? ""}`.trim()
+      : "FREE ist kostenlos. Die aktuellen Preise für BASIC und VEREIN findest du in der Lizenzübersicht.",
+  };
+  const vorKosten = FAQ.findIndex((f) => f.frage.startsWith("Was ist der Unterschied"));
+  const faq = [...FAQ.slice(0, vorKosten), kosten, ...FAQ.slice(vorKosten)];
+
   const tarife = [
     {
       name: "FREE",
       untertitel: "Kostenlose persönliche Nutzung",
       preis: (
-        <p className="text-[34px] font-extrabold leading-none tracking-tight text-brand-ink">
-          0 €<span className="text-[14px] font-semibold text-brand-ink-soft"> für immer</span>
-        </p>
+        <div>
+          <p className="text-[32px] font-extrabold leading-none tracking-tight text-brand-ink">Kostenlos</p>
+          <p className="mt-2 text-[15px] text-brand-ink-soft">ohne Laufzeit, ohne Zahlungsdaten</p>
+        </div>
       ),
-      punkte: ["Persönliche TanzRaum-Funktionen", "Turnierkalender und Spotlight", "Freiwillige Profilangabe „Verein, in dem ich tanze“", "Keine offizielle Vereinszuordnung", "Keine Vereinsverwaltung"],
+      punkte: TARIF_KURZ.free,
       knopf: { text: "Kostenlos starten", href: "/signup", primaer: false },
       hervorgehoben: false,
     },
@@ -269,23 +297,15 @@ export function Startseite({
       name: "BASIC",
       untertitel: "Für deinen persönlichen Tanzsport",
       preis: <Preiszeile preise={preise} tarif="basic" />,
-      punkte: ["Alle FREE-Funktionen", "TanzRaum Connect mit Karte und Suche", "Eigener Kalender und Dateien", "Freiwillige Profilangabe „Verein, in dem ich tanze“", "Keine Vereinsverwaltung"],
+      punkte: TARIF_KURZ.basic,
       knopf: { text: "BASIC wählen", href: "/signup", primaer: false },
       hervorgehoben: false,
     },
     {
       name: "VEREIN",
-      untertitel: "Die komplette Vereinsverwaltung",
+      untertitel: "Vereinslizenz – für deinen ganzen Verein",
       preis: <Preiszeile preise={preise} tarif="verein" />,
-      punkte: [
-        "Vereinsverwaltung und Mitgliederverwaltung",
-        "Tanzgruppen, Training, Kalender",
-        "Kommunikation und Mitgliedsanträge",
-        "Fahrgemeinschaften, Kostüme & Requisiten",
-        "Finanzen: Kassenbuch und Beiträge",
-        "Vereinsstatistiken, Support und Fernwartung",
-        "Optional Turnierfunktionen",
-      ],
+      punkte: TARIF_KURZ.verein,
       knopf: { text: "Verein-Lizenz entdecken", href: "/signup?ziel=verein", primaer: true },
       hervorgehoben: true,
     },
@@ -678,7 +698,11 @@ export function Startseite({
         <section id="preise" className="scroll-mt-20 py-16 sm:py-24">
           <div className={BREITE}>
             <Einblenden>
-              <Ueberschrift oben="Preise & Lizenzen" titel="Starte kostenlos – wachse mit deinem Verein" text="Jährlich bezahlt sparst du zwei Monatsbeiträge." />
+              <Ueberschrift
+                oben="Preise & Lizenzen"
+                titel="Starte kostenlos – wachse mit deinem Verein"
+                text={(preise && jahrHinweis(preise, "basic")) ?? "Monatlich oder jährlich zahlen – jederzeit zum Laufzeitende kündbar."}
+              />
             </Einblenden>
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
               {tarife.map((t, i) => (
@@ -709,7 +733,33 @@ export function Startseite({
                 </Einblenden>
               ))}
             </div>
-            <p className="mt-5 text-center text-[12.5px] text-brand-ink-soft">
+            <Einblenden className="mt-6">
+              <div className="rounded-[22px] border border-brand-red/30 bg-brand-red-wash/30 p-5 sm:p-7">
+                <h3 className="text-[19px] font-extrabold text-brand-ink sm:text-[22px]">VEREIN enthält unter anderem</h3>
+                <p className="mt-2 max-w-3xl text-[14.5px] leading-relaxed text-brand-ink">{VEREINSLIZENZ_TEXT}</p>
+                <ul className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                  {VEREIN_UEBERSICHT.map((l) => (
+                    <li key={l.titel} className="flex gap-2.5 rounded-2xl bg-white p-3.5 shadow-[var(--shadow)]">
+                      <Check size={18} className="mt-0.5 shrink-0 text-brand-red" />
+                      <span>
+                        <span className="block text-[14.5px] font-bold text-brand-ink">{l.titel}</span>
+                        <span className="block text-[13px] leading-snug text-brand-ink-soft">{l.text}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-4 grid grid-cols-1 gap-2.5 text-[13.5px] leading-relaxed text-brand-ink lg:grid-cols-2">
+                  <p className="rounded-2xl bg-white/70 p-3.5">
+                    <strong>Kein zusätzliches BASIC nötig:</strong> {KEIN_BASIC_NOETIG_TEXT}
+                  </p>
+                  <p className="rounded-2xl bg-white/70 p-3.5">
+                    <strong>Du hast schon BASIC?</strong> {BASIC_PAUSE_TEXT}
+                  </p>
+                </div>
+              </div>
+            </Einblenden>
+            {preisHinweis && <p className="mt-5 text-center text-[12.5px] text-brand-ink-soft">{preisHinweis}</p>}
+            <p className="mt-2 text-center text-[12.5px] text-brand-ink-soft">
               Alle Details in der{" "}
               <Link href="/lizenz" className="underline">
                 Lizenzübersicht
@@ -956,7 +1006,7 @@ export function Startseite({
               <Ueberschrift oben="FAQ" titel="Häufige Fragen" />
             </Einblenden>
             <div className="flex flex-col gap-2.5">
-              {FAQ.map((f) => (
+              {faq.map((f) => (
                 <details key={f.frage} id={f.id} className="group scroll-mt-24 rounded-2xl border border-brand-line bg-white px-5 shadow-[var(--shadow)] open:border-brand-red/30">
                   <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 py-3 text-[15.5px] font-bold text-brand-ink [&::-webkit-details-marker]:hidden">
                     {f.frage}

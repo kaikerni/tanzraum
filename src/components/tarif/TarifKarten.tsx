@@ -8,7 +8,7 @@ import { zahlungAufruf } from "./zahlungAufruf";
 import { ueberweisungBeantragen, vereinFuerLizenzAnlegen } from "@/app/dashboard/tarif/actions";
 import { TARIF_LEISTUNGEN } from "@/lib/tarif-leistungen";
 import { SendenButton, Meldung, LEERES_ERGEBNIS } from "@/components/ui/SendenButton";
-import { euro, ersparnis, gratisMonate, type BezahlTarif, type Periode, type Preise } from "@/lib/tarife";
+import { euro, gratisMonate, jahrHinweis, jahrKurz, type BezahlTarif, type Periode, type Preise } from "@/lib/tarife";
 import { LEISTUNGSBEGINN_TEXT } from "@/lib/recht/leistungsbeginn";
 
 type AdminVerein = { id: string; name: string; lizenz: boolean };
@@ -46,7 +46,7 @@ export function TarifKarten({
   );
   const [neu, anlegen] = useActionState(vereinFuerLizenzAnlegen, LEERES_ERGEBNIS);
   const router = useRouter();
-  const maxErsparnis = Math.max(ersparnis(preise, "basic"), ersparnis(preise, "verein"));
+  const inklusive = jahrKurz(preise, "basic");
   const [ueLaeuft, ueStarten] = useTransition();
   const [ueMeldung, setUeMeldung] = useState<{ error: string | null; ok?: string | null } | null>(null);
 
@@ -154,18 +154,17 @@ export function TarifKarten({
         </div>
         {periode === "jahr" ? (
           <div className="text-[12.5px] text-brand-ink-soft">
-            entspricht {euro(Math.round(p / 12))} pro Monat · du sparst {euro(ersparnis(preise, tarif))} gegenüber monatlich
+            oder {euro(preise[tarif].monat)} pro Monat bei monatlicher Zahlung
             {gratis > 0 && (
-              <span className="mt-1 block w-fit rounded-full bg-brand-gold-wash px-2.5 py-0.5 text-[12px] font-bold text-brand-ink">
-                🎁 {gratis} {gratis === 1 ? "MONAT" : "MONATE"} GRATIS
-              </span>
+              <span className="mt-1 block w-fit rounded-full bg-brand-green-wash px-2.5 py-0.5 text-[12px] font-bold text-brand-green">{jahrKurz(preise, tarif)}</span>
             )}
+            {jahrHinweis(preise, tarif) && <span className="mt-1 block">{jahrHinweis(preise, tarif)}</span>}
           </div>
         ) : (
           <div className="flex flex-col gap-0.5 text-[12.5px] text-brand-ink-soft">
-            <span>monatlich kündbar</span>
+            <span>oder {euro(preise[tarif].jahr)} pro Jahr bei jährlicher Zahlung</span>
             <button type="button" onClick={() => setPeriode("jahr")} className="w-fit text-left font-semibold text-brand-green hover:underline">
-              💡 Jährlich buchen{gratis > 0 ? ` & ${gratis} ${gratis === 1 ? "Monat" : "Monate"} sparen` : " und sparen"} →
+              💡 Jährlich zahlen{gratis > 0 ? ` – ${jahrKurz(preise, tarif)}` : ""} →
             </button>
           </div>
         )}
@@ -213,9 +212,7 @@ export function TarifKarten({
               ) : (
                 <span className="inline-flex items-center gap-2">
                   Jährlich
-                  {maxErsparnis > 0 && (
-                    <span className="rounded-full bg-brand-green px-2 py-0.5 text-[11px] font-bold text-white">spare bis zu {euro(maxErsparnis)}</span>
-                  )}
+                  {inklusive && <span className="rounded-full bg-brand-green px-2 py-0.5 text-[11px] font-bold text-white">{inklusive}</span>}
                 </span>
               )}
             </button>

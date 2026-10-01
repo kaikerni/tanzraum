@@ -29,7 +29,7 @@ export function VereinAnlegenAdmin() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr]">
         <label className="field">
           <span>Vereinsname</span>
-          <input name="name" required maxLength={120} placeholder="z. B. Cannstatter Quellenclub" />
+          <input name="name" required maxLength={120} placeholder="z. B. TSV Musterstadt e. V." />
         </label>
         <label className="field">
           <span>Kürzel</span>

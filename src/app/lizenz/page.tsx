@@ -2,7 +2,8 @@ import Link from "next/link";
 import { RechtsSeite, Abschnitt } from "@/components/recht/RechtsSeite";
 import { createClient } from "@/lib/supabase/server";
 import { getAnbieter } from "@/lib/recht/anbieter";
-import { euro, getPreise, gratisMonate } from "@/lib/tarife";
+import { euro, getPreise, jahrHinweis } from "@/lib/tarife";
+import { ABDECKUNG_ENDE_TEXT, BASIC_PAUSE_TEXT, KEIN_BASIC_NOETIG_TEXT, MITGLIEDERIMPORT_TEXT, TARIF_LEISTUNGEN, VEREINSLIZENZ_TEXT } from "@/lib/tarif-leistungen";
 
 export const metadata = { title: "Lizenzen" };
 // Preise live aus tarif_preise
@@ -30,30 +31,40 @@ export default async function LizenzSeite() {
       <Abschnitt titel="BASIC – persönliche Lizenz">
         {preise ? (
           <p>
-            {euro(preise.basic.monat)} pro Monat oder {euro(preise.basic.jahr)} pro Jahr
-            {gratisMonate(preise, "basic") > 0 ? ` (jährlich bezahlt: ${gratisMonate(preise, "basic")} Monate gratis)` : ""}.
+            {euro(preise.basic.monat)} pro Monat oder {euro(preise.basic.jahr)} pro Jahr. {jahrHinweis(preise, "basic")}
           </p>
         ) : (
           <p>Die aktuellen Preise können gerade nicht geladen werden.</p>
         )}
-        <p>
-          Bist du über die Vereinslizenz deines Vereins abgedeckt, wird deine BASIC-Lizenz pausiert (keine Abbuchung) und läuft nach dem
-          Ende der Vereinsabdeckung automatisch weiter.
-        </p>
+        <ul>
+          {TARIF_LEISTUNGEN.basic.filter((l) => !l.bald).map((l) => (
+            <li key={l.text}>{l.text}</li>
+          ))}
+        </ul>
+        <p>{BASIC_PAUSE_TEXT}</p>
       </Abschnitt>
 
       <Abschnitt titel="VEREIN – Vereinslizenz">
         {preise ? (
           <p>
-            {euro(preise.verein.monat)} pro Monat oder {euro(preise.verein.jahr)} pro Jahr
-            {gratisMonate(preise, "verein") > 0 ? ` (jährlich bezahlt: ${gratisMonate(preise, "verein")} Monate gratis)` : ""}.
+            {euro(preise.verein.monat)} pro Monat oder {euro(preise.verein.jahr)} pro Jahr. {jahrHinweis(preise, "verein")}
           </p>
         ) : (
           <p>Die aktuellen Preise können gerade nicht geladen werden.</p>
         )}
+        <p>{VEREINSLIZENZ_TEXT} Abgeschlossen wird sie von einem Vereinsadmin für seinen Verein.</p>
+        <p>{KEIN_BASIC_NOETIG_TEXT}</p>
+        <p>{ABDECKUNG_ENDE_TEXT}</p>
         <p>
-          Die Vereinslizenz kauft ein Vereinsadmin für seinen Verein. Sie gilt ohne Begrenzung der Mitgliederzahl für alle aktiven Mitglieder
-          des Vereins. Wer aus dem Verein entfernt oder deaktiviert wird, ist nicht mehr abgedeckt.
+          <strong>VEREIN enthält unter anderem:</strong>
+        </p>
+        <ul>
+          {TARIF_LEISTUNGEN.verein.filter((l) => !l.bald).map((l) => (
+            <li key={l.text}>{l.text}</li>
+          ))}
+        </ul>
+        <p>
+          <strong>Mitglieder einfach übernehmen:</strong> {MITGLIEDERIMPORT_TEXT}
         </p>
       </Abschnitt>
 
