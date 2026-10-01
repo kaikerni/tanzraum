@@ -26,6 +26,8 @@ const nextConfig = {
   // Eigenstaendiges Server-Paket (.next/standalone) fuer den Betrieb auf einem eigenen Node.js-Server
   output: "standalone",
   generateBuildId: async () => buildId,
+  // Mitgliederimport: bis zu 3000 Zeilen werden als Server Action uebertragen (Standard waere 1 MB)
+  experimental: { serverActions: { bodySizeLimit: "5mb" } },
   env: {
     NEXT_PUBLIC_TANZRAUM_VERSION: paket.version,
     NEXT_PUBLIC_TANZRAUM_BUILD: build,

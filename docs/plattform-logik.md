@@ -182,3 +182,8 @@ Trainer sehen nur betreute Gruppen. Details: `docs/training-abmeldung.md`.
 Siehe `docs/vereinsanlage-pilot.md`: Verein anlegen (ohne Mitgliedschaft), manuelle Vereinslizenz als normales
 `abos`-Abo (`anbieter = 'manuell'`), Vereinsadmin-Einladung per persönlichem Link (Registrierung immer selbst),
 Verein suchen → Beitritt anfragen → Vereinsadmin entscheidet. Keine Sonderlogik für einzelne Vereine.
+
+## Mitgliederimport und persönliche Einladungen
+
+Siehe `docs/mitgliederimport.md`: CSV/Excel-Import in die bestehende Tabelle `mitglieder` (Vereinsmitglieder ohne Konto),
+Kontostatus je Mitglied, persönliche Einladungslinks (`einladungen.mitglied_id`). Der Import erstellt keine Konten.

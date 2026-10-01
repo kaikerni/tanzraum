@@ -159,6 +159,7 @@ export async function getOffeneEinladungen(supabase: SupabaseClient, vereinId: s
     .select("id, token, expires_at, uses, max_uses, revoked, rollen(name), gruppen(name)")
     .eq("verein_id", vereinId)
     .eq("revoked", false)
+    .is("mitglied_id", null) // persoenliche Einladungen stehen beim jeweiligen Mitglied
     .order("created_at", { ascending: false });
   const jetzt = Date.now();
   // deno-lint-ignore no-explicit-any

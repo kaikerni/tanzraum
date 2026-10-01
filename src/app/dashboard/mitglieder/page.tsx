@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ShieldCheck, UserPlus } from "lucide-react";
+import { FileUp, ShieldCheck, UserPlus } from "lucide-react";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { ElternBestaetigungen } from "@/components/familie/Familie";
@@ -9,11 +9,13 @@ import { getDashboardData } from "@/lib/dashboard/getDashboardData";
 import { getMitgliederListe, getMitgliederAuswahl, getMitgliederVereine } from "@/lib/mitglieder/getMitglieder";
 import { getAuswahllisten } from "@/lib/verein/getVerein";
 import { MitgliederAnsicht } from "@/components/mitglieder/MitgliederAnsicht";
+import { getRegister } from "@/lib/mitglieder/register";
+import { basisUrl } from "@/lib/url";
 
 export default async function MitgliederSeite({
   searchParams,
 }: {
-  searchParams: Promise<{ verein?: string }>;
+  searchParams: Promise<{ verein?: string; konto?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -39,7 +41,7 @@ export default async function MitgliederSeite({
     );
   }
 
-  const { verein: gewaehlt } = await searchParams;
+  const { verein: gewaehlt, konto } = await searchParams;
   const mitgliedschaft = vereine.find((v) => v.vereinId === gewaehlt) ?? vereine[0];
   const vereinId = mitgliedschaft.vereinId;
   const rolle = (mitgliedschaft.rolleName ?? "").toLowerCase();
@@ -58,7 +60,11 @@ export default async function MitgliederSeite({
   // Freie Vereinsfunktionen je Mitglied (vergeben keine Rechte)
   const funktionenJeMitglied: Record<string, string[]> = {};
   for (const z of funktionsZuordnung ?? []) (funktionenJeMitglied[z.vereins_mitglied_id] ??= []).push(z.funktion_id);
-  const { data: offeneEltern } = istAdmin ? await supabase.rpc("offene_eltern_bestaetigungen", { p_verein_id: vereinId }) : { data: [] };
+  const [{ data: offeneEltern }, register, basis] = await Promise.all([
+    istAdmin ? supabase.rpc("offene_eltern_bestaetigungen", { p_verein_id: vereinId }) : Promise.resolve({ data: [] }),
+    istAdmin ? getRegister(supabase, vereinId) : Promise.resolve(null),
+    basisUrl(),
+  ]);
   if (mitglieder === null) redirect("/dashboard");
 
   return (
@@ -86,15 +92,40 @@ export default async function MitgliederSeite({
               </Link>
             ))}
           {istAdmin && (
-            <Link
-              href={`/dashboard/mitglieder/neu?verein=${vereinId}`}
-              className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-brand-red px-4 text-[13.5px] font-semibold text-white hover:bg-brand-red-deep"
-            >
-              <UserPlus size={16} /> Mitglied hinzufügen
-            </Link>
+            <>
+              <Link
+                href={`/dashboard/mitglieder/neu?verein=${vereinId}`}
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-brand-red px-4 text-[14px] font-semibold text-white hover:bg-brand-red-deep"
+              >
+                <UserPlus size={17} /> Mitglied anlegen
+              </Link>
+              <Link
+                href={`/dashboard/mitglieder/import?verein=${vereinId}`}
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-brand-line bg-white px-4 text-[14px] font-semibold text-brand-ink hover:bg-brand-bg"
+              >
+                <FileUp size={17} /> Mitglieder importieren
+              </Link>
+            </>
           )}
         </div>
       </div>
+
+      {istAdmin && (register ?? []).length === 0 && (
+        <section className="flex flex-col gap-3 rounded-[var(--radius-l)] border border-brand-gold/40 bg-brand-gold-wash/60 p-4 sm:flex-row sm:items-center sm:p-5">
+          <div className="min-w-0 flex-1">
+            <p className="text-[15px] font-bold text-brand-ink">Du hast bereits eine Mitgliederliste aus einer anderen Vereinssoftware?</p>
+            <p className="mt-0.5 text-[13.5px] text-brand-ink-soft">
+              Dann musst du deine Mitglieder nicht einzeln anlegen. Importiere einfach deine bestehende Mitgliederliste.
+            </p>
+          </div>
+          <Link
+            href={`/dashboard/mitglieder/import?verein=${vereinId}`}
+            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand-ink px-4 text-[14px] font-semibold text-white"
+          >
+            <FileUp size={17} /> Mitglieder importieren
+          </Link>
+        </section>
+      )}
 
       {(offeneEltern ?? []).length > 0 && (
         <section className={KARTE}>
@@ -114,6 +145,9 @@ export default async function MitgliederSeite({
         funktionen={(funktionen ?? []) as { id: string; name: string }[]}
         funktionenJeMitglied={funktionenJeMitglied}
         darfFunktionen={darfFunktionen === true}
+        register={register}
+        basisUrl={basis}
+        kontoStart={konto === "ohne" || konto === "eingeladen" || konto === "konto" ? konto : "alle"}
       />
     </div>
   );

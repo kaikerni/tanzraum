@@ -16,6 +16,8 @@ import { mitgliedFunktionGeben, funktionEntfernen } from "@/app/dashboard/verein
 import type { AktionsErgebnis } from "@/components/ui/SendenButton";
 import type { Mitglied, Person } from "@/lib/mitglieder/getMitglieder";
 import { funktionsBezeichnung, rollenBezeichnung } from "@/lib/geschlecht";
+import type { RegisterEintrag } from "@/lib/mitglieder/register";
+import { EinladenDialog, KontoStatusKarte, LinksDialog, RegisterZeile, StatusPille, type KontoFilter } from "./KontoStatus";
 
 type Auswahl = { id: string; name: string };
 
@@ -365,6 +367,9 @@ export function MitgliederAnsicht({
   funktionen,
   funktionenJeMitglied,
   darfFunktionen,
+  register,
+  basisUrl,
+  kontoStart,
 }: {
   vereinId: string;
   mitglieder: Mitglied[];
@@ -376,8 +381,18 @@ export function MitgliederAnsicht({
   funktionen: Auswahl[];
   funktionenJeMitglied: Record<string, string[]>;
   darfFunktionen: boolean;
+  // Nur Vereinsadmin: Stammdaten (z. B. importiert) inkl. TanzRaum-Kontostatus
+  register?: RegisterEintrag[] | null;
+  basisUrl?: string;
+  kontoStart?: KontoFilter;
 }) {
   const [suche, setSuche] = useState("");
+  const [konto, setKonto] = useState<KontoFilter>(kontoStart ?? "alle");
+  const [auswahlIds, setAuswahlIds] = useState<Set<string>>(new Set());
+  const [dialog, setDialog] = useState<{ art: "einladen" | "links"; eintraege: RegisterEintrag[] } | null>(null);
+  const mitStatus = !!register && istAdmin;
+  const ohneKonto = useMemo(() => (register ?? []).filter((r) => !r.vmId), [register]);
+  const nummerJeVm = useMemo(() => new Map((register ?? []).filter((r) => r.vmId).map((r) => [r.vmId as string, r.mitgliedsnummer])), [register]);
   const [gruppe, setGruppe] = useState("");
   const [rolle, setRolle] = useState("");
   const [status, setStatus] = useState<"alle" | "aktiv" | "inaktiv" | "neu">("aktiv");
@@ -394,13 +409,55 @@ export function MitgliederAnsicht({
     );
   }, [mitglieder, suche, gruppe, rolle, status]);
 
+  // Vereinsmitglieder ohne TanzRaum-Konto (Stammdaten) mit denselben Filtern
+  const ohneGefiltert = useMemo(() => {
+    if (!mitStatus || rolle || status === "inaktiv" || status === "neu") return [];
+    const s = suche.trim().toLowerCase();
+    return ohneKonto.filter(
+      (r) =>
+        (konto === "alle" || r.status === konto) &&
+        (!s || r.name.toLowerCase().includes(s) || (r.email ?? "").includes(s) || (r.mitgliedsnummer ?? "").toLowerCase().includes(s)) &&
+        (!gruppe || (gruppe === "_ohne" ? !r.gruppeId : r.gruppeId === gruppe)),
+    );
+  }, [mitStatus, ohneKonto, konto, suche, gruppe, rolle, status]);
+  const kontoZeilen = mitStatus && konto !== "alle" && konto !== "konto" ? [] : gefiltert;
+  const gewaehlt = ohneKonto.filter((r) => auswahlIds.has(r.id));
+  const alleSichtbarGewaehlt = ohneGefiltert.length > 0 && ohneGefiltert.every((r) => auswahlIds.has(r.id));
+  const waehlen = (id: string, an: boolean) =>
+    setAuswahlIds((alt) => {
+      const neu = new Set(alt);
+      if (an) neu.add(id);
+      else neu.delete(id);
+      return neu;
+    });
+  const anzahl = {
+    gesamt: mitglieder.length + ohneKonto.length,
+    konto: mitglieder.length,
+    eingeladen: ohneKonto.filter((r) => r.status === "eingeladen").length,
+    ohne: ohneKonto.filter((r) => r.status === "ohne").length,
+    // Noch nie per E-Mail eingeladen (auch wenn schon ein Link erstellt wurde)
+    ohneMitEmail: ohneKonto.filter((r) => r.email && !r.gesendetAm).length,
+  };
+
   const aktive = mitglieder.filter((m) => m.aktiv).length;
   const ohneGruppe = mitglieder.filter((m) => m.aktiv && m.gruppen.length === 0).length;
   const FILTER = "min-h-10 rounded-xl border border-brand-line bg-white px-3 text-[13px] text-brand-ink outline-none focus:border-brand-red";
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-3 gap-3">
+      {mitStatus && (
+        <KontoStatusKarte
+          anzahl={anzahl}
+          filter={konto}
+          setFilter={(f) => {
+            setKonto(f);
+            if (f !== "alle" && f !== "konto" && status !== "alle") setStatus("aktiv");
+          }}
+          onAlleOhneEinladen={() => setDialog({ art: "einladen", eintraege: ohneKonto.filter((r) => r.email && !r.gesendetAm) })}
+          onLinks={() => setDialog({ art: "links", eintraege: ohneKonto })}
+        />
+      )}
+      <div className={mitStatus ? "hidden" : "grid grid-cols-3 gap-3"}>
         {[
           { wert: mitglieder.length, label: istAdmin ? "im Verein" : "in deinen Gruppen" },
           { wert: aktive, label: "aktiv" },
@@ -436,6 +493,14 @@ export function MitgliederAnsicht({
             </option>
           ))}
         </select>
+        {mitStatus && (
+          <select value={konto} onChange={(e) => setKonto(e.target.value as KontoFilter)} aria-label="Nach TanzRaum-Konto filtern" className={FILTER}>
+            <option value="alle">Alle Kontostatus</option>
+            <option value="konto">🟢 TanzRaum-Konto vorhanden</option>
+            <option value="eingeladen">🟠 Einladung ausstehend</option>
+            <option value="ohne">⚪ Noch kein TanzRaum-Konto</option>
+          </select>
+        )}
         <select value={status} onChange={(e) => setStatus(e.target.value as typeof status)} aria-label="Nach Status filtern" className={FILTER}>
           <option value="aktiv">Aktive</option>
           <option value="neu">Neu (Antrag offen)</option>
@@ -444,14 +509,61 @@ export function MitgliederAnsicht({
         </select>
       </div>
 
+      {mitStatus && ohneGefiltert.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-brand-line bg-white px-3.5 py-2.5 shadow-[var(--shadow)]">
+          <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 text-[13.5px] font-semibold text-brand-ink">
+            <input
+              type="checkbox"
+              checked={alleSichtbarGewaehlt}
+              onChange={(e) =>
+                setAuswahlIds((alt) => {
+                  const neu = new Set(alt);
+                  for (const r of ohneGefiltert) {
+                    if (e.target.checked) neu.add(r.id);
+                    else neu.delete(r.id);
+                  }
+                  return neu;
+                })
+              }
+              className="h-5 w-5 accent-[var(--color-brand-red,#e11d2e)]"
+            />
+            Alle auswählen ({ohneGefiltert.length} ohne Konto)
+          </label>
+          {gewaehlt.length > 0 && (
+            <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row">
+              <button type="button" onClick={() => setDialog({ art: "einladen", eintraege: gewaehlt })} className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl bg-brand-red px-3.5 text-[13px] font-semibold text-white hover:bg-brand-red-deep">
+                ✉ {gewaehlt.length === 1 ? "1 Mitglied einladen" : `${gewaehlt.length} Mitglieder einladen`}
+              </button>
+              <button type="button" onClick={() => setDialog({ art: "links", eintraege: gewaehlt })} className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-brand-line bg-white px-3.5 text-[13px] font-semibold text-brand-ink hover:bg-brand-bg">
+                <Link2 size={15} /> Einladungslinks anzeigen
+              </button>
+              <button type="button" onClick={() => setAuswahlIds(new Set())} className="min-h-10 rounded-xl px-3 text-[13px] text-brand-ink-soft hover:bg-brand-bg">
+                Auswahl aufheben
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <section className="overflow-hidden rounded-[var(--radius-l)] border border-brand-line bg-white shadow-[var(--shadow)]">
-        {gefiltert.length === 0 ? (
+        {kontoZeilen.length === 0 && ohneGefiltert.length === 0 ? (
           <p className="px-4 py-6 text-center text-[13.5px] text-brand-ink-soft">
-            {mitglieder.length === 0 ? "Noch keine Mitglieder." : "Keine Mitglieder passen zu den Filtern."}
+            {mitglieder.length === 0 && ohneKonto.length === 0 ? "Noch keine Mitglieder." : "Keine Mitglieder passen zu den Filtern."}
           </p>
         ) : (
           <ul className="divide-y divide-brand-line">
-            {gefiltert.map((m) => {
+            {ohneGefiltert.map((r) => (
+              <RegisterZeile
+                key={r.id}
+                e={r}
+                gruppen={gruppen}
+                gewaehlt={auswahlIds.has(r.id)}
+                onWaehlen={(an) => waehlen(r.id, an)}
+                onEinladen={() => setDialog({ art: "einladen", eintraege: [r] })}
+                onLink={() => setDialog({ art: "links", eintraege: [r] })}
+              />
+            ))}
+            {kontoZeilen.map((m) => {
               const istOffen = offen === m.vmId;
               return (
                 <li key={m.vmId}>
@@ -472,7 +584,13 @@ export function MitgliederAnsicht({
                       </span>
                       <span className="block truncate text-[12.5px] text-brand-ink-soft">
                         {m.gruppen.length > 0 ? m.gruppen.map((g) => g.name).join(", ") : "keine Gruppe"}
+                        {nummerJeVm.get(m.vmId) ? ` · Nr. ${nummerJeVm.get(m.vmId)}` : ""}
                       </span>
+                      {mitStatus && (
+                        <span className="mt-1 block">
+                          <StatusPille status="konto" />
+                        </span>
+                      )}
                     </span>
                     <span className="hidden shrink-0 rounded-full bg-brand-bg px-2.5 py-1 text-[12px] font-medium text-brand-ink sm:inline">{rollenBezeichnung(m.rolle, m.geschlecht) ?? "–"}</span>
                     <ChevronDown size={18} className={`shrink-0 text-brand-ink-soft transition-transform ${istOffen ? "rotate-180" : ""}`} />
@@ -497,6 +615,8 @@ export function MitgliederAnsicht({
           </ul>
         )}
       </section>
+      {dialog?.art === "einladen" && vereinId && <EinladenDialog vereinId={vereinId} eintraege={dialog.eintraege} onSchliessen={() => setDialog(null)} />}
+      {dialog?.art === "links" && <LinksDialog vereinId={vereinId} eintraege={dialog.eintraege} basisUrl={basisUrl ?? ""} onSchliessen={() => setDialog(null)} />}
     </div>
   );
 }

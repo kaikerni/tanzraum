@@ -457,6 +457,15 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
     meine_ankuendigungen: [],
     meine_offenen_wichtigen_news: [],
     meine_mitgliedsantraege: [],
+    // Mitglieder-Stammdaten mit TanzRaum-Kontostatus (nur Vereinsadmin, erfundene Beispielpersonen)
+    mitglieder_register:
+      ansicht === "verein_admin"
+        ? [
+            { id: "0e000000-0000-4000-8000-0000000000c1", vorname: "Lisa", nachname: "Beispiel", email: "lisa@example.org", mitgliedsnummer: "1042", geschlecht: "weiblich", gruppe_id: null, gruppe_name: "Jugendgarde", vereins_mitglied_id: null, quelle: "import", status: "ohne", einladung_id: null, einladung_token: null, einladung_erstellt: null, gesendet_am: null, gueltig_bis: null, einladung_abgelaufen: false },
+            { id: "0e000000-0000-4000-8000-0000000000c2", vorname: "Max", nachname: "Muster", email: "max@example.org", mitgliedsnummer: "1043", geschlecht: "männlich", gruppe_id: null, gruppe_name: "Schautanz", vereins_mitglied_id: null, quelle: "import", status: "eingeladen", einladung_id: "0e000000-0000-4000-8000-0000000000c4", einladung_token: "0e000000-0000-4000-8000-0000000000c5", einladung_erstellt: new Date(Date.now() - 3 * 86400000).toISOString(), gesendet_am: new Date(Date.now() - 3 * 86400000).toISOString(), gueltig_bis: new Date(Date.now() + 27 * 86400000).toISOString(), einladung_abgelaufen: false },
+            { id: "0e000000-0000-4000-8000-0000000000c3", vorname: "Tim", nachname: "Ohnemail", email: null, mitgliedsnummer: "1044", geschlecht: null, gruppe_id: null, gruppe_name: null, vereins_mitglied_id: null, quelle: "import", status: "ohne", einladung_id: null, einladung_token: null, einladung_erstellt: null, gesendet_am: null, gueltig_bis: null, einladung_abgelaufen: false },
+          ]
+        : [],
     // Verein suchen / Beitritt anfragen (nur Beispielvereine, nichts wird gesendet)
     meine_beitrittsanfragen: [],
     vereine_suchen: [

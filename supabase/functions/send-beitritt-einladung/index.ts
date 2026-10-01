@@ -7,7 +7,8 @@
 //   - angemeldet; Einladungsdaten werden ALS Nutzer ueber mail_einladung_daten() gelesen:
 //     nur Vereinsadmin des Vereins, Verein mit Lizenz, Einladung gueltig (nicht widerrufen/abgelaufen/aufgebraucht)
 //   - Empfaengeradresse wird validiert; Inhalt, Link und Absender legt ausschliesslich der Server fest
-//   - Ratenbegrenzung: 30 Einladungs-Mails pro Nutzer und Stunde, 10 pro Einladung und Tag
+//   - Ratenbegrenzung: 150 Einladungs-Mails pro Nutzer und Stunde (Sammeleinladung nach einem Mitgliederimport),
+//     10 pro Einladung und Tag
 // Link: <App>/einladung/<token>  (keine alten *.html-Seiten mehr)
 
 import { appUrl, CORS, istEmail, json, NEUTRALER_FEHLER, sendeMail } from "../_shared/mail.ts";
@@ -38,7 +39,7 @@ Deno.serve(async (req) => {
 
   const admin = dienst();
   if (
-    (await versandSeit(admin, { art: ART, absender_user: sitzung.userId }, 1)) >= 30 ||
+    (await versandSeit(admin, { art: ART, absender_user: sitzung.userId }, 1)) >= 150 ||
     (await versandSeit(admin, { art: ART, bezug_id: einladungId }, 24)) >= 10
   ) {
     return json({ error: "Zu viele Einladungen in kurzer Zeit. Bitte versuche es später erneut." }, 429);

@@ -14,6 +14,7 @@ import {
   CalendarDays,
   Check,
   ChevronDown,
+  FileSpreadsheet,
   ClipboardCheck,
   Gavel,
   Globe,
@@ -139,7 +140,7 @@ const DATENSCHUTZ: { icon: LucideIcon; titel: string; text: string }[] = [
   },
 ];
 
-const FAQ: { frage: string; antwort: React.ReactNode }[] = [
+const FAQ: { frage: string; antwort: React.ReactNode; id?: string }[] = [
   {
     frage: "Was ist TanzRaum?",
     antwort: "TanzRaum ist eine digitale Plattform für den Tanzsport – besonders für den karnevalistischen Tanzsport. Sie verbindet Tänzer, Fans, Trainer, Betreuer und Vereine an einem Ort: mit Training, Kalender, Chat, Spotlight, TanzRaum Connect, der TanzRaum Börse und Vereinsverwaltung.",
@@ -161,6 +162,23 @@ const FAQ: { frage: string; antwort: React.ReactNode }[] = [
   {
     frage: "Was ist die Verein-Lizenz?",
     antwort: "Die Verein-Lizenz ist der einzige Weg, einen Verein in TanzRaum zu verwalten: Mitglieder, Tanzgruppen, Training, Kalender, Kommunikation, Mitgliedsanträge, Statistiken, Support und Fernwartung. Aufgenommene Mitglieder nutzen die Vereinsfunktionen über die Lizenz ihres Vereins.",
+  },
+  {
+    id: "faq-mitgliederimport",
+    frage: "Muss ich alle Vereinsmitglieder manuell anlegen?",
+    antwort: (
+      <>
+        Nein. Wenn dein Verein bereits eine Mitgliederverwaltung verwendet, kannst du deine Mitgliederliste als CSV- oder Excel-Datei in TanzRaum
+        importieren. Vor dem Import entscheidest du selbst, welche Daten übernommen werden; die Spalten können beim Import geprüft und angepasst
+        werden. Anschließend kannst du deine Mitglieder per E-Mail oder persönlichem Einladungslink zu TanzRaum einladen.{" "}
+        <strong>Wichtig:</strong> Der Import erstellt nicht automatisch TanzRaum-Konten. Jedes Mitglied registriert sich selbst.
+      </>
+    ),
+  },
+  {
+    frage: "Können sich meine Mitglieder auch selbst registrieren?",
+    antwort:
+      "Ja. Mitglieder können sich selbst bei TanzRaum registrieren und anschließend ihrem Verein beitreten, sofern der Verein diesen Beitritt entsprechend freigibt. Alternativ kann der Vereinsadmin ein bereits importiertes Mitglied direkt per E-Mail oder persönlichem Einladungslink einladen. Die bestehende Vereinsbeitrittslogik bleibt erhalten.",
   },
   {
     frage: "Kann mein Verein TanzRaum nutzen, obwohl wir nicht an Turnieren teilnehmen?",
@@ -723,6 +741,15 @@ export function Startseite({
                   </li>
                 ))}
               </ul>
+              <a href="#mitgliederimport" className="mt-6 flex max-w-xl items-start gap-3 rounded-2xl bg-white/15 px-4 py-3 hover:bg-white/20">
+                <FileSpreadsheet size={20} className="mt-0.5 shrink-0" />
+                <span>
+                  <span className="block text-[15px] font-bold">Mitglieder einfach übernehmen</span>
+                  <span className="block text-[13.5px] leading-relaxed text-white/90">
+                    Importiere deine bestehende Mitgliederliste aus deiner bisherigen Vereinssoftware und lade deine Mitglieder anschließend direkt zu TanzRaum ein.
+                  </span>
+                </span>
+              </a>
               <Link
                 href={angemeldet ? "/dashboard/tarif" : "/signup?ziel=verein"}
                 className="mt-8 inline-flex min-h-12 items-center rounded-xl bg-white px-6 text-[15px] font-bold text-brand-red hover:bg-brand-red-wash"
@@ -754,6 +781,56 @@ export function Startseite({
                 </ul>
                 <p className="mt-2 text-[12px] text-brand-ink-soft">Beispiel: Turniere ausgeschaltet – ohne dass Daten verloren gehen.</p>
               </div>
+            </Einblenden>
+          </div>
+        </section>
+
+        {/* Mitgliederimport */}
+        <section id="mitgliederimport" className="scroll-mt-20 py-16 sm:py-24" aria-labelledby="import-titel">
+          <div className={`${BREITE} grid grid-cols-1 items-center gap-10 lg:grid-cols-2`}>
+            <Einblenden>
+              <p className="mb-2 text-[12.5px] font-bold uppercase tracking-[0.18em] text-brand-red">CSV- und Excel-Import</p>
+              <h2 id="import-titel" className="text-[28px] font-extrabold leading-tight tracking-tight text-brand-ink sm:text-[38px]">
+                Bereits eine Vereinssoftware?
+              </h2>
+              <p className="mt-2 text-[18px] font-semibold text-brand-ink">Deine Mitglieder müssen nicht alle neu angelegt werden.</p>
+              <p className="mt-4 max-w-xl text-[15.5px] leading-relaxed text-brand-ink-soft">
+                Nutzt dein Verein bereits eine andere Vereinsverwaltung? Dann kannst du deine vorhandene Mitgliederliste einfach in TanzRaum importieren.
+                Du entscheidest selbst, welche Daten übernommen werden. Anschließend kannst du deine Mitglieder bequem per E-Mail oder persönlichem
+                Einladungslink zu TanzRaum einladen.
+              </p>
+              <p className="mt-3 max-w-xl text-[13.5px] text-brand-ink-soft">
+                Die Spalten können beim Import geprüft und angepasst werden. Der Import erstellt keine Konten – jedes Mitglied registriert sich selbst.
+              </p>
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <Link href={angemeldet ? "/dashboard/tarif" : "/signup?ziel=verein"} className={KNOPF_PRIMAER}>
+                  TanzRaum für Vereine entdecken
+                </Link>
+                <a href="#faq-mitgliederimport" className={KNOPF_SEKUNDAER}>
+                  Mehr über den Mitgliederimport
+                </a>
+              </div>
+            </Einblenden>
+            <Einblenden verzoegerung={120}>
+              <ol className="mx-auto flex max-w-[360px] flex-col items-stretch" aria-label="Ablauf des Mitgliederimports">
+                {["Vereinssoftware", "CSV / Excel", "TanzRaum Import", "Daten auswählen", "Mitglieder übernehmen", "Einladen", "Registrieren", "Fertig"].map((s, i, alle) => (
+                  <li key={s} className="flex flex-col items-center">
+                    <span
+                      className={`flex min-h-11 w-full items-center gap-3 rounded-2xl border px-4 py-2 text-[14.5px] font-semibold shadow-[var(--shadow)] ${
+                        i === alle.length - 1 ? "border-brand-green bg-brand-green-wash text-brand-green" : i === 2 ? "border-brand-red bg-brand-red text-white" : "border-brand-line bg-white text-brand-ink"
+                      }`}
+                    >
+                      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${i === 2 ? "bg-white/25" : "bg-brand-bg text-brand-ink-soft"}`}>{i + 1}</span>
+                      {s}
+                    </span>
+                    {i < alle.length - 1 && (
+                      <span aria-hidden className="py-0.5 text-[14px] leading-none text-brand-ink-faint">
+                        ↓
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ol>
             </Einblenden>
           </div>
         </section>
@@ -880,7 +957,7 @@ export function Startseite({
             </Einblenden>
             <div className="flex flex-col gap-2.5">
               {FAQ.map((f) => (
-                <details key={f.frage} className="group rounded-2xl border border-brand-line bg-white px-5 shadow-[var(--shadow)] open:border-brand-red/30">
+                <details key={f.frage} id={f.id} className="group scroll-mt-24 rounded-2xl border border-brand-line bg-white px-5 shadow-[var(--shadow)] open:border-brand-red/30">
                   <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 py-3 text-[15.5px] font-bold text-brand-ink [&::-webkit-details-marker]:hidden">
                     {f.frage}
                     <ChevronDown size={18} className="shrink-0 text-brand-ink-soft transition-transform group-open:rotate-180" />

@@ -96,7 +96,7 @@ export const KONTEXT_TIPPS: KaiTipp[] = [
   { pfad: "/dashboard/anwesenheit", zeile: "✅ Anwesenheit in Sekunden.", titel: "Anwesenheit", pose: "erklaeren",
     text: "Tippe „Alle Anwesenden markieren“ und korrigiere nur die Ausnahmen – auch nachträglich für die letzten 7 Tage." },
   { pfad: "/dashboard/mitglieder", zeile: "💡 So findest du jedes Mitglied schnell.", titel: "Mitglieder", pose: "idee",
-    text: "Suche nach Namen und filtere nach Gruppe, Rolle oder Status. Du siehst nur, was deine Rolle im Verein erlaubt." },
+    text: "Suche nach Namen und filtere nach Gruppe, Rolle oder Status. Du siehst nur, was deine Rolle im Verein erlaubt. Vereinsadmins sehen zusätzlich bei jedem Mitglied, ob es schon ein TanzRaum-Konto hat, und können eine bestehende Mitgliederliste (CSV/Excel) importieren." },
   { pfad: "/dashboard/turniere", zeile: "🏆 Hier findest du die Turniere deiner Gruppen.", titel: "Turniere", pose: "sport",
     text: "Merke dir Turniere und gib deinem Verein Bescheid, ob du startest. Die offizielle Meldung macht dein Verein beim Verband." },
   { pfad: "/dashboard/saisonplanung", zeile: "📅 Die ganze Saison auf einen Blick.", titel: "Saisonplanung", pose: "sport",

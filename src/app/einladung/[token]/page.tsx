@@ -36,7 +36,18 @@ export default async function EinladungSeite({ params }: { params: Promise<{ tok
             <>
               <h1>{vorschau.admin_einladung ? "Einladung als Vereinsadmin" : `Einladung zu ${vorschau.verein_name}`}</h1>
               <p className="subtitle">
-                {vorschau.admin_einladung ? (
+                {vorschau.persoenlich ? (
+                  <>
+                    Das ist deine persönliche Einladung von <strong>{vorschau.verein_name}</strong>. Dein Verein führt dich bereits als Mitglied
+                    {vorschau.gruppe_name ? (
+                      <>
+                        {" "}
+                        (Gruppe <strong>{vorschau.gruppe_name}</strong>)
+                      </>
+                    ) : null}{" "}
+                    – mit deinem TanzRaum-Konto bist du dann direkt dabei.
+                  </>
+                ) : vorschau.admin_einladung ? (
                   <>
                     Du wurdest eingeladen, <strong>Vereinsadmin</strong> von <strong>{vorschau.verein_name}</strong> zu werden.
                   </>
@@ -73,11 +84,16 @@ export default async function EinladungSeite({ params }: { params: Promise<{ tok
     );
   }
 
-  const { data } = UUID.test(token)
-    ? await supabase.rpc("einladung_info", { p_token: token }).maybeSingle()
-    : { data: null };
+  const [{ data }, { data: vor }] = UUID.test(token)
+    ? await Promise.all([supabase.rpc("einladung_info", { p_token: token }).maybeSingle(), supabase.rpc("einladung_vorschau", { p_token: token }).maybeSingle()])
+    : [{ data: null }, { data: null }];
   // deno-lint-ignore no-explicit-any
   const info = data as any;
+  // Persoenliche Einladung (importiertes/angelegtes Vereinsmitglied): Konto wird mit dem Mitglied verbunden
+  // deno-lint-ignore no-explicit-any
+  const persoenlich = !!(vor as any)?.persoenlich;
+  // deno-lint-ignore no-explicit-any
+  const gruppeName = info?.gruppe_name ?? (vor as any)?.gruppe_name ?? null;
 
   return (
     <div className="auth-page">
@@ -92,6 +108,22 @@ export default async function EinladungSeite({ params }: { params: Promise<{ tok
           <>
             <h1>Einladung nicht mehr gültig</h1>
             <p className="subtitle">{info.grund}</p>
+          </>
+        ) : persoenlich ? (
+          <>
+            <h1>Einladung zu {info.verein_name}</h1>
+            <p className="subtitle">
+              {info.eingeladen_von ? <strong>{info.eingeladen_von}</strong> : "Dein Verein"} hat dich persönlich zu TanzRaum eingeladen. Du bist bei{" "}
+              <strong>{info.verein_name}</strong> bereits als Mitglied eingetragen
+              {gruppeName ? (
+                <>
+                  {" "}
+                  (Gruppe <strong>{gruppeName}</strong>)
+                </>
+              ) : null}
+              . Mit „Einladung annehmen“ wird dein TanzRaum-Konto mit deinem Vereinsmitglied verbunden.
+            </p>
+            <EinladungAnnehmen token={token} />
           </>
         ) : (
           <>
