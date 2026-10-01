@@ -85,6 +85,11 @@ export default async function DatenschutzSeite() {
             den Einstellungen einschaltest; Konten unter 16 Jahren werden nie mit Namen gezeigt. Die TanzRaum-Administration sieht
             ausschließlich zusammengefasste Zahlen.
           </li>
+          <li>
+            Meine Navigation: Wenn du die Reihenfolge deiner Menüpunkte änderst, speichern wir sie in deinem Konto, damit sie auf all
+            deinen Geräten gilt. Welche Bereiche du sehen darfst, ändert sich dadurch nicht. Die Angabe wird gelöscht, wenn du auf
+            Standard zurücksetzt oder dein Konto löschst.
+          </li>
         </ul>
         <p>Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Nutzungsvertrag).</p>
       </Abschnitt>
@@ -256,6 +261,54 @@ export default async function DatenschutzSeite() {
         </p>
       </Abschnitt>
 
+      <Abschnitt titel="7f. Spotlight (Stories)">
+        <p>
+          Mit Spotlight teilst du Stories, die 24 Stunden sichtbar sind. Erstellen können sie Nutzerinnen und Nutzer mit BASIC oder
+          Vereinslizenz, ansehen alle angemeldeten Nutzerinnen und Nutzer, für die Spotlight freigeschaltet ist.
+        </p>
+        <ul>
+          <li>
+            <strong>Was wir speichern:</strong> dein Foto oder Video bzw. den gewählten Hintergrund, die Elemente deiner Story (Texte,
+            Hashtags, TanzRaum-Smileys, Emojis, Zeichnungen, Ortsname, erwähnte Personen), die Sichtbarkeit und den Zeitpunkt. Videos
+            werden vor dem Hochladen auf deinem Gerät verkleinert. Fotos und Videos liegen in einem nicht öffentlichen Speicher und
+            werden nur über kurzlebige Links angezeigt.
+          </li>
+          <li>
+            <strong>Wer sie sieht:</strong> Du wählst „Alle im TanzRaum-Netzwerk“ (angemeldete Nutzerinnen und Nutzer) oder „Nur mein
+            Verein &amp; meine Buddys“. Stories von Konten unter 16 Jahren sind nur für den eigenen Verein und Kontakte sichtbar,
+            solange ein verknüpftes Elternteil nichts anderes festlegt. Stories sind nicht öffentlich im Internet abrufbar.
+          </li>
+          <li>
+            <strong>Ansichten und Reaktionen:</strong> Wir speichern, wer eine Story angesehen hat, damit neue Stories markiert werden
+            können. Du siehst bei deinen eigenen Stories nur die Anzahl der Ansichten (ohne Namen) und die Reaktionen mit dem Namen
+            der reagierenden Person.
+          </li>
+          <li>
+            <strong>Standort:</strong> Veröffentlicht wird nur der Ortsname, den du auswählst oder selbst einträgst – keine Adresse,
+            keine Koordinaten. Nutzt du „Aktuellen Standort verwenden“, ermittelt dein Gerät nach deiner Erlaubnis die Position; die
+            Koordinaten werden einmalig an unseren Server übermittelt, der daraus über die Google Geocoding API den Ortsnamen
+            ermittelt (siehe Abschnitt 6). Die Koordinaten werden nicht gespeichert. Die Ortssuche läuft ebenfalls über diesen
+            Dienst.
+          </li>
+          <li>
+            <strong>@Erwähnungen:</strong> Erwähnen kannst du nur Personen, denen du auch schreiben darfst. Ihr Name wird von unserem
+            Server eingesetzt und ist für alle sichtbar, die die Story sehen. Die erwähnte Person wird benachrichtigt, wenn sie die
+            Story sehen kann. Möchtest du nicht erwähnt werden, kannst du die Story melden.
+          </li>
+          <li>
+            <strong>Musik:</strong> Du kannst einen Ausschnitt eines Titels aus der TanzRaum-Musik hinzufügen, den du selbst hören
+            darfst. Wer die Story sieht, hört diesen Ausschnitt und sieht Titel und Interpret.
+          </li>
+          <li>
+            <strong>Meldungen:</strong> Gemeldete Stories sieht die TanzRaum-Administration zur Prüfung.
+          </li>
+        </ul>
+        <p>
+          Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Nutzungsvertrag); Prüfung von Meldungen und Missbrauchsschutz: Art. 6 Abs. 1
+          lit. f DSGVO.
+        </p>
+      </Abschnitt>
+
       <Abschnitt titel="8. Push-Benachrichtigungen">
         <p>
           Wenn du Benachrichtigungen erlaubst, speichern wir die Push-Adresse deines Browsers. Die Benachrichtigung wird über den
@@ -311,6 +364,10 @@ export default async function DatenschutzSeite() {
           <li>E-Mail-Versandprotokolle: 90 Tage.</li>
           <li>Börse-Angebote, Favoriten und eigene Musik: bis du sie löschst bzw. bis zur Löschung deines Kontos.</li>
           <li>Fahrgemeinschaften: automatisch 30 Tage nach dem Fahrtdatum.</li>
+          <li>
+            Spotlights: Story, Foto bzw. Video, Ansichten und Reaktionen werden 24 Stunden nach der Veröffentlichung automatisch
+            gelöscht, früher, wenn du sie selbst löschst. Gemeldete Stories bleiben bis zum Abschluss der Prüfung erhalten.
+          </li>
           <li>
             Kassenbuch, Belege und Beiträge: solange der Verein sie benötigt; die gesetzlichen Aufbewahrungsfristen (z. B. 10 Jahre für
             Buchungsbelege) beachtet der Verein.
