@@ -21,7 +21,7 @@ Stand: 29.09.2026 · Migrationen `20260929135109_plattform_logik`, `202609291356
   Mitglieder einladen. Texte in Onboarding, „Mein Verein“ und Tarifseite entsprechend.
 - **Genau ein Verein je Person** und Freigabe durch den bisherigen Verein: unverändert (siehe `mitgliedsantraege.md`).
 - **„Verein, in dem ich tanze“** (`profiles.verein_angabe`, ≤ 100 Zeichen): freiwilliger Freitext in den Einstellungen,
-  änderbar/löschbar, ohne Rechte und ohne Verknüpfung. Angezeigt im Profil (TanzRaum Connect) nur, wenn das Profil
+  änderbar/löschbar, ohne Rechte und ohne Verknüpfung. Angezeigt im Profil (TanzRaum-Netzwerk) nur, wenn das Profil
   sichtbar ist und keine offizielle Zuordnung besteht. Lesen der eigenen Werte über `meine_profilangaben()`
   (die Spalten sind für `authenticated` nicht direkt lesbar).
 
@@ -44,7 +44,7 @@ Stand: 29.09.2026 · Migrationen `20260929135109_plattform_logik`, `202609291356
     sie `module_aus` prüfen.
 - Plattform-Admins haben eine eigene Navigation (`ADMIN_NAV` in `src/lib/navigation.ts`): nur Plattform-Aufgaben
   (Administration, Meldungen, Statistik, Vereine, Tarife, Rechnungen, Börse-Moderation, Ankündigungen, Fernwartung,
-  Ehrungskatalog, Turnierkalender, TanzRaum Connect, „Ansicht als …“, Anbieterangaben, Einstellungen). Vereins-,
+  Ehrungskatalog, Turnierkalender, TanzRaum-Netzwerk, „Ansicht als …“, Anbieterangaben, Einstellungen). Vereins-,
   Trainings-, Musik- oder Kostümbereiche erscheinen dort nicht. Auch das Admin-Dashboard zeigt nur Plattform-Karten
   und Admin-Schnellaktionen.
 
@@ -111,7 +111,7 @@ Stand: 29.09.2026 · Migrationen `20260929135109_plattform_logik`, `202609291356
 ## Suche (Kopfzeile)
 
 `/dashboard/suche?q=` (`src/lib/suche.ts`): Bereiche (sichtbare Navigation), Mitglieder (nur Vereine mit Recht auf die
-Mitgliederliste), Termine, Nachrichten (Chat-Namen), Dateien, News, Turniere, Börse, Connect (ab BASIC); für die
+Mitgliederliste), Termine, Nachrichten (Chat-Namen), Dateien, News, Turniere, Börse, TanzRaum-Netzwerk (ab BASIC); für die
 Administration zusätzlich der Sprung in die Benutzersuche. Jede Quelle läuft mit den Rechten der Person.
 Strg/Cmd + K springt ins Suchfeld, auf dem Handy führt die Lupe zur Suchseite.
 

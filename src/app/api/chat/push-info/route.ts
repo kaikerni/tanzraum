@@ -11,6 +11,9 @@ export async function GET() {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({}, { status: 401 });
 
+  // Push auf einem Geraet angekommen -> Nachrichten gelten als zugestellt (✓✓)
+  await supabase.rpc("nachrichten_zugestellt");
+
   // Eingehender Anruf hat Vorrang
   const { data: anruf } = await supabase.rpc("mein_eingehender_anruf");
   // deno-lint-ignore no-explicit-any

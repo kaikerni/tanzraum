@@ -2,18 +2,26 @@
 
 | Bereich | Frage | Route |
 |---|---|---|
-| 🗺️ TanzRaum Map | Wo ist TanzRaum? | `/dashboard/netzwerk` (Standardansicht) |
-| 🌐 Netzwerk (Liste) | Wer und welche Vereine gehören dazu? | `/dashboard/netzwerk?ansicht=liste` |
-| ✨ Spotlights | Was teilen die Menschen gerade? | Leiste immer oben im Netzwerk (über Map und Liste) und auf dem Dashboard |
-| 👤 Profile | Wer ist diese Person / dieser Verein? | `/dashboard/netzwerk/person/[id]`, `/dashboard/netzwerk/verein/[id]` |
-| 💬 Nachrichten | Mit wem darf ich kommunizieren? | Kopfzeilen-Symbol, „Nachricht senden“ im Profil – kein Menüpunkt |
+> Verbindliche Tarifstruktur und Navigation: `docs/tarifstruktur-netzwerk.md`. „TanzRaum Connect“ gibt es nicht mehr –
+> der eine soziale Bereich heißt **TanzRaum-Netzwerk**.
 
-**Zugang:** Map, Liste, Nachrichten und eigene Spotlights ab **Basic** (oder automatisch über einen Verein mit
-Vereinslizenz). **Free**: Spotlights nur **ansehen** (die für alle freigegebenen), Profile daraus öffnen, Kontaktanfragen
-senden/annehmen – keine Nachrichten, keine eigenen Spotlights, keine Map/Liste. Das **Trainer-Netzwerk** bleibt separat (nur vom Verein
+| Bereich | Frage | Route | Tarif |
+|---|---|---|---|
+| 🔎 Nutzer suchen | Wen gibt es? | `/dashboard/netzwerk/suche` | FREE (Name/@Nutzername), ab BASIC mit Kategorien + Ort |
+| 🤝 Meine Buddys | Mit wem bin ich verbunden? | `/dashboard/netzwerk/buddys` (Online-Status) | ab BASIC |
+| ✉️ Buddy-Anfragen | Wer möchte Buddy werden? | `/dashboard/netzwerk/anfragen` | ab BASIC |
+| ✨ Spotlight | Was teilen die Menschen gerade? | `/dashboard/netzwerk/spotlight` (nur im Netzwerk) | ansehen alle (Admin-Schalter), erstellen ab BASIC |
+| 🗺️ Map | Wo ist TanzRaum? | `/dashboard/netzwerk/map` (Standardansicht, `/dashboard/netzwerk` leitet dorthin) | ab BASIC |
+| 🏠 Vereine | Welche Vereine/Gruppen gibt es? | `/dashboard/netzwerk/vereine` | ab BASIC |
+| 👤 Profile | Wer ist diese Person / dieser Verein? | `/dashboard/netzwerk/person/[id]`, `/dashboard/netzwerk/verein/[id]` | Personenprofile alle |
+| 💬 Nachrichten | Mit wem darf ich kommunizieren? | Menüpunkt „Nachrichten“ (ab BASIC), „Nachricht senden“ im Profil (alle) | siehe Messenger |
+
+**Buddys** = die bisherigen Kontakte/Vernetzungen (`connections`, art `kontakt`) – vorhandene Verbindungen bleiben
+erhalten. Buddys anfragen/annehmen ab BASIC (`kontaktanfrage_senden`/`_beantworten` prüfen den Tarif), entfernen
+(`buddy_entfernen`), Liste mit Online-Status (`meine_buddys`). Das **Trainer-Netzwerk** bleibt separat (nur vom Verein
 zugeordnete Trainer mit Vereinslizenz, `docs/trainer-netzwerk.md`).
 
-Nicht umgesetzt (bewusst): Connect Match, Radar, Newsfeed, dauerhafte Beiträge, Follower, Likes-Zähler,
+Nicht umgesetzt (bewusst): Match, Radar, Newsfeed, dauerhafte Beiträge, Follower, Likes-Zähler,
 „Posten als Verein/Gruppe“, zweites Nachrichtensystem.
 
 ## Map

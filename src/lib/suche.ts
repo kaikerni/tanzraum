@@ -92,7 +92,7 @@ export async function globaleSuche(supabase: SupabaseClient, eingabe: string, zu
       const { data } = await supabase.from("news").select("id, titel, erstellt_am").ilike("titel", muster).order("erstellt_am", { ascending: false }).limit(10);
       return ((data ?? []) as { id: string; titel: string; erstellt_am: string }[]).map((n) => ({ id: n.id, titel: n.titel, zeile: datum(n.erstellt_am), href: "/dashboard/news" }));
     }, [] as SuchTreffer[]),
-    // TanzRaum Connect (BASIC/VEREIN): Personen und Vereine, die im Netzwerk sichtbar sind
+    // TanzRaum-Netzwerk (BASIC/VEREIN): Personen und Vereine, die im Netzwerk sichtbar sind
     sicher(async () => {
       if (istAdmin || zugriff.tarif === "free") return [] as SuchTreffer[];
       const [personen, vereine] = await Promise.all(
@@ -113,7 +113,7 @@ export async function globaleSuche(supabase: SupabaseClient, eingabe: string, zu
     { art: "news", titel: "News", treffer: news, mehrHref: "/dashboard/news" },
     { art: "turniere", titel: "Turniere", treffer: turniere, mehrHref: "/dashboard/turniere" },
     { art: "boerse", titel: "TanzRaum Börse", treffer: boerse, mehrHref: `/dashboard/boerse?q=${encodeURIComponent(eingabe.trim())}` },
-    { art: "connect", titel: "TanzRaum Connect", treffer: connect, mehrHref: "/dashboard/netzwerk" },
+    { art: "connect", titel: "TanzRaum-Netzwerk", treffer: connect, mehrHref: "/dashboard/netzwerk/suche" },
   ];
   if (istAdmin) {
     gruppen.push({

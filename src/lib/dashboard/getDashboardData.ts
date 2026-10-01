@@ -68,12 +68,8 @@ export async function getDashboardData(
     },
   );
 
-  const { data: juryMitgliedschaft } = await supabase
-    .from("juryraum_mitglieder")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("aktiv", true)
-    .maybeSingle();
+  // JuryRaum nur, wenn die TanzRaum-Administration ihn eingeschaltet hat (Standard: aus) und eine aktive Mitgliedschaft besteht
+  const { data: juryMitgliedschaft } = await supabase.rpc("juryraum_fuer_mich");
 
   return {
     userId: profil.id,
@@ -86,6 +82,6 @@ export async function getDashboardData(
     persoenlicherTarif: eigen.tarif ?? "free",
     tarifAktivBis: eigen.tarif_aktiv_bis ?? null,
     vereine,
-    istJuryMitglied: juryMitgliedschaft !== null,
+    istJuryMitglied: juryMitgliedschaft === true,
   };
 }

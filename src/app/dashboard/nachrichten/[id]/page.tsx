@@ -17,11 +17,15 @@ export default async function ChatSeite({ params }: { params: Promise<{ id: stri
   const kopf = await getChatKopf(supabase, id);
   if (!kopf) notFound();
 
-  const [nachrichten, { data: stumm }, { data: profil }] = await Promise.all([
+  const [nachrichten, { data: stumm }, { data: profil }, { data: tarif }] = await Promise.all([
     getChatNachrichten(supabase, id),
     supabase.rpc("chat_ist_stumm", { p_gespraech_id: id }),
     supabase.from("profiles").select("vorname, handle").eq("id", user.id).maybeSingle(),
+    supabase.rpc("mein_tarif"),
   ]);
+  // FREE: keine Chatuebersicht – zurueck zum Profil des Gegenuebers bzw. zum Dashboard
+  const zurueckHref =
+    tarif === "basic" || tarif === "verein" ? "/dashboard/nachrichten" : kopf.partnerId ? `/dashboard/netzwerk/person/${kopf.partnerId}` : "/dashboard";
   const bilder = await signierteBildUrls(
     supabase,
     nachrichten.map((n) => n.bildPfad).filter((p): p is string => !!p),
@@ -36,6 +40,7 @@ export default async function ChatSeite({ params }: { params: Promise<{ id: stri
       userId={user.id}
       meinName={profil?.vorname || (profil?.handle ? `@${profil.handle}` : "Jemand")}
       stumm={Boolean(stumm)}
+      zurueckHref={zurueckHref}
     />
   );
 }

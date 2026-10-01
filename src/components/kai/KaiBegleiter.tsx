@@ -12,6 +12,7 @@ import { BEGRUESSUNG, einrichtungsSchritte, KAI_UNTERTITEL, NEUIGKEITEN, tippFue
 import { KAI_FRAGEN, kaiFragen, kaiThemen } from "@/lib/kai/fragen";
 import { kaiLesen, kaiSchreiben, type KaiSpeicher } from "@/lib/kai/speicher";
 import { aufKaiOeffnen, type KaiModus } from "@/lib/kai/steuerung";
+import { NAV, navPfad } from "@/lib/navigation";
 import type { KaiAktion, KaiKontext } from "@/lib/kai/typen";
 
 // „✨ Kai – Hilfe?“: der freiwillig aufrufbare Hilfe-Einstieg in der Kopfzeile (ueberall im eingeloggten Bereich).
@@ -25,12 +26,16 @@ const LINK_SEKUNDAER =
   "inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-brand-line bg-white px-4 text-[13px] font-semibold text-brand-ink hover:bg-brand-bg";
 
 // Links nur zu Bereichen, die diese Person auch hat
+// Unterbereiche mit eigenem Menuepunkt (z. B. „Meine Buddys“ im Netzwerk) muessen selbst freigegeben sein
+const EIGENE_MENUEPUNKTE = new Set(NAV.map((n) => navPfad(n.href)));
 function erlaubtFuer(k: KaiKontext) {
   const immer = ["/dashboard/einstellungen", "/dashboard/hilfe", "/dashboard/suche", "/dashboard/verein", "/dashboard/neu"];
+  const freigegeben = [...immer, ...k.bereiche.map(navPfad)];
   return (href: string) => {
     if (href.startsWith("/#") || href === "/dashboard") return true;
     const pfad = href.split(/[?#]/)[0];
-    return [...immer, ...k.bereiche].some((b) => b !== "/dashboard" && (pfad === b || pfad.startsWith(`${b}/`)));
+    if (EIGENE_MENUEPUNKTE.has(pfad) && !immer.includes(pfad)) return k.bereiche.map(navPfad).includes(pfad);
+    return freigegeben.some((b) => b !== "/dashboard" && (pfad === b || pfad.startsWith(`${b}/`)));
   };
 }
 

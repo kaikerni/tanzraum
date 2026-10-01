@@ -9,6 +9,9 @@ export default async function NeuerChatSeite() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  // FREE: keine Chatuebersicht – Direktnachrichten entstehen aus dem Profil
+  const { data: tarif } = await supabase.rpc("mein_tarif");
+  if (tarif !== "basic" && tarif !== "verein") redirect("/dashboard/netzwerk/suche");
 
   const [kontakte, anfragen] = await Promise.all([getKontakte(supabase), getKontaktanfragen(supabase)]);
   return <NeuerChat kontakte={kontakte} anfragen={anfragen} />;

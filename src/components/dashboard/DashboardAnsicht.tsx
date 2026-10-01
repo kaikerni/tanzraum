@@ -291,7 +291,7 @@ export function DashboardAnsicht({
 
       {/* Nachrichten / Turniere / Trainingsbeteiligung */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <NachrichtenKarte nachrichten={nachrichten} />
+        <NachrichtenKarte nachrichten={nachrichten} uebersicht={zugriff.istPlattformAdmin || zugriff.tarif !== "free"} />
         {mitTurnieren && <TurniereKarte turniere={turniere} />}
         {zeigeBeteiligung && (
           <section className={`${KARTE} md:col-span-2 xl:col-span-1`}>

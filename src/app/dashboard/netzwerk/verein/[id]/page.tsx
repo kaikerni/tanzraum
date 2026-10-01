@@ -23,7 +23,7 @@ export default async function VereinSeite({ params }: { params: Promise<{ id: st
 
   return (
     <div className="mx-auto flex max-w-[900px] flex-col gap-4">
-      <Link href="/dashboard/netzwerk" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-brand-ink-soft hover:text-brand-ink">
+      <Link href="/dashboard/netzwerk/vereine" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-brand-ink-soft hover:text-brand-ink">
         <ArrowLeft size={15} /> Netzwerk
       </Link>
 
@@ -58,7 +58,7 @@ export default async function VereinSeite({ params }: { params: Promise<{ id: st
         </div>
         {v.beschreibung && <p className="whitespace-pre-line text-[14px] text-brand-ink">{v.beschreibung}</p>}
         {v.lat !== null && (
-          <Link href={`/dashboard/netzwerk?verein=${v.id}`} className="inline-flex min-h-10 items-center gap-2 self-start rounded-xl border border-brand-line px-3.5 text-[13.5px] font-semibold text-brand-ink hover:bg-brand-bg">
+          <Link href={`/dashboard/netzwerk/map?verein=${v.id}`} className="inline-flex min-h-10 items-center gap-2 self-start rounded-xl border border-brand-line px-3.5 text-[13.5px] font-semibold text-brand-ink hover:bg-brand-bg">
             <MapPin size={15} className="text-brand-red" /> Auf der TanzRaum Map zeigen
           </Link>
         )}

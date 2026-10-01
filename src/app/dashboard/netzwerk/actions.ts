@@ -34,7 +34,31 @@ export async function netzwerkSuchen(suche: string, kategorie: NetzwerkKategorie
   return ((data ?? []) as any[]).map(alsTreffer);
 }
 
-// Nachricht senden: nur wenn die Datenbank es erlaubt (Verein, Eltern/Kind oder Vernetzung)
+export type NutzerTreffer = {
+  userId: string;
+  anzeige: string;
+  handle: string | null;
+  avatarUrl: string | null;
+  status: "verbunden" | "angefragt" | "eingehend" | "abgelehnt" | null;
+  darfSchreiben: boolean;
+};
+
+// Nutzer suchen (alle Tarife): Name oder @Nutzername, ab 3 Zeichen. Sichtbarkeit und Jugendschutz prueft die Datenbank.
+export async function nutzerSuchen(suche: string): Promise<NutzerTreffer[]> {
+  const supabase = await sitzung();
+  const { data } = await supabase.rpc("nutzer_suchen", { p_suche: suche.slice(0, 80) });
+  // deno-lint-ignore no-explicit-any
+  return ((data ?? []) as any[]).map((t) => ({
+    userId: t.user_id,
+    anzeige: t.anzeige,
+    handle: t.handle,
+    avatarUrl: t.avatar_url,
+    status: t.status,
+    darfSchreiben: t.darf_schreiben === true,
+  }));
+}
+
+// Nachricht senden: nur wenn die Datenbank es erlaubt (Verein, Eltern/Kind, freigegebenes Profil ab 16 oder Buddy)
 export async function nachrichtOeffnen(userId: string): Promise<AktionsErgebnis> {
   if (!UUID.test(userId)) return { error: "Ungültige Auswahl." };
   const supabase = await sitzung();
@@ -52,8 +76,9 @@ export async function vernetzen(userId: string): Promise<AktionsErgebnis & { sta
   const { data, error } = await supabase.rpc("kontaktanfrage_senden", { p_user_id: userId });
   if (error) return { error: freundlicherFehler(error) };
   revalidatePath(`/dashboard/netzwerk/person/${userId}`);
-  if (data === "direkt" || data === "angenommen") return { error: null, status: "verbunden", ok: "Ihr seid bereits verbunden." };
-  return { error: null, status: "angefragt", ok: "Anfrage gesendet. Sobald sie angenommen wird, seid ihr vernetzt." };
+  revalidatePath("/dashboard/netzwerk/anfragen");
+  if (data === "angenommen") return { error: null, status: "verbunden", ok: "Ihr seid bereits Buddys." };
+  return { error: null, status: "angefragt", ok: "Buddy-Anfrage gesendet. Sobald sie angenommen wird, seid ihr Buddys." };
 }
 
 export async function anfrageBeantworten(userId: string, annehmen: boolean): Promise<AktionsErgebnis & { status?: string }> {
@@ -62,7 +87,8 @@ export async function anfrageBeantworten(userId: string, annehmen: boolean): Pro
   const { error } = await supabase.rpc("kontaktanfrage_beantworten", { p_user_id: userId, p_aktion: annehmen ? "annehmen" : "ablehnen" });
   if (error) return { error: freundlicherFehler(error) };
   revalidatePath(`/dashboard/netzwerk/person/${userId}`);
-  return { error: null, status: annehmen ? "verbunden" : undefined, ok: annehmen ? "Ihr seid jetzt vernetzt." : "Anfrage abgelehnt." };
+  revalidatePath("/dashboard/netzwerk", "layout");
+  return { error: null, status: annehmen ? "verbunden" : undefined, ok: annehmen ? "Ihr seid jetzt Buddys." : "Anfrage abgelehnt." };
 }
 
 export async function anfrageZurueckziehen(userId: string): Promise<AktionsErgebnis & { status?: string }> {
@@ -71,7 +97,19 @@ export async function anfrageZurueckziehen(userId: string): Promise<AktionsErgeb
   const { error } = await supabase.rpc("kontaktanfrage_zurueckziehen", { p_user_id: userId });
   if (error) return { error: freundlicherFehler(error) };
   revalidatePath(`/dashboard/netzwerk/person/${userId}`);
+  revalidatePath("/dashboard/netzwerk/anfragen");
   return { error: null, ok: "Anfrage zurückgezogen." };
+}
+
+// Buddy entfernen: nur die Buddy-Verbindung, bestehende Chats bleiben
+export async function buddyEntfernen(userId: string): Promise<AktionsErgebnis & { status?: string }> {
+  if (!UUID.test(userId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { error } = await supabase.rpc("buddy_entfernen", { p_user_id: userId });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath(`/dashboard/netzwerk/person/${userId}`);
+  revalidatePath("/dashboard/netzwerk/buddys");
+  return { error: null, ok: "Buddy entfernt." };
 }
 
 export async function blockieren(userId: string, blockiert: boolean): Promise<AktionsErgebnis> {

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Handshake, MessageCircle, Clock, Check, X, Ban } from "lucide-react";
-import { anfrageBeantworten, anfrageZurueckziehen, blockieren, nachrichtOeffnen, vernetzen } from "@/app/dashboard/netzwerk/actions";
+import { UserPlus, UserCheck, UserMinus, MessageCircle, Clock, Check, X, Ban } from "lucide-react";
+import { anfrageBeantworten, anfrageZurueckziehen, blockieren, buddyEntfernen, nachrichtOeffnen, vernetzen } from "@/app/dashboard/netzwerk/actions";
 import { Meldung, type AktionsErgebnis } from "@/components/ui/SendenButton";
 import { sperrgrundText } from "@/lib/chat/sperrgrund";
 import { MeldenKnopf } from "./Melden";
@@ -23,9 +23,9 @@ export function PersonAktionen({ person }: { person: PersonProfil }) {
       if (!r.error) danach?.(r);
     });
 
-  // Hinweis, warum keine Nachricht moeglich ist (nur wenn nicht gerade eine Vernetzung weiterhilft)
+  // Hinweis, warum keine Nachricht moeglich ist (nur wenn nicht gerade eine Buddy-Anfrage weiterhilft)
   const hinweis =
-    !person.darfSchreiben && person.sperrgrund && !(person.sperrgrund === "kontakt_noetig" && person.kannVernetzen && status !== "verbunden")
+    !person.darfSchreiben && person.sperrgrund && !(person.sperrgrund === "privat_konto" && person.kannVernetzen && status !== "verbunden")
       ? sperrgrundText(person.sperrgrund)
       : null;
 
@@ -44,7 +44,7 @@ export function PersonAktionen({ person }: { person: PersonProfil }) {
             onClick={() => tue(() => vernetzen(person.id), (r) => setStatus((r.status as PersonProfil["status"]) ?? "angefragt"))}
             className={`${KNOPF} ${person.darfSchreiben ? "border border-brand-line bg-white text-brand-ink hover:bg-brand-bg" : "bg-brand-red text-white hover:bg-brand-red-deep"}`}
           >
-            <Handshake size={17} /> Vernetzen
+            <UserPlus size={17} /> Als Buddy hinzufügen
           </button>
         )}
         {status === "angefragt" && (
@@ -60,7 +60,7 @@ export function PersonAktionen({ person }: { person: PersonProfil }) {
         {status === "eingehend" && !blockiert && (
           <>
             <button type="button" disabled={laeuft} onClick={() => tue(() => anfrageBeantworten(person.id, true), () => setStatus("verbunden"))} className={`${KNOPF} bg-brand-green text-white`}>
-              <Check size={17} /> Vernetzung annehmen
+              <Check size={17} /> Buddy-Anfrage annehmen
             </button>
             <button type="button" disabled={laeuft} onClick={() => tue(() => anfrageBeantworten(person.id, false), () => setStatus(null))} className={`${KNOPF} border border-brand-line bg-white text-brand-ink`}>
               <X size={17} /> Ablehnen
@@ -68,9 +68,21 @@ export function PersonAktionen({ person }: { person: PersonProfil }) {
           </>
         )}
         {status === "verbunden" && (
-          <span className={`${KNOPF} bg-brand-green-wash text-brand-green`}>
-            <Handshake size={16} /> Vernetzt
-          </span>
+          <>
+            <span className={`${KNOPF} bg-brand-green-wash text-brand-green`}>
+              <UserCheck size={16} /> Buddy
+            </span>
+            {person.kannVernetzen && (
+              <button
+                type="button"
+                disabled={laeuft}
+                onClick={() => confirm(`${person.name} als Buddy entfernen? Eure Chats bleiben erhalten.`) && tue(() => buddyEntfernen(person.id), () => setStatus(null))}
+                className={`${KNOPF} border border-brand-line bg-white text-brand-ink-soft hover:text-brand-red`}
+              >
+                <UserMinus size={16} /> Buddy entfernen
+              </button>
+            )}
+          </>
         )}
       </div>
       {hinweis && <p className="text-[12.5px] text-brand-ink-soft">{hinweis}</p>}

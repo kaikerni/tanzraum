@@ -8,18 +8,20 @@ export const TARIF_LEISTUNGEN: Record<"free" | "basic" | "verein", Leistung[]> =
   free: [
     { text: "Dashboard mit deinen Terminen" },
     { text: "Turnierkalender, Ausschreibungen & Ergebnisse" },
-    { text: "Spotlights" },
     { text: "Eigenes Profil & Einstellungen" },
-    { text: "Nachrichten mit deinen Kontakten" },
+    { text: "Nutzer suchen und freigegebene Profile ansehen" },
+    { text: "Direktnachricht aus dem Profil – mit Zustell- und Lesestatus" },
+    { text: "Spotlights ansehen" },
     { text: "TanzRaum Börse: kaufen, verkaufen, tauschen, verschenken, suchen" },
     { text: "Freiwillige Angabe „Verein, in dem ich tanze“" },
   ],
   basic: [
     { text: "Alles aus FREE" },
-    { text: "TanzRaum Connect: Karte, Suche & Profile" },
+    { text: "TanzRaum-Netzwerk: Buddys, Buddy-Anfragen, Map & Vereine entdecken" },
+    { text: "Eigene Spotlights erstellen und verwalten" },
+    { text: "Vollständiger Messenger: Chatübersicht, Gruppenchats, Bilder, Videos, Dateien, Sprachnachrichten" },
     { text: "Eigener Kalender mit Kalender-Abo fürs Handy (iCal)" },
     { text: "TeamCloud: 100 MB eigener Speicher für Dokumente & Musik" },
-    { text: "Nachrichten im ganzen TanzRaum-Netzwerk" },
   ],
   verein: [
     { text: "Alles aus BASIC – für alle aktiven Mitglieder deines Vereins" },
@@ -46,8 +48,8 @@ export const TARIF_LEISTUNGEN: Record<"free" | "basic" | "verein", Leistung[]> =
 
 // Kurzfassung fuer die Tarifkarten der Startseite
 export const TARIF_KURZ: Record<"free" | "basic" | "verein", string[]> = {
-  free: ["Persönliche TanzRaum-Funktionen", "Turnierkalender und Spotlights", "TanzRaum Börse", "Keine Vereinsverwaltung"],
-  basic: ["Alles aus FREE", "TanzRaum Connect mit Karte und Suche", "Eigener Kalender und TeamCloud (100 MB)", "Keine Vereinsverwaltung"],
+  free: ["Nutzer suchen und Direktnachricht senden", "Turnierkalender und Spotlights ansehen", "TanzRaum Börse", "Keine Vereinsverwaltung"],
+  basic: ["Alles aus FREE", "TanzRaum-Netzwerk mit Buddys und Map", "Messenger mit Gruppenchats", "Keine Vereinsverwaltung"],
   verein: ["Für alle aktiven Mitglieder des Vereins", "Unbegrenzte Anzahl aktiver Mitglieder", "Komplette Vereinsverwaltung", "Mitglieder einfach übernehmen (CSV/Excel)"],
 };
 

@@ -28,7 +28,7 @@ export function ChatAvatar({ typ, name, avatarUrl, groesse = 48 }: { typ: ChatTy
     );
   }
   const Icon = typ === "verein" ? Building2 : Users;
-  const farbe = typ === "verein" ? "bg-brand-blue-wash text-brand-blue" : "bg-brand-green-wash text-brand-green";
+  const farbe = typ === "verein" ? "bg-brand-blue-wash text-brand-blue" : typ === "gruppenchat" ? "bg-brand-purple-wash text-brand-purple" : "bg-brand-green-wash text-brand-green";
   return (
     <span style={stil} className={`flex shrink-0 items-center justify-center rounded-full ${farbe}`}>
       <Icon size={Math.round(groesse * 0.45)} />

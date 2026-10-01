@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useSelectedLayoutSegment, useRouter } from "next/navigation";
-import { Search, SquarePen, ChevronDown, UserPlus, Check, X, Ban, Handshake } from "lucide-react";
+import { Search, SquarePen, ChevronDown, UserPlus, Check, X, Ban, Handshake, Users } from "lucide-react";
 import { AdminMarke, ADMIN_KENNUNG } from "./AdminMarke";
 import { createClient } from "@/lib/supabase/client";
 import { alsChatEintrag, type ChatEintrag, type Kontaktanfrage } from "@/lib/chat/getChat";
@@ -102,7 +102,7 @@ function AnfrageKarte({ a }: { a: Kontaktanfrage }) {
       <div className="flex items-center gap-3">
         <ChatAvatar typ="dm" name={a.anzeige} avatarUrl={a.avatarUrl} groesse={40} />
         <div className="min-w-0 flex-1">
-          <div className="text-[12px] font-semibold text-brand-amber">Neue Kontaktanfrage</div>
+          <div className="text-[12px] font-semibold text-brand-amber">Neue Buddy-Anfrage</div>
           <div className="truncate text-[14.5px] font-semibold text-brand-ink">{a.anzeige}</div>
         </div>
       </div>
@@ -143,8 +143,11 @@ export function ChatRahmen({
   const router = useRouter();
   const [chats, setChats] = useState(start);
   const [suche, setSuche] = useState("");
-  const offen = segment && segment !== "neu" ? segment : null;
-  const imChat = segment !== null;
+  // Unterpunkte „Chats“ und „Gruppenchats“ sind Listenansichten, kein geoeffneter Chat
+  const LISTEN = ["chats", "gruppen"];
+  const nurGruppen = segment === "gruppen" || segment === "gruppe-neu";
+  const offen = segment && segment !== "neu" && segment !== "gruppe-neu" && !LISTEN.includes(segment) ? segment : null;
+  const imChat = segment !== null && !LISTEN.includes(segment);
   const zeitgeber = useRef<ReturnType<typeof setTimeout> | null>(null);
   const eingehend = anfragen.filter((a) => a.richtung === "eingehend");
 
@@ -177,10 +180,11 @@ export function ChatRahmen({
     return q ? chats.filter((c) => `${c.name} ${c.untertitel ?? ""}`.toLowerCase().includes(q)) : chats;
   }, [chats, suche]);
 
-  const netzwerk = gefiltert.filter((c) => c.bereich === "netzwerk");
+  const netzwerk = nurGruppen ? [] : gefiltert.filter((c) => c.bereich === "netzwerk");
+  const eigeneGruppen = gefiltert.filter((c) => c.bereich === "gruppenchat");
   const vereine = gefiltert.filter((c) => c.bereich === "verein");
   const gruppen = gefiltert.filter((c) => c.bereich === "gruppe");
-  const privat = gefiltert.filter((c) => c.bereich === "privat");
+  const privat = nurGruppen ? [] : gefiltert.filter((c) => c.bereich === "privat");
   const summe = (l: ChatEintrag[]) => l.reduce((a, c) => a + c.ungelesen, 0);
 
   return (
@@ -189,13 +193,31 @@ export function ChatRahmen({
         <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-4">
           <h1 className="text-[22px] font-extrabold tracking-tight text-brand-ink">Nachrichten</h1>
           <Link
-            href="/dashboard/nachrichten/neu"
-            aria-label="Neuer Privatchat"
+            href={nurGruppen ? "/dashboard/nachrichten/gruppe-neu" : "/dashboard/nachrichten/neu"}
+            aria-label={nurGruppen ? "Neuer Gruppenchat" : "Neuer Chat"}
+            title={nurGruppen ? "Neuer Gruppenchat" : "Neuer Chat"}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-red text-white hover:bg-brand-red-deep"
           >
             <SquarePen size={18} />
           </Link>
         </div>
+        <nav className="mx-4 mb-2 flex gap-1 rounded-xl bg-brand-bg p-1" aria-label="Chats">
+          {(
+            [
+              ["/dashboard/nachrichten/chats", "Chats", !nurGruppen],
+              ["/dashboard/nachrichten/gruppen", "Gruppenchats", nurGruppen],
+            ] as const
+          ).map(([href, titel, aktiv]) => (
+            <Link
+              key={href}
+              href={href}
+              aria-current={aktiv ? "page" : undefined}
+              className={`inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-lg text-[13px] font-semibold ${aktiv ? "bg-white text-brand-ink shadow-sm" : "text-brand-ink-soft hover:text-brand-ink"}`}
+            >
+              {titel === "Gruppenchats" && <Users size={14} />} {titel}
+            </Link>
+          ))}
+        </nav>
         <div className="px-4 pb-3">
           <label className="flex min-h-10 items-center gap-2 rounded-xl bg-brand-bg px-3 text-brand-ink-soft focus-within:ring-1 focus-within:ring-brand-red">
             <Search size={16} />
@@ -210,10 +232,10 @@ export function ChatRahmen({
         </div>
         <PushSchalter />
         <div className="flex-1 overflow-y-auto pb-4">
-          {eingehend.length > 0 && (
+          {eingehend.length > 0 && !nurGruppen && (
             <section className="mb-1">
               <div className="flex min-h-9 items-center gap-1.5 px-4 text-[12px] font-bold uppercase tracking-wide text-brand-amber">
-                <UserPlus size={14} /> Kontaktanfragen
+                <UserPlus size={14} /> Buddy-Anfragen
               </div>
               <ul>
                 {eingehend.map((a) => (
@@ -223,6 +245,14 @@ export function ChatRahmen({
             </section>
           )}
 
+          {nurGruppen && eigeneGruppen.length + vereine.length + gruppen.length === 0 && chats.length > 0 && !suche && (
+            <p className="px-5 py-8 text-center text-[13.5px] text-brand-ink-soft">
+              Noch keine Gruppenchats.{" "}
+              <Link href="/dashboard/nachrichten/gruppe-neu" className="font-semibold text-brand-red">
+                Gruppenchat erstellen
+              </Link>
+            </p>
+          )}
           {gefiltert.length === 0 && (
             <p className="px-5 py-8 text-center text-[13.5px] text-brand-ink-soft">
               {chats.length === 0 ? (
@@ -230,7 +260,11 @@ export function ChatRahmen({
                   Noch keine Chats. Vereins- und Gruppenchats erscheinen automatisch, sobald du einem Verein mit Vereinslizenz angehörst.
                   <br />
                   <Link href="/dashboard/nachrichten/neu" className="font-semibold text-brand-red">
-                    Privatchat starten
+                    Chat starten
+                  </Link>{" "}
+                  ·{" "}
+                  <Link href="/dashboard/nachrichten/gruppe-neu" className="font-semibold text-brand-red">
+                    Gruppenchat erstellen
                   </Link>
                 </>
               ) : (
@@ -246,6 +280,13 @@ export function ChatRahmen({
               ))}
             </ul>
           </Abschnitt>
+          <Abschnitt titel="Eigene Gruppenchats" anzahl={eigeneGruppen.length} ungelesen={summe(eigeneGruppen)}>
+            <ul>
+              {eigeneGruppen.map((c) => (
+                <ChatZeile key={c.id} c={c} offen={offen === c.id} />
+              ))}
+            </ul>
+          </Abschnitt>
           <Abschnitt titel="Vereinschat" anzahl={vereine.length} ungelesen={summe(vereine)}>
             <ul>
               {vereine.map((c) => (
@@ -253,7 +294,7 @@ export function ChatRahmen({
               ))}
             </ul>
           </Abschnitt>
-          <Abschnitt titel="Gruppen" anzahl={gruppen.length} ungelesen={summe(gruppen)}>
+          <Abschnitt titel="Tanzgruppen" anzahl={gruppen.length} ungelesen={summe(gruppen)}>
             <ul>
               {gruppen.map((c) => (
                 <ChatZeile key={c.id} c={c} offen={offen === c.id} />

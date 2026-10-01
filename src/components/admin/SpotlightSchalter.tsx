@@ -43,7 +43,7 @@ export function SpotlightSchalter({ aktiv: start, tarife: startTarife }: { aktiv
           <span className="min-w-0">
             <span className="block text-[16px] font-bold text-brand-ink">Spotlights</span>
             <span className="block text-[13px] text-brand-ink-soft">
-              {aktiv ? "Eingeschaltet – 24-Stunden-Fotos in Dashboard, Connect und Profilen." : "Ausgeschaltet – für alle ausgeblendet, nichts wird gelöscht."}
+              {aktiv ? "Eingeschaltet – 24-Stunden-Fotos im TanzRaum-Netzwerk und in Profilen." : "Ausgeschaltet – für alle ausgeblendet, nichts wird gelöscht."}
             </span>
           </span>
         </div>

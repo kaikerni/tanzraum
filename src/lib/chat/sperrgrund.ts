@@ -4,9 +4,10 @@ export const SPERRGRUND_TEXT: Record<string, string> = {
   eltern_sperre_ich: "Deine Eltern haben Nachrichten für dein Konto deaktiviert. Du kannst nur noch mit ihnen schreiben.",
   // betrifft nur die eigene Person – Gruende der anderen Person (Alter, Elternsperre) werden nicht verraten
   jugendschutz: "Unter 16 Jahren kannst du mit Mitgliedern deines Vereins und deinen Eltern schreiben.",
-  kontakt_noetig: "Ihr seid nicht im selben Verein. Vernetzt euch zuerst – nach der Annahme könnt ihr schreiben.",
-  tarif_ich: "Nachrichten gibt es ab dem Basic-Tarif. Mit Free kannst du Kontaktanfragen senden und annehmen.",
-  tarif_partner: "Diese Person kann mit ihrem Tarif keine Nachrichten empfangen – eure Vernetzung bleibt bestehen.",
+  kontakt_noetig: "Ihr seid nicht im selben Verein. Werdet zuerst Buddys – nach der Annahme könnt ihr schreiben.",
+  privat_konto: "Dieses Konto ist privat. Schreiben können Mitglieder desselben Vereins und Buddys (Buddys ab BASIC).",
+  tarif_ich: "Privaten Konten kannst du als Buddy schreiben – Buddys gibt es ab BASIC.",
+  tarif_partner: "Diese Person nutzt derzeit keinen Tarif mit Buddys – ihr privates Konto ist deshalb gerade nicht erreichbar.",
   nur_leitung: "Hier schreiben nur Vorstand, Trainer und Betreuer.",
   nicht_moeglich: "Eine Kontaktaufnahme mit dieser Person ist nicht möglich.",
 };

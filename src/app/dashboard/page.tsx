@@ -16,9 +16,8 @@ import { getAktuelleNachrichten } from "@/lib/dashboard/getNachrichten";
 import { getOnline } from "@/lib/online/getOnline";
 import { ZEITRAEUME } from "@/lib/dashboard/zeitraeume";
 import { DashboardAnsicht } from "@/components/dashboard/DashboardAnsicht";
-import { KARTE } from "@/components/dashboard/Karten";
-import { SpotlightLeiste } from "@/components/spotlights/SpotlightLeiste";
-import { getSpotlightIch, getSpotlightLeiste, spotlightsFuerMich } from "@/lib/spotlights/getSpotlights";
+import { NetzwerkHinweis } from "@/components/netzwerk/NetzwerkHinweis";
+import { getSpotlightLeiste, spotlightsFuerMich } from "@/lib/spotlights/getSpotlights";
 import { TarifZaehler, type TarifZaehlerDaten } from "@/components/admin/TarifZaehler";
 import { getAnkuendigungen, getMeineNews, getMeineUmfragen } from "@/lib/news/getNews";
 import { AnkuendigungenLeiste } from "@/components/news/AnkuendigungenLeiste";
@@ -72,10 +71,9 @@ export default async function DashboardPage({
     // Nur mit Vereinslizenz liefert die Datenbank Termine (training_kalender)
     daten.istPlattformAdmin || zugriff.tarif !== "verein" ? Promise.resolve([]) : getTrainingKalender(supabase, heuteDatum, heuteDatum),
   ]);
-  // Spotlights prominent oben (ansehen: alle, erstellen: ab Basic bzw. mit Vereinslizenz)
-  const [spotlightIch, spotlights] = spotlightsAn
-    ? await Promise.all([getSpotlightIch(supabase, user), getSpotlightLeiste(supabase)])
-    : [null, []];
+  // Spotlights gehoeren ins TanzRaum-Netzwerk – auf dem Dashboard nur ein dezenter Hinweis mit Link
+  const spotlights = spotlightsAn && !daten.istPlattformAdmin ? await getSpotlightLeiste(supabase) : [];
+  const neueSpotlights = spotlights.filter((p) => !p.ich && p.ungesehen > 0).length;
 
   // TanzRaum-Administration: Zaehler Free/Basic/Verein (Klick -> Listen)
   let tarifZaehler: TarifZaehlerDaten | null = null;
@@ -110,10 +108,10 @@ export default async function DashboardPage({
           <NewsDashboardKarte news={news} umfragen={umfragen} />
         </div>
       )}
-      {spotlightIch && (spotlightIch.darfErstellen || spotlights.length > 0) && (
-        <section className={`${KARTE} mx-auto mb-4 max-w-[1560px] py-3`} aria-label="Spotlights">
-          <SpotlightLeiste personen={spotlights} ich={spotlightIch} />
-        </section>
+      {!daten.istPlattformAdmin && (
+        <div className="mx-auto mb-4 max-w-[1560px]">
+          <NetzwerkHinweis tarif={zugriff.tarif} neueSpotlights={neueSpotlights} />
+        </div>
       )}
     <DashboardAnsicht
       daten={daten}

@@ -497,3 +497,43 @@ button.card:hover {
     scroll-behavior: auto;
   }
 }
+
+/* Messenger: „Lisa schreibt …“ – animierte Punkte nur waehrend jemand tippt */
+.tipp-punkte {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 0.9em;
+  margin-left: 1px;
+}
+.tipp-punkte span {
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: tipp-punkt 1.2s infinite ease-in-out;
+}
+.tipp-punkte span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.tipp-punkte span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes tipp-punkt {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tipp-punkte span {
+    animation: none;
+    opacity: 0.8;
+  }
+}

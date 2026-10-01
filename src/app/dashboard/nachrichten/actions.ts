@@ -87,9 +87,9 @@ export async function kontaktAufnehmen(userId: string): Promise<KontaktErgebnis>
   const r = ((data ?? []) as any[])[0];
   if (r?.ergebnis === "chat" && r.gespraech_id) redirect(`/dashboard/nachrichten/${r.gespraech_id}`);
   const texte: Record<string, string> = {
-    angefragt: "Deine Kontaktanfrage ist noch offen.",
-    eingehend: "Diese Person hat dir eine Kontaktanfrage geschickt – du findest sie oben in deiner Chatliste.",
-    abgelehnt: "Diese Person hat deine Kontaktanfrage abgelehnt.",
+    angefragt: "Deine Buddy-Anfrage ist noch offen.",
+    eingehend: "Diese Person hat dir eine Buddy-Anfrage geschickt – du findest sie unter „Buddy-Anfragen“.",
+    abgelehnt: "Diese Person hat deine Buddy-Anfrage abgelehnt.",
     nicht_moeglich: "Eine Kontaktaufnahme mit dieser Person ist nicht möglich.",
   };
   if (r?.ergebnis === "nicht_moeglich") {
@@ -107,7 +107,7 @@ export async function kontaktanfrageSenden(userId: string): Promise<AktionsErgeb
   if (error) return { error: freundlicherFehler(error) };
   if (data === "direkt" || data === "angenommen") return kontaktAufnehmen(userId);
   revalidatePath("/dashboard/nachrichten", "layout");
-  return { error: null, ok: "Kontaktanfrage gesendet. Sobald sie angenommen wird, könnt ihr chatten." };
+  return { error: null, ok: "Buddy-Anfrage gesendet. Sobald sie angenommen wird, seid ihr Buddys." };
 }
 
 export async function kontaktanfrageBeantworten(userId: string, aktion: "annehmen" | "ablehnen" | "blockieren"): Promise<AktionsErgebnis> {
@@ -201,4 +201,69 @@ export async function chatSuchen(gespraechId: string, suche: string): Promise<Su
   const { data } = await supabase.rpc("chat_suchen", { p_gespraech_id: gespraechId, p_suche: suche.slice(0, 100) });
   // deno-lint-ignore no-explicit-any
   return ((data ?? []) as any[]).map((r) => ({ id: r.id, inhalt: r.inhalt, senderName: r.sender_name, eigene: r.eigene, gesendetAm: r.gesendet_am }));
+}
+
+// ---------- Gruppenchats (ab BASIC; Pruefung in der Datenbank) ----------
+
+export type GruppenKandidat = { userId: string; anzeige: string; handle: string | null; avatarUrl: string | null; grund: string };
+export type GruppenMitglied = { userId: string; anzeige: string; avatarUrl: string | null; istLeitung: boolean; ich: boolean };
+
+export async function gruppenchatKandidaten(): Promise<GruppenKandidat[]> {
+  const supabase = await sitzung();
+  const { data } = await supabase.rpc("gruppenchat_kandidaten");
+  // deno-lint-ignore no-explicit-any
+  return ((data ?? []) as any[]).map((k) => ({ userId: k.user_id, anzeige: k.anzeige, handle: k.handle, avatarUrl: k.avatar_url, grund: k.grund }));
+}
+
+export async function gruppenchatErstellen(name: string, mitglieder: string[]): Promise<AktionsErgebnis> {
+  const ids = mitglieder.filter((m) => UUID.test(m)).slice(0, 99);
+  const supabase = await sitzung();
+  const { data, error } = await supabase.rpc("gruppenchat_erstellen", { p_name: name.trim().slice(0, 60), p_mitglieder: ids });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath("/dashboard/nachrichten", "layout");
+  redirect(`/dashboard/nachrichten/${data}`);
+}
+
+export async function gruppenchatMitglieder(gespraechId: string): Promise<GruppenMitglied[]> {
+  if (!UUID.test(gespraechId)) return [];
+  const supabase = await sitzung();
+  const { data } = await supabase.rpc("gruppenchat_mitglieder", { p_gespraech_id: gespraechId });
+  // deno-lint-ignore no-explicit-any
+  return ((data ?? []) as any[]).map((m) => ({ userId: m.user_id, anzeige: m.anzeige, avatarUrl: m.avatar_url, istLeitung: m.ist_leitung, ich: m.ich }));
+}
+
+export async function gruppenchatHinzufuegen(gespraechId: string, mitglieder: string[]): Promise<AktionsErgebnis> {
+  if (!UUID.test(gespraechId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { data, error } = await supabase.rpc("gruppenchat_mitglieder_hinzufuegen", { p_gespraech_id: gespraechId, p_mitglieder: mitglieder.filter((m) => UUID.test(m)) });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath(`/dashboard/nachrichten/${gespraechId}`);
+  return { error: null, ok: Number(data) === 1 ? "1 Person hinzugefügt." : `${Number(data ?? 0)} Personen hinzugefügt.` };
+}
+
+export async function gruppenchatEntfernen(gespraechId: string, userId: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(gespraechId) || !UUID.test(userId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { error } = await supabase.rpc("gruppenchat_mitglied_entfernen", { p_gespraech_id: gespraechId, p_user_id: userId });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath(`/dashboard/nachrichten/${gespraechId}`);
+  return { error: null, ok: "Aus der Gruppe entfernt." };
+}
+
+export async function gruppenchatUmbenennen(gespraechId: string, name: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(gespraechId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { error } = await supabase.rpc("gruppenchat_umbenennen", { p_gespraech_id: gespraechId, p_name: name.trim().slice(0, 60) });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath("/dashboard/nachrichten", "layout");
+  return { error: null, ok: "Name gespeichert." };
+}
+
+export async function gruppenchatVerlassen(gespraechId: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(gespraechId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { error } = await supabase.rpc("gruppenchat_verlassen", { p_gespraech_id: gespraechId });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath("/dashboard/nachrichten", "layout");
+  redirect("/dashboard/nachrichten/gruppen");
 }

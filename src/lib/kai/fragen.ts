@@ -59,9 +59,33 @@ export const KAI_FRAGEN: KaiFrage[] = [
   { id: "kalender-sync", bereiche: ["/dashboard/kalender"], frage: "Wie bekomme ich die Termine in meinen Handy-Kalender?", stichworte: ["synchronisieren", "sync", "ical", "google", "apple", "outlook", "handy kalender"],
     antwort: "Im Kalender unten auf „Mit deinem Kalender synchronisieren“ – das funktioniert mit Google, Apple und Outlook.",
     aktion: { label: "Zum Kalender", href: "/dashboard/kalender" } },
-  { id: "nachricht", bereiche: ["/dashboard/nachrichten"], frage: "Wie schreibe ich jemandem eine Nachricht?", stichworte: ["nachricht", "chat", "schreiben", "direktnachricht", "kontakt"],
-    antwort: "Oben über die Sprechblase zu „Nachrichten“ und dort einen neuen Chat beginnen.",
+  { id: "nachricht", bereiche: ["/dashboard/nachrichten"], frage: "Wie schreibe ich jemandem eine Nachricht?", stichworte: ["nachricht", "chat", "schreiben", "direktnachricht", "kontakt", "messenger"],
+    antwort: "Unter „Nachrichten“ einen neuen Chat beginnen – oder im Profil einer Person auf „Nachricht senden“ tippen. Bilder, Videos, Dateien, Sprachnachrichten, Standort und TanzRaum-Smileys gehen direkt im Chat.",
     aktion: { label: "Zu den Nachrichten", href: "/dashboard/nachrichten" } },
+  // FREE: einzelne Direktnachricht aus dem Profil (solange „Nachrichten“ nicht freigegeben ist)
+  { id: "nachricht-free", nurOhne: "/dashboard/nachrichten", bereiche: ["/dashboard/netzwerk", "/dashboard/nachrichten"], frage: "Wie schreibe ich jemandem eine Nachricht?", stichworte: ["nachricht", "chat", "schreiben", "direktnachricht", "kontakt", "messenger"],
+    antwort: "Mit FREE kannst du Nutzer suchen und einzelne Direktnachrichten senden: Person suchen, Profil öffnen und „Nachricht senden“ tippen. Neue Nachrichten findest du auf deinem Dashboard. Buddys und der vollständige Messenger mit Chatübersicht und Gruppenchats sind ab BASIC verfügbar.",
+    aktion: { label: "Nutzer suchen", href: "/dashboard/netzwerk/suche" } },
+  { id: "haekchen", bereiche: ["/dashboard/nachrichten"], frage: "Was bedeuten die Häkchen bei meinen Nachrichten?", stichworte: ["haekchen", "haken", "gelesen", "zugestellt", "gesendet", "blau", "status"],
+    antwort: "✓ gesendet · ✓✓ zugestellt (TanzRaum ist auf einem Gerät der anderen Person angekommen) · blaue ✓✓ gelesen. In Gruppenchats erscheinen die Häkchen, wenn alle Mitglieder so weit sind. Während jemand tippt, steht oben z. B. „Lisa schreibt …“." },
+  { id: "gruppenchat", bereiche: ["/dashboard/nachrichten"], frage: "Wie erstelle ich einen Gruppenchat?", stichworte: ["gruppenchat", "gruppe", "gruppen", "mehrere", "gemeinsam"],
+    antwort: "Unter „Nachrichten“ → „Gruppenchats“ auf „Neuer Gruppenchat“ tippen, Namen vergeben und Buddys, Vereinsmitglieder oder Familie (ab 16) auswählen. Vereins- und Tanzgruppenchats entstehen automatisch.",
+    aktion: { label: "Gruppenchats öffnen", href: "/dashboard/nachrichten/gruppen" } },
+  { id: "netzwerk", bereiche: ["/dashboard/netzwerk"], frage: "Was ist das TanzRaum-Netzwerk?", stichworte: ["netzwerk", "community", "suchen", "finden", "leute", "map", "karte"],
+    antwort: "Der soziale Bereich von TanzRaum: Nutzer suchen und Profile ansehen. Ab BASIC zusätzlich Buddys, Buddy-Anfragen, Spotlight erstellen, die Map und „Vereine entdecken“.",
+    aktion: { label: "Zum TanzRaum-Netzwerk", href: "/dashboard/netzwerk" } },
+  { id: "buddys", bereiche: ["/dashboard/netzwerk"], frage: "Was sind Buddys?", stichworte: ["buddy", "buddys", "freund", "freunde", "vernetzen", "kontaktanfrage", "anfrage"],
+    antwort: "Buddys sind deine TanzRaum-Kontakte. Im Profil auf „Als Buddy hinzufügen“ tippen; nimmt die Person an, erscheint sie unter „Meine Buddys“ – mit Online-Status, sofern sie ihn zeigt. Buddys kannst du jederzeit wieder entfernen.",
+    aktion: { label: "Meine Buddys", href: "/dashboard/netzwerk/buddys" } },
+  { id: "buddys-free", nurOhne: "/dashboard/netzwerk/buddys", bereiche: ["/dashboard/netzwerk"], frage: "Was sind Buddys?", stichworte: ["buddy", "buddys", "freund", "freunde", "vernetzen", "kontaktanfrage", "anfrage"],
+    antwort: "Buddys sind TanzRaum-Kontakte mit eigener Liste und Anfragen. Sie sind ab BASIC verfügbar – oder automatisch über einen Verein mit Vereinslizenz. Mit FREE kannst du Nutzer suchen und ihnen eine Nachricht senden.",
+    aktion: { label: "Tarife ansehen", href: "/dashboard/tarif" } },
+  { id: "spotlight", bereiche: ["/dashboard/netzwerk"], frage: "Wo finde ich Spotlights?", stichworte: ["spotlight", "spotlights", "story", "stories", "foto teilen"],
+    antwort: "Spotlights findest du im TanzRaum-Netzwerk unter „Spotlight“: persönliche Fotos, 24 Stunden sichtbar. Ansehen geht mit jedem Tarif, eigene Spotlights erstellen ab BASIC.",
+    aktion: { label: "Zu den Spotlights", href: "/dashboard/netzwerk/spotlight" } },
+  { id: "juryraum", bereiche: ["/juryraum"], frage: "Was ist der JuryRaum?", stichworte: ["jury", "juryraum", "juror", "wertungsrichter", "besetzung"],
+    antwort: "Im JuryRaum organisierst du deine Jury-Einsätze: Turniere, Besetzungen, Verfügbarkeit, Anreise und Unterkunft.",
+    aktion: { label: "JuryRaum öffnen", href: "/juryraum/dashboard" } },
   { id: "fahrgemeinschaft", bereiche: ["/dashboard/fahrgemeinschaften"], frage: "Wie finde ich eine Mitfahrgelegenheit?", stichworte: ["fahrgemeinschaft", "mitfahren", "mitfahrt", "fahrt", "auto"],
     antwort: "Unter „Fahrgemeinschaften“ Fahrten deines Vereins ansehen oder selbst eine anbieten bzw. suchen.",
     aktion: { label: "Zu den Fahrgemeinschaften", href: "/dashboard/fahrgemeinschaften" } },
@@ -160,7 +184,7 @@ function quelle(oeffentlich: boolean) {
 }
 
 export function kaiThemen(pfad: string, erlaubt?: (href: string) => boolean, max = 4, oeffentlich = false): KaiFrage[] {
-  const nutzbar = quelle(oeffentlich).filter((f) => !f.aktion || !erlaubt || erlaubt(f.aktion.href));
+  const nutzbar = quelle(oeffentlich).filter((f) => (!f.aktion || !erlaubt || erlaubt(f.aktion.href)) && (!f.nurOhne || !erlaubt || !erlaubt(f.nurOhne)));
   const passend = nutzbar.filter((f) => f.bereiche?.some((b) => pfad === b || pfad.startsWith(`${b}/`)));
   return (passend.length ? passend : nutzbar.filter((f) => ["turniere", "training-abmelden", "einstellungen", "hilfe"].includes(f.id))).slice(0, max);
 }
@@ -170,7 +194,7 @@ export function kaiFragen(eingabe: string, erlaubt?: (href: string) => boolean, 
   const q = normal(eingabe);
   if (q.length < 2) return [];
   const woerter = q.split(" ").filter((w) => w.length > 2);
-  return quelle(oeffentlich).filter((f) => !f.aktion || !erlaubt || erlaubt(f.aktion.href))
+  return quelle(oeffentlich).filter((f) => (!f.aktion || !erlaubt || erlaubt(f.aktion.href)) && (!f.nurOhne || !erlaubt || !erlaubt(f.nurOhne)))
     .map((f) => {
       const fr = normal(f.frage);
       let punkte = fr.includes(q) ? 5 : 0;

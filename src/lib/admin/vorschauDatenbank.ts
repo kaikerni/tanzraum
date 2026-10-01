@@ -312,7 +312,7 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
           chatEintrag(C_VEREIN, "verein", "verein", verein.name, "Alle Mitglieder", "Die Hallenzeiten in den Herbstferien stehen im Kalender.", "Thomas Weber", 180, 0),
         ]
       : []),
-    ...(tarif === "free" && !mitVerein ? [] : [chatEintrag(C_DM, "dm", mitVerein ? "verein" : "netzwerk", "Jonas Wagner", mitVerein ? verein.name : "TanzRaum Connect", "Klingt gut, bis Donnerstag!", "Jonas Wagner", 60 * 26, 0, uid(5))]),
+    ...(tarif === "free" && !mitVerein ? [] : [chatEintrag(C_DM, "dm", mitVerein ? "verein" : "netzwerk", "Jonas Wagner", mitVerein ? verein.name : "TanzRaum-Netzwerk", "Klingt gut, bis Donnerstag!", "Jonas Wagner", 60 * 26, 0, uid(5))]),
   ];
   const nachricht = (i: number, gespraech: string, von: number, text: string, minuten: number) => ({
     id: `0e000000-0000-4000-8000-0000000007${gespraech.slice(-1)}${i}`, sender_id: von === 0 ? userId : uid(von), sender_name: von === 0 ? ichName : PERSONEN.find((p) => p.n === von)?.name ?? "Mitglied",
@@ -340,7 +340,7 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
     const c = chats.find((x) => x.id === id);
     return c
       ? [{ id: c.id, typ: c.typ, name: c.name, untertitel: c.untertitel, partner_id: c.partner_id, avatar_url: null, darf_schreiben: true, ist_leitung: c.ist_leitung, nur_leitung_schreibt: false,
-           partner_gelesen_bis: null, partner_rolle: null, ich_habe_blockiert: false, partner_blockiert: false, sperrgrund: null }]
+           partner_gelesen_bis: null, partner_zugestellt_bis: null, partner_rolle: null, ich_habe_blockiert: false, partner_blockiert: false, sperrgrund: null }]
       : [];
   };
 
@@ -583,7 +583,7 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
     },
     boerse_meine: [],
     boerse_darf_handeln: null,
-    // TanzRaum Connect (erfundene Personen und Vereine)
+    // TanzRaum-Netzwerk (erfundene Personen und Vereine)
     netzwerk_map: tarif === "free" ? [] : [
       { art: "verein", id: V, name: verein.name, zeile: "Beispielstadt", lat: 49.44, lng: 8.2, avatar_url: null },
       { art: "verein", id: "0e000000-0000-4000-8000-000000000c11", name: "KG Blau-Weiß Musterdorf", zeile: "Musterdorf", lat: 49.32, lng: 8.43, avatar_url: null },
@@ -606,7 +606,19 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
     // Ehrungen
     ehrungen_aktualisieren: 0,
     meine_netzwerk_kontakte: [],
-    meine_kontaktanfragen: [],
+    // Buddys (ab BASIC) – erfundene Personen
+    meine_kontaktanfragen: tarif === "free" ? [] : [{ user_id: uid(7), anzeige: "Mia Schröder", handle: "mia.tanzt", avatar_url: null, richtung: "eingehend", erstellt_am: vor(1) }],
+    meine_buddys: tarif === "free"
+      ? []
+      : [
+          { user_id: uid(1), anzeige: "Sabine Keller", handle: "sabine.k", avatar_url: null, vereine: verein.name, online: true, seit: vor(40), darf_schreiben: true },
+          { user_id: uid(5), anzeige: "Jonas Wagner", handle: "jonas.w", avatar_url: null, vereine: verein.name, online: false, seit: vor(12), darf_schreiben: true },
+        ],
+    gruppenchat_kandidaten: [],
+    gruppenchat_mitglieder: [],
+    nachrichten_zugestellt: null,
+    juryraum_fuer_mich: false,
+    juryraum_freigegeben: false,
     anzeige_namen: [],
   };
 

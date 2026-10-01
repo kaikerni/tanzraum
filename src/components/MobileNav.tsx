@@ -7,22 +7,26 @@ import { MoreHorizontal, X, HelpCircle } from "lucide-react";
 import { sichtbareNav, type Zugriff } from "@/lib/navigation";
 
 // Training steht fuer Vereinsmitglieder direkt in der Leiste (nicht nur unter „Mehr“)
-const BEVORZUGT = ["/dashboard", "/dashboard/training", "/dashboard/kalender", "/dashboard/netzwerk"];
+const BEVORZUGT = ["/dashboard", "/dashboard/training", "/dashboard/nachrichten", "/dashboard/netzwerk", "/dashboard/kalender"];
 const ADMIN_BEVORZUGT = ["/dashboard", "/dashboard/admin", "/dashboard/admin/meldungen", "/dashboard/admin/statistik"];
 
 export function MobileNav({
   zugriff,
   ungeleseneNachrichten,
   neueAbmeldungen = 0,
+  buddyAnfragen = 0,
 }: {
   zugriff: Zugriff;
   ungeleseneNachrichten: number;
   // Ungelesene Hinweise „Neue Abmeldung“ (Trainer) -> Badge am Menuepunkt Training
   neueAbmeldungen?: number;
+  // Offene Buddy-Anfragen -> Badge am Netzwerk
+  buddyAnfragen?: number;
 }) {
   const pathname = usePathname();
   const [offen, setOffen] = useState(false);
-  const alle = sichtbareNav(zugriff);
+  // Unterpunkte von Netzwerk und Nachrichten erreicht man auf dem Handy ueber die Reiter des jeweiligen Bereichs
+  const alle = sichtbareNav(zugriff).filter((n) => !n.nurSeitenleiste);
 
   const bevorzugt = zugriff.istPlattformAdmin ? ADMIN_BEVORZUGT : BEVORZUGT;
   const leiste = [
@@ -101,8 +105,9 @@ export function MobileNav({
         <div className="grid grid-cols-5">
           {leiste.map((item) => {
             const Icon = item.icon;
-            const aktiv = pathname === item.href;
-            const zaehler = item.href === "/dashboard/nachrichten" ? ungeleseneNachrichten : item.href === "/dashboard/training" ? neueAbmeldungen : 0;
+            const aktiv = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
+            const zaehler =
+              item.href === "/dashboard/nachrichten" ? ungeleseneNachrichten : item.href === "/dashboard/training" ? neueAbmeldungen : item.href === "/dashboard/netzwerk" ? buddyAnfragen : 0;
             return (
               <Link
                 key={item.href}

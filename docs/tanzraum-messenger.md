@@ -1,11 +1,15 @@
 # TanzRaum-Messenger
 
-Der **TanzRaum-Messenger** („Nachrichten“) ist die Kommunikation innerhalb von TanzRaum. Er hat **keinen eigenen
-Menüpunkt**: Chats öffnen sich über das Nachrichten-Symbol in der Kopfzeile, aus Profilen („Nachricht senden“),
-Kontakten sowie Vereins- und Gruppenbeziehungen. Siehe auch `docs/soziale-struktur.md`.
+Der **TanzRaum-Messenger** („Nachrichten“) ist die Kommunikation innerhalb von TanzRaum. Menüpunkt **💬 Nachrichten**
+(ab BASIC) mit den Unterpunkten **Chats** und **Gruppenchats**; außerdem Kopfzeilen-Symbol und „Nachricht senden“ im
+Profil. Siehe auch `docs/soziale-struktur.md` und `docs/tarifstruktur-netzwerk.md`.
 
-Route: `/dashboard/nachrichten` · Nachrichten ab BASIC bzw. mit Vereinslizenz; FREE kann nur Kontaktanfragen senden
-und annehmen.
+Routen: `/dashboard/nachrichten` (`/chats`, `/gruppen`, `/neu`, `/gruppe-neu`, `/[id]`)
+
+| Tarif | Messenger |
+|---|---|
+| FREE | **Einzelne Direktnachricht** aus dem Profil („Nachricht senden“) mit Zustell- und Lesestatus. **Keine** Chatübersicht, keine Gruppenchats. Neue Nachrichten zeigt das Dashboard (Karte „Nachrichten“, Kopfzeilen-Symbol führt dorthin). |
+| BASIC / VEREIN | Vollständiger Messenger: Chatübersicht, 1:1, Gruppenchats, Verlauf, Status, „schreibt …“, Push, Bilder, Videos, Dateien, Smileys, Standort, Sprachnachrichten, Anrufe (1:1). |
 
 ## Funktionen
 
@@ -23,17 +27,35 @@ und annehmen.
 | 📊 | Umfragen | Einzel- oder Mehrfachauswahl, 2–12 Antworten |
 | 📞📹 | Sprach- & Videoanrufe | WebRTC im Privatchat, Klingeln überall im Dashboard + Push |
 | 🔔 | Push-Benachrichtigungen | pro Gerät aktivierbar, Chats einzeln stummschaltbar |
-| ✍️ | „schreibt …“ | flüchtiger Realtime-Broadcast, nichts wird gespeichert |
+| ✍️ | „Lisa schreibt …“ | Name + animierte Punkte nur während jemand tippt (flüchtiger Realtime-Broadcast, nichts wird gespeichert) |
+| ✓✓ | Nachrichtenstatus | ✓ gesendet · ✓✓ zugestellt · blaue ✓✓ gelesen – nur aus echten Daten (Privat- und eigene Gruppenchats, siehe unten) |
 
 ## Chatarten
 
-Es gibt **ausschließlich** diese drei Chatarten – keinen Teamchat:
+Es gibt **ausschließlich** diese vier Chatarten – keinen Teamchat:
 
 1. **Vereinschat** – entsteht automatisch für jeden Verein. Zugriff: alle aktiven Mitglieder des Vereins
    (Vereinsadmin, Trainer/in, Betreuer/in, Tänzer/in, Eltern), nur solange der Verein eine Vereinslizenz hat.
 2. **Gruppenchat** – entsteht automatisch für jede Gruppe. Zugriff: Mitglieder, Trainer und Betreuer der Gruppe
    sowie der Vereinsadmin (mit Vereinslizenz). Trainer sehen nur die Gruppen, denen sie zugeordnet sind.
 3. **Privatchat (1:1)** – zwischen zwei Personen, siehe Regeln unten.
+4. **Eigener Gruppenchat** (`gespraeche.typ = 'gruppenchat'`, ab BASIC) – Name + Mitglieder frei gewählt aus
+   Buddys, Vereinsmitgliedern und Familie, die man selbst anschreiben darf (`gruppenchat_kandidaten`). Nur **ab 16**
+   (Erstellende und alle Mitglieder) und nur mit BASIC/VEREIN – Kinder unter 16 nutzen Vereins- und
+   Tanzgruppenchats. Ersteller/in = Gruppenleitung (umbenennen, hinzufügen, entfernen, moderieren); Verlassen kann
+   jede/r, die Leitung geht dann an das dienstälteste Mitglied. Max. 100 Mitglieder, 10 neue Gruppenchats pro Tag.
+   Funktionen: `gruppenchat_erstellen`, `gruppenchat_mitglieder_hinzufuegen`, `gruppenchat_mitglied_entfernen`,
+   `gruppenchat_verlassen`, `gruppenchat_umbenennen`, `gruppenchat_mitglieder`, `gruppenchat_kandidaten`.
+
+## Nachrichtenstatus
+
+- ✓ **gesendet**: Nachricht gespeichert.
+- ✓✓ **zugestellt**: `gespraech_teilnehmer.zugestellt_bis` – gesetzt, sobald TanzRaum auf einem Gerät der
+  Empfängerin/des Empfängers geöffnet ist (`NachrichtenZustellung` im Dashboard-Layout, auch bei neuen Nachrichten
+  per Realtime) oder ein Push dort angekommen ist (Service Worker → `/api/chat/push-info` → `nachrichten_zugestellt`).
+- ✓✓ blau **gelesen**: `last_read_at` (Chat geöffnet, `chat_gelesen`).
+- Gruppenchats: Status, sobald **alle** anderen Mitglieder so weit sind. Vereins-/Tanzgruppenchats: kein Status
+  (sehr viele Empfänger). Kein Fake: ohne Daten bleibt es bei ✓.
 
 In Vereins- und Gruppenchats können Vorstand, Trainer und Betreuer den Modus „nur Leitung schreibt“
 (Ankündigungen) ein- und ausschalten und Nachrichten moderieren (löschen).
@@ -41,19 +63,23 @@ In Vereins- und Gruppenchats können Vorstand, Trainer und Betreuer den Modus �
 ## Privatchat-Regeln (Jugendschutz)
 
 Direktnachrichten sind möglich, wenn **keine Blockierung** und **keine elterliche Nachrichtensperre** besteht und
-mindestens eines gilt (Prüfung ausschließlich serverseitig in `darf_direkt_schreiben`):
+mindestens eines gilt (Prüfung ausschließlich serverseitig in `darf_direkt_schreiben`, Stand Migration
+`20261001090000_netzwerk_buddys_messenger`):
 
 - beide sind aktive Mitglieder **desselben Vereins mit Vereinslizenz** (gleiche oder andere Gruppe; Trainer/Betreuer
-  eingeschlossen) – das gilt auch für Kinder unter 15,
+  eingeschlossen) – das gilt auch für Kinder unter 16,
 - **Eltern ↔ eigenes Kind** (bestätigte Verknüpfung oder Eltern-Kind-Zuordnung des Vereins),
-- eine **Vernetzung wurde angenommen** – nur wenn **beide mindestens 15** sind und **beide Nachrichten** haben
-  (ab Basic bzw. über eine Vereinslizenz).
+- **beide mindestens 16** und das Profil der anderen Person ist **freigegeben** (kein privates Konto) – unabhängig vom
+  Tarif (FREE: Direktnachricht aus dem Profil),
+- **private Konten**: nur als **Buddys** (angenommene Buddy-Anfrage), beide ab 16 und beide mit BASIC/VEREIN.
 
-Fremde Erwachsene (auch Trainer anderer Vereine) können Kinder unter 15 weder finden noch anfragen noch anschreiben.
+Fremde Erwachsene (auch Trainer anderer Vereine) können Kinder unter 16 weder finden noch anfragen noch anschreiben.
+Schutz vor Massennachrichten: höchstens 20 neue Direktchats pro Tag mit Personen ohne Verein-, Familien- oder
+Buddy-Beziehung (`kontakt_aufnehmen`); bestehende Chats sind davon nicht betroffen.
 
 **Altersgrenze:** Maßgeblich ist das tatsächliche Geburtsdatum (Profil, bei der Registrierung Pflicht; zusätzlich die
-Mitgliederdaten des Vereins – das jüngste zählt). Bis zum Tag vor dem **15. Geburtstag** gilt der Jugendschutz, ab dem
-15. Geburtstag automatisch die normalen Regeln (`ist_unter_15`). Ohne Geburtsdatum gilt der Schutz; bestehende Konten
+Mitgliederdaten des Vereins – das jüngste zählt). Bis zum Tag vor dem **16. Geburtstag** gilt der Jugendschutz, ab dem
+16. Geburtstag automatisch die normalen Regeln (`ist_unter_16`). Ohne Geburtsdatum gilt der Schutz; bestehende Konten
 tragen es einmalig nach (`/geburtsdatum`). Ändern kann es danach nur TanzRaum.
 
 Die Gründe, warum man nicht schreiben kann, zeigt der Chat verständlich an (`schreib_sperrgrund`); Gründe, die die
@@ -61,8 +87,8 @@ andere Person betreffen (Alter, Elternsperre), werden dabei nicht verraten.
 
 ## Blockieren
 
-Blockieren beendet private Nachrichten, Anrufe und Kontaktanfragen in beide Richtungen; die blockierte Person
-findet einen in der Suche nicht mehr. Eine neue Kontaktanfrage kann die Blockierung nicht umgehen.
+Blockieren beendet private Nachrichten, Anrufe und Buddy-Anfragen in beide Richtungen; die blockierte Person
+findet einen in der Suche nicht mehr. Eine neue Buddy-Anfrage kann die Blockierung nicht umgehen.
 Nur wer blockiert hat, kann die Blockierung wieder aufheben.
 
 ## Datenschutz
@@ -77,10 +103,10 @@ Nur wer blockiert hat, kann die Blockierung wieder aufheben.
 Alle Regeln gelten in der Datenbank (RLS + `SECURITY DEFINER`-Funktionen), nicht nur in der Oberfläche.
 
 - Zugriff/Schreiben: `hat_gespraech_zugriff`, `darf_im_gespraech_schreiben`, `darf_direkt_schreiben`,
-  `hat_vereinsbeziehung`, `ist_minderjaehrig`, `ist_blockiert`
+  `hat_vereinsbeziehung`, `ist_unter_16`, `ist_blockiert`
 - Kontakt: `kontakt_aufnehmen`, `kontaktanfrage_senden`, `kontaktanfrage_beantworten`,
   `kontaktanfrage_zurueckziehen`, `nutzer_blockieren`, `nutzer_freigeben`, `meine_kontaktanfragen`, `nutzer_suchen`
-- Chats: `chat_liste`, `chat_kopf`, `chat_nachrichten`, `chat_gelesen`, `chat_kontakte`, `chat_einstellung`,
+- Chats: `chat_liste`, `chat_kopf` (inkl. `partner_zugestellt_bis`), `chat_nachrichten`, `chat_gelesen`, `nachrichten_zugestellt`, `chat_kontakte`, `chat_einstellung`,
   `chat_stumm_setzen`, `nachricht_loeschen`, `nachricht_reagieren`, `umfrage_abstimmen`
 - Anrufe: `anruf_starten`, `anruf_status`, `anruf_signal`, `mein_eingehender_anruf`; verpasste Anrufe per pg_cron
 - Gespräche und Teilnehmer können nicht direkt angelegt werden, nur über diese Funktionen.

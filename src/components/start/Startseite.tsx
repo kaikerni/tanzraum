@@ -62,7 +62,7 @@ function Ueberschrift({ oben, titel, text, hell = false }: { oben?: string; tite
 }
 
 const ZIELGRUPPEN: { titel: string; claim: string; icon: LucideIcon; farbe: string; punkte: string[] }[] = [
-  { titel: "Fans", claim: "Tanzsport erleben.", icon: Heart, farbe: "bg-brand-red-wash text-brand-red", punkte: ["Vereine und Turniere entdecken", "Spotlight und Neuigkeiten", "TanzRaum Connect – ganz ohne Verein"] },
+  { titel: "Fans", claim: "Tanzsport erleben.", icon: Heart, farbe: "bg-brand-red-wash text-brand-red", punkte: ["Vereine und Turniere entdecken", "Spotlight und Neuigkeiten", "TanzRaum-Netzwerk – ganz ohne Verein"] },
   {
     titel: "Tänzer",
     claim: "Dein Tanzsport. Dein Raum.",
@@ -89,10 +89,10 @@ const ZIELGRUPPEN: { titel: string; claim: string; icon: LucideIcon; farbe: stri
 const FUNKTIONEN: { titel: string; icon: LucideIcon; farbe: string; punkte: string[]; bald?: boolean }[] = [
   { titel: "Training", icon: Activity, farbe: "text-brand-red bg-brand-red-wash", punkte: ["Trainingsübersicht", "An- und Abmeldung", "Anwesenheit", "Informationen"] },
   { titel: "Kalender", icon: CalendarDays, farbe: "text-brand-blue bg-brand-blue-wash", punkte: ["Training", "Veranstaltungen", "Turniere", "Termine"] },
-  { titel: "Chat", icon: MessageCircle, farbe: "text-brand-green bg-brand-green-wash", punkte: ["Nachrichten", "Gruppen", "Dateien und Bilder", "TanzRaum-Smileys"] },
+  { titel: "Messenger", icon: MessageCircle, farbe: "text-brand-green bg-brand-green-wash", punkte: ["Chats und Gruppenchats", "Gesendet, zugestellt, gelesen", "Bilder, Videos, Sprachnachrichten", "TanzRaum-Smileys"] },
   { titel: "News & Umfragen", icon: Newspaper, farbe: "text-brand-blue bg-brand-blue-wash", punkte: ["Vereinsnachrichten", "Lesebestätigung", "Abstimmungen"] },
-  { titel: "TanzRaum Connect", icon: Globe, farbe: "text-brand-purple bg-brand-purple-wash", punkte: ["Karte und Suche", "Kontakte", "Tanzsport-Community"] },
-  { titel: "Spotlight", icon: Sparkles, farbe: "text-brand-gold bg-brand-gold-wash", punkte: ["Fotos mit Text und Smileys", "24 Stunden sichtbar", "Für Kontakte oder alle"] },
+  { titel: "TanzRaum-Netzwerk", icon: Globe, farbe: "text-brand-purple bg-brand-purple-wash", punkte: ["Nutzer suchen und Profile", "Buddys, Map und Vereine", "Tanzsport-Community"] },
+  { titel: "Spotlight", icon: Sparkles, farbe: "text-brand-gold bg-brand-gold-wash", punkte: ["Im TanzRaum-Netzwerk", "Fotos mit Text und Smileys", "24 Stunden sichtbar"] },
   { titel: "TanzRaum Börse", icon: Store, farbe: "text-brand-gold bg-brand-gold-wash", punkte: ["Kostüme, Schuhe, Requisiten", "Kaufen, tauschen, verschenken", "Kontakt über den Chat"] },
   { titel: "Fahrgemeinschaften", icon: Car, farbe: "text-brand-green bg-brand-green-wash", punkte: ["Fahrten anbieten und suchen", "Zu Turnier und Training", "Nur im eigenen Verein"] },
   { titel: "Kostüme & Requisiten", icon: Shirt, farbe: "text-brand-red bg-brand-red-wash", punkte: ["Inventar und Kostümsätze", "Ausgabe und Rückgabe", "Wer hat was – mit Rückgabedatum"] },
@@ -144,7 +144,7 @@ const DATENSCHUTZ: { icon: LucideIcon; titel: string; text: string }[] = [
 const FAQ: { frage: string; antwort: React.ReactNode; id?: string }[] = [
   {
     frage: "Was ist TanzRaum?",
-    antwort: "TanzRaum ist eine digitale Plattform für den Tanzsport – besonders für den karnevalistischen Tanzsport. Sie verbindet Tänzer, Fans, Trainer, Betreuer und Vereine an einem Ort: mit Training, Kalender, Chat, Spotlight, TanzRaum Connect, der TanzRaum Börse und Vereinsverwaltung.",
+    antwort: "TanzRaum ist eine digitale Plattform für den Tanzsport – besonders für den karnevalistischen Tanzsport. Sie verbindet Tänzer, Fans, Trainer, Betreuer und Vereine an einem Ort: mit Training, Kalender, Messenger, dem TanzRaum-Netzwerk mit Spotlight, der TanzRaum Börse und Vereinsverwaltung.",
   },
   { frage: "Für wen ist TanzRaum?", antwort: "Für Fans, Tänzerinnen und Tänzer, Trainer und Betreuer sowie für Vereine." },
   {
@@ -158,7 +158,7 @@ const FAQ: { frage: string; antwort: React.ReactNode; id?: string }[] = [
   },
   {
     frage: "Was ist der Unterschied zwischen FREE und BASIC?",
-    antwort: "FREE ist die kostenlose persönliche Nutzung. BASIC erweitert sie um zusätzliche persönliche Funktionen, zum Beispiel TanzRaum Connect mit Karte und Suche, einen eigenen Kalender und Dateien. Beide Tarife enthalten keine Vereinsverwaltung.",
+    antwort: "FREE ist die kostenlose persönliche Nutzung. Mit FREE suchst du Nutzer, siehst freigegebene Profile und schreibst einzelne Direktnachrichten. BASIC erweitert das um das vollständige TanzRaum-Netzwerk (Buddys, Map, Vereine, eigene Spotlights), den vollständigen Messenger mit Gruppenchats, einen eigenen Kalender und Dateien. Beide Tarife enthalten keine Vereinsverwaltung.",
   },
   {
     frage: "Was ist die VEREIN-Lizenz?",

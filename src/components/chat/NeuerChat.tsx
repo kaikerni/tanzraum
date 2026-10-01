@@ -35,7 +35,7 @@ function Person({ name, zeile, avatarUrl, children, onClick }: { name: string; z
   );
 }
 
-// Dialog vor einer Kontaktanfrage. Kinderkonten (unter 16) bekommen den altersgerechten Hinweis.
+// Dialog vor einer Buddy-Anfrage. Kinderkonten (unter 16) bekommen den altersgerechten Hinweis.
 function AnfrageDialog({ name, unter16, laeuft, onSenden, onAbbrechen }: { name: string; unter16: boolean; laeuft: boolean; onSenden: () => void; onAbbrechen: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-brand-navy/40 p-3 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="anfrage-titel">
@@ -43,20 +43,20 @@ function AnfrageDialog({ name, unter16, laeuft, onSenden, onAbbrechen }: { name:
         <div className="mb-2 flex items-center gap-2">
           <ShieldAlert size={20} className="text-brand-amber" />
           <h3 id="anfrage-titel" className="text-[16px] font-bold text-brand-ink">
-            Kontaktanfrage an {name}
+            Buddy-Anfrage an {name}
           </h3>
         </div>
         <p className="text-[13.5px] leading-relaxed text-brand-ink-soft">
           {unter16
             ? "Du möchtest Kontakt mit einer Person außerhalb deines Vereins oder deiner Gruppe aufnehmen. Bitte achte darauf, keine persönlichen Daten wie deine Adresse, Telefonnummer oder Passwörter weiterzugeben."
-            : `${name} gehört nicht zu deinem Verein oder deiner Gruppe. Ihr könnt chatten, sobald die Kontaktanfrage angenommen wurde.`}
+            : `${name} hat ein privates Konto. Ihr könnt chatten, sobald ihr Buddys seid – also nach Annahme der Buddy-Anfrage.`}
         </p>
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button type="button" onClick={onAbbrechen} className="min-h-11 rounded-xl border border-brand-line text-[14px] font-semibold text-brand-ink">
             Abbrechen
           </button>
           <button type="button" disabled={laeuft} onClick={onSenden} className="min-h-11 rounded-xl bg-brand-red text-[14px] font-semibold text-white disabled:opacity-60">
-            Kontaktanfrage senden
+            Buddy-Anfrage senden
           </button>
         </div>
       </div>
@@ -141,7 +141,7 @@ export function NeuerChat({ kontakte, anfragen }: { kontakte: Kontakt[]; anfrage
               ))
             )}
             <p className="mx-2 mt-4 text-[12px] text-brand-ink-faint">
-              Mit allen Mitgliedern deines Vereins, deiner Familie und angenommenen Kontakten kannst du direkt chatten.
+              Mit Mitgliedern deines Vereins, deiner Familie und deinen Buddys kannst du direkt chatten – über „Suchen“ auch mit allen freigegebenen Profilen ab 16.
             </p>
           </>
         )}

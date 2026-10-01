@@ -227,10 +227,11 @@ function nachrichtZeit(iso: string): string {
   return d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", timeZone: ZEITZONE });
 }
 
-export function NachrichtenKarte({ nachrichten }: { nachrichten: AktuelleNachricht[] }) {
+// uebersicht = false (FREE): keine Chatuebersicht – die Karte zeigt die eigenen Direktchats
+export function NachrichtenKarte({ nachrichten, uebersicht = true }: { nachrichten: AktuelleNachricht[]; uebersicht?: boolean }) {
   return (
-    <section className={`${KARTE} h-full`}>
-      <KarteKopf icon={Mail} titel="Nachrichten" alleHref="/dashboard/nachrichten" />
+    <section id="neue-nachrichten" className={`${KARTE} h-full scroll-mt-4`}>
+      <KarteKopf icon={Mail} titel="Nachrichten" alleHref={uebersicht ? "/dashboard/nachrichten" : undefined} />
       {nachrichten.length === 0 ? (
         <Leer text="Keine neuen Nachrichten." />
       ) : (

@@ -30,6 +30,7 @@ import {
   Forward,
   Search,
   Mail,
+  Users,
 } from "lucide-react";
 import { AdminMarke, ADMIN_KENNUNG } from "./AdminMarke";
 import { createClient } from "@/lib/supabase/client";
@@ -59,6 +60,7 @@ import { sperrgrundText } from "@/lib/chat/sperrgrund";
 import { Sprachaufnahme } from "./Sprachaufnahme";
 import { useAnruf } from "./AnrufProvider";
 import { ChatAvatar } from "./ChatAvatar";
+import { GruppenchatInfo } from "./Gruppenchat";
 
 const NAMENSFARBEN = ["text-brand-red", "text-brand-blue", "text-brand-green", "text-brand-purple", "text-brand-gold", "text-brand-navy-soft"];
 const tagBerlin = (iso: string) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(new Date(iso));
@@ -231,6 +233,7 @@ export function ChatFenster({
   userId,
   meinName,
   stumm: startStumm = false,
+  zurueckHref = "/dashboard/nachrichten",
 }: {
   kopf: ChatKopf;
   start: ChatNachricht[];
@@ -238,6 +241,8 @@ export function ChatFenster({
   userId: string;
   meinName: string;
   stumm?: boolean;
+  // FREE hat keine Chatuebersicht: zurueck zum Profil bzw. Dashboard
+  zurueckHref?: string;
 }) {
   const router = useRouter();
   const anruf = useAnruf();
@@ -273,6 +278,7 @@ export function ChatFenster({
   const [reaktionAuswahl, setReaktionAuswahl] = useState(false);
   const [aufnahme, setAufnahme] = useState(false);
   const [tippende, setTippende] = useState<Record<string, { name: string; bis: number }>>({});
+  const [gruppenInfo, setGruppenInfo] = useState(false);
   const tippKanal = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const zuletztGetippt = useRef(0);
   const dokumentEingabe = useRef<HTMLInputElement>(null);
@@ -301,6 +307,7 @@ export function ChatFenster({
       setKopf((alt) => ({
         ...alt,
         partnerGelesenBis: k.partner_gelesen_bis,
+        partnerZugestelltBis: k.partner_zugestellt_bis ?? null,
         darfSchreiben: k.darf_schreiben,
         nurLeitungSchreibt: k.nur_leitung_schreibt,
         ichHabeBlockiert: k.ich_habe_blockiert,
@@ -556,19 +563,32 @@ export function ChatFenster({
     <div className="flex min-h-0 flex-1 flex-col">
       {/* Kopf */}
       <header className="flex min-h-[60px] items-center gap-3 border-b border-brand-line bg-white px-2 py-2 sm:px-4">
-        <Link href="/dashboard/nachrichten" aria-label="Zurück zu allen Chats" className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-brand-bg lg:hidden">
+        <Link
+          href={zurueckHref}
+          aria-label={zurueckHref === "/dashboard/nachrichten" ? "Zurück zu allen Chats" : "Zurück"}
+          className={`flex h-10 w-10 items-center justify-center rounded-full hover:bg-brand-bg ${zurueckHref === "/dashboard/nachrichten" ? "lg:hidden" : ""}`}
+        >
           <ArrowLeft size={20} />
         </Link>
         <ChatAvatar typ={kopf.typ} name={kopf.name} avatarUrl={kopf.avatarUrl} groesse={40} />
-        <div className="min-w-0 flex-1">
+        <div
+          className={`min-w-0 flex-1 ${kopf.typ === "gruppenchat" ? "cursor-pointer" : ""}`}
+          onClick={kopf.typ === "gruppenchat" ? () => setGruppenInfo(true) : undefined}
+        >
           <div className="truncate text-[15.5px] font-bold text-brand-ink">
             {kopf.name}
             {kopf.typ === "dm" && kopf.untertitel === ADMIN_KENNUNG && <AdminMarke />}
           </div>
           <div className="truncate text-[12px] text-brand-ink-soft">
             {tippNamen.length > 0 ? (
-              <span className="font-medium text-brand-green">
-                {kopf.typ === "dm" ? "schreibt …" : `${tippNamen.slice(0, 2).join(", ")} ${tippNamen.length > 1 ? "schreiben" : "schreibt"} …`}
+              <span className="inline-flex items-center gap-1 font-medium text-brand-green" aria-live="polite">
+                {tippNamen.slice(0, 2).join(", ")}
+                {tippNamen.length > 2 ? ` +${tippNamen.length - 2}` : ""} {tippNamen.length > 1 ? "schreiben" : "schreibt"}
+                <span className="tipp-punkte" aria-hidden>
+                  <span />
+                  <span />
+                  <span />
+                </span>
               </span>
             ) : (
               <>
@@ -657,7 +677,20 @@ export function ChatFenster({
                   {stumm ? <Bell size={17} /> : <BellOff size={17} />}
                   {stumm ? "Stummschaltung aufheben" : kopf.nurLeitungSchreibt ? "Stummschalten (Ankündigungen kommen trotzdem)" : "Stummschalten"}
                 </button>
-                {kopf.istLeitung && (
+                {kopf.typ === "gruppenchat" && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenueOffen(false);
+                      setGruppenInfo(true);
+                    }}
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[14px] text-brand-ink hover:bg-brand-bg"
+                  >
+                    <Users size={17} /> Gruppeninfo & Mitglieder
+                  </button>
+                )}
+                {kopf.istLeitung && kopf.typ !== "gruppenchat" && (
                   <button
                     type="button"
                     role="menuitem"
@@ -829,7 +862,10 @@ export function ChatFenster({
             const neuerTag = !vorher || tagBerlin(vorher.gesendetAm) !== tagBerlin(n.gesendetAm);
             const neuerAbsender = neuerTag || !vorher || vorher.senderId !== n.senderId;
             const gewaehlt = auswahl === n.id;
-            const gelesenVonPartner = kopf.typ === "dm" && kopf.partnerGelesenBis && kopf.partnerGelesenBis >= n.gesendetAm;
+            // ✓ gesendet · ✓✓ zugestellt · ✓✓ (blau) gelesen – nur echte Daten (Privat- und eigene Gruppenchats)
+            const mitStatus = kopf.typ === "dm" || kopf.typ === "gruppenchat";
+            const gelesenVonPartner = mitStatus && !!kopf.partnerGelesenBis && kopf.partnerGelesenBis >= n.gesendetAm;
+            const zugestellt = gelesenVonPartner || (mitStatus && !!kopf.partnerZugestelltBis && kopf.partnerZugestelltBis >= n.gesendetAm);
             // Sticker stehen ohne Sprechblase im Chat
             const nurSticker = !n.geloescht && !!n.sticker;
             return (
@@ -921,8 +957,14 @@ export function ChatFenster({
                     >
                       {n.bearbeitet && <span className="mr-0.5 italic">bearbeitet</span>}
                       {uhrzeit(n.gesendetAm)}
-                      {n.eigene && kopf.typ === "dm" && !n.geloescht &&
-                        (gelesenVonPartner ? <CheckCheck size={14} className="text-brand-blue" aria-label="gelesen" /> : <Check size={14} aria-label="gesendet" />)}
+                      {n.eigene && mitStatus && !n.geloescht &&
+                        (gelesenVonPartner ? (
+                          <CheckCheck size={14} className="text-brand-blue" aria-label="gelesen" />
+                        ) : zugestellt ? (
+                          <CheckCheck size={14} aria-label="zugestellt" />
+                        ) : (
+                          <Check size={14} aria-label="gesendet" />
+                        ))}
                     </span>
                     {n.reaktionen.length > 0 && (
                       <span className={`absolute -bottom-3 ${n.eigene ? "right-2" : "left-2"} flex items-center gap-0.5 rounded-full border border-brand-line bg-white px-1.5 py-0.5 text-[12px] shadow-sm`}>
@@ -1319,6 +1361,17 @@ export function ChatFenster({
             </div>
           )}
         </div>
+      )}
+      {gruppenInfo && kopf.typ === "gruppenchat" && (
+        <GruppenchatInfo
+          gespraechId={kopf.id}
+          name={kopf.name}
+          istLeitung={kopf.istLeitung}
+          onSchliessen={() => {
+            setGruppenInfo(false);
+            router.refresh();
+          }}
+        />
       )}
     </div>
   );

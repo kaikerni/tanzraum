@@ -63,6 +63,15 @@ export async function musikEinstellen(aktiv: boolean): Promise<AktionsErgebnis> 
   return { error: null, ok: aktiv ? "Musikbereich ist eingeschaltet." : "Musikbereich ist für alle ausgeschaltet." };
 }
 
+// JuryRaum plattformweit ein-/ausschalten (Standard: aus). Ausschalten loescht keine JuryRaum-Daten.
+export async function juryraumEinstellen(aktiv: boolean): Promise<AktionsErgebnis> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_juryraum_setzen", { p_aktiv: aktiv === true });
+  if (error) return { error: freundlicherFehler(error) };
+  revalidatePath("/dashboard", "layout");
+  return { error: null, ok: aktiv ? "JuryRaum ist eingeschaltet." : "JuryRaum ist ausgeschaltet – alle Daten bleiben erhalten." };
+}
+
 // Benutzerkonto loeschen: in 14 Tagen (abbrechbar) oder sofort. Hindernisse und Rechte prueft die Datenbank.
 export async function kontoLoeschenAdmin(userId: string, grund: string, sofort: boolean): Promise<AktionsErgebnis> {
   if (!UUID.test(userId)) return { error: "Ungültige Auswahl." };

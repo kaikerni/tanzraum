@@ -302,7 +302,7 @@ export function NetzwerkMap({
             ) : (
               <p className="text-[13.5px] text-brand-ink-soft">Die Karte wird gerade eingerichtet. Bis dahin findest du alle Einträge in der Listenansicht.</p>
             )}
-            <Link href="/dashboard/netzwerk?ansicht=liste" className="text-[13px] font-semibold text-brand-red">
+            <Link href="/dashboard/netzwerk/suche" className="text-[13px] font-semibold text-brand-red">
               Zur Listenansicht
             </Link>
           </div>

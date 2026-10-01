@@ -7,6 +7,7 @@ import { KARTE } from "@/components/dashboard/Karten";
 import { DashboardStatus } from "@/components/dashboard/DashboardStatus";
 import { SpotlightSchalter } from "@/components/admin/SpotlightSchalter";
 import { MusikSchalter } from "@/components/admin/MusikSchalter";
+import { JuryraumSchalter } from "@/components/admin/JuryraumSchalter";
 
 export const metadata = { title: "TanzRaum-Administration" };
 
@@ -24,7 +25,7 @@ export default async function AdminSeite() {
   const aktiveFernwartungen = ((fernwartungen ?? []) as { aktiv: boolean }[]).filter((f) => f.aktiv).length;
   const { data: boerse } = await supabase.rpc("admin_boerse_meldungen");
   const boerseMeldungen = Number((boerse as { zahlen?: { offene_meldungen?: number } } | null)?.zahlen?.offene_meldungen ?? 0);
-  const { data: spotlightEinstellung } = await supabase.from("plattform_einstellungen").select("spotlights_aktiv, spotlights_tarife, musik_aktiv").eq("id", true).maybeSingle();
+  const { data: spotlightEinstellung } = await supabase.from("plattform_einstellungen").select("spotlights_aktiv, spotlights_tarife, musik_aktiv, juryraum_aktiv").eq("id", true).maybeSingle();
   const { data: laufend } = await supabase.rpc("admin_benutzer_suche", { p_q: "" });
   const loeschungen = ((laufend ?? []) as unknown[]).length;
   const kacheln = [
@@ -68,6 +69,9 @@ export default async function AdminSeite() {
       </section>
       <section className={KARTE} aria-label="Musikbereich">
         <MusikSchalter aktiv={spotlightEinstellung?.musik_aktiv ?? false} />
+      </section>
+      <section className={KARTE} aria-label="JuryRaum">
+        <JuryraumSchalter aktiv={spotlightEinstellung?.juryraum_aktiv ?? false} />
       </section>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {kacheln.map((k) => (

@@ -15,9 +15,9 @@ const KATEGORIEN: { wert: NetzwerkKategorie; titel: string; icon: typeof Users }
 ];
 
 const STATUS: Record<string, { text: string; klasse: string }> = {
-  verbunden: { text: "Vernetzt", klasse: "bg-brand-green-wash text-brand-green" },
+  verbunden: { text: "Buddy", klasse: "bg-brand-green-wash text-brand-green" },
   angefragt: { text: "Angefragt", klasse: "bg-brand-gold-wash text-brand-gold" },
-  eingehend: { text: "Fragt dich an", klasse: "bg-brand-red-wash text-brand-red" },
+  eingehend: { text: "Buddy-Anfrage", klasse: "bg-brand-red-wash text-brand-red" },
 };
 
 function Bild({ t }: { t: ListenTreffer }) {
@@ -33,8 +33,15 @@ function Bild({ t }: { t: ListenTreffer }) {
   );
 }
 
-export function NetzwerkListe() {
-  const [kategorie, setKategorie] = useState<NetzwerkKategorie>("mitglieder");
+// kategorien: welche Reiter der jeweilige Netzwerk-Bereich zeigt (Nutzer suchen: Mitglieder/Trainer, Vereine: Vereine/Tanzgruppen)
+export function NetzwerkListe({
+  kategorien = ["mitglieder", "vereine", "gruppen", "trainer"],
+  platzhalter = "Mitglieder, Vereine und Gruppen suchen …",
+}: {
+  kategorien?: NetzwerkKategorie[];
+  platzhalter?: string;
+}) {
+  const [kategorie, setKategorie] = useState<NetzwerkKategorie>(kategorien[0]);
   const [suche, setSuche] = useState("");
   const [ort, setOrt] = useState("");
   const [treffer, setTreffer] = useState<ListenTreffer[] | null>(null);
@@ -64,13 +71,13 @@ export function NetzwerkListe() {
           <input
             value={suche}
             onChange={(e) => setSuche(e.target.value)}
-            placeholder="Mitglieder, Vereine und Gruppen suchen …"
+            placeholder={platzhalter}
             className="min-w-0 flex-1 bg-transparent text-[14.5px] text-brand-ink outline-none"
           />
         </label>
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Kategorie">
-            {KATEGORIEN.map(({ wert, titel, icon: Icon }) => (
+            {KATEGORIEN.filter((k) => kategorien.includes(k.wert)).map(({ wert, titel, icon: Icon }) => (
               <button
                 key={wert}
                 type="button"

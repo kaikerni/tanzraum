@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type ChatTyp = "dm" | "verein" | "trainingsgruppe" | "juryraum";
-export type ChatBereich = "netzwerk" | "verein" | "gruppe" | "privat";
+export type ChatTyp = "dm" | "verein" | "trainingsgruppe" | "juryraum" | "gruppenchat";
+export type ChatBereich = "netzwerk" | "verein" | "gruppe" | "privat" | "gruppenchat";
 
 export type ChatEintrag = {
   id: string;
@@ -33,6 +33,8 @@ export type ChatKopf = {
   istLeitung: boolean;
   nurLeitungSchreibt: boolean;
   partnerGelesenBis: string | null;
+  // ✓✓ zugestellt (Privatchat: Gegenueber, Gruppenchat: alle anderen Mitglieder)
+  partnerZugestelltBis: string | null;
   partnerRolle: string | null;
   ichHabeBlockiert: boolean;
   partnerBlockiert: boolean;
@@ -163,6 +165,7 @@ export async function getChatKopf(supabase: SupabaseClient, id: string): Promise
     istLeitung: k.ist_leitung,
     nurLeitungSchreibt: k.nur_leitung_schreibt,
     partnerGelesenBis: k.partner_gelesen_bis,
+    partnerZugestelltBis: k.partner_zugestellt_bis ?? null,
     partnerRolle: k.partner_rolle,
     ichHabeBlockiert: k.ich_habe_blockiert,
     partnerBlockiert: k.partner_blockiert,

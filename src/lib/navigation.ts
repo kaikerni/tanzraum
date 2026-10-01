@@ -30,6 +30,14 @@ import {
   Eye,
   FileText,
   Sparkles,
+  MessageCircle,
+  MessagesSquare,
+  Search,
+  UserCheck,
+  UserPlus,
+  Map as MapIcon,
+  Theater,
+  Scale,
   type LucideIcon,
 } from "lucide-react";
 
@@ -98,6 +106,10 @@ export type Zugriff = {
   netzwerk?: NetzwerkModus | null;
   // Musikbereich plattformweit von der TanzRaum-Administration eingeschaltet (DB: musik_freigegeben())
   musikAn?: boolean;
+  // Spotlights fuer den eigenen Tarif eingeschaltet (DB: spotlights_fuer_mich())
+  spotlightsAn?: boolean;
+  // JuryRaum global eingeschaltet UND aktive JuryRaum-Mitgliedschaft (DB: juryraum_fuer_mich())
+  juryraum?: boolean;
 };
 
 export type NavEintrag = {
@@ -115,32 +127,59 @@ export type NavEintrag = {
   netzwerk?: NetzwerkModus;
   // Vereinsbereich, den der Verein ausschalten kann
   modul?: VereinsModul;
+  // Unterpunkt eines Hauptpunkts (href des Hauptpunkts) – Seitenleiste zeigt ihn eingerueckt darunter
+  eltern?: string;
+  // Nur in der Seitenleiste; auf dem Handy erreichbar ueber die Reiter des Bereichs
+  nurSeitenleiste?: boolean;
+  // Nur bei eingeschaltetem JuryRaum mit Berechtigung
+  jury?: boolean;
+  // Nur wenn Spotlights fuer den eigenen Tarif eingeschaltet sind
+  spotlights?: boolean;
 };
 
+export const NETZWERK = "/dashboard/netzwerk";
+export const NACHRICHTEN = "/dashboard/nachrichten";
+const VEREIN = "/dashboard/verein";
+
+// Hauptstruktur: Dashboard · Mein Verein · TanzRaum-Netzwerk · Nachrichten · Turniere · JuryRaum (danach persoenliche Bereiche)
 export const NAV: NavEintrag[] = [
   { href: "/dashboard", label: "Dashboard", icon: Home, tarif: "free" },
-  { href: "/dashboard/verein", label: "Mein Verein", icon: Building2, tarif: "basic" },
-  { href: "/dashboard/news", label: "News & Umfragen", kurz: "News", icon: Newspaper, tarif: "verein", modul: "news" },
-  { href: "/dashboard/kalender", label: "Kalender", icon: Calendar, tarif: "basic", modul: "kalender" },
-  { href: "/dashboard/training", label: "Training", icon: Activity, tarif: "verein", modul: "training" },
-  { href: "/dashboard/anwesenheit", label: "Anwesenheit", icon: ClipboardCheck, tarif: "verein", recht: "anwesenheit", modul: "anwesenheit" },
+  // 🏢 Mein Verein (Vereinsbereiche ab Vereinslizenz)
+  { href: VEREIN, label: "Mein Verein", icon: Building2, tarif: "basic" },
+  { href: "/dashboard/mitglieder", label: "Mitglieder", icon: Users, tarif: "verein", recht: "mitglieder", eltern: VEREIN },
+  { href: "/dashboard/verein#gruppen", label: "Gruppen", icon: Theater, tarif: "verein", eltern: VEREIN },
+  { href: "/dashboard/training", label: "Training", icon: Activity, tarif: "verein", modul: "training", eltern: VEREIN },
+  { href: "/dashboard/anwesenheit", label: "Anwesenheit", icon: ClipboardCheck, tarif: "verein", recht: "anwesenheit", modul: "anwesenheit", eltern: VEREIN },
+  { href: "/dashboard/kalender", label: "Kalender", icon: Calendar, tarif: "basic", modul: "kalender", eltern: VEREIN },
+  { href: "/dashboard/saisonplanung", label: "Saisonplanung", icon: CalendarRange, tarif: "verein", recht: "saison", modul: "saisonplanung", eltern: VEREIN },
+  { href: "/dashboard/news", label: "News & Umfragen", kurz: "News", icon: Newspaper, tarif: "verein", modul: "news", eltern: VEREIN },
+  { href: "/dashboard/mitgliedsantraege", label: "Mitgliedsanträge", icon: FileSignature, tarif: "verein", recht: "beitritt", eltern: VEREIN },
+  { href: "/dashboard/fahrgemeinschaften", label: "Fahrgemeinschaften", icon: Car, tarif: "verein", recht: "fahrgemeinschaften", modul: "fahrgemeinschaften", eltern: VEREIN },
+  // Verwalten: Bereich "Kostueme" (Vereinsverwaltung); alle anderen sehen hier, was ihnen ausgegeben ist
+  { href: "/dashboard/kostueme", label: "Kostüme & Requisiten", kurz: "Kostüme", icon: Shirt, tarif: "verein", modul: "kostueme", eltern: VEREIN },
+  { href: "/dashboard/finanzen", label: "Finanzen", icon: Wallet, tarif: "verein", recht: "beitraege", modul: "finanzen", eltern: VEREIN },
+  { href: "/dashboard/statistiken", label: "Statistiken", icon: BarChart3, tarif: "verein", recht: "statistiken", modul: "statistiken", eltern: VEREIN },
+  { href: "/dashboard/vereinsverwaltung", label: "Vereinsverwaltung", icon: Settings2, tarif: "verein", recht: "rolle_admin", eltern: VEREIN },
+  // 🌐 TanzRaum-Netzwerk: FREE nur „Nutzer suchen“ (+ Spotlights ansehen), alles weitere ab BASIC
+  { href: NETZWERK, label: "TanzRaum-Netzwerk", kurz: "Netzwerk", icon: Globe, tarif: "free" },
+  { href: `${NETZWERK}/suche`, label: "Nutzer suchen", icon: Search, tarif: "free", eltern: NETZWERK, nurSeitenleiste: true },
+  { href: `${NETZWERK}/buddys`, label: "Meine Buddys", icon: UserCheck, tarif: "basic", eltern: NETZWERK, nurSeitenleiste: true },
+  { href: `${NETZWERK}/anfragen`, label: "Buddy-Anfragen", icon: UserPlus, tarif: "basic", eltern: NETZWERK, nurSeitenleiste: true },
+  { href: `${NETZWERK}/spotlight`, label: "Spotlight", icon: Sparkles, tarif: "free", eltern: NETZWERK, nurSeitenleiste: true, spotlights: true },
+  { href: `${NETZWERK}/map`, label: "Map", icon: MapIcon, tarif: "basic", eltern: NETZWERK, nurSeitenleiste: true },
+  { href: `${NETZWERK}/vereine`, label: "Vereine", icon: Building2, tarif: "basic", eltern: NETZWERK, nurSeitenleiste: true },
+  // 💬 Nachrichten: vollstaendiger Messenger ab BASIC (FREE: einzelne Direktnachricht aus dem Profil, keine Chatuebersicht)
+  { href: NACHRICHTEN, label: "Nachrichten", icon: MessageCircle, tarif: "basic" },
+  { href: `${NACHRICHTEN}/chats`, label: "Chats", icon: MessageCircle, tarif: "basic", eltern: NACHRICHTEN, nurSeitenleiste: true },
+  { href: `${NACHRICHTEN}/gruppen`, label: "Gruppenchats", icon: MessagesSquare, tarif: "basic", eltern: NACHRICHTEN, nurSeitenleiste: true },
   { href: "/dashboard/turniere", label: "Turniere", icon: Trophy, tarif: "free", modul: "turniere" },
-  { href: "/dashboard/saisonplanung", label: "Saisonplanung", icon: CalendarRange, tarif: "verein", recht: "saison", modul: "saisonplanung" },
-  { href: "/dashboard/mitglieder", label: "Mitglieder", icon: Users, tarif: "verein", recht: "mitglieder" },
-  { href: "/dashboard/mitgliedsantraege", label: "Mitgliedsanträge", icon: FileSignature, tarif: "verein", recht: "beitritt" },
-  // Sozialer Bereich: Map ist die Startansicht. Nachrichten haben keinen eigenen Menuepunkt (Kopfzeile, Profile, Kontakte).
-  { href: "/dashboard/netzwerk", label: "TanzRaum Connect", kurz: "Connect", icon: Globe, tarif: "basic" },
+  { href: "/juryraum/dashboard", label: "JuryRaum", icon: Scale, tarif: "free", jury: true },
+  // Persoenliche und weitere Bereiche
   { href: "/dashboard/trainer-netzwerk", label: "Trainer-Netzwerk", icon: Handshake, tarif: "verein", netzwerk: "trainer", modul: "trainer_netzwerk" },
   { href: "/dashboard/dateien", label: "TeamCloud", icon: Folder, tarif: "basic", modul: "dateien" },
   // Community-Marktplatz fuer alle (keine Vereinsfunktion)
   { href: "/dashboard/boerse", label: "TanzRaum Börse", kurz: "Börse", icon: Store, tarif: "free" },
-  { href: "/dashboard/fahrgemeinschaften", label: "Fahrgemeinschaften", icon: Car, tarif: "verein", recht: "fahrgemeinschaften", modul: "fahrgemeinschaften" },
   { href: "/dashboard/musik", label: "Musik", icon: Music, tarif: "basic", nichtNurFuer: ["rolle_betreuer", "rolle_eltern"], modul: "musik" },
-  // Verwalten: Bereich "Kostueme" (Vereinsverwaltung); alle anderen sehen hier, was ihnen ausgegeben ist
-  { href: "/dashboard/kostueme", label: "Kostüme & Requisiten", kurz: "Kostüme", icon: Shirt, tarif: "verein", modul: "kostueme" },
-  { href: "/dashboard/finanzen", label: "Finanzen", icon: Wallet, tarif: "verein", recht: "beitraege", modul: "finanzen" },
-  { href: "/dashboard/statistiken", label: "Statistiken", icon: BarChart3, tarif: "verein", recht: "statistiken", modul: "statistiken" },
-  { href: "/dashboard/vereinsverwaltung", label: "Vereinsverwaltung", icon: Settings2, tarif: "verein", recht: "rolle_admin" },
   { href: "/dashboard/admin", label: "TanzRaum-Administration", icon: ShieldCheck, tarif: "free", recht: "plattform_admin" },
   { href: "/dashboard/tarif", label: "Mein Tarif", kurz: "Tarif", icon: CreditCard, tarif: "free" },
   { href: "/dashboard/einstellungen", label: "Einstellungen", icon: Settings, tarif: "free" },
@@ -163,7 +202,7 @@ export const ADMIN_NAV: NavEintrag[] = [
   { href: "/dashboard/admin/fernwartung", label: "Fernwartung", icon: LifeBuoy, tarif: "free" },
   { href: "/dashboard/admin/ehrungen", label: "Ehrungskatalog", kurz: "Ehrungen", icon: Medal, tarif: "free" },
   { href: "/dashboard/turniere", label: "Turnierkalender", kurz: "Turniere", icon: Trophy, tarif: "free" },
-  { href: "/dashboard/netzwerk", label: "TanzRaum Connect", kurz: "Connect", icon: Globe, tarif: "free" },
+  { href: "/dashboard/netzwerk", label: "TanzRaum-Netzwerk", kurz: "Netzwerk", icon: Globe, tarif: "free" },
   { href: "/dashboard/admin/vorschau", label: "Ansicht als …", kurz: "Ansicht", icon: Eye, tarif: "free" },
   { href: "/dashboard/admin/anbieter", label: "Anbieterangaben", icon: FileText, tarif: "free" },
   { href: "/dashboard/einstellungen", label: "Einstellungen", icon: Settings, tarif: "free" },
@@ -199,10 +238,30 @@ export function sichtbareNav(zugriff: Zugriff): NavEintrag[] {
   return NAV.filter(
     (n) =>
       (n.href !== "/dashboard/musik" || zugriff.musikAn !== false) &&
+      (!n.jury || zugriff.juryraum === true) &&
+      (!n.spotlights || zugriff.spotlightsAn === true) &&
       (n.netzwerk ? zugriff.netzwerk === n.netzwerk : darf(zugriff, n.tarif, n.recht)) &&
       modulAn(zugriff, n.modul) &&
       (zugriff.istPlattformAdmin || !n.nichtNurFuer || !nurAusgeschlosseneRollen(zugriff, n.nichtNurFuer)),
   );
+}
+
+// Seitenleiste: Hauptpunkte mit ihren sichtbaren Unterpunkten. Die Vereinsbereiche erscheinen nur bei einer
+// Vereinsmitgliedschaft (Tarif VEREIN) unter „Mein Verein“; ohne Verein stehen z. B. Kalender selbst in der Liste.
+export type NavGruppe = { eintrag: NavEintrag; unterpunkte: NavEintrag[] };
+
+export function navGruppen(zugriff: Zugriff, eintraege: NavEintrag[] = sichtbareNav(zugriff)): NavGruppe[] {
+  const hrefs = new Set(eintraege.map((n) => n.href));
+  const gruppiert = (n: NavEintrag) =>
+    !!n.eltern && hrefs.has(n.eltern) && (n.eltern !== VEREIN || zugriff.istPlattformAdmin || zugriff.tarif === "verein");
+  return eintraege
+    .filter((n) => !gruppiert(n))
+    .map((eintrag) => ({ eintrag, unterpunkte: eintraege.filter((n) => gruppiert(n) && n.eltern === eintrag.href) }));
+}
+
+// Pfad ohne Anker (z. B. /dashboard/verein#gruppen)
+export function navPfad(href: string): string {
+  return href.split("#")[0];
 }
 
 // Nur fuer diese Seiten werden "Alle anzeigen"-Links gesetzt; waechst mit jedem fertigen Modul.

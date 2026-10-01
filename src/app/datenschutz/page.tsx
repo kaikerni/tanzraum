@@ -152,7 +152,7 @@ export default async function DatenschutzSeite() {
             eingegebene Ort bzw. die Vereinsadresse übermittelt, nicht deine IP-Adresse.
           </li>
           <li>
-            Die Karte in TanzRaum Connect lädt dein Browser erst, wenn du auf „Karte laden“ tippst (auf Wunsch für dein Gerät
+            Die Karte im TanzRaum-Netzwerk lädt dein Browser erst, wenn du auf „Karte laden“ tippst (auf Wunsch für dein Gerät
             gemerkt, jederzeit abschaltbar unter der Karte). Dabei werden u. a. deine IP-Adresse und technische Gerätedaten an Google
             übertragen. Geteilte Standorte in Nachrichten und „Auf der Karte zeigen“ öffnen Google Maps erst beim Antippen.
           </li>

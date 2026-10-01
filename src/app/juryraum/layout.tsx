@@ -30,6 +30,10 @@ export default async function JuryraumLayout({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Globaler Schalter der TanzRaum-Administration (Standard: aus). Aus = Bereich gesperrt, Daten bleiben erhalten.
+  const { data: freigegeben } = await supabase.rpc("juryraum_fuer_mich");
+  if (freigegeben !== true) redirect("/dashboard");
+
   const kontext = await getJuryKontext(supabase, user.id);
   // Kein aktives JuryRaum-Mitglied -> der Bereich existiert fuer diesen Nutzer nicht (§1).
   if (!kontext) redirect("/dashboard");

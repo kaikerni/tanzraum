@@ -33,6 +33,7 @@ export function AppHeader({
   anzeigeName,
   untertitel,
   ungeleseneNachrichten,
+  nachrichtenHref = "/dashboard/nachrichten",
   ungeleseneBenachrichtigungen,
   kai,
 }: {
@@ -40,6 +41,8 @@ export function AppHeader({
   anzeigeName: string;
   untertitel: string;
   ungeleseneNachrichten: number;
+  // FREE hat keine Chatuebersicht: das Symbol fuehrt zu „Nachrichten“ auf dem Dashboard
+  nachrichtenHref?: string;
   ungeleseneBenachrichtigungen: number;
   kai?: KaiKontext;
 }) {
@@ -125,7 +128,7 @@ export function AppHeader({
           <Zaehler anzahl={ungeleseneBenachrichtigungen} />
         </Link>
         <Link
-          href="/dashboard/nachrichten"
+          href={nachrichtenHref}
           className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-brand-line text-brand-ink transition-colors hover:bg-brand-bg"
           aria-label={`Nachrichten${ungeleseneNachrichten > 0 ? ` (${ungeleseneNachrichten} ungelesen)` : ""}`}
           title="Nachrichten"

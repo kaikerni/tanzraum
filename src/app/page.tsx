@@ -8,7 +8,7 @@ import { getAnbieter } from "@/lib/recht/anbieter";
 export const metadata: Metadata = {
   title: "TanzRaum – Die digitale Plattform für den Tanzsport",
   description:
-    "TanzRaum verbindet Tänzer, Fans, Trainer, Betreuer und Vereine: Training, Kalender, Chat, Spotlight, TanzRaum Connect und Vereinsverwaltung – an einem Ort. Kostenlos starten.",
+    "TanzRaum verbindet Tänzer, Fans, Trainer, Betreuer und Vereine: Training, Kalender, Messenger, TanzRaum-Netzwerk mit Spotlight und Vereinsverwaltung – an einem Ort. Kostenlos starten.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",

@@ -30,8 +30,8 @@ export default async function PersonSeite({ params }: { params: Promise<{ id: st
 
   return (
     <div className="mx-auto flex max-w-[760px] flex-col gap-4">
-      <Link href="/dashboard/netzwerk?ansicht=liste" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-brand-ink-soft hover:text-brand-ink">
-        <ArrowLeft size={15} /> Netzwerk
+      <Link href="/dashboard/netzwerk/suche" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-brand-ink-soft hover:text-brand-ink">
+        <ArrowLeft size={15} /> Nutzer suchen
       </Link>
 
       <section className={`${KARTE} flex flex-col gap-4`}>
@@ -69,7 +69,7 @@ export default async function PersonSeite({ params }: { params: Promise<{ id: st
         </div>
         {person.privat && (
           <p className="flex items-center gap-2 rounded-xl bg-brand-bg px-3 py-2 text-[13px] text-brand-ink-soft">
-            <Lock size={14} /> Privates Konto – weitere Angaben sieht nur, wer im selben Verein oder vernetzt ist.
+            <Lock size={14} /> Privates Konto – weitere Angaben sieht nur, wer im selben Verein oder Buddy ist.
           </p>
         )}
         {!person.ich && <PersonAktionen person={person} />}

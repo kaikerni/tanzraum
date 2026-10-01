@@ -12,6 +12,7 @@ import { getAnkuendigungen, getOffeneWichtigeNews } from "@/lib/news/getNews";
 import { getMeineAntraege } from "@/lib/antraege/getAntraege";
 import { AntragHinweis } from "@/components/antraege/AntragHinweis";
 import { OnlineHerzschlag } from "@/components/online/OnlineHerzschlag";
+import { NachrichtenZustellung } from "@/components/chat/NachrichtenZustellung";
 import { aktiveAnsicht } from "@/lib/admin/ansichtLesen";
 import { ANSICHT_LABEL, ansichtZugriff } from "@/lib/admin/ansicht";
 import { AnsichtLeiste } from "@/components/admin/AnsichtUmschalter";
@@ -99,7 +100,13 @@ export default async function DashboardLayout({
 
   // TanzRaum-Administration: „Ansicht als …“ ersetzt nur Menue und Dashboard (Beispieldaten), keine Rechte
   const ansicht = await aktiveAnsicht();
-  const navZugriff = ansicht ? { ...ansichtZugriff(ansicht), musikAn: zugriff.musikAn } : zugriff;
+  const navZugriff = ansicht ? { ...ansichtZugriff(ansicht), musikAn: zugriff.musikAn, spotlightsAn: zugriff.spotlightsAn, juryraum: false } : zugriff;
+  // Offene Buddy-Anfragen (Buddys ab BASIC)
+  let buddyAnfragen = 0;
+  if (navZugriff.tarif !== "free" && !navZugriff.istPlattformAdmin) {
+    const { data: anfragen } = await supabase.rpc("meine_kontaktanfragen");
+    buddyAnfragen = ((anfragen ?? []) as { richtung: string }[]).filter((a) => a.richtung === "eingehend").length;
+  }
 
   const name = [daten.vorname, daten.nachname].filter(Boolean).join(" ") || "TanzRaum-Nutzer";
   const ersterVerein = daten.vereine.find((v) => !v.vereinGesperrt) ?? daten.vereine[0];
@@ -151,11 +158,12 @@ export default async function DashboardLayout({
         anzeigeName={daten.vorname || name}
         untertitel={rolle}
         ungeleseneNachrichten={ungeleseneNachrichten}
+        nachrichtenHref={navZugriff.tarif === "free" && !navZugriff.istPlattformAdmin ? "/dashboard#neue-nachrichten" : "/dashboard/nachrichten"}
         ungeleseneBenachrichtigungen={benachrichtigungen ?? 0}
         kai={kai}
       />
       <div className="flex min-h-0 flex-1">
-        <AppSidebar kontext={kontext} zugriff={navZugriff} ungeleseneNachrichten={ungeleseneNachrichten} neueAbmeldungen={neueAbmeldungen ?? 0} />
+        <AppSidebar kontext={kontext} zugriff={navZugriff} ungeleseneNachrichten={ungeleseneNachrichten} neueAbmeldungen={neueAbmeldungen ?? 0} buddyAnfragen={buddyAnfragen} />
         <main className="flex flex-1 flex-col overflow-y-auto px-3 pb-28 pt-4 sm:px-5 md:pb-8 md:pt-5 xl:px-6">
           {ansicht && <AnsichtLeiste aktiv={ansicht} />}
           {offeneAntraege.length > 0 && <AntragHinweis antraege={offeneAntraege} />}
@@ -163,10 +171,11 @@ export default async function DashboardLayout({
           <AppFusszeile className="mx-auto mt-10 w-full max-w-[1200px]" />
         </main>
       </div>
-      <MobileNav zugriff={navZugriff} ungeleseneNachrichten={ungeleseneNachrichten} neueAbmeldungen={neueAbmeldungen ?? 0} />
+      <MobileNav zugriff={navZugriff} ungeleseneNachrichten={ungeleseneNachrichten} neueAbmeldungen={neueAbmeldungen ?? 0} buddyAnfragen={buddyAnfragen} />
       {popup.length > 0 && <WichtigPopup eintraege={popup} />}
       <UpdateHinweis />
       <OnlineHerzschlag />
+      {!ansicht && <NachrichtenZustellung userId={user.id} />}
       {!ansicht && <VorschauAufraeumen />}
     </div>
     </AnrufProvider>
