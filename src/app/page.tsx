@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getPreise } from "@/lib/tarife";
 import { Startseite } from "@/components/start/Startseite";
+import { getOeffentlicheUpdates } from "@/lib/updates/getUpdates";
 
 export const metadata: Metadata = {
   title: "TanzRaum – Die digitale Plattform für den Tanzsport",
@@ -33,11 +34,12 @@ export default async function Home() {
       data: { user },
     },
     preise,
-  ] = await Promise.all([supabase.auth.getUser(), getPreise(supabase)]);
+    neuigkeiten,
+  ] = await Promise.all([supabase.auth.getUser(), getPreise(supabase), getOeffentlicheUpdates(supabase, 3)]);
   let vorname: string | null = null;
   if (user) {
     const { data } = await supabase.from("profiles").select("vorname").eq("id", user.id).maybeSingle();
     vorname = (data?.vorname as string | null) ?? "";
   }
-  return <Startseite preise={preise} angemeldet={user ? { vorname } : null} />;
+  return <Startseite preise={preise} angemeldet={user ? { vorname } : null} neuigkeiten={neuigkeiten} />;
 }

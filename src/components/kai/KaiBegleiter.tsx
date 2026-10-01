@@ -25,7 +25,7 @@ const LINK_SEKUNDAER =
 
 // Links nur zu Bereichen, die diese Person auch hat
 function erlaubtFuer(k: KaiKontext) {
-  const immer = ["/dashboard/einstellungen", "/dashboard/hilfe", "/dashboard/suche", "/dashboard/verein"];
+  const immer = ["/dashboard/einstellungen", "/dashboard/hilfe", "/dashboard/suche", "/dashboard/verein", "/dashboard/neu"];
   return (href: string) => {
     if (href.startsWith("/#") || href === "/dashboard") return true;
     const pfad = href.split(/[?#]/)[0];
@@ -46,7 +46,10 @@ export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
   const erlaubt = useMemo(() => erlaubtFuer(kontext), [kontext]);
   const schritte = useMemo(() => einrichtungsSchritte(kontext), [kontext]);
   const tipp = tippFuer(pfad);
-  const ungelesen = speicher ? NEUIGKEITEN.filter((n) => !speicher.gelesen.includes(n.id)) : [];
+  // Neuigkeiten: zuerst die zentral gepflegten Updates (mit Kai-Hinweis), danach Kais feste Hinweise
+  const neuigkeiten = useMemo(() => [...(kontext.neuigkeiten ?? []), ...NEUIGKEITEN], [kontext.neuigkeiten]);
+  const ungelesen = speicher ? neuigkeiten.filter((n) => !speicher.gelesen.includes(n.id)) : [];
+  const neuesUpdate = ungelesen.find((n) => (kontext.neuigkeiten ?? []).some((k) => k.id === n.id)) ?? null;
   const offeneSchritte = speicher ? schritte.filter((s) => !s.erledigt && !speicher.schritte[s.id]) : [];
   const aktuellerSchritt = offeneSchritte[0] ?? null;
   const schrittNr = aktuellerSchritt ? schritte.findIndex((s) => s.id === aktuellerSchritt.id) + 1 : schritte.length;
@@ -107,7 +110,7 @@ export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
     if (vorher) schritt(vorher.id, null);
   }
   function neuigkeitenGelesen() {
-    setSpeicher(kaiSchreiben((s) => ({ ...s, gelesen: [...new Set([...s.gelesen, ...NEUIGKEITEN.map((n) => n.id)])] })));
+    setSpeicher(kaiSchreiben((s) => ({ ...s, gelesen: [...new Set([...s.gelesen, ...neuigkeiten.map((n) => n.id)])] })));
   }
 
   const treffer = frage.trim().length >= 2 ? kaiFragen(frage, erlaubt) : [];
@@ -235,7 +238,7 @@ export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
                     <Sparkles size={14} /> Neu in TanzRaum
                   </p>
                   <ul className="flex flex-col gap-2">
-                    {NEUIGKEITEN.map((n) => (
+                    {neuigkeiten.map((n) => (
                       <li key={n.id} className="rounded-xl border border-brand-line px-3.5 py-2.5">
                         <p className="text-[14px] font-bold text-brand-ink">{n.titel}</p>
                         <p className="mt-0.5 text-[13px] leading-relaxed text-brand-ink-soft">{n.text}</p>
@@ -280,6 +283,26 @@ export function KaiBegleiter({ kontext }: { kontext: KaiKontext }) {
                         </span>
                       )}
                     </div>
+                  )}
+
+                  {/* Neues TanzRaum-Update: Kai weist nur darauf hin und fuehrt zur Funktion (aendert nichts) */}
+                  {neuesUpdate && (
+                    <section className="rounded-2xl border border-brand-red/25 bg-brand-red-wash/50 px-3.5 py-3">
+                      <p className="text-[14px] leading-snug text-brand-ink [overflow-wrap:anywhere]">
+                        <strong>✨ Neu bei TanzRaum:</strong> {neuesUpdate.titel}. {neuesUpdate.text}
+                      </p>
+                      <p className="mt-1 text-[13px] text-brand-ink-soft">Soll ich dir zeigen, wie es funktioniert?</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {neuesUpdate.aktion && erlaubt(neuesUpdate.aktion.href) && (
+                          <Link href={neuesUpdate.aktion.href} onClick={() => { neuigkeitenGelesen(); setOffen(false); }} className={LINK_PRIMAER}>
+                            {neuesUpdate.aktion.label} <ArrowRight size={14} />
+                          </Link>
+                        )}
+                        <button type="button" onClick={neuigkeitenGelesen} className={LINK_SEKUNDAER}>
+                          Später
+                        </button>
+                      </div>
+                    </section>
                   )}
 
                   {/* Tipp zur aktuellen Seite */}

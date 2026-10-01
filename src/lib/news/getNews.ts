@@ -66,6 +66,11 @@ export type Ankuendigung = {
   bildUrl: string | null;
   linkUrl: string | null;
   linkText: string | null;
+  // Updates & Neuigkeiten (nur Art „neuheit“)
+  version: string | null;
+  kategorie: string | null;
+  kurztext: string | null;
+  kaiHinweis: boolean;
 };
 
 // Bilder der TanzRaum-Ankuendigungen liegen im oeffentlichen Bucket "ankuendigungen"
@@ -147,6 +152,10 @@ export async function getAnkuendigungen(supabase: SupabaseClient): Promise<Ankue
     bildUrl: ankuendigungBildUrl(a.bild_pfad),
     linkUrl: a.link_url,
     linkText: a.link_text,
+    version: a.version ?? null,
+    kategorie: a.kategorie ?? null,
+    kurztext: a.kurztext ?? null,
+    kaiHinweis: a.kai_hinweis === true,
   }));
 }
 

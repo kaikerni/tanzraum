@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Bell, MessageSquare, ChevronDown, LogOut } from "lucide-react";
+import { Search, Bell, MessageSquare, ChevronDown, LogOut, Sparkles } from "lucide-react";
+import { versionText } from "@/lib/version";
 import { signOut } from "@/app/actions";
 import { KaiBegleiter } from "@/components/kai/KaiBegleiter";
 import type { KaiKontext } from "@/lib/kai/typen";
@@ -160,6 +161,15 @@ export function AppHeader({
                 <div className="text-[13px] font-bold text-brand-ink">{anzeigeName}</div>
                 <div className="text-[11.5px] text-brand-ink-soft">{untertitel}</div>
               </div>
+              <Link
+                href="/dashboard/neu"
+                role="menuitem"
+                onClick={() => setMenuOffen(false)}
+                className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[13px] text-brand-ink hover:bg-brand-bg"
+              >
+                <Sparkles size={15} className="text-brand-gold" />
+                Was ist neu?
+              </Link>
               <form action={signOut}>
                 <button
                   type="submit"
@@ -170,6 +180,7 @@ export function AppHeader({
                   Abmelden
                 </button>
               </form>
+              <p className="border-t border-brand-line px-3.5 pb-1 pt-2 text-[11px] text-brand-ink-faint">{versionText()}</p>
             </div>
           )}
         </div>

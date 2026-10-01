@@ -189,7 +189,10 @@ fi
 BUILD_ID="$(cat "$APP_DIR/.next/BUILD_ID")"
 for _ in $(seq 1 20); do
   if curl -fsS "http://127.0.0.1:$PORT/login" 2>/dev/null | grep -q "$BUILD_ID"; then
-    echo; echo "Fertig: TanzRaum läuft (Version $BUILD_ID). Status: systemctl status tanzraum · Protokoll: journalctl -u tanzraum -f"
+    VERSION_INFO="$(curl -fsS "http://127.0.0.1:$PORT/api/version" 2>/dev/null || true)"
+    echo; echo "Fertig: TanzRaum läuft (Build $BUILD_ID). Status: systemctl status tanzraum · Protokoll: journalctl -u tanzraum -f"
+    [ -n "$VERSION_INFO" ] && echo "Version: $VERSION_INFO"
+    echo "Nutzer erhalten die neue Version automatisch beim nächsten Laden (keine Neuinstallation nötig)."
     exit 0
   fi
   sleep 1

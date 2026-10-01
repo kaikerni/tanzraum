@@ -38,8 +38,10 @@ import { ChatScreen, DashboardScreen, InstallScreen, KalenderScreen, SpotlightSc
 import { TanzRaumAssistant } from "@/components/kai/TanzRaumAssistant";
 import { KaiBuehne } from "@/components/kai/KaiBuehne";
 import { KaiFigur } from "@/components/kai/KaiFigur";
+import { UpdateKarte, type UpdateAnzeige } from "@/components/updates/UpdateKarte";
 
-// Oeffentliche Startseite (immer sichtbar, auch angemeldet). Nur Demo-Inhalte, keine Datenbankdaten ausser den Preisen.
+// Oeffentliche Startseite (immer sichtbar, auch angemeldet). Nur Demo-Inhalte, keine Datenbankdaten ausser den Preisen
+// und den freigegebenen Neuigkeiten („✨ Neu bei TanzRaum“).
 
 const BREITE = "mx-auto w-full max-w-[1200px] px-4 sm:px-6";
 const KNOPF_PRIMAER =
@@ -222,7 +224,16 @@ function Preiszeile({ preise, tarif }: { preise: Preise | null; tarif: "basic" |
   );
 }
 
-export function Startseite({ preise, angemeldet = null }: { preise: Preise | null; angemeldet?: { vorname: string | null } | null }) {
+export function Startseite({
+  preise,
+  angemeldet = null,
+  neuigkeiten = [],
+}: {
+  preise: Preise | null;
+  angemeldet?: { vorname: string | null } | null;
+  // Von der TanzRaum-Administration fuer die Landingpage freigegebene Neuheiten (Updates & Neuigkeiten)
+  neuigkeiten?: UpdateAnzeige[];
+}) {
   const tarife = [
     {
       name: "FREE",
@@ -411,6 +422,30 @@ export function Startseite({ preise, angemeldet = null }: { preise: Preise | nul
             </div>
           </Einblenden>
         </section>
+
+        {/* ✨ Neu bei TanzRaum – nur wenn die Administration Neuheiten fuer die Landingpage freigegeben hat */}
+        {neuigkeiten.length > 0 && (
+          <section id="neu" className="scroll-mt-20 bg-brand-gold-wash/60 py-14 sm:py-20" aria-labelledby="neu-titel">
+            <div className={BREITE}>
+              <Einblenden>
+                <p className="text-center text-[13px] font-extrabold uppercase tracking-[0.14em] text-brand-red">✨ Neu bei TanzRaum</p>
+                <h2 id="neu-titel" className="mt-2 text-center text-[26px] font-extrabold tracking-tight text-brand-ink sm:text-[34px]">
+                  Was sich gerade verbessert hat
+                </h2>
+              </Einblenden>
+              <div className={`mt-8 grid grid-cols-1 gap-4 ${neuigkeiten.length > 1 ? "md:grid-cols-2" : "mx-auto max-w-[640px]"} ${neuigkeiten.length > 2 ? "lg:grid-cols-3" : ""}`}>
+                {neuigkeiten.map((u) => (
+                  <UpdateKarte key={u.id} u={u} mehrHref={`/neu#update-${u.id}`} />
+                ))}
+              </div>
+              <p className="mt-6 text-center">
+                <Link href="/neu" className="text-[14px] font-semibold text-brand-red hover:underline">
+                  Alle Neuigkeiten ansehen
+                </Link>
+              </p>
+            </div>
+          </section>
+        )}
 
         {/* Was ist TanzRaum + Zielgruppen */}
         <section id="was-ist-tanzraum" className="scroll-mt-20 py-16 sm:py-24">

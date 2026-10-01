@@ -29,6 +29,7 @@ import {
   Medal,
   Eye,
   FileText,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
@@ -158,6 +159,7 @@ export const ADMIN_NAV: NavEintrag[] = [
   { href: "/dashboard/admin/rechnungen", label: "Rechnungen", icon: Receipt, tarif: "free" },
   { href: "/dashboard/admin/boerse", label: "Börse-Moderation", kurz: "Börse", icon: Store, tarif: "free" },
   { href: "/dashboard/admin/ankuendigungen", label: "Ankündigungen", icon: Megaphone, tarif: "free" },
+  { href: "/dashboard/admin/updates", label: "Updates & Neuigkeiten", kurz: "Updates", icon: Sparkles, tarif: "free" },
   { href: "/dashboard/admin/fernwartung", label: "Fernwartung", icon: LifeBuoy, tarif: "free" },
   { href: "/dashboard/admin/ehrungen", label: "Ehrungskatalog", kurz: "Ehrungen", icon: Medal, tarif: "free" },
   { href: "/dashboard/turniere", label: "Turnierkalender", kurz: "Turniere", icon: Trophy, tarif: "free" },

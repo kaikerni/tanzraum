@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Megaphone, Wrench, Sparkles, X, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { Megaphone, Wrench, Sparkles, X, ExternalLink, ArrowRight } from "lucide-react";
 import { ankuendigungGelesen } from "@/app/dashboard/news/actions";
 import type { Ankuendigung } from "@/lib/news/getNews";
 
@@ -29,6 +30,20 @@ export function AnkuendigungenLeiste({ liste, ausblendbar = true }: { liste: Ank
             ) : (
               <Icon size={20} className={`mt-0.5 shrink-0 ${farbe}`} />
             )}
+            {a.art === "neuheit" ? (
+              // Updates & Neuigkeiten: kurz auf dem Dashboard, Details unter „Was ist neu?“
+              <div className="min-w-0 flex-1">
+                <p className="text-[11.5px] font-extrabold uppercase tracking-[0.12em] text-brand-red">✨ Neu bei TanzRaum{a.version ? ` · ${a.version}` : ""}</p>
+                <div className="text-[14.5px] font-bold text-brand-ink [overflow-wrap:anywhere]">{a.titel}</div>
+                <p className="text-[13.5px] text-brand-ink [overflow-wrap:anywhere]">{a.kurztext || a.text}</p>
+                <Link
+                  href={`/dashboard/neu#update-${a.id}`}
+                  className="mt-2 inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-brand-ink px-3 text-[13px] font-semibold text-white hover:opacity-90"
+                >
+                  Mehr erfahren <ArrowRight size={14} />
+                </Link>
+              </div>
+            ) : (
             <div className="min-w-0 flex-1">
               <div className="text-[14.5px] font-bold text-brand-ink">{a.titel}</div>
               {a.text && <p className="whitespace-pre-line text-[13.5px] text-brand-ink">{a.text}</p>}
@@ -44,6 +59,7 @@ export function AnkuendigungenLeiste({ liste, ausblendbar = true }: { liste: Ank
               )}
               <p className="mt-1 text-[11.5px] text-brand-ink-soft">TanzRaum</p>
             </div>
+            )}
             {ausblendbar && (
               <button
                 type="button"

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Flag, ShieldCheck, CreditCard, Medal, Building2, Receipt, Megaphone, BarChart3, LifeBuoy, Eye, Store, Users } from "lucide-react";
+import { Flag, ShieldCheck, CreditCard, Medal, Building2, Receipt, Megaphone, BarChart3, LifeBuoy, Eye, Store, Users, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { versionText } from "@/lib/version";
 import { KARTE } from "@/components/dashboard/Karten";
 import { DashboardStatus } from "@/components/dashboard/DashboardStatus";
 import { SpotlightSchalter } from "@/components/admin/SpotlightSchalter";
@@ -99,6 +100,15 @@ export default async function AdminSeite() {
         <span className="flex-1">
           <span className="block text-[16px] font-bold text-brand-ink">Ankündigungen</span>
           <span className="block text-[13px] text-brand-ink-soft">Nachrichten an alle Dashboards – z. B. Wartungsarbeiten oder Neuheiten</span>
+        </span>
+      </Link>
+      <Link href="/dashboard/admin/updates" className={`${KARTE} flex items-center gap-4 hover:border-brand-red`}>
+        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-gold-wash text-brand-gold">
+          <Sparkles size={22} />
+        </span>
+        <span className="flex-1">
+          <span className="block text-[16px] font-bold text-brand-ink">Updates & Neuigkeiten</span>
+          <span className="block text-[13px] text-brand-ink-soft">Release-Infos für Landingpage, „Was ist neu?“ und Kai · {versionText()}</span>
         </span>
       </Link>
       <Link href="/dashboard/admin/tarife" className={`${KARTE} flex items-center gap-4 hover:border-brand-red`}>

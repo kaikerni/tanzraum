@@ -21,6 +21,8 @@ export type KaiKontext = {
   bereiche: string[];
   // „Ansicht als …“ der Administration: Kai zeigt dann die Sicht der gewaehlten Rolle
   vorschau: boolean;
+  // Updates & Neuigkeiten der TanzRaum-Administration mit „Kai-Hinweis“ (zentrale Quelle, siehe docs/updates-versionen.md)
+  neuigkeiten?: KaiNeuigkeit[];
 };
 
 // Ein Schritt der Einrichtungshilfe

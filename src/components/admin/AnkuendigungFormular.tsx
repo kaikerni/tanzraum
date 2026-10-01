@@ -10,7 +10,7 @@ import { SendenButton, Meldung, LEERES_ERGEBNIS } from "@/components/ui/SendenBu
 const TYPEN: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
 // Bild (z. B. CD-/Bundle-Cover) direkt in den oeffentlichen Bucket "ankuendigungen" laden (Storage-Policy: nur Plattform-Admins)
-function BildAuswahl() {
+export function BildAuswahl() {
   const [pfad, setPfad] = useState("");
   const [laedt, setLaedt] = useState(false);
   const [fehler, setFehler] = useState<string | null>(null);

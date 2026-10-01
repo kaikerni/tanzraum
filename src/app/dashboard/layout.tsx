@@ -16,6 +16,8 @@ import { aktiveAnsicht } from "@/lib/admin/ansichtLesen";
 import { ANSICHT_LABEL, ansichtZugriff } from "@/lib/admin/ansicht";
 import { AnsichtLeiste } from "@/components/admin/AnsichtUmschalter";
 import { VorschauAufraeumen } from "@/components/admin/VorschauAufraeumen";
+import { sichererLink } from "@/lib/updates/getUpdates";
+import { UpdateHinweis } from "@/components/updates/UpdateHinweis";
 import { sichtbareNav } from "@/lib/navigation";
 import type { KaiKontext } from "@/lib/kai/typen";
 
@@ -78,8 +80,9 @@ export default async function DashboardLayout({
   const offeneAntraege = meineAntraege.filter((a) => a.status === "offen");
   // Wichtige News und wichtige TanzRaum-Ankuendigungen erscheinen als Popup, bis sie bestaetigt sind
   const popup: PopupEintrag[] = [
+    // Updates & Neuigkeiten (Art „neuheit“) nie als Popup – sie erscheinen dezent auf dem Dashboard, unter „Was ist neu?“ und bei Kai
     ...ankuendigungen
-      .filter((a) => a.wichtig && !a.gelesenAm)
+      .filter((a) => a.wichtig && !a.gelesenAm && a.art !== "neuheit")
       .map((a) => ({
         art: "ankuendigung" as const,
         id: a.id,
@@ -120,6 +123,24 @@ export default async function DashboardLayout({
     tarif: navZugriff.tarif,
     bereiche: sichtbareNav(navZugriff).map((n) => n.href),
     vorschau: !!ansicht,
+    neuigkeiten: ansicht
+      ? []
+      : ankuendigungen
+          .filter((a) => a.art === "neuheit" && a.kaiHinweis && !a.gelesenAm)
+          .slice(0, 5)
+          .map((a) => {
+            const ziel = sichererLink(a.linkUrl);
+            return {
+              id: `update-${a.id}`,
+              datum: a.sichtbarAb.slice(0, 10),
+              titel: a.titel,
+              text: a.kurztext || a.text.slice(0, 200),
+              wichtig: true,
+              aktion: ziel?.startsWith("/")
+                ? { label: a.linkText || "Zeig es mir", href: ziel }
+                : { label: "Mehr erfahren", href: "/dashboard/neu" },
+            };
+          }),
   };
 
   return (
@@ -144,6 +165,7 @@ export default async function DashboardLayout({
       </div>
       <MobileNav zugriff={navZugriff} ungeleseneNachrichten={ungeleseneNachrichten} neueAbmeldungen={neueAbmeldungen ?? 0} />
       {popup.length > 0 && <WichtigPopup eintraege={popup} />}
+      <UpdateHinweis />
       <OnlineHerzschlag />
       {!ansicht && <VorschauAufraeumen />}
     </div>
