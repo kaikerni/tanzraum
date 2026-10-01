@@ -6,7 +6,8 @@ import { getBetreuteGruppen, heuteBerlin } from "@/lib/training/getTraining";
 import { KARTE } from "@/components/dashboard/Karten";
 import { TrainingFormular } from "@/components/training/TrainingFormular";
 
-export default async function TrainingNeuSeite() {
+// ?gruppe=<id>: Gruppe vorauswaehlen (z. B. aus der Gruppenseite „Training verwalten“)
+export default async function TrainingNeuSeite({ searchParams }: { searchParams: Promise<{ gruppe?: string }> }) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -14,6 +15,7 @@ export default async function TrainingNeuSeite() {
   if (!user) redirect("/login");
 
   const gruppen = await getBetreuteGruppen(supabase);
+  const { gruppe } = await searchParams;
 
   return (
     <div className="mx-auto flex max-w-[720px] flex-col gap-4">
@@ -28,7 +30,7 @@ export default async function TrainingNeuSeite() {
             zugeordnet – oder im Verein gibt es noch keine Gruppen (unter „Mein Verein“ anlegen).
           </p>
         ) : (
-          <TrainingFormular gruppen={gruppen} heute={heuteBerlin()} />
+          <TrainingFormular gruppen={gruppen} heute={heuteBerlin()} vorauswahl={gruppe} />
         )}
       </section>
     </div>

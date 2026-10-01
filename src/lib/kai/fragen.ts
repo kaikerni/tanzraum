@@ -73,10 +73,14 @@ export const KAI_FRAGEN: KaiFrage[] = [
     aktion: { label: "Zu den Mitgliedern", href: "/dashboard/mitglieder" } },
   // Tanzgruppen
   { id: "gruppen", bereiche: ["/dashboard/verein", "/dashboard/mitglieder"], frage: "Wo verwalte ich unsere Tanzgruppen?", stichworte: ["gruppe", "gruppen", "tanzgruppe", "garde", "formation"],
-    antwort: "Unter „Mein Verein“ im Bereich Gruppen: Gruppen anlegen, Altersklasse und Disziplin festlegen und Trainer/Betreuer zuordnen (Vereinsadmin).",
+    antwort: "Unter „Mein Verein“ im Bereich Gruppen. Mit „Gruppe anlegen“ führt dich ein Assistent Schritt für Schritt: Name, Altersklasse, Disziplin, Tänzer, Trainer und Betreuer. Eine Gruppe öffnest du per Tippen – dort änderst du Mitglieder, Trainer, Betreuer, Altersklasse oder Disziplin.",
+    aktion: { label: "Mein Verein öffnen", href: "/dashboard/verein" } },
+  { id: "gruppe-anlegen", bereiche: ["/dashboard/verein"], frage: "Wie lege ich eine neue Gruppe an?", stichworte: ["gruppe anlegen", "neue gruppe", "tanzpaar", "solist", "assistent", "altersklasse", "disziplin"],
+    antwort: "Unter „Mein Verein“ → Gruppen → „Gruppe anlegen“. Wähle Gruppe, Tanzpaar oder Solist, gib einen Namen ein (nicht die Altersklasse), wähle die Altersklasse (Jugend, Junioren, Ü15 oder eine eigene wie „Bambinis“) und die passende Disziplin. Danach Tänzer, Trainer und optional Betreuer auswählen und in der Übersicht „Gruppe erstellen“. Eilig? „Schnell anlegen“ braucht nur den Namen.",
+    schritte: ["Mein Verein öffnen", "„Gruppe anlegen“ tippen", "Schritte durchgehen", "In der Übersicht „Gruppe erstellen“"],
     aktion: { label: "Mein Verein öffnen", href: "/dashboard/verein" } },
   { id: "gruppe-zuordnen", bereiche: ["/dashboard/verein", "/dashboard/mitglieder"], frage: "Wie ordne ich jemanden einer Gruppe zu?", stichworte: ["zuordnen", "gruppe hinzufuegen", "in gruppe"],
-    antwort: "In „Mitglieder“ das Mitglied öffnen und die Gruppe auswählen – als Mitglied, Trainer/in oder Betreuer/in.",
+    antwort: "Am einfachsten in „Mein Verein“: Gruppe öffnen und „Mitglieder ändern“, „Trainer ändern“ oder „Betreuer ändern“ tippen. Alternativ in „Mitglieder“ das Mitglied öffnen und die Gruppe auswählen.",
     aktion: { label: "Zu den Mitgliedern", href: "/dashboard/mitglieder" } },
   // Turniere
   { id: "start-zusagen", bereiche: ["/dashboard/turniere"], frage: "Wie sage ich für ein Turnier zu?", stichworte: ["zusagen", "dabei", "teilnahme turnier", "starten"],

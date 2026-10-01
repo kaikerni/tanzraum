@@ -123,6 +123,8 @@ export async function gruppeLoeschen(formData: FormData): Promise<void> {
   const { supabase } = await sitzung();
   await supabase.from("gruppen").delete().eq("id", gruppeId);
   revalidatePath("/dashboard/verein");
+  // Von der Gruppenseite aus geloescht: zurueck zur Vereinsseite
+  if (text(formData, "zurueck")) redirect("/dashboard/verein");
 }
 
 export async function einladungErstellen(_prev: AktionsErgebnis, formData: FormData): Promise<AktionsErgebnis> {
@@ -214,4 +216,68 @@ export async function einladungEinloesen(_prev: AktionsErgebnis, formData: FormD
   // Verein verlangt einen Mitgliedsantrag: direkt dorthin
   if (typeof ergebnis.antrag_id === "string") redirect(`/dashboard/mitgliedsantrag/${ergebnis.antrag_id}`);
   redirect(`/dashboard/verein?verein=${ergebnis.verein_id}`);
+}
+
+// ---------- Gefuehrter Gruppen-Assistent ----------
+
+export type AssistentPerson = { vmId: string; name: string; geschlecht: "weiblich" | "männlich" | "divers" | null; familie: string };
+
+// Mitglieder des Vereins fuer die Auswahl (nur Vereinsadmin/Trainer; DB: gruppe_assistent_personen)
+export async function gruppenPersonen(vereinId: string): Promise<{ error: string | null; liste: AssistentPerson[] }> {
+  const { supabase } = await sitzung();
+  const { data, error } = await supabase.rpc("gruppe_assistent_personen", { p_verein_id: vereinId });
+  if (error) return { error: "Die Mitglieder konnten nicht geladen werden.", liste: [] };
+  return {
+    error: null,
+    // deno-lint-ignore no-explicit-any
+    liste: ((data ?? []) as any[]).map((p) => ({ vmId: p.vm_id, name: p.name ?? "Mitglied", geschlecht: p.geschlecht, familie: p.familie ?? "sonstige" })),
+  };
+}
+
+// Aktuelle Besetzung einer Gruppe (fuer „Gruppe bearbeiten“)
+export async function gruppenBesetzung(gruppeId: string): Promise<{ taenzer: string[]; trainer: string[]; betreuer: string[] }> {
+  const { supabase } = await sitzung();
+  const { data } = await supabase.from("gruppen_mitglieder").select("vereins_mitglied_id, funktion").eq("gruppe_id", gruppeId);
+  const zeilen = (data ?? []) as { vereins_mitglied_id: string; funktion: string | null }[];
+  return {
+    taenzer: zeilen.filter((z) => !z.funktion || z.funktion === "mitglied").map((z) => z.vereins_mitglied_id),
+    trainer: zeilen.filter((z) => z.funktion === "trainer").map((z) => z.vereins_mitglied_id),
+    betreuer: zeilen.filter((z) => z.funktion === "betreuer").map((z) => z.vereins_mitglied_id),
+  };
+}
+
+export type GruppeEingabe = {
+  vereinId: string;
+  gruppeId: string | null;
+  name: string;
+  altersklasseId: string | null;
+  altersklasseFrei: string | null;
+  disziplinId: string | null;
+  taenzer: string[];
+  trainer: string[];
+  betreuer: string[];
+  // false = „Schnell anlegen“ bzw. nur Stammdaten aendern (Personen bleiben unveraendert)
+  personen: boolean;
+};
+
+// Speichert Gruppe + Tänzer/Trainer/Betreuer in einem Schritt; Pruefungen (Rechte, Lizenz, Disziplin je Altersklasse,
+// Tanzpaar/Solist-Besetzung, nur eigener Verein) macht die Datenbank (gruppe_speichern)
+export async function gruppeAssistentSpeichern(e: GruppeEingabe): Promise<AktionsErgebnis & { gruppeId?: string }> {
+  const { supabase } = await sitzung();
+  const { data, error } = await supabase.rpc("gruppe_speichern", {
+    p_verein_id: e.vereinId,
+    p_gruppe_id: e.gruppeId,
+    p_name: e.name.slice(0, 80),
+    p_altersklasse_id: e.altersklasseId,
+    p_altersklasse_frei: e.altersklasseFrei?.slice(0, 40) ?? null,
+    p_disziplin_id: e.disziplinId,
+    p_taenzer: e.taenzer,
+    p_trainer: e.trainer,
+    p_betreuer: e.betreuer,
+    p_personen: e.personen,
+  });
+  if (error) return { error: error.code === "P0001" || error.code === "42501" ? error.message : "Die Gruppe konnte nicht gespeichert werden." };
+  revalidatePath("/dashboard/verein", "layout");
+  revalidatePath("/dashboard/training");
+  return { error: null, ok: e.gruppeId ? "Gruppe gespeichert." : "Gruppe erstellt.", gruppeId: String(data) };
 }

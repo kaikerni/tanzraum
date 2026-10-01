@@ -30,6 +30,11 @@ export type GruppeUebersicht = {
   anzahl: number;
   trainer: string[];
   betreuer: string[];
+  // Gruppen-Assistent: freie Altersklasse (statt offizieller), Besetzung der Disziplin (solo/paar/gruppe)
+  altersklasseFrei: string | null;
+  besetzung: "solo" | "paar" | "gruppe" | null;
+  trainerAnzahl: number;
+  betreuerAnzahl: number;
 };
 
 export type VereinUebersicht = {
@@ -42,6 +47,21 @@ export type VereinUebersicht = {
 };
 
 export type Auswahl = { id: string; name: string };
+
+// Disziplin mit Besetzung (solo/paar/gruppe) und den offiziellen Altersklassen, in denen es sie gibt
+export type DisziplinInfo = { id: string; name: string; besetzung: "solo" | "paar" | "gruppe"; altersklassen: string[] };
+
+export async function getDisziplinInfos(supabase: SupabaseClient): Promise<DisziplinInfo[]> {
+  const [{ data: d }, { data: z }] = await Promise.all([
+    supabase.from("disziplinen").select("id, name, besetzung").order("sortierung"),
+    supabase.from("altersklasse_disziplinen").select("altersklasse_id, disziplin_id"),
+  ]);
+  const zuordnung = (z ?? []) as { altersklasse_id: string; disziplin_id: string }[];
+  return ((d ?? []) as { id: string; name: string; besetzung: DisziplinInfo["besetzung"] }[]).map((x) => ({
+    ...x,
+    altersklassen: zuordnung.filter((a) => a.disziplin_id === x.id).map((a) => a.altersklasse_id),
+  }));
+}
 
 export async function getVereinsDetails(supabase: SupabaseClient, vereinId: string): Promise<VereinsDetails | null> {
   const { data } = await supabase
@@ -96,6 +116,10 @@ export async function getVereinUebersicht(supabase: SupabaseClient, vereinId: st
       anzahl: Number(g.anzahl ?? 0),
       trainer: g.trainer ?? [],
       betreuer: g.betreuer ?? [],
+      altersklasseFrei: g.altersklasse_frei ?? null,
+      besetzung: g.besetzung ?? null,
+      trainerAnzahl: Number(g.trainer_anzahl ?? (g.trainer ?? []).length),
+      betreuerAnzahl: Number(g.betreuer_anzahl ?? (g.betreuer ?? []).length),
     })),
     ansprechpartner: d.ansprechpartner ?? [],
   };

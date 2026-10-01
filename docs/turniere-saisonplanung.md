@@ -63,6 +63,7 @@ TanzRaum plant Starts – die offizielle Turnieranmeldung läuft weiter über de
   Solist weiblich, Solist männlich, Schautanz (Thema optional).
 - Altersklassen Jugend, Junioren, Ü15; `altersklasse_disziplinen` legt fest, welche Disziplin es wo gibt
   (Gemischte Garde nur Ü15).
+- Gruppen-Assistent, freie Altersklassen und Geschlechterlogik für Tanzpaar/Solist: siehe `docs/gruppen.md`.
 - Gruppe ≠ Disziplin ≠ Formation: Eine **Gruppe** ist eine Trainingsgruppe im Verein. Eine **Formation** (`formationen`,
   `formation_mitglieder`) ist die konkrete Besetzung einer Disziplin, z. B. „Tanzpaar Anna & Max“, „Solist weiblich Lena“
   oder ein Schautanz mit Thema. Solo höchstens 1, Paar höchstens 2 Personen, nur Mitglieder desselben Vereins.

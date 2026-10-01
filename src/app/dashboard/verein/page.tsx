@@ -5,6 +5,7 @@ import {
   getVereinsDetails,
   getVereinUebersicht,
   getAuswahllisten,
+  getDisziplinInfos,
   getOffeneEinladungen,
 } from "@/lib/verein/getVerein";
 import { basisUrl } from "@/lib/url";
@@ -53,13 +54,14 @@ export default async function MeinVereinSeite({
   const istAdmin = rolle.includes("admin");
   const darfGruppen = istAdmin || rolle.includes("trainer");
 
-  const [verein, uebersicht, auswahl, einladungen, basis, lizenz] = await Promise.all([
+  const [verein, uebersicht, auswahl, einladungen, basis, lizenz, disziplinInfos] = await Promise.all([
     getVereinsDetails(supabase, vereinId),
     getVereinUebersicht(supabase, vereinId),
     getAuswahllisten(supabase),
     istAdmin ? getOffeneEinladungen(supabase, vereinId) : Promise.resolve([]),
     basisUrl(),
     istAdmin ? supabase.rpc("vereinslizenz_status", { p_verein_id: vereinId }).then((r) => r.data as VereinslizenzStatus | null) : Promise.resolve(null),
+    getDisziplinInfos(supabase),
   ]);
   if (!verein || !uebersicht) redirect("/dashboard");
 
@@ -76,6 +78,7 @@ export default async function MeinVereinSeite({
       istAdmin={istAdmin}
       darfGruppen={darfGruppen}
       lizenz={lizenz}
+      disziplinInfos={disziplinInfos}
     />
       {/* Eigene Beitraege (nur wenn der Verein welche erfasst hat) */}
       <div className="mx-auto mt-4 max-w-[1200px]">

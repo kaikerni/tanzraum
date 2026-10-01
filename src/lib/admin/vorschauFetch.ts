@@ -7,6 +7,7 @@ import { vorschauDaten } from "@/lib/admin/vorschauDatenbank";
 
 const JSON_KOPF = { "content-type": "application/json; charset=utf-8" };
 export const VORSCHAU_NUR_LESEN = "Vorschau: Änderungen werden nicht gespeichert.";
+const SCHREIBEND = /(speichern|anlegen|loeschen|setzen|senden|erstellen|aendern|veroeffentlichen|annehmen|ablehnen|entscheiden|einloesen|verknuepfen|aktivieren|erzeugen|widerrufen|beantworten|reagieren|ausgeben|zuruecknehmen|bestaetigen|einladen|beitreten)/;
 
 function antwort(status: number, wert: unknown, kopf: Record<string, string> = {}): Response {
   return new Response(wert === undefined ? null : JSON.stringify(wert), { status, headers: { ...JSON_KOPF, ...kopf } });
@@ -55,6 +56,10 @@ export function vorschauFetch(ansicht: Ansicht, userId: string, einstellungen: V
         body = {};
       }
       const eintrag = daten.rpc[name];
+      // Schreibende Datenbankfunktionen sind in der Vorschau gesperrt (nichts wird gespeichert)
+      if (eintrag === undefined && SCHREIBEND.test(name)) {
+        return antwort(403, { code: "42501", message: VORSCHAU_NUR_LESEN, details: null, hint: null });
+      }
       const wert = typeof eintrag === "function" ? eintrag(body) : (eintrag ?? null);
       if ((kopf.get("accept") ?? "").includes("vnd.pgrst.object")) return antwort(200, Array.isArray(wert) ? (wert[0] ?? null) : wert);
       return antwort(200, wert);

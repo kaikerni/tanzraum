@@ -7,7 +7,7 @@ import type { BetreuteGruppe } from "@/lib/training/getTraining";
 
 const WOCHENTAGE = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 
-export function TrainingFormular({ gruppen, heute }: { gruppen: BetreuteGruppe[]; heute: string }) {
+export function TrainingFormular({ gruppen, heute, vorauswahl }: { gruppen: BetreuteGruppe[]; heute: string; vorauswahl?: string }) {
   const [ergebnis, aktion] = useActionState(trainingAnlegen, LEERES_ERGEBNIS);
   const [art, setArt] = useState<"woechentlich" | "einmalig">("woechentlich");
   const mehrereVereine = new Set(gruppen.map((g) => g.vereinId)).size > 1;
@@ -16,7 +16,7 @@ export function TrainingFormular({ gruppen, heute }: { gruppen: BetreuteGruppe[]
     <form action={aktion} className="flex flex-col gap-4">
       <label className="field">
         <span>Gruppe</span>
-        <select name="gruppe" required defaultValue="">
+        <select name="gruppe" required defaultValue={(() => { const g = gruppen.find((x) => x.gruppeId === vorauswahl); return g ? `${g.gruppeId}|${g.vereinId}` : ""; })()}>
           <option value="" disabled>
             Gruppe wählen …
           </option>

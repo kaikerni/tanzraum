@@ -44,11 +44,33 @@ const PERSONEN = [
   { n: 12, name: "Markus Beispiel", rolle: "Eltern", ak: null, g: [] },
 ] as const;
 
-const GRUPPEN = [
-  { id: G1, name: "Juniorengarde", ak: "Jugend", disziplin: "Garde", tage: [2, 4], von: "18:00", bis: "19:30", halle: "Sporthalle Nord" },
-  { id: G2, name: "Showtanzgruppe", ak: "Hauptklasse", disziplin: "Showtanz", tage: [3], von: "19:30", bis: "21:00", halle: "Gymnastikraum" },
-  { id: G3, name: "Minis", ak: "Kinder", disziplin: "Garde", tage: [5], von: "16:30", bis: "17:30", halle: "Sporthalle Nord" },
+// Wie in der Datenbank: offizielle Altersklassen + Disziplinen mit Besetzung und Zuordnung (altersklasse_disziplinen)
+const AK = { jugend: "0e000000-0000-4000-8000-000000000f02", junioren: "0e000000-0000-4000-8000-000000000f04", ue15: "0e000000-0000-4000-8000-000000000f05" };
+const DISZ = [
+  { id: "0e000000-0000-4000-8000-000000000f11", name: "Tanzgarden", besetzung: "gruppe", ak: [AK.jugend, AK.junioren, AK.ue15] },
+  { id: "0e000000-0000-4000-8000-000000000f13", name: "Gemischte Garde", besetzung: "gruppe", ak: [AK.ue15] },
+  { id: "0e000000-0000-4000-8000-000000000f14", name: "Tanzpaare", besetzung: "paar", ak: [AK.jugend, AK.junioren, AK.ue15] },
+  { id: "0e000000-0000-4000-8000-000000000f15", name: "Solist weiblich", besetzung: "solo", ak: [AK.jugend, AK.junioren, AK.ue15] },
+  { id: "0e000000-0000-4000-8000-000000000f16", name: "Solist männlich", besetzung: "solo", ak: [AK.jugend, AK.junioren, AK.ue15] },
+  { id: "0e000000-0000-4000-8000-000000000f12", name: "Schautanz", besetzung: "gruppe", ak: [AK.jugend, AK.junioren, AK.ue15] },
 ];
+
+const GRUPPEN = [
+  { id: G1, name: "Juniorengarde", ak: "Junioren", akId: AK.junioren, akFrei: null, disziplin: "Tanzgarden", disziplinId: DISZ[0].id, tage: [2, 4], von: "18:00", bis: "19:30", halle: "Sporthalle Nord" },
+  { id: G2, name: "Showtanzgruppe", ak: "Ü15", akId: AK.ue15, akFrei: null, disziplin: "Schautanz", disziplinId: DISZ[5].id, tage: [3], von: "19:30", bis: "21:00", halle: "Gymnastikraum" },
+  { id: G3, name: "Minis", ak: "Bambinis", akId: null, akFrei: "Bambinis", disziplin: null, disziplinId: null, tage: [5], von: "16:30", bis: "17:30", halle: "Sporthalle Nord" },
+];
+
+// wie rolle_familie() in der Datenbank
+function rollenFamilie(rolle: string | null | undefined): string {
+  const r = (rolle ?? "").toLowerCase();
+  if (r.includes("admin") || r.includes("vorsitz")) return "admin";
+  if (r.includes("trainer")) return "trainer";
+  if (r.includes("betreuer")) return "betreuer";
+  if (["eltern", "mutter", "vater"].includes(r)) return "eltern";
+  if (r.startsWith("tänzer") || r.startsWith("tanzer")) return "mitglied";
+  return "sonstige";
+}
 
 const ROLLE: Record<Exclude<Ansicht, "free" | "basic">, { name: string; vorname: string; gruppen: string[] }> = {
   verein_admin: { name: "Vereins-Admin", vorname: "Sophie", gruppen: [] },
@@ -450,7 +472,11 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
     // Verein
     verein_uebersicht: mitVerein
       ? { meine_rolle: r!.name, meine_gruppen: r!.gruppen.map((id) => GRUPPEN.find((g) => g.id === id)!.name), lizenz: true, mitglieder_anzahl: mitglieder.length,
-          gruppen: GRUPPEN.map((g) => ({ id: g.id, name: g.name, altersklasse_id: null, altersklasse: g.ak, disziplin_id: null, disziplin: g.disziplin, thema: null, anzahl: gruppenGroesse(g.id),
+          gruppen: GRUPPEN.map((g) => ({ id: g.id, name: g.name, altersklasse_id: g.akId, altersklasse: g.ak, altersklasse_frei: g.akFrei, disziplin_id: g.disziplinId, disziplin: g.disziplin,
+            besetzung: g.disziplinId ? (DISZ.find((d) => d.id === g.disziplinId)?.besetzung ?? null) : null, thema: null,
+            anzahl: mitglieder.filter((p) => inGruppe(p, g.id) && funktionVon(p) === "mitglied").length,
+            trainer_anzahl: mitglieder.filter((p) => inGruppe(p, g.id) && funktionVon(p) === "trainer").length,
+            betreuer_anzahl: mitglieder.filter((p) => inGruppe(p, g.id) && funktionVon(p) === "betreuer").length,
             trainer: mitglieder.filter((p) => inGruppe(p, g.id) && funktionVon(p) === "trainer").map((p) => p.name),
             betreuer: mitglieder.filter((p) => inGruppe(p, g.id) && funktionVon(p) === "betreuer").map((p) => p.name) })),
           ansprechpartner: [{ name: "Thomas Weber", rolle: "Vorsitzender" }, { name: "Sabine Keller", rolle: "Trainerin" }] }
@@ -459,6 +485,11 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
     // DB mitglieder_liste(): nur mit Bereich „mitglieder“ bzw. Admin; ohne Admin nur relevante Mitglieder
     mitglieder_liste: istAdmin || hatBereich("mitglieder") ? mitglieder.filter(relevant).map(mitgliedZeile) : null,
     mitglieder_auswahl: namenListe,
+    // Gruppen-Assistent (nur Vereinsadmin/Trainer)
+    is_verein_admin_oder_trainer: istAdmin || istTrainer,
+    gruppe_assistent_personen: istAdmin || istTrainer
+      ? mitglieder.map((p) => ({ vm_id: vm(p.n), name: p.name, geschlecht: /a$|e$|n$/.test(p.name.split(" ")[0]) ? "weiblich" : "männlich", familie: rollenFamilie(p.rolle) }))
+      : null,
     dashboard_meine_kinder: meineKinder,
     // Training & Anwesenheit
     training_kalender: (b: Json) => trainingsTage(b.p_von ?? tag(-7), b.p_bis ?? tag(28)),
@@ -567,7 +598,7 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
       ? [{ id: ICH, verein_id: V, user_id: userId, aktiv: true, aufnahme_status: "aufgenommen", vereine: { id: V, name: verein.name, tarif: "verein", gesperrt: false }, rollen: { name: r!.name } }]
       : [],
     vereine: mitVerein ? [verein] : [],
-    gruppen: mitVerein ? GRUPPEN.map((g) => ({ id: g.id, name: g.name, verein_id: V, altersklasse_id: null, disziplin_id: null, thema: null })) : [],
+    gruppen: mitVerein ? GRUPPEN.map((g) => ({ id: g.id, name: g.name, verein_id: V, altersklasse_id: g.akId, altersklasse_frei: g.akFrei, disziplin_id: g.disziplinId, thema: null })) : [],
     trainingstermine: mitVerein
       ? GRUPPEN.flatMap((g) => g.tage.map((t) => ({ id: `${g.id.slice(0, -2)}${String(t).padStart(2, "0")}`, gruppe_id: g.id, ist_wiederholend: true, wochentag: t, datum: null, von: `${g.von}:00`, bis: `${g.bis}:00`, halle: g.halle, titel: `Training ${g.name}`, gruppen: { name: g.name } })))
       : [],
@@ -596,8 +627,10 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
     ].map(([schluessel, eltern, name, emoji, sortierung]) => ({ schluessel, eltern, name, emoji, sortierung, aktiv: true })),
     plattform_einstellungen: [{ id: true, spotlights_aktiv: einstellungen.spotlightsAktiv, spotlights_tarife: einstellungen.spotlightsTarife, musik_aktiv: einstellungen.musikAn }],
     tarif_preise: [{ tarif: "basic", periode: "monat", preis_cent: 299 }, { tarif: "basic", periode: "jahr", preis_cent: 2990 }, { tarif: "verein", periode: "monat", preis_cent: 2990 }, { tarif: "verein", periode: "jahr", preis_cent: 29900 }],
-    altersklassen: [{ id: "0e000000-0000-4000-8000-000000000f01", name: "Kinder" }, { id: "0e000000-0000-4000-8000-000000000f02", name: "Jugend" }, { id: "0e000000-0000-4000-8000-000000000f03", name: "Hauptklasse" }],
-    disziplinen: [{ id: "0e000000-0000-4000-8000-000000000f11", name: "Garde" }, { id: "0e000000-0000-4000-8000-000000000f12", name: "Showtanz" }],
+    altersklassen: [{ id: AK.jugend, name: "Jugend" }, { id: AK.junioren, name: "Junioren" }, { id: AK.ue15, name: "Ü15" }],
+    disziplinen: DISZ.map((d) => ({ id: d.id, name: d.name, besetzung: d.besetzung })),
+    altersklasse_disziplinen: DISZ.flatMap((d) => d.ak.map((a) => ({ altersklasse_id: a, disziplin_id: d.id }))),
+    gruppen_mitglieder: mitglieder.flatMap((p) => (p.g as readonly string[]).map((gid) => ({ gruppe_id: gid, vereins_mitglied_id: vm(p.n), funktion: funktionVon(p) }))),
     verbaende: [],
     einladungen: [],
     juryraum_mitglieder: [],

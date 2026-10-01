@@ -18,6 +18,7 @@ import type {
   OffeneEinladung,
   VereinsDetails,
   VereinUebersicht,
+  DisziplinInfo,
 } from "@/lib/verein/getVerein";
 import type { VereinsMitgliedschaft } from "@/lib/dashboard/getDashboardData";
 import { KARTE } from "@/components/dashboard/Karten";
@@ -40,6 +41,7 @@ export function VereinAnsicht({
   istAdmin,
   darfGruppen,
   lizenz,
+  disziplinInfos = [],
 }: {
   vereine: VereinsMitgliedschaft[];
   vereinId: string;
@@ -51,6 +53,8 @@ export function VereinAnsicht({
   istAdmin: boolean;
   darfGruppen: boolean;
   lizenz: VereinslizenzStatus | null;
+  // Disziplinen mit Besetzung und Altersklassen-Zuordnung (Gruppen-Assistent)
+  disziplinInfos?: DisziplinInfo[];
 }) {
   const adresse = [
     [verein.strasse, verein.hausnummer].filter(Boolean).join(" "),
@@ -238,14 +242,14 @@ export function VereinAnsicht({
         <KarteKopf
           icon={Layers}
           titel="Gruppen"
-          untertitel={darfGruppen ? "Als Vereinsadmin/Trainer kannst du Gruppen anlegen und bearbeiten." : undefined}
+          untertitel={darfGruppen ? "Gruppe, Tanzpaar oder Solist Schritt für Schritt anlegen – Altersklasse, Disziplin, Tänzer, Trainer und Betreuer." : undefined}
         />
         <GruppenVerwaltung
           vereinId={vereinId}
           gruppen={uebersicht.gruppen}
           darfVerwalten={darfGruppen}
           altersklassen={auswahl.altersklassen}
-          disziplinen={auswahl.disziplinen}
+          disziplinen={disziplinInfos}
         />
       </section>
 
