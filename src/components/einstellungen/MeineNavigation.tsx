@@ -2,9 +2,9 @@
 
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { GripVertical, ChevronUp, ChevronDown, Lock, RotateCcw, Save, Smartphone, Monitor } from "lucide-react";
+import { GripVertical, ChevronUp, ChevronDown, Lock, RotateCcw, Save, Smartphone, Monitor, Eye, EyeOff } from "lucide-react";
 import { ADMIN_NAV, NAV, type NavEintrag } from "@/lib/navigation";
-import { navigationSpeichern } from "@/app/dashboard/einstellungen/actions";
+import { adminNavigationAusblenden, navigationSpeichern } from "@/app/dashboard/einstellungen/actions";
 import { Meldung, type AktionsErgebnis } from "@/components/ui/SendenButton";
 import { Dialog } from "@/components/ui/Dialog";
 
@@ -18,7 +18,20 @@ function Symbol({ href, size = 18 }: { href: string; size?: number }) {
 }
 
 // Sortierbare Liste: Ziehen am Griff (Maus sofort, Touch nach kurzem Halten) oder „Nach oben/unten“
-function SortierListe({ eintraege, onAendern, klein = false }: { eintraege: { href: string; label: string }[]; onAendern: (neu: { href: string; label: string }[]) => void; klein?: boolean }) {
+function SortierListe({
+  eintraege,
+  onAendern,
+  klein = false,
+  versteckt,
+  onSichtbar,
+}: {
+  eintraege: { href: string; label: string }[];
+  onAendern: (neu: { href: string; label: string }[]) => void;
+  klein?: boolean;
+  // Nur Admin-Navigation: ausgeblendete Punkte (reine Anzeige)
+  versteckt?: Set<string>;
+  onSichtbar?: (href: string, sichtbar: boolean) => void;
+}) {
   const [ziehe, setZiehe] = useState<string | null>(null);
   const [versatz, setVersatz] = useState(0);
   const zug = useRef<{ href: string; startY: number; startIndex: number; h: number; index: number } | null>(null);
@@ -105,7 +118,21 @@ function SortierListe({ eintraege, onAendern, klein = false }: { eintraege: { hr
                 <GripVertical size={18} />
               </button>
               <Symbol href={e.href} size={klein ? 16 : 18} />
-              <span className={`min-w-0 flex-1 truncate font-semibold text-brand-ink ${klein ? "text-[13.5px]" : "text-[14.5px]"}`}>{e.label}</span>
+              <span className={`min-w-0 flex-1 truncate font-semibold ${versteckt?.has(e.href) ? "text-brand-ink-faint line-through" : "text-brand-ink"} ${klein ? "text-[13.5px]" : "text-[14.5px]"}`}>
+                {e.label}
+              </span>
+              {onSichtbar && (
+                <button
+                  type="button"
+                  aria-label={`${e.label} ${versteckt?.has(e.href) ? "einblenden" : "ausblenden"}`}
+                  aria-pressed={!versteckt?.has(e.href)}
+                  title={versteckt?.has(e.href) ? "Ausgeblendet – einblenden" : "Angezeigt – ausblenden"}
+                  onClick={() => onSichtbar(e.href, !!versteckt?.has(e.href))}
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg hover:bg-brand-bg ${versteckt?.has(e.href) ? "text-brand-ink-faint" : "text-brand-green"}`}
+                >
+                  {versteckt?.has(e.href) ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              )}
               <button type="button" aria-label={`${e.label} nach oben`} title="Nach oben" disabled={i === 0} onClick={() => verschieben(i, i - 1)} className="flex h-9 w-9 items-center justify-center rounded-lg text-brand-ink-soft hover:bg-brand-bg disabled:opacity-30">
                 <ChevronUp size={17} />
               </button>
@@ -128,7 +155,20 @@ function SortierListe({ eintraege, onAendern, klein = false }: { eintraege: { hr
 }
 
 // „Meine Navigation“: nur die Reihenfolge der Bereiche, die diese Person ohnehin sehen darf
-export function MeineNavigation({ start, system, angepasst }: { start: NaviPunkt[]; system: { href: string; label: string }[]; angepasst: boolean }) {
+export function MeineNavigation({
+  start,
+  system,
+  angepasst,
+  admin = false,
+  ausgeblendet = [],
+}: {
+  start: NaviPunkt[];
+  system: { href: string; label: string }[];
+  angepasst: boolean;
+  // TanzRaum-Admin: Punkte der eigenen Admin-Navigation ein-/ausblenden (Berechtigung bleibt)
+  admin?: boolean;
+  ausgeblendet?: string[];
+}) {
   const router = useRouter();
   const [punkte, setPunkte] = useState(start);
   const [meldung, setMeldung] = useState<AktionsErgebnis | null>(null);
@@ -136,12 +176,20 @@ export function MeineNavigation({ start, system, angepasst }: { start: NaviPunkt
   const [laeuft, starte] = useTransition();
   const startSchluessel = useMemo(() => JSON.stringify(start.map((p) => [p.href, p.unterpunkte.map((u) => u.href)])), [start]);
   // Neue Grundlage vom Server (gespeichert, zurueckgesetzt, Rechte geaendert): Liste uebernehmen, Meldung bleibt stehen
+  const [versteckt, setVersteckt] = useState(() => new Set(ausgeblendet));
   const [basis, setBasis] = useState(startSchluessel);
+  const [ausBasis, setAusBasis] = useState(JSON.stringify([...ausgeblendet].sort()));
   if (basis !== startSchluessel) {
     setBasis(startSchluessel);
     setPunkte(start);
   }
-  const geaendert = JSON.stringify(punkte.map((p) => [p.href, p.unterpunkte.map((u) => u.href)])) !== startSchluessel;
+  if (ausBasis !== JSON.stringify([...ausgeblendet].sort())) {
+    setAusBasis(JSON.stringify([...ausgeblendet].sort()));
+    setVersteckt(new Set(ausgeblendet));
+  }
+  const ausSchluessel = JSON.stringify([...ausgeblendet].sort());
+  const ausGeaendert = admin && JSON.stringify([...versteckt].sort()) !== ausSchluessel;
+  const geaendert = JSON.stringify(punkte.map((p) => [p.href, p.unterpunkte.map((u) => u.href)])) !== startSchluessel || ausGeaendert;
   const reihenfolge = punkte.flatMap((p) => [p.href, ...p.unterpunkte.map((u) => u.href)]);
 
   return (
@@ -149,6 +197,7 @@ export function MeineNavigation({ start, system, angepasst }: { start: NaviPunkt
       <p className="text-[13.5px] text-brand-ink-soft">
         Bestimme selbst, in welcher Reihenfolge deine Bereiche erscheinen – am Griff ziehen (am Handy kurz gedrückt halten) oder mit den Pfeilen verschieben. Die Reihenfolge gilt auf all
         deinen Geräten. Welche Bereiche du siehst, ändert sich dadurch nicht.
+        {admin && " Als TanzRaum-Admin kannst du einzelne Punkte deiner Admin-Navigation zusätzlich ausblenden (Auge)."}
       </p>
       <div className="grid gap-5 lg:grid-cols-[1fr_240px]">
         <div className="flex flex-col gap-4">
@@ -157,7 +206,25 @@ export function MeineNavigation({ start, system, angepasst }: { start: NaviPunkt
             <SortierListe
               eintraege={punkte.map(({ href, label }) => ({ href, label }))}
               onAendern={(neu) => setPunkte(neu.map((n) => punkte.find((p) => p.href === n.href)!))}
+              versteckt={admin ? versteckt : undefined}
+              onSichtbar={
+                admin
+                  ? (href, sichtbar) =>
+                      setVersteckt((alt) => {
+                        const neu = new Set(alt);
+                        if (sichtbar) neu.delete(href);
+                        else neu.add(href);
+                        return neu;
+                      })
+                  : undefined
+              }
             />
+            {admin && (
+              <p className="mt-2 text-[12.5px] text-brand-ink-soft">
+                👁 Ausblenden betrifft nur deine eigene Admin-Navigation. Deine Berechtigungen bleiben vollständig erhalten – ausgeblendete Bereiche erreichst
+                du weiterhin über die Administration oder die Adresse.
+              </p>
+            )}
           </section>
           {punkte
             .filter((p) => p.unterpunkte.length > 1)
@@ -198,7 +265,7 @@ export function MeineNavigation({ start, system, angepasst }: { start: NaviPunkt
               <Monitor size={13} /> Computer &amp; Tablet
             </p>
             <ul className="flex flex-col gap-0.5">
-              {punkte.map((p, i) => (
+              {punkte.filter((p) => !versteckt.has(p.href)).map((p, i) => (
                 <li key={p.href} className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] ${i === 0 ? "bg-brand-red text-white" : "text-brand-ink"}`}>
                   <Symbol href={p.href} size={15} /> <span className="truncate">{p.label}</span>
                 </li>
@@ -215,7 +282,7 @@ export function MeineNavigation({ start, system, angepasst }: { start: NaviPunkt
               <Smartphone size={13} /> Handy – untere Leiste
             </p>
             <div className="grid grid-cols-5 gap-1">
-              {punkte.slice(0, 4).map((p) => (
+              {punkte.filter((p) => !versteckt.has(p.href)).slice(0, 4).map((p) => (
                 <span key={p.href} className="flex flex-col items-center gap-0.5 rounded-lg py-1.5 text-[10.5px] text-brand-ink-soft">
                   <Symbol href={p.href} size={17} />
                   <span className="max-w-full truncate px-0.5">{p.label.replace("TanzRaum-", "")}</span>
@@ -236,7 +303,12 @@ export function MeineNavigation({ start, system, angepasst }: { start: NaviPunkt
           disabled={!geaendert || laeuft}
           onClick={() =>
             starte(async () => {
-              const r = await navigationSpeichern(reihenfolge);
+              let r = await navigationSpeichern(reihenfolge);
+              // Ausgeblendete Admin-Punkte: nur ein Fehler ersetzt die Erfolgsmeldung der Reihenfolge
+              if (!r.error && admin) {
+                const aus = await adminNavigationAusblenden([...versteckt]);
+                if (aus.error) r = aus;
+              }
               setMeldung(r);
               if (!r.error) router.refresh();
             })
@@ -269,7 +341,11 @@ export function MeineNavigation({ start, system, angepasst }: { start: NaviPunkt
                 disabled={laeuft}
                 onClick={() =>
                   starte(async () => {
-                    const r = await navigationSpeichern(null);
+                    let r = await navigationSpeichern(null);
+                    if (!r.error && admin) {
+                      const aus = await adminNavigationAusblenden([]);
+                      if (aus.error) r = aus;
+                    }
                     setMeldung(r);
                     setFrage(false);
                     if (!r.error) router.refresh();

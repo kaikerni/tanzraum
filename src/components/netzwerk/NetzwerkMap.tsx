@@ -8,11 +8,11 @@ import { farbeFuer, initialen } from "@/components/chat/ChatAvatar";
 
 // Karte: Google Maps (Maps JavaScript API). Geladen wird erst nach Klick auf "Karte laden" (Daten gehen an Google),
 // auf Wunsch fuer dieses Geraet gemerkt. Der Browser-Schluessel kommt zur Laufzeit vom Server (GOOGLE_MAPS_BROWSER_KEY).
-const MERKEN = "tanzraum-google-maps";
+export const MERKEN = "tanzraum-google-maps";
 const DEUTSCHLAND = { lat: 51.16, lng: 10.45 };
 
 // TanzRaum-Farbwelt: warmer Hintergrund, zartes Wasser, ohne Geschaefte/OePNV-Symbole
-const STIL: google.maps.MapTypeStyle[] = [
+export const STIL: google.maps.MapTypeStyle[] = [
   { elementType: "geometry", stylers: [{ color: "#faf7f4" }] },
   { elementType: "labels.text.fill", stylers: [{ color: "#5b6272" }] },
   { elementType: "labels.text.stroke", stylers: [{ color: "#ffffff" }] },
@@ -28,7 +28,7 @@ const STIL: google.maps.MapTypeStyle[] = [
 type Bibliothek = { Map: typeof google.maps.Map; OverlayView: typeof google.maps.OverlayView; LatLngBounds: typeof google.maps.LatLngBounds };
 let ladevorgang: Promise<Bibliothek> | null = null;
 
-function googleMapsLaden(schluessel: string): Promise<Bibliothek> {
+export function googleMapsLaden(schluessel: string): Promise<Bibliothek> {
   if (ladevorgang) return ladevorgang;
   ladevorgang = new Promise<Bibliothek>((resolve, reject) => {
     const w = window as unknown as Record<string, unknown>;
@@ -56,7 +56,7 @@ function googleMapsLaden(schluessel: string): Promise<Bibliothek> {
 
 // Eigene HTML-Marker (TanzRaum-Optik) als OverlayView – braucht keine Map-ID
 type HtmlMarker = google.maps.OverlayView;
-function htmlMarker(bib: Bibliothek, position: google.maps.LatLngLiteral, el: HTMLElement, unten: boolean): HtmlMarker {
+export function htmlMarker(bib: Bibliothek, position: google.maps.LatLngLiteral, el: HTMLElement, unten: boolean): HtmlMarker {
   class Marker extends bib.OverlayView {
     onAdd() {
       el.style.position = "absolute";

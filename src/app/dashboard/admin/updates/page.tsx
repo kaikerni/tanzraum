@@ -33,15 +33,17 @@ export default async function UpdatesSeite() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  // TanzRaum-Admin oder Teammitglied mit dem Recht „news.verwalten“ (die Datenbank prueft jede Aktion erneut)
   const { data: istAdmin } = await supabase.rpc("ist_plattform_admin_aktuell");
-  if (istAdmin !== true) redirect("/dashboard");
+  const { data: darfTeam } = istAdmin === true ? { data: true } : await supabase.rpc("team_darf", { p_recht: "news.verwalten" });
+  if (darfTeam !== true) redirect("/dashboard");
   const { data } = await supabase.rpc("ankuendigungen_admin");
   const liste = ((data ?? []) as Eintrag[]).filter((a) => a.art === "neuheit");
   const jetzt = Date.now();
 
   return (
     <div className="mx-auto flex max-w-[900px] flex-col gap-4">
-      <Link href="/dashboard/admin" className="text-[13px] font-semibold text-brand-ink-soft hover:text-brand-ink">
+      <Link href={istAdmin === true ? "/dashboard/admin" : "/dashboard/team"} className="text-[13px] font-semibold text-brand-ink-soft hover:text-brand-ink">
         ← Administration
       </Link>
       <section className={`${KARTE} flex flex-wrap items-center gap-3`}>

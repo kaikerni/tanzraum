@@ -136,8 +136,16 @@ export const KONTEXT_TIPPS: KaiTipp[] = [
     text: "Wichtige Informationen und Abstimmungen aus deinem Verein – und Ankündigungen von TanzRaum." },
   { pfad: "/dashboard/dateien", zeile: "📁 Eure Dateien, sicher abgelegt.", titel: "TeamCloud", pose: "erklaeren",
     text: "Dokumente, Musik und Pläne deines Vereins – und eigene Dateien, die nur du siehst." },
-  { pfad: "/dashboard/tarif", zeile: "💳 Dein Tarif im Überblick.", titel: "Mein Tarif", pose: "erklaeren",
-    text: "Dein Tarif und – falls du Vereinsadmin bist – eure Vereinslizenz." },
+  { pfad: "/dashboard/tarif", zeile: "💳 Dein Tarif im Überblick.", titel: "Mein Tarif & Lizenz", pose: "erklaeren",
+    text: "Dein Tarif, wie lange er gilt und wie er freigeschaltet ist – und falls du Vereinsadmin bist, eure Vereinslizenz." },
+  { pfad: "/dashboard/workshops", zeile: "🎓 Lust auf neue Impulse?", titel: "Workshops", pose: "idee",
+    text: "Hier findest du Workshops rund um den karnevalistischen Tanzsport – filtere nach Bundesland und Zeitraum oder reiche selbst einen ein." },
+  { pfad: "/dashboard/treff", zeile: "💬 Fragen · Austauschen · Wissen teilen", titel: "TanzRaum Treff", pose: "hinweis",
+    text: "Lies mit, stell Fragen und teile deine Erfahrung. Mitdiskutieren kannst du mit BASIC oder über die Vereinslizenz." },
+  { pfad: "/dashboard/treff/wissen", zeile: "📚 Gesammeltes Wissen.", titel: "Wissensbeiträge im Treff", pose: "erklaeren",
+    text: "Redaktionell aufbereitetes Wissen aus der Community – teils mit Link zur passenden Diskussion im Treff." },
+  { pfad: "/dashboard/team", zeile: "🛡 Dein Teambereich.", titel: "TanzRaum Team", pose: "erklaeren",
+    text: "Hier siehst du nur die Bereiche, die dir der TanzRaum-Admin freigegeben hat." },
   { pfad: "/dashboard/suche", zeile: "🔎 Wonach suchst du?", titel: "Suche", pose: "nachdenken",
     text: "Gefunden wird nur, was du in TanzRaum auch sehen darfst." },
   { pfad: "/dashboard/admin", zeile: "🛡️ Plattform-Aufgaben.", titel: "Administration", pose: "erklaeren",
@@ -154,6 +162,7 @@ export function tippFuer(pfad: string, erlaubt?: (href: string) => boolean): Kai
 
 // Hinweise auf neue Funktionen (neueste zuerst)
 export const NEUIGKEITEN: KaiNeuigkeit[] = [
+  { id: "2026-10-treff", datum: "2026-10-02", titel: "TanzRaum Treff & Workshops", text: "Die neue Community: Fragen stellen, austauschen, Wissen teilen – mit Wissensbeiträgen – und Workshops rund um den Tanzsport entdecken.", aktion: { label: "Zum TanzRaum Treff", href: "/dashboard/treff" } },
   { id: "2026-09-kai", datum: "2026-09-30", titel: "Kai ist da", text: "Dein neuer TanzRaum-Begleiter – mit Einrichtungshilfe und Tipps für jede Seite." },
   { id: "2026-09-suche", datum: "2026-09-30", titel: "Suche in der Kopfzeile", text: "Mitglieder, Termine, Dateien, Nachrichten und mehr – alles mit einer Suche.", aktion: { label: "Suche öffnen", href: "/dashboard/suche" } },
   { id: "2026-09-erinnerungen", datum: "2026-09-30", titel: "Automatische Erinnerungen", text: "TanzRaum erinnert an fällige Beiträge und an die Rückgabe von Kostümen – jeweils nur einmal." },

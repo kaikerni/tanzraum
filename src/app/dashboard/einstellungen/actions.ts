@@ -157,3 +157,13 @@ export async function navigationSpeichern(reihenfolge: string[] | null): Promise
   revalidatePath("/dashboard", "layout");
   return { error: null, ok: liste && liste.length ? "Deine Navigation ist gespeichert – auf allen Geräten." : "Die TanzRaum-Standardreihenfolge gilt wieder." };
 }
+
+// TanzRaum-Admin: Punkte der eigenen Admin-Navigation ausblenden (nur Anzeige – die Datenbank prueft das Admin-Recht)
+export async function adminNavigationAusblenden(hrefs: string[]): Promise<AktionsErgebnis> {
+  const { supabase } = await sitzung();
+  const liste = hrefs.filter((x) => typeof x === "string" && /^\/[a-z0-9/#_-]{1,80}$/.test(x)).slice(0, 100);
+  const { error } = await supabase.rpc("admin_navigation_ausblenden", { p_hrefs: liste });
+  if (error) return { error: error.code === "42501" ? "Nur für die TanzRaum-Administration." : "Die Admin-Navigation konnte nicht gespeichert werden." };
+  revalidatePath("/dashboard", "layout");
+  return { error: null, ok: "Deine Admin-Navigation ist gespeichert. Deine Berechtigungen bleiben unverändert." };
+}

@@ -29,6 +29,12 @@ const SA = (() => {
   return 7 + ((6 - wt + 7) % 7);
 })();
 
+const TREFF_KATEGORIEN = [
+  { id: "0e000000-0000-4000-8000-000000000f41", name: "Turniere & Wertung", emoji: "🏆" },
+  { id: "0e000000-0000-4000-8000-000000000f42", name: "Kostüme & Requisiten", emoji: "👗" },
+  { id: "0e000000-0000-4000-8000-000000000f43", name: "Training & Technik", emoji: "💃" },
+];
+
 const PERSONEN = [
   { n: 1, name: "Sabine Keller", rolle: "Trainerin", ak: "Hauptklasse", g: [G1, G2, G3], funktion: "trainer" },
   { n: 2, name: "Lena Muster", rolle: "Tänzerin", ak: "Jugend", g: [G1] },
@@ -426,6 +432,11 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
       })
     : [];
 
+  const treffThemen = [
+    { id: "0e000000-0000-4000-8000-000000000f51", kategorie_id: TREFF_KATEGORIEN[0].id, kategorie: TREFF_KATEGORIEN[0].name, kategorie_emoji: TREFF_KATEGORIEN[0].emoji, titel: "Wie bereitet ihr euch auf das erste Turnier vor?", auszug: "Unsere Jugendgarde startet bald zum ersten Mal – welche Tipps habt ihr?", autor_id: uid(1), autor_handle: "sabine.k", autor_avatar: null, autor_verein: verein.name, autor_kennzeichen: null, erstellt_am: vor(2), bearbeitet_am: null, letzte_aktivitaet: vor(1), antworten: 4, angepinnt: false, geschlossen: false, empfohlen: true, beantwortet: true },
+    { id: "0e000000-0000-4000-8000-000000000f52", kategorie_id: TREFF_KATEGORIEN[1].id, kategorie: TREFF_KATEGORIEN[1].name, kategorie_emoji: TREFF_KATEGORIEN[1].emoji, titel: "Kostüme richtig lagern über den Sommer", auszug: "Wie lagert ihr Gardekostüme, damit nichts knittert oder ausbleicht?", autor_id: uid(5), autor_handle: "jonas.w", autor_avatar: null, autor_verein: null, autor_kennzeichen: null, erstellt_am: vor(5), bearbeitet_am: null, letzte_aktivitaet: vor(2), antworten: 2, angepinnt: false, geschlossen: false, empfohlen: false, beantwortet: false },
+  ];
+
   const rpc: VorschauDaten["rpc"] = {
     // Konto, Tarif, Rechte
     ist_plattform_admin_aktuell: false,
@@ -623,6 +634,14 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
     juryraum_fuer_mich: false,
     juryraum_freigegeben: false,
     anzeige_namen: [],
+    // TanzRaum Team: die Vorschau zeigt nie Team-/Admin-Rechte
+    meine_team_rechte: { admin: false, team: false, moderator: false, alle_rechte: false, rechte: [] },
+    team_darf: false,
+    // TanzRaum Treff (erfundene Beispielthemen; Schreiben ab BASIC, unter 16 nur lesen)
+    treff_mein_status: { schreiben: tarif !== "free" && ansicht !== "verein_mitglied", tarif, unter_16: ansicht === "verein_mitglied", gesperrt_bis: null, themen_erstellen_team: false, admin: false, rechte: [] },
+    treff_kategorien_liste: TREFF_KATEGORIEN.map((k, i) => ({ ...k, beschreibung: null, sortierung: (i + 1) * 10, aktiv: true, themen: i < 2 ? 1 : 0, letzte_aktivitaet: i < 2 ? vor(i + 1) : null })),
+    treff_themen_liste: (b: Json) => treffThemen.filter((t) => !b.p_kategorie || t.kategorie_id === b.p_kategorie),
+    treff_aehnliche: [],
   };
 
   const tab: VorschauDaten["tab"] = {
@@ -659,7 +678,7 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
       ["kostueme", null, "Kostüme", "👗", 10], ["tanzschuhe", null, "Tanzschuhe", "👠", 20], ["accessoires", null, "Accessoires", "🎀", 30], ["requisiten", null, "Requisiten", "🎭", 40],
       ["trainingsbekleidung", null, "Trainingsbekleidung", "👕", 50], ["sonstiges", null, "Sonstiges", "📦", 90],
     ].map(([schluessel, eltern, name, emoji, sortierung]) => ({ schluessel, eltern, name, emoji, sortierung, aktiv: true })),
-    plattform_einstellungen: [{ id: true, spotlights_aktiv: einstellungen.spotlightsAktiv, spotlights_tarife: einstellungen.spotlightsTarife, musik_aktiv: einstellungen.musikAn }],
+    plattform_einstellungen: [{ id: true, spotlights_aktiv: einstellungen.spotlightsAktiv, spotlights_tarife: einstellungen.spotlightsTarife, musik_aktiv: einstellungen.musikAn, navigation_tarife: {} }],
     tarif_preise: [{ tarif: "basic", periode: "monat", preis_cent: 299 }, { tarif: "basic", periode: "jahr", preis_cent: 2990 }, { tarif: "verein", periode: "monat", preis_cent: 2990 }, { tarif: "verein", periode: "jahr", preis_cent: 29900 }],
     altersklassen: [{ id: AK.jugend, name: "Jugend" }, { id: AK.junioren, name: "Junioren" }, { id: AK.ue15, name: "Ü15" }],
     disziplinen: DISZ.map((d) => ({ id: d.id, name: d.name, besetzung: d.besetzung })),
@@ -674,6 +693,13 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
     ehrungs_organisationen: [],
     ehrungs_bestellungen: [],
     mitglied_zeitraeume: [],
+    workshops: [
+      { id: "0e000000-0000-4000-8000-000000000f61", titel: "Technik-Workshop Gardetanz", datum: tag(SA + 7), datum_bis: null, uhrzeit_von: "10:00:00", uhrzeit_bis: "16:00:00", ausrichter: "KG Blau-Weiß Musterdorf", ort: "Musterdorf", adresse: "Sporthalle am Park", bundesland: "Rheinland-Pfalz", kategorie: "technik", beschreibung: "Grundlagen und Feinschliff für Garde-Tänzerinnen und -Tänzer.", ansprechpartner: "Sabine Keller", kontakt: null, link: null, bild_pfad: null, lat: null, lng: null, status: "freigegeben", ablehnungsgrund: null, eingereicht_von: uid(1), erstellt_am: vor(10) },
+      { id: "0e000000-0000-4000-8000-000000000f62", titel: "Akrobatik für Einsteiger", datum: tag(SA + 21), datum_bis: tag(SA + 22), uhrzeit_von: null, uhrzeit_bis: null, ausrichter: "TSV Beispielstadt", ort: "Beispielstadt", adresse: null, bundesland: "Hessen", kategorie: "akrobatik", beschreibung: "Sicher und schrittweise zu den ersten Akrobatik-Elementen.", ansprechpartner: null, kontakt: null, link: null, bild_pfad: null, lat: null, lng: null, status: "freigegeben", ablehnungsgrund: null, eingereicht_von: uid(5), erstellt_am: vor(4) },
+    ],
+    wissen_artikel: [
+      { id: "0e000000-0000-4000-8000-000000000f71", titel: "Wie funktioniert die Wertung im karnevalistischen Tanzsport?", kategorie_id: TREFF_KATEGORIEN[0].id, einleitung: "Ein Überblick über Wertungsrichter, Kriterien und Punktevergabe.", inhalt: "Beispieltext für die Vorschau.", bild_pfad: null, link: null, redaktionshinweis: null, treff_thema_id: treffThemen[0].id, status: "veroeffentlicht", erstellt_am: vor(20), geaendert_am: vor(20), veroeffentlicht_am: vor(20) },
+    ],
   };
   return { rpc, tab };
 }

@@ -7,8 +7,42 @@ import { TarifKarten } from "@/components/tarif/TarifKarten";
 import { LizenzKarte } from "@/components/tarif/LizenzKarte";
 import { OffeneUeberweisung } from "@/components/tarif/OffeneUeberweisung";
 import { TARIF_LABEL, datum, getPreise, type MeinTarifStatus } from "@/lib/tarife";
+import { lizenzStatus, restTage } from "@/lib/lizenz";
 
-export const metadata = { title: "Mein Tarif" };
+// Vereinslizenz, ueber die man abgedeckt ist: Verein, Status, gueltig bis (Abrechnung ueber den Verein)
+function VereinslizenzKarte({ verein, bis }: { verein: string | null; bis: string | null }) {
+  const st = lizenzStatus("verein", bis);
+  const tage = restTage(bis);
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-brand-gold/40 bg-brand-gold-wash/40 p-4">
+      <div className="text-[11.5px] font-bold uppercase tracking-wide text-brand-ink-soft">Vereinslizenz</div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+        <div>
+          <div className="text-[11.5px] font-bold uppercase tracking-wide text-brand-ink-soft">Verein</div>
+          <div className="text-[14.5px] font-bold text-brand-ink">{verein ?? "–"}</div>
+        </div>
+        <div>
+          <div className="text-[11.5px] font-bold uppercase tracking-wide text-brand-ink-soft">Lizenz</div>
+          <div className="text-[14.5px] font-bold text-brand-ink">VEREIN</div>
+        </div>
+        <div>
+          <div className="text-[11.5px] font-bold uppercase tracking-wide text-brand-ink-soft">Status</div>
+          <div className="text-[14.5px] font-bold text-brand-ink">{st.text}</div>
+        </div>
+        <div>
+          <div className="text-[11.5px] font-bold uppercase tracking-wide text-brand-ink-soft">Gültig bis</div>
+          <div className="text-[14.5px] font-bold text-brand-ink">{bis ? datum(bis) : "laufend"}</div>
+        </div>
+      </div>
+      {st.stufe === "bald" && tage !== null && (
+        <p className="text-[13px] font-semibold text-brand-ink">🟠 Die Vereinslizenz ist noch {tage === 1 ? "1 Tag" : `${tage} Tage`} gültig.</p>
+      )}
+      <p className="text-[12.5px] text-brand-ink-soft">Abrechnung über deinen Verein – für dich entstehen keine Kosten.</p>
+    </div>
+  );
+}
+
+export const metadata = { title: "Mein Tarif & Lizenz" };
 
 export default async function MeinTarifSeite({
   searchParams,
@@ -30,9 +64,9 @@ export default async function MeinTarifSeite({
     <div className="mx-auto flex max-w-[1200px] flex-col gap-5">
       <div>
         <h1 className="flex items-center gap-2 text-[26px] font-extrabold tracking-tight text-brand-ink">
-          <CreditCard size={24} className="text-brand-red" /> Mein Tarif
+          <CreditCard size={24} className="text-brand-red" /> Mein Tarif & Lizenz
         </h1>
-        <p className="text-[14px] text-brand-ink-soft">Dein persönlicher Tarif und die Vereinslizenzen, die du verwaltest.</p>
+        <p className="text-[14px] text-brand-ink-soft">Dein Tarif, seine Laufzeit und die Vereinslizenzen, die du verwaltest.</p>
       </div>
 
       {sp.zahlung === "erfolg" && (
@@ -65,6 +99,7 @@ export default async function MeinTarifSeite({
             <strong className="text-brand-ink">{z.vereinszugang ? "ja, du bist abgedeckt" : "keine"}</strong>
           </div>
         </div>
+        {z.vereinszugang && <VereinslizenzKarte verein={status.verein_name} bis={status.vereinslizenz_bis ?? null} />}
         {status.abos.length > 0 ? (
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             {status.abos.map((a) => (

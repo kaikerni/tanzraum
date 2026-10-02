@@ -38,6 +38,12 @@ import {
   Map as MapIcon,
   Theater,
   Scale,
+  GraduationCap,
+  MessageSquareText as TreffIcon,
+  Shield,
+  History,
+  ListOrdered,
+  KeyRound,
   type LucideIcon,
 } from "lucide-react";
 
@@ -77,7 +83,8 @@ export type VereinsModul =
   | "finanzen"
   | "musik"
   | "statistiken"
-  | "trainer_netzwerk";
+  | "trainer_netzwerk"
+  | "workshops";
 
 export const VEREINS_MODULE: { id: VereinsModul; label: string; text: string }[] = [
   { id: "training", label: "Training", text: "Trainingszeiten, Zu- und Absagen" },
@@ -94,6 +101,7 @@ export const VEREINS_MODULE: { id: VereinsModul; label: string; text: string }[]
   { id: "musik", label: "Musik", text: "Musiktitel für Training und Auftritte" },
   { id: "statistiken", label: "Statistiken", text: "Auswertungen – Inhalte und Zugriff legt der Vereinsadmin fest" },
   { id: "trainer_netzwerk", label: "Trainer-Netzwerk", text: "Austausch der Trainerinnen und Trainer" },
+  { id: "workshops", label: "Workshops", text: "Workshops im Menü der Vereinsmitglieder – ausblenden schaltet sie nicht für TanzRaum ab" },
 ];
 
 export type Zugriff = {
@@ -112,6 +120,12 @@ export type Zugriff = {
   juryraum?: boolean;
   // „Meine Navigation“: nur die persoenliche Reihenfolge (DB: meine_navigation()) – vergibt nie Rechte
   reihenfolge?: string[] | null;
+  // TanzRaum Team (DB: meine_team_rechte()) – zeigt den Teambereich; jede Aktion prueft ihr Recht selbst
+  team?: boolean;
+  // Admin-Navigation: vom TanzRaum-Admin ausgeblendete Punkte (DB: meine_navigation_ausgeblendet()) – nur Anzeige
+  ausgeblendet?: string[] | null;
+  // Globale Nutzer-Navigation je Tarif (DB: plattform_einstellungen.navigation_tarife) – nur Anzeige
+  navTarife?: Record<string, string[]> | null;
 };
 
 export type NavEintrag = {
@@ -137,6 +151,8 @@ export type NavEintrag = {
   jury?: boolean;
   // Nur wenn Spotlights fuer den eigenen Tarif eingeschaltet sind
   spotlights?: boolean;
+  // Nur fuer Mitglieder des TanzRaum Teams
+  team?: boolean;
 };
 
 export const NETZWERK = "/dashboard/netzwerk";
@@ -176,6 +192,9 @@ export const NAV: NavEintrag[] = [
   { href: `${NACHRICHTEN}/chats`, label: "Chats", icon: MessageCircle, tarif: "basic", eltern: NACHRICHTEN, nurSeitenleiste: true },
   { href: `${NACHRICHTEN}/gruppen`, label: "Gruppenchats", icon: MessagesSquare, tarif: "basic", eltern: NACHRICHTEN, nurSeitenleiste: true },
   { href: "/dashboard/turniere", label: "Turniere", icon: Trophy, tarif: "free", modul: "turniere" },
+  // 🎓 Workshops, 💬 TanzRaum Treff (inkl. 📚 Wissensbeiträge – kein eigener Menüpunkt): mit Konto ab FREE (schreiben im Treff ab BASIC/VEREIN)
+  { href: "/dashboard/workshops", label: "Workshops", icon: GraduationCap, tarif: "free", modul: "workshops" },
+  { href: "/dashboard/treff", label: "TanzRaum Treff", kurz: "Treff", icon: TreffIcon, tarif: "free" },
   { href: "/juryraum/dashboard", label: "JuryRaum", icon: Scale, tarif: "free", jury: true },
   // Persoenliche und weitere Bereiche
   { href: "/dashboard/trainer-netzwerk", label: "Trainer-Netzwerk", icon: Handshake, tarif: "verein", netzwerk: "trainer", modul: "trainer_netzwerk" },
@@ -183,6 +202,7 @@ export const NAV: NavEintrag[] = [
   // Community-Marktplatz fuer alle (keine Vereinsfunktion)
   { href: "/dashboard/boerse", label: "TanzRaum Börse", kurz: "Börse", icon: Store, tarif: "free" },
   { href: "/dashboard/musik", label: "Musik", icon: Music, tarif: "basic", nichtNurFuer: ["rolle_betreuer", "rolle_eltern"], modul: "musik" },
+  { href: "/dashboard/team", label: "TanzRaum Team", kurz: "Team", icon: Shield, tarif: "free", team: true },
   { href: "/dashboard/admin", label: "TanzRaum-Administration", icon: ShieldCheck, tarif: "free", recht: "plattform_admin" },
   { href: "/dashboard/tarif", label: "Mein Tarif", kurz: "Tarif", icon: CreditCard, tarif: "free" },
   { href: "/dashboard/einstellungen", label: "Einstellungen", icon: Settings, tarif: "free" },
@@ -198,6 +218,10 @@ export const ADMIN_NAV: NavEintrag[] = [
   { href: "/dashboard/admin/vereine", label: "Vereine", icon: Building2, tarif: "free" },
   { href: "/dashboard/admin/benutzer", label: "Benutzer", icon: Users, tarif: "free" },
   { href: "/dashboard/admin/tarife", label: "Tarife & Lizenzen", kurz: "Tarife", icon: CreditCard, tarif: "free" },
+  { href: "/dashboard/admin/lizenzen", label: "Nutzer freischalten", kurz: "Freischalten", icon: KeyRound, tarif: "free" },
+  { href: "/dashboard/admin/team", label: "TanzRaum Team", kurz: "Team", icon: Shield, tarif: "free" },
+  { href: "/dashboard/workshops", label: "Workshops", icon: GraduationCap, tarif: "free" },
+  { href: "/dashboard/treff", label: "TanzRaum Treff", kurz: "Treff", icon: TreffIcon, tarif: "free" },
   { href: "/dashboard/admin/rechnungen", label: "Rechnungen", icon: Receipt, tarif: "free" },
   { href: "/dashboard/admin/boerse", label: "Börse-Moderation", kurz: "Börse", icon: Store, tarif: "free" },
   { href: "/dashboard/admin/ankuendigungen", label: "Ankündigungen", icon: Megaphone, tarif: "free" },
@@ -209,6 +233,8 @@ export const ADMIN_NAV: NavEintrag[] = [
   { href: "/dashboard/spotlight", label: "Spotlight", icon: Sparkles, tarif: "free", spotlights: true },
   { href: "/dashboard/admin/vorschau", label: "Ansicht als …", kurz: "Ansicht", icon: Eye, tarif: "free" },
   { href: "/dashboard/admin/anbieter", label: "Anbieterangaben", icon: FileText, tarif: "free" },
+  { href: "/dashboard/admin/navigation", label: "Navigation & Bereiche", kurz: "Navigation", icon: ListOrdered, tarif: "free" },
+  { href: "/dashboard/admin/protokoll", label: "Protokoll", icon: History, tarif: "free" },
   { href: "/dashboard/einstellungen", label: "Einstellungen", icon: Settings, tarif: "free" },
 ];
 
@@ -239,17 +265,35 @@ function nurAusgeschlosseneRollen(zugriff: Zugriff, ausgeschlossen: RollenMarker
 // Erlaubte Menuepunkte (ohne persoenliche Reihenfolge) – Grundlage fuer alle Rechte-Pruefungen der Anzeige
 export function erlaubteNav(zugriff: Zugriff): NavEintrag[] {
   // Plattform-Admin (ohne „Ansicht als …“): nur die Admin-Navigation
-  if (zugriff.istPlattformAdmin) return ADMIN_NAV.filter((n) => !n.spotlights || zugriff.spotlightsAn === true);
+  // Ausgeblendete Punkte entfallen nur in der Anzeige – die Berechtigung bleibt (Einstellungen immer sichtbar)
+  if (zugriff.istPlattformAdmin) {
+    const aus = new Set(zugriff.ausgeblendet ?? []);
+    return ADMIN_NAV.filter((n) => (!n.spotlights || zugriff.spotlightsAn === true) && (!aus.has(n.href) || n.href === "/dashboard/einstellungen"));
+  }
   return NAV.filter(
     (n) =>
       (n.href !== "/dashboard/musik" || zugriff.musikAn !== false) &&
       (!n.jury || zugriff.juryraum === true) &&
       (!n.spotlights || zugriff.spotlightsAn === true) &&
+      (!n.team || zugriff.team === true) &&
       (n.netzwerk ? zugriff.netzwerk === n.netzwerk : darf(zugriff, n.tarif, n.recht)) &&
       modulAn(zugriff, n.modul) &&
-      (zugriff.istPlattformAdmin || !n.nichtNurFuer || !nurAusgeschlosseneRollen(zugriff, n.nichtNurFuer)),
+      (zugriff.istPlattformAdmin || !n.nichtNurFuer || !nurAusgeschlosseneRollen(zugriff, n.nichtNurFuer)) &&
+      tarifSichtbar(zugriff, n),
   );
 }
+
+// Globale Nutzer-Navigation: Bereiche, die der TanzRaum-Admin fuer einen Tarif ausgeblendet hat (samt Unterpunkten).
+// Nur Anzeige – jede Seite prueft ihren Zugriff selbst. Fehlt ein Bereich in der Einstellung, ist er fuer alle sichtbar.
+export function tarifSichtbar(zugriff: Zugriff, n: NavEintrag): boolean {
+  const regel = zugriff.navTarife ?? {};
+  const pruefen = (href: string) => !Array.isArray(regel[href]) || regel[href].includes(zugriff.tarif);
+  return pruefen(n.href) && (!n.eltern || pruefen(n.eltern));
+}
+
+// Bereiche fuer „Navigation & Bereiche“ (Hauptpunkte der Nutzer-Navigation ohne System, Admin und Team)
+export const TARIF_BEREICHE = (): NavEintrag[] =>
+  NAV.filter((n) => !n.eltern && !SYSTEM_NAV.has(n.href) && n.href !== "/dashboard" && n.recht !== "plattform_admin" && !n.team);
 
 // Systembereiche bleiben fest am Ende (nicht sortierbar)
 export const SYSTEM_NAV = new Set(["/dashboard/tarif", "/dashboard/einstellungen"]);

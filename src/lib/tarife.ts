@@ -31,7 +31,7 @@ export const VERLAENGERUNG_LABEL: Record<string, string> = {
   manuell: "über den TanzRaum-Support",
   ueberweisung: "per Überweisung",
 };
-export const PERIODE_LABEL: Record<string, string> = { monat: "monatlich", jahr: "jährlich", unbefristet: "unbefristet" };
+export const PERIODE_LABEL: Record<string, string> = { monat: "monatlich", jahr: "jährlich", unbefristet: "unbefristet", befristet: "befristet" };
 
 export async function getPreise(supabase: SupabaseClient): Promise<Preise | null> {
   const { data } = await supabase.from("tarif_preise").select("tarif, periode, preis_cent");
@@ -92,6 +92,9 @@ export type AboInfo = {
   pause_grund?: string | null;
   pausiert_am?: string | null;
   pause_verein?: string | null;
+  // PAID_BASIC, MANUAL_FREE, TEAM_FREE, VEREIN (DB: abo_lizenzart)
+  lizenzart?: string | null;
+  start?: string | null;
 };
 
 export type OffeneUeberweisung = {
@@ -116,6 +119,8 @@ export type MeinTarifStatus = {
     plattform_admin: boolean;
   };
   verein_name: string | null;
+  vereinslizenz_bis?: string | null;
+  team?: boolean;
   abos: AboInfo[];
   admin_vereine: { id: string; name: string; lizenz: boolean; lizenz_bis: string | null; abo: AboInfo | null; ueberweisung: OffeneUeberweisung | null }[];
   bank: Bankverbindung | null;

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Flag, ShieldCheck, CreditCard, Medal, Building2, Receipt, Megaphone, BarChart3, LifeBuoy, Eye, Store, Users, Sparkles } from "lucide-react";
+import { Flag, ShieldCheck, CreditCard, Medal, Building2, Receipt, Megaphone, BarChart3, LifeBuoy, Eye, Store, Users, Sparkles, KeyRound, Shield, GraduationCap, MessageSquareText, ListOrdered, History } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { versionText } from "@/lib/version";
 import { KARTE } from "@/components/dashboard/Karten";
@@ -27,6 +27,9 @@ export default async function AdminSeite() {
   const boerseMeldungen = Number((boerse as { zahlen?: { offene_meldungen?: number } } | null)?.zahlen?.offene_meldungen ?? 0);
   const { data: spotlightEinstellung } = await supabase.from("plattform_einstellungen").select("spotlights_aktiv, spotlights_tarife, musik_aktiv, juryraum_aktiv").eq("id", true).maybeSingle();
   const { data: laufend } = await supabase.rpc("admin_benutzer_suche", { p_q: "" });
+  const [{ data: pruefen }, { data: treffMeldungen }] = await Promise.all([supabase.rpc("workshops_pruefen"), supabase.rpc("treff_meldungen", { p_status: "offen" })]);
+  const workshopsOffen = ((pruefen ?? []) as { status: string }[]).filter((w) => w.status === "eingereicht").length;
+  const treffOffen = ((treffMeldungen ?? []) as unknown[]).length;
   const loeschungen = ((laufend ?? []) as unknown[]).length;
   const kacheln = [
     { href: "/dashboard/admin/statistik", icon: BarChart3, farbe: "bg-brand-blue-wash text-brand-blue", titel: "Plattform-Statistik", text: "Nutzer, Tarife, Vereine, Aktivität – nur zusammengefasste Zahlen" },
@@ -56,6 +59,26 @@ export default async function AdminSeite() {
       marke: loeschungen > 0 ? `${loeschungen} Löschung${loeschungen === 1 ? "" : "en"}` : null,
     },
     { href: "/dashboard/admin/vorschau", icon: Eye, farbe: "bg-brand-purple-wash text-brand-purple", titel: "Ansicht als …", text: "TanzRaum als FREE, BASIC oder VEREIN (Vereinsadmin, Trainer, Betreuer, Tänzer, Eltern) ansehen" },
+    { href: "/dashboard/admin/lizenzen", icon: KeyRound, farbe: "bg-brand-green-wash text-brand-green", titel: "Nutzer freischalten", text: "Kostenlos oder regulär freischalten, verlängern, deaktivieren – mit Lizenzübersicht" },
+    { href: "/dashboard/admin/team", icon: Shield, farbe: "bg-brand-blue-wash text-brand-blue", titel: "TanzRaum Team", text: "Teammitglieder, Moderatoren und ihre einzeln vergebenen Rechte" },
+    {
+      href: "/dashboard/workshops/pruefen",
+      icon: GraduationCap,
+      farbe: "bg-brand-gold-wash text-brand-gold",
+      titel: "Workshops prüfen",
+      text: "Eingereichte Workshops freigeben oder ablehnen",
+      marke: workshopsOffen > 0 ? `${workshopsOffen} eingereicht` : null,
+    },
+    {
+      href: "/dashboard/treff/meldungen",
+      icon: MessageSquareText,
+      farbe: "bg-brand-red-wash text-brand-red",
+      titel: "TanzRaum Treff – Moderation",
+      text: "Gemeldete Themen, Beiträge und Nutzer · Kategorien · Wissensbeiträge",
+      marke: treffOffen > 0 ? `${treffOffen} offen` : null,
+    },
+    { href: "/dashboard/admin/navigation", icon: ListOrdered, farbe: "bg-brand-blue-wash text-brand-blue", titel: "Navigation & Bereiche", text: "Welche Bereiche FREE, BASIC und VEREIN im Menü sehen (nur Anzeige)" },
+    { href: "/dashboard/admin/protokoll", icon: History, farbe: "bg-brand-bg text-brand-ink", titel: "Protokoll", text: "Wer hat was wann geändert – Team, Freischaltungen, Moderation" },
   ];
 
   return (

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Mail, KeyRound, EyeOff, Users, Map as MapIcon, UserRound, Bell, ShieldCheck, Building2, Radio, ListOrdered } from "lucide-react";
+import { Mail, KeyRound, EyeOff, Users, Map as MapIcon, UserRound, Bell, ShieldCheck, Building2, Radio, ListOrdered, CreditCard } from "lucide-react";
+import { LIZENZART_LABEL, lizenzStatus } from "@/lib/lizenz";
+import { datum as tarifDatum, type MeinTarifStatus } from "@/lib/tarife";
 import { MeineNavigation, type NaviPunkt } from "@/components/einstellungen/MeineNavigation";
 import { getZugriff } from "@/lib/dashboard/getBereiche";
 import { aktiveAnsicht } from "@/lib/admin/ansichtLesen";
@@ -73,18 +75,42 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
   ]);
   const hinweis = email ? HINWEISE[email] : undefined;
 
+  // „Mein Tarif & Lizenz“ (kompakt): nur fuer BASIC und VEREIN
+  const { data: tarifRoh } = await supabase.rpc("mein_tarif_status");
+  const ts = tarifRoh as MeinTarifStatus | null;
+  let lizenz: { tarif: string; status: string; bis: string; art: string; hinweis: string | null } | null = null;
+  if (ts?.zugang && (ts.zugang.effektiv === "basic" || ts.zugang.effektiv === "verein") && !ts.zugang.plattform_admin) {
+    const abo = ts.abos[0];
+    const ueberVerein = ts.zugang.vereinszugang;
+    const bis = ueberVerein ? (ts.vereinslizenz_bis ?? null) : abo?.periode === "unbefristet" ? null : (abo?.gekuendigt_zum ?? abo?.laeuft_bis ?? null);
+    const st = lizenzStatus(ts.zugang.effektiv, bis);
+    const endet = ueberVerein || !abo || abo.status === "cancelled" || abo.anbieter === "manuell" || abo.anbieter === "ueberweisung";
+    lizenz = {
+      tarif: ts.zugang.effektiv,
+      status: st.text,
+      bis: bis ? tarifDatum(bis) : "unbefristet",
+      art: ueberVerein ? `Vereinslizenz · ${ts.verein_name ?? ""}` : abo?.lizenzart ? (LIZENZART_LABEL[abo.lizenzart] ?? abo.lizenzart) : "–",
+      hinweis:
+        endet && st.stufe === "bald" && st.tage !== null
+          ? `🟠 ${ueberVerein ? "Die Vereinslizenz" : "Deine BASIC-Lizenz"} ist noch ${st.tage === 1 ? "1 Tag" : `${st.tage} Tage`} gültig.`
+          : null,
+    };
+  }
+
   // „Meine Navigation“: nur die Bereiche, die diese Person ohnehin sehen darf (gleiche Logik wie das Menue)
   const { data: istAdmin } = await supabase.rpc("ist_plattform_admin_aktuell");
   const echterZugriff = await getZugriff(supabase, istAdmin === true);
   // „Ansicht als …“ der Administration: dieselbe Menue-Grundlage wie das Layout (Beispielrechte, Standardreihenfolge)
   const ansicht = await aktiveAnsicht();
   const zugriff = ansicht
-    ? { ...ansichtZugriff(ansicht), musikAn: echterZugriff.musikAn, spotlightsAn: echterZugriff.spotlightsAn, juryraum: false, reihenfolge: null }
+    ? { ...ansichtZugriff(ansicht), musikAn: echterZugriff.musikAn, spotlightsAn: echterZugriff.spotlightsAn, juryraum: false, reihenfolge: null, navTarife: echterZugriff.navTarife }
     : echterZugriff;
-  const naviPunkte: NaviPunkt[] = navGruppen(zugriff)
+  // Admin-Navigation: ausgeblendete Punkte trotzdem in der Liste zeigen (zum Wieder-Einblenden)
+  const listenZugriff = zugriff.istPlattformAdmin ? { ...zugriff, ausgeblendet: null } : zugriff;
+  const naviPunkte: NaviPunkt[] = navGruppen(listenZugriff)
     .filter((g) => !SYSTEM_NAV.has(g.eintrag.href))
     .map((g) => ({ href: g.eintrag.href, label: g.eintrag.label, unterpunkte: g.unterpunkte.map((u) => ({ href: u.href, label: u.label })) }));
-  const naviSystem = erlaubteNav(zugriff).filter((n) => SYSTEM_NAV.has(n.href)).map((n) => ({ href: n.href, label: n.label }));
+  const naviSystem = erlaubteNav(listenZugriff).filter((n) => SYSTEM_NAV.has(n.href)).map((n) => ({ href: n.href, label: n.label }));
 
   return (
     <div className="mx-auto flex max-w-[720px] flex-col gap-4">
@@ -103,6 +129,34 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
         actions={<KaiStarten />}
       />
 
+      {lizenz && (
+        <section className={`${KARTE} scroll-mt-4`} id="lizenz">
+          <KarteKopf icon={CreditCard} titel="Mein Tarif & Lizenz" untertitel="Dein Zugang und wie lange er gilt" />
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[13.5px] sm:grid-cols-4">
+            <div>
+              <div className="text-[11.5px] font-bold uppercase tracking-wide text-brand-ink-soft">Tarif</div>
+              <div className="font-bold text-brand-ink">{lizenz.tarif.toUpperCase()}</div>
+            </div>
+            <div>
+              <div className="text-[11.5px] font-bold uppercase tracking-wide text-brand-ink-soft">Status</div>
+              <div className="font-bold text-brand-ink">{lizenz.status}</div>
+            </div>
+            <div>
+              <div className="text-[11.5px] font-bold uppercase tracking-wide text-brand-ink-soft">Gültig bis</div>
+              <div className="font-bold text-brand-ink">{lizenz.bis}</div>
+            </div>
+            <div>
+              <div className="text-[11.5px] font-bold uppercase tracking-wide text-brand-ink-soft">Art</div>
+              <div className="font-bold text-brand-ink">{lizenz.art}</div>
+            </div>
+          </div>
+          {lizenz.hinweis && <p className="mt-2 rounded-xl bg-brand-gold-wash px-3 py-2 text-[13px] font-semibold text-brand-ink">{lizenz.hinweis}</p>}
+          <Link href="/dashboard/tarif" className="mt-2 inline-block text-[13px] font-semibold text-brand-red">
+            Details, Verlängerung und Tarife →
+          </Link>
+        </section>
+      )}
+
       <section className={KARTE}>
         <KarteKopf
           icon={Mail}
@@ -113,8 +167,18 @@ export default async function EinstellungenSeite({ searchParams }: { searchParam
       </section>
 
       <section className={`${KARTE} scroll-mt-4`} id="navigation">
-        <KarteKopf icon={ListOrdered} titel="Meine Navigation" untertitel="Personalisierung – Reihenfolge deiner Menüpunkte" />
-        <MeineNavigation start={naviPunkte} system={naviSystem} angepasst={!!zugriff.reihenfolge?.length} />
+        <KarteKopf
+          icon={ListOrdered}
+          titel={zugriff.istPlattformAdmin ? "Admin-Navigation" : "Meine Navigation"}
+          untertitel={zugriff.istPlattformAdmin ? "Reihenfolge und Sichtbarkeit deiner Admin-Menüpunkte" : "Personalisierung – Reihenfolge deiner Menüpunkte"}
+        />
+        <MeineNavigation
+          start={naviPunkte}
+          system={naviSystem}
+          angepasst={!!zugriff.reihenfolge?.length || !!zugriff.ausgeblendet?.length}
+          admin={zugriff.istPlattformAdmin}
+          ausgeblendet={zugriff.ausgeblendet ?? []}
+        />
       </section>
 
       <section className={`${KARTE} scroll-mt-4`} id="profil">

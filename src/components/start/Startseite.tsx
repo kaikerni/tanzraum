@@ -649,6 +649,49 @@ export function Startseite({
           </div>
         </section>
 
+        {/* Community: Workshops und TanzRaum Treff (inkl. Wissensbeitraege) – erklaert hier, nutzbar nur mit Konto */}
+        <section id="community" className="scroll-mt-20 bg-brand-bg py-16 sm:py-24" aria-labelledby="community-titel">
+          <div className={BREITE}>
+            <Einblenden>
+              <p className="text-center text-[12.5px] font-bold uppercase tracking-[0.18em] text-brand-red">Community</p>
+              <h2 id="community-titel" className="mt-2 text-center text-[28px] font-extrabold leading-tight tracking-tight text-brand-ink sm:text-[38px]">
+                Lernen, fragen, Erfahrungen teilen
+              </h2>
+              <div className="mx-auto mt-8 grid max-w-[860px] gap-4 md:grid-cols-2">
+                {[
+                  { emoji: "🎓", titel: "Workshops", text: "Entdecke Workshops rund um den karnevalistischen Tanzsport.", ziel: "/dashboard/workshops" },
+                  { emoji: "💬", titel: "TanzRaum Treff", text: "Fragen · Austauschen · Wissen teilen – mit Diskussionen und 📚 Wissensbeiträgen aus der Tanzsport-Community.", ziel: "/dashboard/treff" },
+                ].map((k) => (
+                  <div key={k.titel} className="flex flex-col gap-3 rounded-3xl border border-brand-line bg-white p-6 shadow-[var(--shadow)]">
+                    <span className="text-[40px] leading-none" aria-hidden>
+                      {k.emoji}
+                    </span>
+                    <h3 className="text-[20px] font-extrabold text-brand-ink">{k.titel}</h3>
+                    <p className="flex-1 text-[15px] text-brand-ink-soft">{k.text}</p>
+                    <Link
+                      href={angemeldet ? k.ziel : `/login?weiter=${k.ziel}`}
+                      className="inline-flex min-h-11 w-fit items-center rounded-full border border-brand-line px-5 text-[14px] font-semibold text-brand-ink hover:border-brand-red hover:text-brand-red"
+                    >
+                      {angemeldet ? "Öffnen" : "Anmelden & ansehen"}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-6 text-center text-[14px] text-brand-ink-soft">
+                Für die Nutzung brauchst du ein TanzRaum-Konto – schon der kostenlose FREE-Tarif reicht zum Ansehen und Mitlesen. Mitdiskutieren im Treff mit BASIC oder
+                über die Vereinslizenz.
+              </p>
+              {!angemeldet && (
+                <div className="mt-5 flex justify-center">
+                  <Link href="/signup" className="inline-flex min-h-12 items-center rounded-full bg-brand-red px-6 text-[15px] font-bold text-white hover:bg-brand-red-deep">
+                    Kostenlos registrieren
+                  </Link>
+                </div>
+              )}
+            </Einblenden>
+          </div>
+        </section>
+
         {/* Smartphone-Vorschau */}
         <section className="py-16 sm:py-24" aria-labelledby="vorschau-titel">
           <div className={BREITE}>

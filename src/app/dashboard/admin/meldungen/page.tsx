@@ -25,8 +25,10 @@ export default async function MeldungenSeite({ searchParams }: { searchParams: P
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  // TanzRaum-Admin oder Teammitglied mit dem Recht „spotlight.meldungen_bearbeiten“ (die Datenbank prueft jede Aktion erneut)
   const { data: istAdmin } = await supabase.rpc("ist_plattform_admin_aktuell");
-  if (istAdmin !== true) redirect("/dashboard");
+  const { data: darfTeam } = istAdmin === true ? { data: true } : await supabase.rpc("team_darf", { p_recht: "spotlight.meldungen_bearbeiten" });
+  if (darfTeam !== true) redirect("/dashboard");
 
   const { status } = await searchParams;
   const filter = status === "erledigt" ? "erledigt" : status === "alle" ? null : "offen";
@@ -42,7 +44,7 @@ export default async function MeldungenSeite({ searchParams }: { searchParams: P
 
   return (
     <div className="mx-auto flex max-w-[900px] flex-col gap-4">
-      <Link href="/dashboard/admin" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-brand-ink-soft hover:text-brand-ink">
+      <Link href={istAdmin === true ? "/dashboard/admin" : "/dashboard/team"} className="inline-flex items-center gap-1.5 text-[13px] font-medium text-brand-ink-soft hover:text-brand-ink">
         <ArrowLeft size={15} /> Administration
       </Link>
       <div className="flex flex-wrap items-end justify-between gap-3">

@@ -1,6 +1,7 @@
 import { AlertTriangle, PauseCircle } from "lucide-react";
 import { AboKuendigen } from "@/components/tarif/AboKuendigen";
 import { ABO_STATUS_LABEL, TARIF_LABEL, VERLAENGERUNG_LABEL, datum, euro, tageBis, type AboInfo } from "@/lib/tarife";
+import { LIZENZART_LABEL, lizenzStatus } from "@/lib/lizenz";
 
 const KUENDBAR = ["active", "trialing", "past_due", "paused_by_organization"];
 
@@ -26,7 +27,12 @@ function Feld({ label, children }: { label: string; children: React.ReactNode })
 export function LizenzKarte({ abo, kopf, tarif }: { abo: AboInfo; kopf: string; tarif: string }) {
   const bis = abo.gekuendigt_zum ?? abo.laeuft_bis;
   const tage = tageBis(bis);
-  const laufzeit = abo.periode === "jahr" ? "Jahreslizenz" : abo.periode === "monat" ? "Monatslizenz" : "unbefristet";
+  const laufzeit = abo.periode === "jahr" ? "Jahreslizenz" : abo.periode === "monat" ? "Monatslizenz" : abo.periode === "befristet" ? "befristet" : "unbefristet";
+  const kostenlos = abo.lizenzart === "MANUAL_FREE" || abo.lizenzart === "TEAM_FREE";
+  // Ablauf nur dort hervorheben, wo sich die Lizenz nicht automatisch verlaengert
+  const endet = abo.status === "cancelled" || abo.anbieter === "manuell" || abo.anbieter === "ueberweisung";
+  const st = lizenzStatus(tarif, abo.periode === "unbefristet" ? null : bis);
+  const art = tarif === "verein" ? "Vereinslizenz" : "BASIC-Lizenz";
   const verlaengerung =
     abo.status === "cancelled"
       ? "keine – gekündigt"
@@ -50,11 +56,24 @@ export function LizenzKarte({ abo, kopf, tarif }: { abo: AboInfo; kopf: string; 
       </div>
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
-        {abo.periode !== "unbefristet" && <Feld label="Gültig bis">{bis ? datum(bis) : "–"}</Feld>}
+        <Feld label="Status">{abo.status === "paused_by_organization" ? "⏸ Pausiert" : st.text}</Feld>
+        <Feld label="Gültig bis">{abo.periode === "unbefristet" ? "unbefristet" : bis ? datum(bis) : "–"}</Feld>
         {tage !== null && abo.periode !== "unbefristet" && <Feld label="Noch">{tage === 1 ? "1 Tag" : `${tage} Tage`}</Feld>}
-        <Feld label="Verlängerung">{verlaengerung}</Feld>
+        {abo.lizenzart && <Feld label="Zahlungs-/Freischaltungsart">{LIZENZART_LABEL[abo.lizenzart] ?? abo.lizenzart}</Feld>}
+        {!kostenlos && <Feld label="Verlängerung">{verlaengerung}</Feld>}
         {abo.anbieter !== "manuell" && <Feld label="Preis">{`${euro(abo.preis_cent)} / ${abo.periode === "jahr" ? "Jahr" : "Monat"}`}</Feld>}
       </div>
+
+      {endet && st.stufe === "bald" && tage !== null && (
+        <p className="rounded-xl bg-brand-gold-wash px-3 py-2 text-[13px] font-semibold text-brand-ink">
+          🟠 {tarif === "verein" ? "Die Vereinslizenz" : "Deine BASIC-Lizenz"} ist noch {tage === 1 ? "1 Tag" : `${tage} Tage`} gültig (bis {datum(bis)}).
+        </p>
+      )}
+      {st.stufe === "abgelaufen" && (
+        <p className="rounded-xl bg-brand-red-wash px-3 py-2 text-[13px] font-semibold text-brand-red">
+          🔴 Die {art} ist am {datum(bis)} abgelaufen.
+        </p>
+      )}
 
       {abo.anbieter === "ueberweisung" && abo.status === "active" && (
         <p className="text-[12.5px] text-brand-ink-soft">
@@ -79,8 +98,13 @@ export function LizenzKarte({ abo, kopf, tarif }: { abo: AboInfo; kopf: string; 
       {KUENDBAR.includes(abo.status) && abo.anbieter !== "manuell" && (
         <AboKuendigen aboId={abo.id} text="Kündigen" frage="Lizenz wirklich kündigen? Sie bleibt bis zum Ende des bezahlten Zeitraums aktiv." />
       )}
-      {KUENDBAR.includes(abo.status) && abo.anbieter === "manuell" && (
+      {KUENDBAR.includes(abo.status) && abo.anbieter === "manuell" && !kostenlos && (
         <span className="text-[12.5px] text-brand-ink-soft">Kündigung über info@tanzraum.app</span>
+      )}
+      {kostenlos && (
+        <span className="text-[12.5px] text-brand-ink-soft">
+          Kostenlos – es entstehen keine Kosten und es ist keine Kündigung nötig.{abo.periode === "befristet" ? " Nach dem Ablauf gilt wieder dein normaler Tarif." : ""}
+        </span>
       )}
     </div>
   );

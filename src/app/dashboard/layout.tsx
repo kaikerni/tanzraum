@@ -100,7 +100,9 @@ export default async function DashboardLayout({
 
   // TanzRaum-Administration: „Ansicht als …“ ersetzt nur Menue und Dashboard (Beispieldaten), keine Rechte
   const ansicht = await aktiveAnsicht();
-  const navZugriff = ansicht ? { ...ansichtZugriff(ansicht), musikAn: zugriff.musikAn, spotlightsAn: zugriff.spotlightsAn, juryraum: false } : zugriff;
+  const navZugriff = ansicht
+    ? { ...ansichtZugriff(ansicht), musikAn: zugriff.musikAn, spotlightsAn: zugriff.spotlightsAn, juryraum: false, navTarife: zugriff.navTarife }
+    : zugriff;
   // Offene Buddy-Anfragen (Buddys ab BASIC)
   let buddyAnfragen = 0;
   if (navZugriff.tarif !== "free" && !navZugriff.istPlattformAdmin) {
@@ -110,11 +112,11 @@ export default async function DashboardLayout({
 
   const name = [daten.vorname, daten.nachname].filter(Boolean).join(" ") || "TanzRaum-Nutzer";
   const ersterVerein = daten.vereine.find((v) => !v.vereinGesperrt) ?? daten.vereine[0];
-  const rolle = daten.istPlattformAdmin ? "TanzRaum Admin" : (ersterVerein?.rolleName ?? "Mitglied");
+  const rolle = daten.istPlattformAdmin ? "👑 TanzRaum-Admin" : (ersterVerein?.rolleName ?? "Mitglied");
   const kontext = ansicht
     ? { titel: ansicht.startsWith("verein") ? "TSC Beispielstadt" : "Beispielkonto", untertitel: ANSICHT_LABEL[ansicht], istPlattformAdmin: false }
     : daten.istPlattformAdmin
-    ? { titel: "TanzRaum Admin", untertitel: "Administrator", istPlattformAdmin: true }
+    ? { titel: "TanzRaum", untertitel: "👑 TanzRaum-Admin", istPlattformAdmin: true }
     : {
         titel: ersterVerein?.vereinName || name,
         untertitel: ersterVerein?.rolleName ?? "Mitglied",

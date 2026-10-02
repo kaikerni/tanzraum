@@ -18,6 +18,9 @@ function ziel(typ: string): string | null {
   if (typ === "beitrag") return "/dashboard/verein#beitraege";
   if (typ === "news" || typ === "umfrage") return "/dashboard/news";
   if (typ.includes("netzwerk") || typ === "kontaktanfrage") return "/dashboard/netzwerk";
+  if (typ === "lizenz_ablauf") return "/dashboard/tarif";
+  if (typ.startsWith("workshop_")) return "/dashboard/workshops";
+  if (typ.startsWith("treff_") || typ === "meldung_status") return "/dashboard/treff";
   return null;
 }
 
@@ -30,7 +33,7 @@ export default async function Benachrichtigungen() {
   // RLS: nur eigene Benachrichtigungen
   const { data } = await supabase
     .from("benachrichtigungen")
-    .select("id, typ, text, gelesen, erstellt_am")
+    .select("id, typ, text, gelesen, erstellt_am, link")
     .eq("user_id", user.id)
     .order("erstellt_am", { ascending: false })
     .limit(100);
@@ -48,7 +51,8 @@ export default async function Benachrichtigungen() {
       ) : (
         <ul className={`${KARTE} divide-y divide-brand-line p-0 sm:p-0`}>
           {liste.map((b) => {
-            const href = ziel(b.typ);
+            // Gespeicherter Link (nur interne /dashboard-Pfade, DB prueft) vor der Zuordnung nach Art
+            const href = typeof b.link === "string" && b.link.startsWith("/dashboard") ? b.link : ziel(b.typ);
             const inhalt = (
               <>
                 <span className="min-w-0 flex-1">
