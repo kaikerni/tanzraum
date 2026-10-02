@@ -83,8 +83,8 @@ export default async function TurniereSeite({
         <div>
           <h1 className="text-[26px] font-extrabold tracking-tight text-brand-ink">Turniere</h1>
           <p className="text-[14px] text-brand-ink-soft">
-            Turniere entdecken, merken und – mit Vereinslizenz – Starts planen. Die offizielle Anmeldung läuft weiterhin über euren
-            Verband.
+            Turniere entdecken, merken und wichtige Informationen im Blick behalten. Die Anmeldung erfolgt ausschließlich über die offizielle
+            Seite des Bund Deutscher Karneval e. V.
           </p>
         </div>
         {planung.length > 0 && (

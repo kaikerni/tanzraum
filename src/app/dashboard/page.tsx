@@ -94,8 +94,8 @@ export default async function DashboardPage({
   return (
     <>
       {tarifZaehler && (
-        <div className="mx-auto mb-4 max-w-[1560px]">
-          <TarifZaehler z={tarifZaehler} />
+        <div className="mx-auto mb-3 max-w-[1560px]">
+          <TarifZaehler z={tarifZaehler} kompakt />
         </div>
       )}
       {ankuendigungen.some((a) => !a.gelesenAm) && (

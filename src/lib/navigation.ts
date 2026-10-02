@@ -32,6 +32,8 @@ import {
   Sparkles,
   MessageCircle,
   MessagesSquare,
+  MessageSquareMore,
+  ShieldAlert,
   Search,
   UserCheck,
   UserPlus,
@@ -116,6 +118,8 @@ export type Zugriff = {
   musikAn?: boolean;
   // Spotlights fuer den eigenen Tarif eingeschaltet (DB: spotlights_fuer_mich())
   spotlightsAn?: boolean;
+  // TanzRaum Chat fuer den eigenen Tarif freigeschaltet (DB: chat_fuer_mich())
+  chatAn?: boolean;
   // JuryRaum global eingeschaltet UND aktive JuryRaum-Mitgliedschaft (DB: juryraum_fuer_mich())
   juryraum?: boolean;
   // „Meine Navigation“: nur die persoenliche Reihenfolge (DB: meine_navigation()) – vergibt nie Rechte
@@ -151,6 +155,8 @@ export type NavEintrag = {
   jury?: boolean;
   // Nur wenn Spotlights fuer den eigenen Tarif eingeschaltet sind
   spotlights?: boolean;
+  // Nur wenn der TanzRaum Chat fuer den eigenen Tarif freigeschaltet ist
+  chat?: boolean;
   // Nur fuer Mitglieder des TanzRaum Teams
   team?: boolean;
 };
@@ -195,6 +201,8 @@ export const NAV: NavEintrag[] = [
   // 🎓 Workshops, 💬 TanzRaum Treff (inkl. 📚 Wissensbeiträge – kein eigener Menüpunkt): mit Konto ab FREE (schreiben im Treff ab BASIC/VEREIN)
   { href: "/dashboard/workshops", label: "Workshops", icon: GraduationCap, tarif: "free", modul: "workshops" },
   { href: "/dashboard/treff", label: "TanzRaum Treff", kurz: "Treff", icon: TreffIcon, tarif: "free" },
+  // 💬 TanzRaum Chat: oeffentlicher Live-Chat (Freigabe je Tarif durch den TanzRaum-Admin; Schutzpruefung vor Veroeffentlichung)
+  { href: "/dashboard/chat", label: "TanzRaum Chat", kurz: "Chat", icon: MessageSquareMore, tarif: "free", chat: true },
   { href: "/juryraum/dashboard", label: "JuryRaum", icon: Scale, tarif: "free", jury: true },
   // Persoenliche und weitere Bereiche
   { href: "/dashboard/trainer-netzwerk", label: "Trainer-Netzwerk", icon: Handshake, tarif: "verein", netzwerk: "trainer", modul: "trainer_netzwerk" },
@@ -222,6 +230,8 @@ export const ADMIN_NAV: NavEintrag[] = [
   { href: "/dashboard/admin/team", label: "TanzRaum Team", kurz: "Team", icon: Shield, tarif: "free" },
   { href: "/dashboard/workshops", label: "Workshops", icon: GraduationCap, tarif: "free" },
   { href: "/dashboard/treff", label: "TanzRaum Treff", kurz: "Treff", icon: TreffIcon, tarif: "free" },
+  { href: "/dashboard/chat", label: "TanzRaum Chat", kurz: "Chat", icon: MessageSquareMore, tarif: "free" },
+  { href: "/dashboard/admin/moderation", label: "Moderation", icon: ShieldAlert, tarif: "free" },
   { href: "/dashboard/admin/rechnungen", label: "Rechnungen", icon: Receipt, tarif: "free" },
   { href: "/dashboard/admin/boerse", label: "Börse-Moderation", kurz: "Börse", icon: Store, tarif: "free" },
   { href: "/dashboard/admin/ankuendigungen", label: "Ankündigungen", icon: Megaphone, tarif: "free" },
@@ -275,6 +285,7 @@ export function erlaubteNav(zugriff: Zugriff): NavEintrag[] {
       (n.href !== "/dashboard/musik" || zugriff.musikAn !== false) &&
       (!n.jury || zugriff.juryraum === true) &&
       (!n.spotlights || zugriff.spotlightsAn === true) &&
+      (!n.chat || zugriff.chatAn === true) &&
       (!n.team || zugriff.team === true) &&
       (n.netzwerk ? zugriff.netzwerk === n.netzwerk : darf(zugriff, n.tarif, n.recht)) &&
       modulAn(zugriff, n.modul) &&

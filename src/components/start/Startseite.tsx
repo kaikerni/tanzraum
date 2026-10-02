@@ -89,10 +89,13 @@ const ZIELGRUPPEN: { titel: string; claim: string; icon: LucideIcon; farbe: stri
 const FUNKTIONEN: { titel: string; icon: LucideIcon; farbe: string; punkte: string[]; bald?: boolean }[] = [
   { titel: "Training", icon: Activity, farbe: "text-brand-red bg-brand-red-wash", punkte: ["Trainingsübersicht", "An- und Abmeldung", "Anwesenheit", "Informationen"] },
   { titel: "Kalender", icon: CalendarDays, farbe: "text-brand-blue bg-brand-blue-wash", punkte: ["Training", "Veranstaltungen", "Turniere", "Termine"] },
-  { titel: "Messenger", icon: MessageCircle, farbe: "text-brand-green bg-brand-green-wash", punkte: ["Chats und Gruppenchats", "Gesendet, zugestellt, gelesen", "Bilder, Videos, Sprachnachrichten", "TanzRaum-Smileys"] },
+  { titel: "Messenger", icon: MessageCircle, farbe: "text-brand-green bg-brand-green-wash", punkte: ["Chats, Vereins- und Gruppenchats", "Gesendet, zugestellt, gelesen", "Bilder, Videos, Sprachnachrichten", "TanzRaum-Sticker und Smileys"] },
+  { titel: "TanzRaum Chat", icon: MessageCircle, farbe: "text-brand-red bg-brand-red-wash", punkte: ["Öffentlicher Live-Chat der Community", "Jede Nachricht wird vorher geprüft", "Profilbild, Verein, Sticker & Smileys"] },
+  { titel: "TanzRaum Treff", icon: Users, farbe: "text-brand-blue bg-brand-blue-wash", punkte: ["Fragen, Antworten, Diskussionen", "📚 Wissensbeiträge", "⭐ TanzRaum empfiehlt"] },
+  { titel: "Workshops", icon: Sparkles, farbe: "text-brand-purple bg-brand-purple-wash", punkte: ["Workshops entdecken und einreichen", "Filter nach Bundesland und Kategorie", "Mit Karte"] },
   { titel: "News & Umfragen", icon: Newspaper, farbe: "text-brand-blue bg-brand-blue-wash", punkte: ["Vereinsnachrichten", "Lesebestätigung", "Abstimmungen"] },
   { titel: "TanzRaum-Netzwerk", icon: Globe, farbe: "text-brand-purple bg-brand-purple-wash", punkte: ["Nutzer suchen und Profile", "Buddys, Map und Vereine", "Tanzsport-Community"] },
-  { titel: "Spotlight", icon: Sparkles, farbe: "text-brand-gold bg-brand-gold-wash", punkte: ["Eigene Story-Kacheln", "Foto, Video, Text, Musik", "24 Stunden sichtbar"] },
+  { titel: "Spotlight", icon: Sparkles, farbe: "text-brand-gold bg-brand-gold-wash", punkte: ["Eigene Story-Kacheln", "Foto, Video, Text, Musik", "TanzRaum-Sticker und Smileys", "24 Stunden sichtbar"] },
   { titel: "TanzRaum Börse", icon: Store, farbe: "text-brand-gold bg-brand-gold-wash", punkte: ["Kostüme, Schuhe, Requisiten", "Kaufen, tauschen, verschenken", "Kontakt über den Chat"] },
   { titel: "Fahrgemeinschaften", icon: Car, farbe: "text-brand-green bg-brand-green-wash", punkte: ["Fahrten anbieten und suchen", "Zu Turnier und Training", "Nur im eigenen Verein"] },
   { titel: "Kostüme & Requisiten", icon: Shirt, farbe: "text-brand-red bg-brand-red-wash", punkte: ["Inventar und Kostümsätze", "Ausgabe und Rückgabe", "Wer hat was – mit Rückgabedatum"] },
@@ -134,6 +137,11 @@ const DATENSCHUTZ: { icon: LucideIcon; titel: string; text: string }[] = [
   { icon: Lock, titel: "Datenschutz", text: "Deine persönlichen Daten gehören dir. Kein Tracking, keine Werbung – Cookies nur, soweit technisch notwendig." },
   { icon: ShieldCheck, titel: "Sichere Datenverarbeitung", text: "Jede Rolle erhält nur die Daten und Funktionen, die sie benötigt. Zugriffe werden in der Datenbank geprüft." },
   { icon: UserRound, titel: "Kontrolle über persönliche Daten", text: "Profil privat stellen, Online-Status verbergen, Daten exportieren oder das Konto löschen – du entscheidest." },
+  {
+    icon: ShieldCheck,
+    titel: "Geschützte Chats",
+    text: "Nachrichten im TanzRaum Chat und in Gruppenchats werden vor der Veröffentlichung automatisch geprüft – besonders zum Schutz von Kindern und Jugendlichen.",
+  },
   {
     icon: Building2,
     titel: "Getrennte Vereinsbereiche",
@@ -221,6 +229,21 @@ const FAQ: { frage: string; antwort: React.ReactNode; id?: string }[] = [
         .
       </>
     ),
+  },
+  {
+    frage: "Was ist der TanzRaum Chat?",
+    antwort:
+      "Der öffentliche Live-Chat der TanzRaum-Community – für spontane Fragen und Grüße rund um Training, Turniere und Tanzsport. Er steht angemeldeten Nutzern zur Verfügung, sobald er für ihren Tarif freigeschaltet ist. Längere Diskussionen gehören in den TanzRaum Treff.",
+  },
+  {
+    frage: "Wie schützt TanzRaum Kinder und Jugendliche in Chats?",
+    antwort:
+      "Nachrichten im TanzRaum Chat und in Vereins- und Gruppenchats erscheinen erst, nachdem die automatische TanzRaum Schutzprüfung sie freigegeben hat. Beleidigungen, sexuelle Inhalte, Kontaktdaten, Aufforderungen zu privaten Treffen oder zum Wechsel in andere Messenger werden nicht veröffentlicht. Im öffentlichen Chat schreiben Kinder unter 16 nicht mit. Die bestehenden Regeln für Privatnachrichten, Eltern und Minderjährige gelten weiter. Jede Nachricht kann zusätzlich gemeldet werden – die TanzRaum-Moderation kümmert sich darum.",
+  },
+  {
+    frage: "Was sind TanzRaum Treff und Workshops?",
+    antwort:
+      "Im TanzRaum Treff stellst du Fragen, tauschst dich aus und findest 📚 Wissensbeiträge aus der Tanzsport-Community. Unter Workshops findest du Angebote rund um Technik, Akrobatik, Choreografie und Fortbildungen – und kannst eigene Workshops einreichen.",
   },
   {
     frage: "Wie schützt TanzRaum meine Daten?",
@@ -655,11 +678,12 @@ export function Startseite({
             <Einblenden>
               <p className="text-center text-[12.5px] font-bold uppercase tracking-[0.18em] text-brand-red">Community</p>
               <h2 id="community-titel" className="mt-2 text-center text-[28px] font-extrabold leading-tight tracking-tight text-brand-ink sm:text-[38px]">
-                Lernen, fragen, Erfahrungen teilen
+                Lernen, fragen, live dabei sein
               </h2>
-              <div className="mx-auto mt-8 grid max-w-[860px] gap-4 md:grid-cols-2">
+              <div className="mx-auto mt-8 grid max-w-[1100px] gap-4 md:grid-cols-3">
                 {[
                   { emoji: "🎓", titel: "Workshops", text: "Entdecke Workshops rund um den karnevalistischen Tanzsport.", ziel: "/dashboard/workshops" },
+                  { emoji: "🗨️", titel: "TanzRaum Chat", text: "Der öffentliche Live-Chat der Community – jede Nachricht wird vor der Veröffentlichung automatisch geprüft.", ziel: "/dashboard/chat" },
                   { emoji: "💬", titel: "TanzRaum Treff", text: "Fragen · Austauschen · Wissen teilen – mit Diskussionen und 📚 Wissensbeiträgen aus der Tanzsport-Community.", ziel: "/dashboard/treff" },
                 ].map((k) => (
                   <div key={k.titel} className="flex flex-col gap-3 rounded-3xl border border-brand-line bg-white p-6 shadow-[var(--shadow)]">
@@ -679,7 +703,7 @@ export function Startseite({
               </div>
               <p className="mt-6 text-center text-[14px] text-brand-ink-soft">
                 Für die Nutzung brauchst du ein TanzRaum-Konto – schon der kostenlose FREE-Tarif reicht zum Ansehen und Mitlesen. Mitdiskutieren im Treff mit BASIC oder
-                über die Vereinslizenz.
+                über die Vereinslizenz. Der TanzRaum Chat wird schrittweise je Tarif freigeschaltet.
               </p>
               {!angemeldet && (
                 <div className="mt-5 flex justify-center">

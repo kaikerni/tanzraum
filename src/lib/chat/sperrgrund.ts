@@ -10,6 +10,8 @@ export const SPERRGRUND_TEXT: Record<string, string> = {
   tarif_partner: "Diese Person nutzt derzeit keinen Tarif mit Buddys – ihr privates Konto ist deshalb gerade nicht erreichbar.",
   nur_leitung: "Hier schreiben nur Vorstand, Trainer und Betreuer.",
   nicht_moeglich: "Eine Kontaktaufnahme mit dieser Person ist nicht möglich.",
+  chat_gesperrt: "Du kannst hier gerade nicht schreiben, weil mehrere Nachrichten gegen die Chatregeln verstoßen haben. Lesen kannst du weiterhin.",
+  chat_ab_16: "Im TanzRaum Chat kannst du ab 16 Jahren mitschreiben. Lesen kannst du schon jetzt.",
 };
 
 export function sperrgrundText(grund: string | null | undefined): string {

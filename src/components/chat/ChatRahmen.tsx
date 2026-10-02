@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useSelectedLayoutSegment, useRouter } from "next/navigation";
-import { Search, SquarePen, ChevronDown, UserPlus, Check, X, Ban, Handshake, Users } from "lucide-react";
+import { Search, SquarePen, ChevronDown, UserPlus, Check, X, Ban, Handshake, Users, MessageSquareMore } from "lucide-react";
 import { AdminMarke, ADMIN_KENNUNG } from "./AdminMarke";
 import { createClient } from "@/lib/supabase/client";
 import { alsChatEintrag, type ChatEintrag, type Kontaktanfrage } from "@/lib/chat/getChat";
@@ -163,6 +163,14 @@ export function ChatRahmen({
 
   useEffect(() => setChats(start), [start]);
 
+  // 💬 TanzRaum Chat oben in der Liste (nur wenn fuer den eigenen Tarif freigeschaltet)
+  const [tanzraum, setTanzraum] = useState<{ ungelesen: number } | null>(null);
+  useEffect(() => {
+    createClient()
+      .rpc("tanzraum_chat")
+      .then(({ data }) => setTanzraum(data && (data as { id?: string }).id ? { ungelesen: Number((data as { ungelesen?: number }).ungelesen ?? 0) } : null));
+  }, [start]);
+
   // Neue Nachrichten in allen sichtbaren Chats (RLS filtert serverseitig) aktualisieren Liste und Zaehler.
   useEffect(() => {
     const supabase = createClient();
@@ -188,7 +196,7 @@ export function ChatRahmen({
   const summe = (l: ChatEintrag[]) => l.reduce((a, c) => a + c.ungelesen, 0);
 
   return (
-    <div className="-mx-3 -mb-28 -mt-4 flex h-[calc(100dvh-125px-env(safe-area-inset-bottom))] overflow-hidden border-brand-line bg-white sm:-mx-5 md:-mb-8 md:-mt-5 md:h-[calc(100dvh-76px)] xl:-mx-6">
+    <div className="-mx-3 -mb-28 -mt-4 flex h-[calc(100dvh-125px-env(safe-area-inset-bottom))] overflow-hidden border-brand-line bg-white sm:-mx-5 md:-mb-8 md:-mt-5 md:h-[calc(100dvh-84px)] xl:-mx-6">
       <aside className={`${imChat ? "hidden lg:flex" : "flex"} w-full shrink-0 flex-col border-r border-brand-line bg-white lg:w-[360px]`} aria-label="Chats">
         <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-4">
           <h1 className="text-[22px] font-extrabold tracking-tight text-brand-ink">Nachrichten</h1>
@@ -273,6 +281,22 @@ export function ChatRahmen({
             </p>
           )}
 
+          {tanzraum && !suche && (
+            <Link href="/dashboard/chat" className="mx-2 mb-1 flex min-h-14 items-center gap-3 rounded-xl px-2 hover:bg-brand-bg">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-red-wash text-brand-red">
+                <MessageSquareMore size={20} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[15px] font-bold text-brand-ink">TanzRaum Chat</span>
+                <span className="block truncate text-[12.5px] text-brand-ink-soft">Öffentlicher Live-Chat der Community</span>
+              </span>
+              {tanzraum.ungelesen > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-green px-1.5 text-[11.5px] font-bold text-white">
+                  {tanzraum.ungelesen > 99 ? "99+" : tanzraum.ungelesen}
+                </span>
+              )}
+            </Link>
+          )}
           <Abschnitt titel={netzwerkTitel} anzahl={netzwerk.length} ungelesen={summe(netzwerk)} hervorgehoben>
             <ul>
               {netzwerk.map((c) => (

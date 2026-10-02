@@ -74,14 +74,16 @@ export function AppHeader({
   }, [menuOffen]);
 
   return (
-    <header className="relative z-20 flex h-16 shrink-0 items-center gap-3 border-b border-brand-line bg-white px-4 sm:gap-4 md:h-[76px] md:px-6">
+    // Globaler Header aller Rollen: grosses TanzRaum-Logo (Proportionen bleiben), kompakte Suche, Kai, Glocke, Nachrichten, Profil.
+    // Hoehe 64 px (Handy) / 84 px (ab md) – die Chat-Ansichten rechnen mit diesen Werten.
+    <header className="relative z-20 flex h-16 shrink-0 items-center gap-2 border-b border-brand-line bg-white px-3 sm:gap-4 sm:px-4 md:h-[84px] md:px-6">
       <Link href="/dashboard" className="flex min-w-0 flex-1 items-center sm:flex-none sm:shrink-0" aria-label="TanzRaum Startseite">
         <Image
           src="/tanzraum-logo-header.webp"
           alt="TanzRaum – Die Plattform für Tanzsport & Gemeinschaft"
           width={1392}
           height={207}
-          className="h-auto w-full max-w-[260px] sm:h-11 sm:w-auto sm:max-w-none md:h-[52px]"
+          className="h-auto max-h-[44px] w-full min-w-0 object-contain object-left sm:h-12 sm:max-h-none sm:w-auto md:h-[58px] lg:h-[62px] xl:h-[68px]"
           priority
         />
       </Link>
@@ -89,7 +91,7 @@ export function AppHeader({
       <form
         action="/dashboard/suche"
         role="search"
-        className="mx-auto hidden max-w-xl flex-1 items-center gap-2.5 rounded-xl border border-brand-line bg-white px-4 py-2.5 transition-all focus-within:border-brand-red focus-within:shadow-[var(--shadow)] md:flex"
+        className="mx-auto hidden min-w-[180px] max-w-[380px] flex-1 items-center gap-2 rounded-xl border border-brand-line bg-white px-3.5 py-2 transition-all focus-within:border-brand-red focus-within:shadow-[var(--shadow)] xl:flex"
       >
         <Search size={17} className="shrink-0 text-brand-ink-soft" />
         <input
@@ -101,17 +103,17 @@ export function AppHeader({
           autoComplete="off"
           placeholder="Suche nach Mitgliedern, Terminen, Dateien, Nachrichten …"
           aria-label="Suche"
-          className="w-full bg-transparent text-[13.5px] outline-none placeholder:text-brand-ink-soft"
+          className="w-full min-w-0 bg-transparent text-[13px] outline-none placeholder:text-brand-ink-soft"
         />
-        <kbd className="hidden shrink-0 rounded-md border border-brand-line bg-brand-bg px-1.5 py-0.5 text-[11px] font-medium text-brand-ink-soft lg:block">
+        <kbd className="hidden shrink-0 rounded-md border border-brand-line bg-brand-bg px-1.5 py-0.5 text-[11px] font-medium text-brand-ink-soft 2xl:block">
           Strg + K
         </kbd>
       </form>
 
-      <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3 md:ml-0">
+      <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-3 xl:ml-0">
         <Link
           href="/dashboard/suche"
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-brand-ink transition-colors hover:bg-brand-bg md:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-brand-ink transition-colors hover:bg-brand-bg sm:h-10 sm:w-10 xl:hidden"
           aria-label="Suche"
           title="Suche"
         >
@@ -120,7 +122,7 @@ export function AppHeader({
         {kai && <KaiBegleiter kontext={kai} />}
         <Link
           href="/dashboard/benachrichtigungen"
-          className="relative flex h-10 w-10 items-center justify-center rounded-xl text-brand-ink transition-colors hover:bg-brand-bg"
+          className="relative flex h-9 w-9 items-center justify-center rounded-xl text-brand-ink transition-colors hover:bg-brand-bg sm:h-10 sm:w-10"
           aria-label={`Benachrichtigungen${ungeleseneBenachrichtigungen > 0 ? ` (${ungeleseneBenachrichtigungen} ungelesen)` : ""}`}
           title="Benachrichtigungen"
         >
@@ -129,7 +131,7 @@ export function AppHeader({
         </Link>
         <Link
           href={nachrichtenHref}
-          className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-brand-line text-brand-ink transition-colors hover:bg-brand-bg"
+          className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-brand-line text-brand-ink transition-colors hover:bg-brand-bg sm:h-10 sm:w-10"
           aria-label={`Nachrichten${ungeleseneNachrichten > 0 ? ` (${ungeleseneNachrichten} ungelesen)` : ""}`}
           title="Nachrichten"
         >
@@ -143,9 +145,9 @@ export function AppHeader({
             onClick={() => setMenuOffen((v) => !v)}
             aria-expanded={menuOffen}
             aria-haspopup="menu"
-            className="flex items-center gap-2.5 rounded-xl py-1 pl-1 pr-1.5 transition-colors hover:bg-brand-bg sm:pr-2"
+            className="flex items-center gap-2.5 rounded-xl py-1 pl-0.5 pr-0.5 transition-colors hover:bg-brand-bg sm:pl-1 sm:pr-2"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-red text-[13px] font-bold text-white md:h-11 md:w-11">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-red text-[13px] font-bold text-white sm:h-10 sm:w-10 md:h-11 md:w-11">
               {initialen(name)}
             </span>
             <span className="hidden text-left lg:block">

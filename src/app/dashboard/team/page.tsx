@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BookOpen, ChevronRight, Flag, GraduationCap, Megaphone, MessageSquareText, Shield, Sparkles, Users } from "lucide-react";
+import { BookOpen, ChevronRight, Flag, GraduationCap, Megaphone, MessageSquareText, Shield, ShieldAlert, Sparkles, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 import { RECHTE_GRUPPEN, darfTeam, meineTeamRechte } from "@/lib/team/rechte";
@@ -31,6 +31,9 @@ export default async function TeamBereich() {
     darfTeam(r, "news.verwalten") ? { href: "/dashboard/admin/ankuendigungen", icon: Megaphone, titel: "News", text: "TanzRaum-Ankündigungen und Updates" } : null,
     darfTeam(r, "spotlight.meldungen_bearbeiten")
       ? { href: "/dashboard/admin/meldungen", icon: Sparkles, titel: "Spotlight-Meldungen", text: "Gemeldete Spotlights prüfen" }
+      : null,
+    darfTeam(r, "chat.meldungen_bearbeiten") || darfTeam(r, "chat.nutzer_stummschalten")
+      ? { href: "/dashboard/admin/moderation", icon: ShieldAlert, titel: "Chat-Moderation", text: "Gemeldete und blockierte Chatnachrichten, Schreibsperren" }
       : null,
     darfTeam(r, "nutzer.ansehen") || darfTeam(r, "nutzer.sperren")
       ? { href: "/dashboard/team/nutzer", icon: Users, titel: "Nutzerverwaltung", text: "Konten per @Nutzername finden und sperren" }

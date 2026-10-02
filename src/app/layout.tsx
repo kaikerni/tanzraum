@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Kaushan_Script } from "next/font/google";
 import "./globals.css";
 import { ServiceWorkerAufraeumen } from "@/components/ServiceWorkerAufraeumen";
@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "TanzRaum", statusBarStyle: "default" },
 };
+
+// Bildschirmtastatur verkleinert den Inhalt (statt ihn zu ueberdecken) – Chat-Eingabe bleibt sichtbar
+export const viewport: Viewport = { width: "device-width", initialScale: 1, interactiveWidget: "resizes-content" };
 
 export default function RootLayout({
   children,

@@ -9,6 +9,8 @@ import { HINTERGRUENDE, vorZeit, type Spotlight, type SpotlightPerson } from "@/
 import { SCHNELL_REAKTIONEN, stickerInfo, stickerUrl } from "@/lib/chat/sticker";
 import { farbeFuer, initialen } from "@/components/chat/ChatAvatar";
 import { MeldenKnopf } from "@/components/netzwerk/Melden";
+import { ReaktionsBild } from "@/components/chat/ReaktionsBild";
+import { SCHNELL_EMOJIS } from "@/lib/chat/emojis";
 
 const DAUER_MS = 6000;
 
@@ -285,8 +287,9 @@ export function SpotlightAnsicht({
               </span>
               <span className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto">
                 {(aktuell.reaktionen ?? []).slice(0, 12).map((r, i) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img key={i} src={stickerUrl(r.sticker)} alt="" title={r.name} className="h-8 w-8 object-contain" />
+                  <span key={i} title={r.name}>
+                    <ReaktionsBild wert={r.sticker} groesse={32} />
+                  </span>
                 ))}
               </span>
               <button
@@ -312,17 +315,16 @@ export function SpotlightAnsicht({
           ) : aktuell ? (
             <>
               <div className="flex justify-center gap-1 overflow-x-auto" role="group" aria-label="Mit TanzRaum-Smiley reagieren">
-                {SCHNELL_REAKTIONEN.map((id) => (
+                {[...SCHNELL_REAKTIONEN.slice(0, 5), ...SCHNELL_EMOJIS.slice(0, 4)].map((id) => (
                   <button
                     key={id}
                     type="button"
                     onClick={() => reagieren(id)}
                     aria-pressed={aktuell.meineReaktion === id}
-                    aria-label={stickerInfo(id)?.name}
+                    aria-label={stickerInfo(id)?.name ?? id}
                     className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-110 ${aktuell.meineReaktion === id ? "bg-white/30 ring-2 ring-white" : ""}`}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={stickerUrl(id)} alt="" className="h-9 w-9 object-contain" />
+                    <ReaktionsBild wert={id} groesse={34} />
                   </button>
                 ))}
               </div>

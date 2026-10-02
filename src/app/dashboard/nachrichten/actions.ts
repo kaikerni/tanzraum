@@ -1,6 +1,7 @@
 "use server";
 
 import { sperrgrundText } from "@/lib/chat/sperrgrund";
+import { istReaktion } from "@/lib/chat/emojis";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -148,7 +149,8 @@ export async function nutzerFreigeben(userId: string): Promise<AktionsErgebnis> 
 }
 
 export async function reagieren(nachrichtId: string, emoji: string | null): Promise<AktionsErgebnis> {
-  if (!UUID.test(nachrichtId)) return { error: "Ungültige Auswahl." };
+  // TanzRaum-Sticker oder normales Smiley
+  if (!UUID.test(nachrichtId) || (emoji !== null && !istReaktion(emoji))) return { error: "Ungültige Auswahl." };
   const supabase = await sitzung();
   const { error } = await supabase.rpc("nachricht_reagieren", { p_nachricht_id: nachrichtId, p_emoji: emoji });
   if (error) return { error: freundlicherFehler(error) };
@@ -266,4 +268,21 @@ export async function gruppenchatVerlassen(gespraechId: string): Promise<Aktions
   if (error) return { error: freundlicherFehler(error) };
   revalidatePath("/dashboard/nachrichten", "layout");
   redirect("/dashboard/nachrichten/gruppen");
+}
+
+// Nachricht in einem geschuetzten Chat melden (geht in die bestehenden Meldungen, Bereich „chat“)
+export async function chatNachrichtMelden(nachrichtId: string, grund: string, text: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(nachrichtId)) return { error: "Ungültige Auswahl." };
+  const supabase = await sitzung();
+  const { error } = await supabase.rpc("chat_nachricht_melden", { p_nachricht_id: nachrichtId, p_grund: grund, p_text: text.slice(0, 1000) });
+  if (error) return { error: freundlicherFehler(error) };
+  return { error: null, ok: "Danke! Deine Meldung ist bei der TanzRaum-Moderation." };
+}
+
+// Chatregeln des TanzRaum Chats einmalig bestaetigen
+export async function chatRegelnBestaetigen(): Promise<AktionsErgebnis> {
+  const supabase = await sitzung();
+  const { error } = await supabase.rpc("chat_regeln_bestaetigen");
+  if (error) return { error: freundlicherFehler(error) };
+  return { error: null };
 }

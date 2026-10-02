@@ -6,7 +6,7 @@ import type { Tarif, Zugriff } from "@/lib/navigation";
  * Nur fuer die Anzeige -- abgesichert wird ueber RLS bzw. die dashboard_*-Funktionen.
  */
 export async function getZugriff(supabase: SupabaseClient, istPlattformAdmin: boolean): Promise<Zugriff> {
-  const [{ data: musik }, { data: spotlights }, { data: jury }, { data: navi }, { data: team }, { data: aus }, { data: einstellung }] = await Promise.all([
+  const [{ data: musik }, { data: spotlights }, { data: jury }, { data: navi }, { data: team }, { data: aus }, { data: einstellung }, { data: chat }] = await Promise.all([
     supabase.rpc("musik_freigegeben"),
     supabase.rpc("spotlights_fuer_mich"),
     supabase.rpc("juryraum_fuer_mich"),
@@ -14,6 +14,7 @@ export async function getZugriff(supabase: SupabaseClient, istPlattformAdmin: bo
     supabase.rpc("meine_team_rechte"),
     istPlattformAdmin ? supabase.rpc("meine_navigation_ausgeblendet") : Promise.resolve({ data: null }),
     supabase.from("plattform_einstellungen").select("navigation_tarife").eq("id", true).maybeSingle(),
+    supabase.rpc("chat_fuer_mich"),
   ]);
   // Persoenliche Reihenfolge / ausgeblendete Admin-Punkte / Tarif-Navigation – nur Anzeige, die Rechte bleiben unberuehrt
   const reihenfolge = Array.isArray(navi) ? (navi as string[]).filter((x) => typeof x === "string") : null;
@@ -22,9 +23,10 @@ export async function getZugriff(supabase: SupabaseClient, istPlattformAdmin: bo
   const musikAn = musik === true;
   const spotlightsAn = spotlights === true;
   const juryraum = jury === true;
+  const chatAn = chat === true;
   const istTeam = (team as { team?: boolean } | null)?.team === true;
   if (istPlattformAdmin)
-    return { tarif: "verein", bereiche: [], istPlattformAdmin: true, netzwerk: "trainer", musikAn, spotlightsAn, juryraum, reihenfolge, ausgeblendet, team: false };
+    return { tarif: "verein", bereiche: [], istPlattformAdmin: true, netzwerk: "trainer", musikAn, spotlightsAn, chatAn, juryraum, reihenfolge, ausgeblendet, team: false };
 
   const [{ data: tarif }, { data: bereiche }, { data: netzwerk }, { data: moduleAus }] = await Promise.all([
     supabase.rpc("mein_tarif"),
@@ -41,6 +43,7 @@ export async function getZugriff(supabase: SupabaseClient, istPlattformAdmin: bo
     netzwerk: netzwerk === "trainer" || netzwerk === "tanzraum" ? netzwerk : null,
     musikAn,
     spotlightsAn,
+    chatAn,
     juryraum,
     reihenfolge,
     team: istTeam,

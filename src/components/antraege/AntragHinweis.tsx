@@ -8,6 +8,8 @@ import type { MeinAntrag } from "@/lib/antraege/getAntraege";
 // Hinweis oben im Dashboard: Ein Verein hat die Person (oder ein Kind) hinzugefuegt, der Antrag fehlt noch
 export function AntragHinweis({ antraege }: { antraege: MeinAntrag[] }) {
   const pfad = usePathname();
+  // Vollbild-Chats (TanzRaum Chat, Nachrichten) nutzen die ganze Hoehe – dort wuerde der Hinweis die Eingabe verdecken
+  if (pfad.startsWith("/dashboard/chat") || pfad.startsWith("/dashboard/nachrichten")) return null;
   const sichtbar = antraege.filter((a) => !pfad.startsWith(`/dashboard/mitgliedsantrag/${a.id}`));
   if (sichtbar.length === 0) return null;
   return (

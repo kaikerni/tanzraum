@@ -31,6 +31,9 @@ import {
   Search,
   Mail,
   Users,
+  Flag,
+  ArrowDown,
+  ShieldCheck,
 } from "lucide-react";
 import { AdminMarke, ADMIN_KENNUNG } from "./AdminMarke";
 import { createClient } from "@/lib/supabase/client";
@@ -48,6 +51,8 @@ import {
   reagieren,
   umfrageAbstimmen,
   weiterleitZiele,
+  chatNachrichtMelden,
+  chatRegelnBestaetigen,
   type SuchErgebnis,
   type WeiterleitZiel,
 } from "@/app/dashboard/nachrichten/actions";
@@ -61,6 +66,9 @@ import { Sprachaufnahme } from "./Sprachaufnahme";
 import { useAnruf } from "./AnrufProvider";
 import { ChatAvatar } from "./ChatAvatar";
 import { GruppenchatInfo } from "./Gruppenchat";
+import { geschuetztSenden, istGeschuetzt, MELDEGRUENDE_CHAT, type Absender } from "@/lib/chat/schutz";
+import { farbeFuer, initialen } from "./ChatAvatar";
+import { ReaktionsBild } from "./ReaktionsBild";
 
 const NAMENSFARBEN = ["text-brand-red", "text-brand-blue", "text-brand-green", "text-brand-purple", "text-brand-gold", "text-brand-navy-soft"];
 const tagBerlin = (iso: string) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(new Date(iso));
@@ -234,6 +242,7 @@ export function ChatFenster({
   meinName,
   stumm: startStumm = false,
   zurueckHref = "/dashboard/nachrichten",
+  tanzraum,
 }: {
   kopf: ChatKopf;
   start: ChatNachricht[];
@@ -243,6 +252,8 @@ export function ChatFenster({
   stumm?: boolean;
   // FREE hat keine Chatuebersicht: zurueck zum Profil bzw. Dashboard
   zurueckHref?: string;
+  // Oeffentlicher TanzRaum Chat
+  tanzraum?: { maxLaenge: number; regelnBestaetigt: boolean; online: number | null };
 }) {
   const router = useRouter();
   const anruf = useAnruf();
@@ -279,6 +290,17 @@ export function ChatFenster({
   const [aufnahme, setAufnahme] = useState(false);
   const [tippende, setTippende] = useState<Record<string, { name: string; bis: number }>>({});
   const [gruppenInfo, setGruppenInfo] = useState(false);
+  // Schutzpruefung, Melden, Absenderangaben, „neue Nachrichten“-Hinweis, Chatregeln
+  const geschuetzt = istGeschuetzt(startKopf.typ);
+  const oeffentlich = startKopf.typ === "tanzraum";
+  const [absender, setAbsender] = useState<Record<string, Absender>>({});
+  const [melden, setMelden] = useState<ChatNachricht | null>(null);
+  const [meldeGrund, setMeldeGrund] = useState("");
+  const [meldeText, setMeldeText] = useState("");
+  const [meldeHinweis, setMeldeHinweis] = useState<string | null>(null);
+  const [neuUnten, setNeuUnten] = useState(0);
+  const [regelnOffen, setRegelnOffen] = useState(oeffentlich && !tanzraum?.regelnBestaetigt);
+  const gesehenBis = useRef<string | null>(null);
   const tippKanal = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const zuletztGetippt = useRef(0);
   const dokumentEingabe = useRef<HTMLInputElement>(null);
@@ -357,7 +379,7 @@ export function ChatFenster({
   }, [supabase, kopf.id, laden, kopfLaden, gelesen, userId]);
 
   function tippenMelden() {
-    if (Date.now() - zuletztGetippt.current < 2500) return;
+    if (oeffentlich || Date.now() - zuletztGetippt.current < 2500) return;
     zuletztGetippt.current = Date.now();
     tippKanal.current?.send({ type: "broadcast", event: "tippt", payload: { id: userId, name: meinName } });
   }
@@ -396,10 +418,40 @@ export function ChatFenster({
   }, [nachrichten, dateiUrls, supabase]);
 
   // Automatisch nach unten scrollen, wenn man ohnehin unten ist.
+  // Liest man aeltere Nachrichten, wird nicht gesprungen – stattdessen „↓ x neue Nachrichten“.
   useLayoutEffect(() => {
     const el = liste.current;
-    if (el && amEnde.current) el.scrollTop = el.scrollHeight;
+    const letzte = aktuell[aktuell.length - 1]?.gesendetAm ?? null;
+    if (el && amEnde.current) {
+      el.scrollTop = el.scrollHeight;
+      gesehenBis.current = letzte;
+      setNeuUnten(0);
+    } else if (gesehenBis.current) {
+      setNeuUnten(aktuell.filter((n) => !n.eigene && n.gesendetAm > gesehenBis.current!).length);
+    }
   }, [aktuell]);
+
+  function nachUnten() {
+    const el = liste.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    amEnde.current = true;
+    gesehenBis.current = aktuell[aktuell.length - 1]?.gesendetAm ?? null;
+    setNeuUnten(0);
+  }
+
+  // Profilbild, Verein und Kennzeichnung der Absender (Gruppen- und oeffentlicher Chat)
+  useEffect(() => {
+    if (startKopf.typ === "dm") return;
+    const fehlend = [...new Set(nachrichten.filter((n) => !n.eigene && n.senderId !== "geloescht").map((n) => n.senderId))].filter((id) => !(id in absender));
+    if (fehlend.length === 0) return;
+    supabase.rpc("chat_absender", { p_gespraech_id: kopf.id, p_user_ids: fehlend.slice(0, 200) }).then(({ data }) => {
+      const neu: Record<string, Absender> = Object.fromEntries(fehlend.map((id) => [id, { avatarUrl: null, verein: null, kennzeichen: null }]));
+      for (const a of (data ?? []) as { user_id: string; avatar_url: string | null; verein: string | null; kennzeichen: string | null }[]) {
+        neu[a.user_id] = { avatarUrl: a.avatar_url, verein: a.verein, kennzeichen: a.kennzeichen };
+      }
+      setAbsender((alt) => ({ ...alt, ...neu }));
+    });
+  }, [nachrichten, absender, supabase, kopf.id, startKopf.typ]);
 
   async function aeltereLaden() {
     const erste = nachrichten[0];
@@ -437,6 +489,20 @@ export function ChatFenster({
     setFehler(null);
     try {
       const einfuegen = async (felder: { inhalt: string; bild_pfad?: string | null; anhang?: Record<string, unknown> | null }, mitAntwort: boolean) => {
+        // Geschuetzte Chats: erst Pruefung, dann Speicherung – andere sehen nur freigegebene Nachrichten
+        if (geschuetzt) {
+          const r = await geschuetztSenden(supabase, kopf.id, {
+            inhalt: felder.inhalt,
+            bild_pfad: felder.bild_pfad ?? null,
+            anhang: felder.anhang ?? null,
+            umfrage: extra?.umfrage ?? null,
+            standort: extra?.standort ?? null,
+            sticker: extra?.sticker ?? null,
+            antwort_auf: mitAntwort ? (antwort?.id ?? null) : null,
+          });
+          if (!r.ok) throw new Error(r.fehler);
+          return;
+        }
         const { error } = await supabase.from("nachrichten").insert({
           gespraech_id: kopf.id,
           sender_id: userId,
@@ -501,12 +567,28 @@ export function ChatFenster({
     }
   }
 
+  // Normales Smiley an der Schreibmarke einfuegen (die Auswahl bleibt offen)
+  function emojiEinfuegen(e: string) {
+    const feld = eingabe.current;
+    const max = tanzraum?.maxLaenge ?? 4000;
+    if (!feld) return setText((t) => (t + e).slice(0, max));
+    const start = feld.selectionStart ?? text.length;
+    const ende = feld.selectionEnd ?? text.length;
+    const neu = (text.slice(0, start) + e + text.slice(ende)).slice(0, max);
+    setText(neu);
+    requestAnimationFrame(() => {
+      feld.selectionStart = feld.selectionEnd = start + e.length;
+    });
+  }
+
   async function absenden() {
     if (!bearbeiten) return senden();
     const neu = text.trim();
     if (sendet) return;
     setSendet(true);
-    const e = await nachrichtBearbeiten(bearbeiten.id, neu);
+    const e = geschuetzt
+      ? await geschuetztSenden(supabase, kopf.id, { inhalt: neu }, bearbeiten.id).then((r) => ({ error: r.ok ? null : r.fehler }))
+      : await nachrichtBearbeiten(bearbeiten.id, neu);
     setSendet(false);
     if (e.error) return setFehler(e.error);
     setBearbeiten(null);
@@ -592,8 +674,19 @@ export function ChatFenster({
               </span>
             ) : (
               <>
-                {kopf.untertitel ?? "Privatchat"}
-                {kopf.nurLeitungSchreibt && istGruppe ? " · nur Leitung schreibt" : ""}
+                {oeffentlich ? (
+                  <span className="inline-flex items-center gap-1">
+                    {tanzraum?.online != null && (
+                      <>
+                        <span className="h-2 w-2 rounded-full bg-brand-green" aria-hidden /> {tanzraum.online} online ·
+                      </>
+                    )}
+                    <ShieldCheck size={12} className="text-brand-green" /> geschützt
+                  </span>
+                ) : (
+                  kopf.untertitel ?? "Privatchat"
+                )}
+                {kopf.nurLeitungSchreibt && istGruppe && !oeffentlich ? " · nur Leitung schreibt" : ""}
               </>
             )}
           </div>
@@ -647,6 +740,20 @@ export function ChatFenster({
                 >
                   <Search size={17} /> Im Chat suchen
                 </button>
+                {oeffentlich && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenueOffen(false);
+                      setRegelnOffen(true);
+                    }}
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[14px] text-brand-ink hover:bg-brand-bg"
+                  >
+                    <ShieldCheck size={17} /> Chatregeln
+                  </button>
+                )}
+                {!oeffentlich && (
                 <button
                   type="button"
                   role="menuitem"
@@ -659,6 +766,7 @@ export function ChatFenster({
                 >
                   <Mail size={17} /> Als ungelesen markieren
                 </button>
+                )}
                 <button
                   type="button"
                   role="menuitem"
@@ -690,7 +798,7 @@ export function ChatFenster({
                     <Users size={17} /> Gruppeninfo & Mitglieder
                   </button>
                 )}
-                {kopf.istLeitung && kopf.typ !== "gruppenchat" && (
+                {kopf.istLeitung && kopf.typ !== "gruppenchat" && !oeffentlich && (
                   <button
                     type="button"
                     role="menuitem"
@@ -840,6 +948,10 @@ export function ChatFenster({
           onScroll={(e) => {
             const el = e.currentTarget;
             amEnde.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+            if (amEnde.current && neuUnten > 0) {
+              gesehenBis.current = aktuell[aktuell.length - 1]?.gesendetAm ?? null;
+              setNeuUnten(0);
+            }
           }}
           className="relative h-full overflow-y-auto px-2 py-3 sm:px-6"
           aria-live="polite"
@@ -875,7 +987,20 @@ export function ChatFenster({
                     <span className="rounded-lg bg-white/95 px-3 py-1 text-[11.5px] font-semibold text-brand-ink-soft shadow-sm">{tagesTrenner(n.gesendetAm)}</span>
                   </div>
                 )}
-                <div id={`n-${n.id}`} className={`flex ${n.eigene ? "justify-end" : "justify-start"} ${neuerAbsender ? "mt-2" : "mt-0.5"}`}>
+                <div id={`n-${n.id}`} className={`flex items-start gap-1.5 ${n.eigene ? "justify-end" : "justify-start"} ${neuerAbsender ? "mt-2" : "mt-0.5"}`}>
+                  {istGruppe && !n.eigene &&
+                    (neuerAbsender ? (
+                      absender[n.senderId]?.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={absender[n.senderId]!.avatarUrl!} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" />
+                      ) : (
+                        <span aria-hidden className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ${farbeFuer(n.senderName)}`}>
+                          {initialen(n.senderName)}
+                        </span>
+                      )
+                    ) : (
+                      <span aria-hidden className="w-7 shrink-0" />
+                    ))}
                   <div
                     role="button"
                     tabIndex={0}
@@ -900,7 +1025,16 @@ export function ChatFenster({
                       <div
                         className={`mb-0.5 text-[12.5px] font-bold ${namensFarbe(n.senderId)} ${nurSticker ? "inline-block rounded-md bg-white/90 px-1.5" : ""}`}
                       >
-                        {n.senderName}
+                        <span className="[overflow-wrap:anywhere]">{n.senderName}</span>
+                        {absender[n.senderId]?.kennzeichen === "admin" && <span className="ml-1 font-semibold text-brand-gold">👑</span>}
+                        {(absender[n.senderId]?.kennzeichen === "team" || absender[n.senderId]?.kennzeichen === "moderator") && (
+                          <span className="ml-1 font-semibold text-brand-blue" title={absender[n.senderId]?.kennzeichen === "moderator" ? "TanzRaum Team · Moderator" : "TanzRaum Team"}>
+                            🛡
+                          </span>
+                        )}
+                        {absender[n.senderId]?.verein && (
+                          <span className="block text-[11px] font-medium text-brand-ink-faint [overflow-wrap:anywhere]">{absender[n.senderId]!.verein}</span>
+                        )}
                       </div>
                     )}
                     {n.antwortAuf && (
@@ -969,8 +1103,7 @@ export function ChatFenster({
                     {n.reaktionen.length > 0 && (
                       <span className={`absolute -bottom-3 ${n.eigene ? "right-2" : "left-2"} flex items-center gap-0.5 rounded-full border border-brand-line bg-white px-1.5 py-0.5 text-[12px] shadow-sm`}>
                         {n.reaktionen.slice(0, 3).map((r) => (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img key={r.emoji} src={stickerUrl(r.emoji)} alt={stickerInfo(r.emoji)?.name ?? ""} className="h-5 w-5 object-contain" />
+                          <ReaktionsBild key={r.emoji} wert={r.emoji} groesse={20} />
                         ))}
                         {n.reaktionen.reduce((a, r) => a + r.anzahl, 0) > 1 && (
                           <span className="ml-0.5 text-[11px] text-brand-ink-soft">{n.reaktionen.reduce((a, r) => a + r.anzahl, 0)}</span>
@@ -986,6 +1119,14 @@ export function ChatFenster({
         </div>
       </div>
 
+      {neuUnten > 0 && (
+        <div className="relative z-10 -mt-12 mb-2 flex h-10 justify-center">
+          <button type="button" onClick={nachUnten} className="inline-flex items-center gap-1.5 rounded-full bg-brand-ink px-3.5 text-[13px] font-semibold text-white shadow-lg">
+            <ArrowDown size={15} /> {neuUnten === 1 ? "1 neue Nachricht" : `${neuUnten} neue Nachrichten`}
+          </button>
+        </div>
+      )}
+
       {/* Aktionen fuer die angetippte Nachricht */}
       {ausgewaehlt && !ausgewaehlt.geloescht && (
         <div className="border-t border-brand-line bg-white">
@@ -997,13 +1138,12 @@ export function ChatFenster({
                   key={id}
                   type="button"
                   aria-pressed={meine}
-                  aria-label={`Mit „${stickerInfo(id)?.name}“ reagieren`}
-                  title={stickerInfo(id)?.name}
+                  aria-label={`Mit „${stickerInfo(id)?.name ?? id}“ reagieren`}
+                  title={stickerInfo(id)?.name ?? id}
                   onClick={() => reaktionSetzen(meine ? null : id)}
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-110 ${meine ? "bg-brand-red-wash ring-1 ring-brand-red/40" : ""}`}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={stickerUrl(id)} alt="" className="h-9 w-9 object-contain" />
+                  <ReaktionsBild wert={id} groesse={36} />
                 </button>
               );
             })}
@@ -1017,7 +1157,7 @@ export function ChatFenster({
               <Plus size={18} />
             </button>
           </div>
-          {reaktionAuswahl && <SmileyAuswahl hoehe="h-[200px]" onWahl={(id) => reaktionSetzen(id)} />}
+          {reaktionAuswahl && <SmileyAuswahl hoehe="h-[200px]" onWahl={(id) => reaktionSetzen(id)} onEmoji={(e) => reaktionSetzen(e)} />}
         </div>
       )}
       {ausgewaehlt && !ausgewaehlt.geloescht && (
@@ -1088,6 +1228,23 @@ export function ChatFenster({
               className="flex h-10 w-10 items-center justify-center rounded-lg text-brand-ink hover:bg-brand-bg"
             >
               <Copy size={16} />
+            </button>
+          )}
+          {geschuetzt && !ausgewaehlt.eigene && (
+            <button
+              type="button"
+              onClick={() => {
+                setMelden(ausgewaehlt);
+                setMeldeGrund("");
+                setMeldeText("");
+                setMeldeHinweis(null);
+                setAuswahl(null);
+              }}
+              aria-label="Nachricht melden"
+              title="Nachricht melden"
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-brand-ink hover:bg-brand-bg"
+            >
+              <Flag size={16} />
             </button>
           )}
           {ausgewaehlt.darfLoeschen && (
@@ -1290,6 +1447,7 @@ export function ChatFenster({
             />
             {!aufnahme && (
               <>
+                {!oeffentlich && (
                 <button
                   type="button"
                   onClick={() => {
@@ -1302,13 +1460,14 @@ export function ChatFenster({
                 >
                   <Plus size={23} />
                 </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {
                     setEmojiOffen(!emojiOffen);
                     setPlusOffen(false);
                   }}
-                  aria-label="TanzRaum-Smileys"
+                  aria-label="Smileys & TanzRaum-Sticker"
                   aria-expanded={emojiOffen}
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-brand-bg ${emojiOffen ? "bg-brand-red-wash" : ""}`}
                 >
@@ -1326,7 +1485,7 @@ export function ChatFenster({
               ref={eingabe}
               value={text}
               rows={1}
-              maxLength={4000}
+              maxLength={tanzraum?.maxLaenge ?? 4000}
               onChange={(e) => {
                 setText(e.target.value);
                 tippenMelden();
@@ -1342,8 +1501,8 @@ export function ChatFenster({
               placeholder="Nachricht"
               className="max-h-[132px] min-h-11 flex-1 resize-none rounded-3xl border border-brand-line bg-brand-bg px-4 py-2.5 text-[15px] text-brand-ink outline-none focus:border-brand-red"
             />
-            {text.trim() || medien.length > 0 || anhangDatei ? (
-              <button type="submit" disabled={sendet} aria-label="Senden" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-red text-white hover:bg-brand-red-deep disabled:opacity-60">
+            {text.trim() || medien.length > 0 || anhangDatei || oeffentlich ? (
+              <button type="submit" disabled={sendet || (oeffentlich && !text.trim())} aria-label="Senden" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-red text-white hover:bg-brand-red-deep disabled:opacity-60">
                 <Send size={19} />
               </button>
             ) : (
@@ -1357,9 +1516,95 @@ export function ChatFenster({
           </form>
           {emojiOffen && !aufnahme && (
             <div className="-mx-2 mt-2 sm:-mx-3">
-              <SmileyAuswahl gesperrt={sendet} onWahl={(id) => senden({ sticker: id })} />
+              <SmileyAuswahl gesperrt={sendet} onWahl={(id) => senden({ sticker: id })} onEmoji={emojiEinfuegen} />
             </div>
           )}
+        </div>
+      )}
+      {melden && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-3 sm:items-center" role="dialog" aria-modal="true" aria-label="Nachricht melden">
+          <div className="flex max-h-[85dvh] w-full max-w-[420px] flex-col gap-3 overflow-y-auto rounded-2xl bg-white p-4 shadow-xl">
+            <div className="flex items-center gap-2">
+              <Flag size={18} className="text-brand-red" />
+              <h2 className="flex-1 text-[16px] font-bold text-brand-ink">Nachricht melden</h2>
+              <button type="button" onClick={() => setMelden(null)} aria-label="Schließen" className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-brand-bg">
+                <X size={17} />
+              </button>
+            </div>
+            {meldeHinweis ? (
+              <>
+                <p className="text-[14px] text-brand-ink">{meldeHinweis}</p>
+                <button type="button" onClick={() => setMelden(null)} className="min-h-11 rounded-xl bg-brand-ink text-[14px] font-semibold text-white">
+                  Schließen
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="line-clamp-3 rounded-lg bg-brand-bg px-3 py-2 text-[13px] text-brand-ink-soft [overflow-wrap:anywhere]">
+                  {melden.senderName}: {melden.inhalt || (melden.sticker ? "TanzRaum-Smiley" : melden.bildPfad ? "Foto" : "Anhang")}
+                </p>
+                <div className="grid grid-cols-1 gap-1.5 min-[380px]:grid-cols-2" role="radiogroup" aria-label="Grund">
+                  {MELDEGRUENDE_CHAT.map((g) => (
+                    <button
+                      key={g.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={meldeGrund === g.id}
+                      onClick={() => setMeldeGrund(g.id)}
+                      className={`min-h-10 rounded-xl border px-3 text-left text-[13.5px] ${meldeGrund === g.id ? "border-brand-red bg-brand-red-wash font-semibold text-brand-red" : "border-brand-line text-brand-ink"}`}
+                    >
+                      {g.label}
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  value={meldeText}
+                  onChange={(e) => setMeldeText(e.target.value)}
+                  maxLength={1000}
+                  rows={2}
+                  placeholder="Beschreibung (optional)"
+                  aria-label="Beschreibung"
+                  className="rounded-xl border border-brand-line px-3 py-2 text-[14px] outline-none focus:border-brand-red"
+                />
+                <button
+                  type="button"
+                  disabled={!meldeGrund}
+                  onClick={async () => {
+                    const e = await chatNachrichtMelden(melden.id, meldeGrund, meldeText);
+                    setMeldeHinweis(e.error ?? e.ok ?? "Danke für deine Meldung.");
+                  }}
+                  className="min-h-11 rounded-xl bg-brand-red text-[14px] font-semibold text-white disabled:opacity-50"
+                >
+                  Melden
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+      {regelnOffen && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-3 sm:items-center" role="dialog" aria-modal="true" aria-label="Willkommen im TanzRaum Chat">
+          <div className="flex max-h-[85dvh] w-full max-w-[420px] flex-col gap-3 overflow-y-auto rounded-2xl bg-white p-5 shadow-xl">
+            <h2 className="text-[18px] font-extrabold text-brand-ink">💬 Willkommen im TanzRaum Chat</h2>
+            <p className="text-[14px] text-brand-ink-soft">Hier treffen sich Tänzer, Trainer, Vereine und Tanzsportbegeisterte aus der TanzRaum-Community.</p>
+            <ul className="flex flex-col gap-1.5 text-[14px] text-brand-ink">
+              <li>🤝 Respektvoll miteinander umgehen</li>
+              <li>🚫 Keine Beleidigungen oder unangemessenen Inhalte</li>
+              <li>🔒 Keine persönlichen Daten – weder eigene noch die anderer</li>
+              <li>🛡️ Der Chat wird automatisch geprüft: Nachrichten erscheinen erst nach der TanzRaum Schutzprüfung.</li>
+            </ul>
+            <p className="text-[12.5px] text-brand-ink-faint">Längere Diskussionen gehören in den TanzRaum Treff.</p>
+            <button
+              type="button"
+              onClick={async () => {
+                setRegelnOffen(false);
+                if (!tanzraum?.regelnBestaetigt) await chatRegelnBestaetigen();
+              }}
+              className="min-h-11 rounded-xl bg-brand-red text-[15px] font-bold text-white"
+            >
+              Verstanden
+            </button>
+          </div>
         </div>
       )}
       {gruppenInfo && kopf.typ === "gruppenchat" && (

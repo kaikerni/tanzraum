@@ -1,4 +1,4 @@
-import { Users, Building2 } from "lucide-react";
+import { Users, Building2, MessageCircle } from "lucide-react";
 import type { ChatTyp } from "@/lib/chat/getChat";
 
 const FARBEN = ["bg-brand-red", "bg-brand-blue", "bg-brand-green", "bg-brand-purple", "bg-brand-gold", "bg-brand-navy-soft"];
@@ -24,6 +24,13 @@ export function ChatAvatar({ typ, name, avatarUrl, groesse = 48 }: { typ: ChatTy
     return (
       <span style={stil} className={`flex shrink-0 items-center justify-center rounded-full text-[15px] font-bold text-white ${farbeFuer(name)}`}>
         {initialen(name)}
+      </span>
+    );
+  }
+  if (typ === "tanzraum") {
+    return (
+      <span style={stil} className="flex shrink-0 items-center justify-center rounded-full bg-brand-red-wash text-brand-red">
+        <MessageCircle size={Math.round(groesse * 0.45)} />
       </span>
     );
   }

@@ -71,6 +71,19 @@ export const RECHTE_GRUPPEN: RechtGruppe[] = [
     aktionen: [{ recht: "spotlight.meldungen_bearbeiten", label: "Spotlight-Meldungen bearbeiten" }],
   },
   {
+    bereich: "chat",
+    label: "Chat",
+    emoji: "💬",
+    text: "TanzRaum Chat und Gruppenchats moderieren (nur gemeldete bzw. blockierte Auszüge)",
+    aktionen: [
+      { recht: "chat.oeffentlich_moderieren", label: "Öffentlichen Chat moderieren" },
+      { recht: "chat.gruppen_moderieren", label: "Gruppenchats moderieren" },
+      { recht: "chat.meldungen_bearbeiten", label: "Chat-Meldungen bearbeiten" },
+      { recht: "chat.nachrichten_loeschen", label: "Nachrichten entfernen" },
+      { recht: "chat.nutzer_stummschalten", label: "Nutzer stummschalten (Chat-Schreibsperre)" },
+    ],
+  },
+  {
     bereich: "nutzer",
     label: "Nutzerverwaltung",
     emoji: "👤",

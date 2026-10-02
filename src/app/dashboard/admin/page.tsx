@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Flag, ShieldCheck, CreditCard, Medal, Building2, Receipt, Megaphone, BarChart3, LifeBuoy, Eye, Store, Users, Sparkles, KeyRound, Shield, GraduationCap, MessageSquareText, ListOrdered, History } from "lucide-react";
+import { Flag, ShieldCheck, CreditCard, Medal, Building2, Receipt, Megaphone, BarChart3, LifeBuoy, Eye, Store, Users, Sparkles, KeyRound, Shield, GraduationCap, MessageSquareText, ListOrdered, History, ShieldAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { versionText } from "@/lib/version";
 import { KARTE } from "@/components/dashboard/Karten";
@@ -30,6 +30,9 @@ export default async function AdminSeite() {
   const [{ data: pruefen }, { data: treffMeldungen }] = await Promise.all([supabase.rpc("workshops_pruefen"), supabase.rpc("treff_meldungen", { p_status: "offen" })]);
   const workshopsOffen = ((pruefen ?? []) as { status: string }[]).filter((w) => w.status === "eingereicht").length;
   const treffOffen = ((treffMeldungen ?? []) as unknown[]).length;
+  const { data: schutz } = await supabase.rpc("schutz_statistik", { p_tage: 7 });
+  const chatFaelle = Number((schutz as { faelle_offen?: number } | null)?.faelle_offen ?? 0);
+  const chatUngeprueft = Number((schutz as { nicht_geprueft_24h?: number } | null)?.nicht_geprueft_24h ?? 0);
   const loeschungen = ((laufend ?? []) as unknown[]).length;
   const kacheln = [
     { href: "/dashboard/admin/statistik", icon: BarChart3, farbe: "bg-brand-blue-wash text-brand-blue", titel: "Plattform-Statistik", text: "Nutzer, Tarife, Vereine, Aktivität – nur zusammengefasste Zahlen" },
@@ -76,6 +79,14 @@ export default async function AdminSeite() {
       titel: "TanzRaum Treff – Moderation",
       text: "Gemeldete Themen, Beiträge und Nutzer · Kategorien · Wissensbeiträge",
       marke: treffOffen > 0 ? `${treffOffen} offen` : null,
+    },
+    {
+      href: "/dashboard/admin/moderation",
+      icon: ShieldAlert,
+      farbe: "bg-brand-red-wash text-brand-red",
+      titel: "Moderation – Chat",
+      text: "TanzRaum Chat freischalten, Chat-Fälle, Schreibsperren, Schutzprüfung",
+      marke: chatFaelle > 0 ? `${chatFaelle} offen` : chatUngeprueft > 0 ? "Prüfung gestört" : null,
     },
     { href: "/dashboard/admin/navigation", icon: ListOrdered, farbe: "bg-brand-blue-wash text-brand-blue", titel: "Navigation & Bereiche", text: "Welche Bereiche FREE, BASIC und VEREIN im Menü sehen (nur Anzeige)" },
     { href: "/dashboard/admin/protokoll", icon: History, farbe: "bg-brand-bg text-brand-ink", titel: "Protokoll", text: "Wer hat was wann geändert – Team, Freischaltungen, Moderation" },

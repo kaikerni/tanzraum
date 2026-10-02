@@ -12,9 +12,10 @@ import {
   type StickerKategorie,
   type StickerSatz,
 } from "@/lib/chat/sticker";
+import { EMOJI_GRUPPEN } from "@/lib/chat/emojis";
 
-// TanzRaum-Smileys: ausschliesslich die eigenen Sticker-Assets, keine Unicode-Emojis.
-type Tab = { art: "zuletzt" } | { art: "satz"; satz: StickerSatz } | { art: "kategorie"; kategorie: StickerKategorie };
+// TanzRaum-Sticker (eigene Assets) und – wenn onEmoji gesetzt ist – zusaetzlich die normalen Smileys.
+type Tab = { art: "zuletzt" } | { art: "satz"; satz: StickerSatz } | { art: "kategorie"; kategorie: StickerKategorie } | { art: "emoji"; gruppe: number };
 
 const SPEICHER = "tanzraum-smileys-zuletzt";
 
@@ -37,10 +38,13 @@ export function zuletztMerken(id: string) {
 
 export function SmileyAuswahl({
   onWahl,
+  onEmoji,
   gesperrt = false,
   hoehe = "h-[240px]",
 }: {
   onWahl: (id: string) => void;
+  // Normale Smileys (Unicode) – z. B. in den Text einfuegen oder als Reaktion setzen
+  onEmoji?: (emoji: string) => void;
   gesperrt?: boolean;
   hoehe?: string;
 }) {
@@ -58,9 +62,11 @@ export function SmileyAuswahl({
       ? zuletzt.map((id) => stickerInfo(id)!).filter(Boolean)
       : tab.art === "satz"
         ? STICKER.filter((s) => s.satz === tab.satz)
-        : STICKER.filter((s) => s.kategorie === tab.kategorie);
+        : tab.art === "kategorie"
+          ? STICKER.filter((s) => s.kategorie === tab.kategorie)
+          : [];
 
-  const tabs: { key: string; titel: string; aktiv: boolean; waehlen: () => void; bild?: string }[] = [
+  const tabs: { key: string; titel: string; aktiv: boolean; waehlen: () => void; bild?: string; zeichen?: string }[] = [
     ...(zuletzt.length > 0
       ? [{ key: "zuletzt", titel: "Zuletzt verwendet", aktiv: tab.art === "zuletzt", waehlen: () => setTab({ art: "zuletzt" }) }]
       : []),
@@ -78,6 +84,15 @@ export function SmileyAuswahl({
       aktiv: tab.art === "kategorie" && tab.kategorie === k.kategorie,
       waehlen: () => setTab({ art: "kategorie", kategorie: k.kategorie }),
     })),
+    ...(onEmoji
+      ? EMOJI_GRUPPEN.map((g, i) => ({
+          key: `emoji-${i}`,
+          titel: g.titel,
+          zeichen: g.zeichen,
+          aktiv: tab.art === "emoji" && tab.gruppe === i,
+          waehlen: () => setTab({ art: "emoji", gruppe: i }),
+        }))
+      : []),
   ];
   const aktiverTitel = tabs.find((t) => t.aktiv)?.titel ?? "";
 
@@ -95,7 +110,9 @@ export function SmileyAuswahl({
             onClick={t.waehlen}
             className={`flex h-10 w-11 shrink-0 items-center justify-center rounded-lg ${t.aktiv ? "bg-brand-red-wash ring-1 ring-brand-red/30" : "hover:bg-brand-bg"}`}
           >
-            {t.bild ? (
+            {t.zeichen ? (
+              <span className="text-[22px] leading-none">{t.zeichen}</span>
+            ) : t.bild ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={stickerUrl(t.bild)} alt="" className="h-8 w-8 object-contain" />
             ) : (
@@ -105,6 +122,22 @@ export function SmileyAuswahl({
         ))}
       </div>
       <p className="px-3 pt-1.5 text-[11.5px] font-semibold uppercase tracking-wide text-brand-ink-faint">{aktiverTitel}</p>
+      {tab.art === "emoji" && onEmoji ? (
+        <div className={`grid ${hoehe} grid-cols-7 content-start gap-0.5 overflow-y-auto p-2 sm:grid-cols-10`}>
+          {EMOJI_GRUPPEN[tab.gruppe].emojis.map((e) => (
+            <button
+              key={e}
+              type="button"
+              disabled={gesperrt}
+              onClick={() => onEmoji(e)}
+              aria-label={e}
+              className="flex aspect-square items-center justify-center rounded-xl text-[26px] leading-none hover:bg-brand-bg disabled:opacity-50"
+            >
+              {e}
+            </button>
+          ))}
+        </div>
+      ) : (
       <div className={`grid ${hoehe} grid-cols-4 content-start gap-1 overflow-y-auto p-2 sm:grid-cols-6`}>
         {liste.map((s) => (
           <button
@@ -124,6 +157,7 @@ export function SmileyAuswahl({
           </button>
         ))}
       </div>
+      )}
     </div>
   );
 }

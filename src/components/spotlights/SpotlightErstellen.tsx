@@ -44,6 +44,7 @@ import { videoVorbereiten, VideoZuGross } from "@/lib/medien/video";
 import { HINTERGRUENDE, type Ebene, type Strich, type TextStil } from "@/lib/spotlights/typen";
 import { SmileyAuswahl } from "@/components/chat/SmileyAuswahl";
 import { EbeneInhalt, StoryEbenen, TEXT_STILE, ebenenStil, useBuehnenGroesse } from "./StoryEbenen";
+import { EMOJIS } from "@/lib/chat/emojis";
 
 // Spotlight-Story-Editor. Gehoert immer der angemeldeten Person (kein „Posten als Verein/Gruppe“).
 // Elemente sind echte Ebenen ueber Foto/Video/Hintergrund: antippen, ziehen, mit zwei Fingern vergroessern/drehen
@@ -56,7 +57,7 @@ type MusikWahl = { titelId: string; titel: string; interpret: string | null; url
 type Punkt = { x: number; y: number };
 type OhneLage<T> = T extends unknown ? Omit<T, "id" | "x" | "y" | "skala" | "drehung"> : never;
 
-const EMOJIS = ["😀", "😂", "😍", "🥰", "😎", "🤩", "🥳", "😮", "😢", "😴", "👏", "🙌", "💪", "🙏", "👍", "🤝", "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "✨", "🔥", "⭐", "🌟", "🎉", "🎊", "🏆", "🥇", "🎵", "🎶", "💃", "🕺", "👑", "🌹", "🎭", "📸", "☀️", "⚡"];
+// Normale Smileys: dieselbe Auswahl wie in Chats und Nachrichten
 const FARBEN = ["#ffffff", "#111111", "#e11d2e", "#c9921f", "#f2d58c", "#1f9d55", "#3b82f6", "#8a6ff0", "#f472b6"];
 const STRICHE = [0.008, 0.016, 0.03];
 const MAX_SEITEN = 10;
@@ -361,7 +362,7 @@ export function SpotlightErstellen({
           {werkzeug === "sticker" && (
             <Blatt titel="TanzRaum-Smileys" onSchliessen={() => setWerkzeug(null)}>
               <div className="-mx-4 text-brand-ink">
-                <SmileyAuswahl hoehe="h-[260px]" onWahl={(id) => ebeneHinzufuegen({ typ: "sticker", sticker: id })} />
+                <SmileyAuswahl hoehe="h-[260px]" onWahl={(id) => ebeneHinzufuegen({ typ: "sticker", sticker: id })} onEmoji={(em) => ebeneHinzufuegen({ typ: "emoji", emoji: em })} />
               </div>
             </Blatt>
           )}

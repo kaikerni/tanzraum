@@ -110,12 +110,15 @@ begin
   begin perform gruppenchat_erstellen('Mit FREE', array[uB2, uF2]); r := r || 'B7 FEHLER FREE im Gruppenchat; ';
   exception when others then r := r || 'B7 FREE nicht aufnehmbar; '; end;
   g := gruppenchat_erstellen('Garde-Freunde', array[uB2, uP]);
-  insert into nachrichten (gespraech_id, sender_id, inhalt) values (g, uB1, 'Hallo Gruppe');
+  -- Gruppenchats: Schreiben nur ueber die Schutzpruefung (direktes Einfuegen ist gesperrt)
+  begin insert into nachrichten (gespraech_id, sender_id, inhalt) values (g, uB1, 'direkt'); r := r || 'B8a FEHLER direkt in Gruppenchat; ';
+  exception when others then r := r || 'B8a direkt gesperrt; '; end;
+  reset role; perform schutz_veroeffentlichen(uB1, g, 'neu', null, jsonb_build_object('inhalt', 'Hallo Gruppe')); set local role authenticated;
   select string_agg(c.bereich || '/' || c.untertitel, ',') into t from chat_liste() c where c.id = g; r := r || coalesce('B8 Gruppenchat=' || t, 'NULL') || '; ';
   select count(*) into n from gruppenchat_mitglieder(g); r := r || coalesce('B9 Mitglieder=' || n, 'NULL') || '; ';
   perform set_config('request.jwt.claims', json_build_object('sub', uB2, 'role', 'authenticated')::text, true);
   perform set_config('request.jwt.claim.sub', uB2::text, true);
-  insert into nachrichten (gespraech_id, sender_id, inhalt) values (g, uB2, 'Hallo zurück');
+  reset role; perform schutz_veroeffentlichen(uB2, g, 'neu', null, jsonb_build_object('inhalt', 'Hallo zurück')); set local role authenticated;
   select count(*) into n from chat_nachrichten(g); r := r || coalesce('B10 Lisa liest Gruppe=' || n, 'NULL') || '; ';
   begin perform gruppenchat_mitglied_entfernen(g, uP); r := r || 'B11 FEHLER Nicht-Ersteller entfernt; ';
   exception when others then r := r || 'B11 nur Ersteller entfernt; '; end;

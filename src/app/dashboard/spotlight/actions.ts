@@ -7,6 +7,7 @@ import type { AktionsErgebnis } from "@/components/ui/SendenButton";
 import type { Ebene, Spotlight, SpotlightPerson } from "@/lib/spotlights/typen";
 import { ortssucheEingerichtet, storyOrtAusPosition, storyOrtSuchen } from "@/lib/geo/geocode";
 import { MUSIK_BUCKET } from "@/lib/musik";
+import { istEmoji } from "@/lib/chat/emojis";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const STICKER = /^[a-z]\d{2,3}$/;
@@ -154,7 +155,8 @@ export async function spotlightGesehen(id: string): Promise<void> {
 }
 
 export async function spotlightReagieren(id: string, sticker: string | null): Promise<AktionsErgebnis> {
-  if (!UUID.test(id) || (sticker && !STICKER.test(sticker))) return { error: "Ungültige Auswahl." };
+  // TanzRaum-Sticker oder normales Smiley
+  if (!UUID.test(id) || (sticker && !STICKER.test(sticker) && !istEmoji(sticker))) return { error: "Ungültige Auswahl." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("spotlight_reagieren", { p_id: id, p_sticker: sticker });
   if (error) return { error: freundlicherFehler(error) };
