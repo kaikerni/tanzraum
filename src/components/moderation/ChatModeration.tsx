@@ -90,8 +90,8 @@ export function ChatFreigabe({ aktiv, tarife }: { aktiv: boolean; tarife: string
         ))}
       </div>
       <p className="text-[12.5px] text-brand-ink-soft">
-        Nur ausgewählte Tarife sehen und nutzen den Chat. Du und Moderatoren mit Chat-Recht habt immer Zugang. Jede Nachricht wird vor der Veröffentlichung geprüft – ohne
-        eingerichtete KI-Prüfung wird nichts veröffentlicht.
+        Nur ausgewählte Tarife sehen und nutzen den Chat. Du und Moderatoren mit Chat-Recht habt immer Zugang. Jede Nachricht wird vor der Veröffentlichung von der TanzRaum
+        Schutzprüfung geprüft.
       </p>
       <button
         type="button"
@@ -112,13 +112,16 @@ export function ChatFreigabe({ aktiv, tarife }: { aktiv: boolean; tarife: string
   );
 }
 
-export function SchutzUebersicht({ s }: { s: SchutzStatistik }) {
+export function SchutzUebersicht({ s, kiAktiv }: { s: SchutzStatistik; kiAktiv: boolean }) {
   const kategorien = Object.entries(s.kategorien ?? {}).sort((a, b) => b[1] - a[1]);
   return (
     <section className={`${KARTE} flex flex-col gap-3`}>
       <h2 className="flex items-center gap-2 text-[17px] font-bold text-brand-ink">
         <Bot size={19} className="text-brand-blue" /> TanzRaum Schutzprüfung (7 Tage)
       </h2>
+      <p className="text-[12.5px] text-brand-ink-soft">
+        Lokale Schutzprüfung: aktiv · Externe KI-Prüfung: {kiAktiv ? "aktiviert" : "deaktiviert"}
+      </p>
       {s.nicht_geprueft_24h > 0 && (
         <p className="rounded-xl bg-brand-gold-wash px-3 py-2 text-[13px] text-brand-ink">
           ⚠️ {s.nicht_geprueft_24h} Nachricht{s.nicht_geprueft_24h === 1 ? "" : "en"} konnte{s.nicht_geprueft_24h === 1 ? "" : "n"} in den letzten 24 Std. nicht geprüft werden (KI nicht

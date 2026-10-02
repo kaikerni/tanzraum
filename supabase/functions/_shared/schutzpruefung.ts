@@ -5,14 +5,17 @@
 //   2. Feste Schutzregeln (dieses Modul): Kontaktdaten, Messenger-Wechsel, Grooming-Signale, sexuelle Inhalte,
 //      Beleidigungen, Drohungen, Diskriminierung, Spam – mit Normalisierung gegen Schreibvarianten/Umgehungen und
 //      Zusammenhang mit den eigenen letzten Nachrichten
-//   3. Externe KI-Pruefung (nur Nachrichtentext + kurzer Kontext, keine Namen, IDs, Profile oder Tokens)
-//   4. Nur wenn beides bestanden ist: Speicherung (-> Realtime). Sonst nichts veroeffentlichen.
-//   Faellt die KI aus oder antwortet unklar, wird NICHT veroeffentlicht (Sicherheit vor Verfuegbarkeit).
+//   3. OPTIONAL – STANDARD AUS: externe KI-Pruefung (nur Nachrichtentext + kurzer Kontext, keine Namen, IDs, Profile
+//      oder Tokens). Nur aktiv, wenn die Server-Konfiguration CHAT_AI_MODERATION_ENABLED ausdruecklich "true" ist
+//      (kiAktiviert). Ein vorhandener API-Schluessel allein schaltet sie NICHT ein. Ist sie aus, wird die KI nie
+//      aufgerufen, kein Schluessel benoetigt und keine Nachricht verlaesst TanzRaum.
+//   4. Nur wenn alle aktiven Pruefungen bestanden sind: Speicherung (-> Realtime). Sonst nichts veroeffentlichen.
+//   Ist die KI eingeschaltet und faellt aus oder antwortet unklar, wird NICHT veroeffentlicht (Sicherheit vor Verfuegbarkeit).
 //
 // Diese Pruefung ist ein technisches Schutzsystem und NICHT Kai (Kai bleibt der TanzRaum-Assistent).
 //
-// TODO (rechtlich, nicht technisch erledigt): Fuer die externe KI-Pruefung sind vor dem Livebetrieb zu klaeren und
-//   umzusetzen: Auftragsverarbeitungsvertrag (AVV) mit dem KI-Anbieter, Pruefung der Drittlandsuebermittlung,
+// TODO (rechtlich, nicht technisch erledigt): Die externe KI-Pruefung ist derzeit DEAKTIVIERT. Vor einer Aktivierung sind
+//   zu klaeren und umzusetzen (siehe docs/chat-schutzpruefung.md, „Rechtliche Prüfung vor Aktivierung externer KI“): Auftragsverarbeitungsvertrag (AVV) mit dem KI-Anbieter, Pruefung der Drittlandsuebermittlung,
 //   Ergaenzung der Datenschutzerklaerung (Zweck, Rechtsgrundlage, Empfaenger, Speicherdauer), Hinweis in den
 //   Nutzungsbedingungen/Chatregeln und ggf. Datenschutz-Folgenabschaetzung (Minderjaehrige). Diese Datei macht das
 //   nicht automatisch rechtssicher.
@@ -241,6 +244,12 @@ export function pruefeRegeln(text: string, k: PruefKontext): RegelErgebnis {
 // ---------------------------------------------------------------------------------------------
 // Externe KI-Pruefung (Anthropic Messages API). Nur Text + kurzer Kontext, keine personenbezogenen Metadaten.
 // ---------------------------------------------------------------------------------------------
+// Externe KI nur bei ausdruecklicher Server-Konfiguration CHAT_AI_MODERATION_ENABLED=true – alles andere (fehlt, leer,
+// "false", "1", "yes" …) bedeutet AUS. Ein gesetzter API-Schluessel schaltet die KI nie automatisch ein.
+export function kiAktiviert(wert: string | undefined | null): boolean {
+  return (wert ?? "").trim().toLowerCase() === "true";
+}
+
 export type KiErgebnis = { entscheidung: "freigeben" | "auffaellig" | "blockieren"; kategorie: string; schwere: number };
 export type KiOptionen = { apiKey: string; modell: string; timeoutMs: number; fetch: typeof fetch };
 
@@ -309,7 +318,8 @@ export type Vorpruefung = { ok: boolean; grund?: string; bis?: string; oeffentli
 
 export type AblaufDeps = {
   vorpruefung: (text: string) => Promise<Vorpruefung>;
-  ki: (text: string, k: PruefKontext, hinweis: string | null) => Promise<KiErgebnis>;
+  // null = externe KI-Pruefung deaktiviert (Standard): nur feste Schutzregeln, kein Aufruf nach aussen
+  ki: ((text: string, k: PruefKontext, hinweis: string | null) => Promise<KiErgebnis>) | null;
   blockieren: (e: { quelle: "regel" | "ki" | "ki_fehler"; ergebnis: "blockiert" | "auffaellig" | "nicht_geprueft"; kategorie: string; schwere: number; hash: string; auszug: string }) => Promise<unknown>;
   veroeffentlichen: () => Promise<string>;
 };
@@ -355,6 +365,8 @@ export async function pruefeUndVeroeffentliche(n: Nachricht, d: AblaufDeps): Pro
       await d.blockieren({ quelle: "regel", ergebnis: "blockiert", kategorie: r.kategorie ?? "sonstiges", schwere: r.schwere, hash, auszug: text.slice(0, 500) });
       return { ok: false, code: "blockiert", fehler: TEXTE.blockiert };
     }
+    // Externe KI deaktiviert: die festen Regeln entscheiden allein (eindeutige Faelle und Kombinationen sind oben blockiert)
+    if (!d.ki) return { ok: true, id: await d.veroeffentlichen() };
     let ki: KiErgebnis;
     try {
       ki = await d.ki(text, k, r.entscheidung === "verdacht" ? r.kategorie : null);

@@ -25,12 +25,15 @@ export default async function ModerationSeite() {
   const darfSperren = darfTeam(r, "chat.nutzer_stummschalten");
   if (!darfFaelle && !darfSperren) redirect("/dashboard");
 
-  const [faelle, sperren, statistik, einstellung] = await Promise.all([
+  const [faelle, sperren, statistik, einstellung, kiStatus] = await Promise.all([
     darfFaelle ? supabase.rpc("chat_faelle", { p_status: null }) : Promise.resolve({ data: [] }),
     darfSperren ? supabase.rpc("chat_sperren_liste") : Promise.resolve({ data: [] }),
     darfFaelle ? supabase.rpc("schutz_statistik", { p_tage: 7 }) : Promise.resolve({ data: null }),
     r.admin ? supabase.from("plattform_einstellungen").select("chat_aktiv, chat_tarife").eq("id", true).maybeSingle() : Promise.resolve({ data: null }),
+    // Nur der Server-Schalter der externen KI-Pruefung (CHAT_AI_MODERATION_ENABLED); alles ausser true gilt als deaktiviert
+    darfFaelle ? supabase.functions.invoke("chat-senden", { body: { nur_status: true } }).catch(() => ({ data: null })) : Promise.resolve({ data: null }),
   ]);
+  const kiAktiv = (kiStatus.data as { ki_aktiv?: boolean } | null)?.ki_aktiv === true;
   const e = einstellung.data as { chat_aktiv?: boolean; chat_tarife?: string[] } | null;
   const s = statistik.data as SchutzStatistik | null;
 
@@ -54,7 +57,7 @@ export default async function ModerationSeite() {
         </Link>
       )}
       {r.admin && e && <ChatFreigabe aktiv={e.chat_aktiv === true} tarife={e.chat_tarife ?? []} />}
-      {s && <SchutzUebersicht s={s} />}
+      {s && <SchutzUebersicht s={s} kiAktiv={kiAktiv} />}
       {darfFaelle && (
         <ChatFaelle faelle={(faelle.data ?? []) as ChatFall[]} rechte={{ entfernen: darfTeam(r, "chat.nachrichten_loeschen"), sperren: darfSperren }} />
       )}

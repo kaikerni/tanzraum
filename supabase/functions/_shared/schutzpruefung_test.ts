@@ -1,7 +1,8 @@
 // Tests der TanzRaum Schutzpruefung (Regeln + Ablauf), ohne Netz:
 //   node --experimental-strip-types supabase/functions/_shared/schutzpruefung_test.ts   (oder: deno run schutzpruefung_test.ts)
 import assert from "node:assert/strict";
-import { pruefeRegeln, pruefeUndVeroeffentliche, kiPruefen, type PruefKontext, type KiErgebnis } from "./schutzpruefung.ts";
+import { readFileSync } from "node:fs";
+import { kiAktiviert, pruefeRegeln, pruefeUndVeroeffentliche, kiPruefen, type PruefKontext, type KiErgebnis } from "./schutzpruefung.ts";
 
 const OEFF: PruefKontext = { oeffentlich: true, minderjaehrige: true, kontextEigene: [], kontextChat: [] };
 const GRUPPE_ERW: PruefKontext = { oeffentlich: false, minderjaehrige: false, kontextEigene: [], kontextChat: [] };
@@ -51,7 +52,7 @@ await fall("Öffentlich: fremder Link -> blockiert, tanzraum.app erlaubt", () =>
   assert.equal(regel("Infos unter https://tanzraum.app/workshops").entscheidung, "frei");
 });
 
-// ---------------- Ablauf ----------------
+// ---------------- Ablauf (mit eingeschalteter externer KI) ----------------
 type Log = { blockiert: unknown[]; veroeffentlicht: number; kiAufrufe: number };
 function deps(o: { vp?: Record<string, unknown>; ki?: (t: string) => Promise<KiErgebnis> }, log: Log) {
   return {
@@ -104,6 +105,46 @@ await fall("Ablauf 9: Umfrage-Text wird mitgeprüft", async () => {
   const l = neu(); const r = await pruefeUndVeroeffentliche({ inhalt: "", umfrage: { frage: "Wer kommt?", optionen: ["ja", "du Wichser"] } }, deps({}, l));
   assert.equal(r.ok, false); assert.equal(l.veroeffentlicht, 0);
 });
+
+// ---------------- Externe KI deaktiviert (Standard) ----------------
+await fall("Schalter: externe KI nur bei CHAT_AI_MODERATION_ENABLED=true", () => {
+  for (const w of [undefined, null, "", "false", "0", "1", "yes", "ja", "an", "on", "truee"]) assert.equal(kiAktiviert(w), false, String(w));
+  for (const w of ["true", "TRUE", " true "]) assert.equal(kiAktiviert(w), true, String(w));
+});
+await fall("Edge Function: Schlüssel nur bei eingeschalteter KI gelesen, KI sonst null", () => {
+  const q = readFileSync(new URL("../chat-senden/index.ts", import.meta.url), "utf8");
+  assert.ok(/const KI_AKTIV = kiAktiviert\(Deno\.env\.get\("CHAT_AI_MODERATION_ENABLED"\)\)/.test(q));
+  assert.ok(/KI_AKTIV \? Deno\.env\.get\("ANTHROPIC_API_KEY"\)/.test(q));
+  assert.equal(q.match(/ANTHROPIC_API_KEY"\)/g)?.length, 1);
+  assert.ok(/ki: KI_AKTIV \? .*kiPruefen.* : null/.test(q));
+});
+{
+  // Ohne KI darf kein einziger Netzaufruf passieren
+  const echtesFetch = globalThis.fetch;
+  let netz = 0;
+  globalThis.fetch = (async () => { netz++; throw new Error("kein Netz erwartet"); }) as typeof fetch;
+  const ohneKi = (log: Log, vp?: Record<string, unknown>) => ({ ...deps({ vp }, log), ki: null });
+  await fall("KI aus 1: normale Nachricht -> nur lokale Prüfung -> veröffentlicht", async () => {
+    const l = neu(); const r = await pruefeUndVeroeffentliche({ inhalt: "Wer ist morgen beim Turnier?" }, ohneKi(l));
+    assert.deepEqual(r, { ok: true, id: "neue-id" }); assert.equal(l.kiAufrufe, 0); assert.equal(l.blockiert.length, 0);
+  });
+  await fall("KI aus 2: Beleidigung/Kontaktdaten/Messenger weiter blockiert (Regel)", async () => {
+    for (const t of ["du Hurensohn", "ruf mich an 0171 2345678", "hast du snap? schreib mir privat", "n.u.d.e.s schicken"]) {
+      const l = neu(); const r = await pruefeUndVeroeffentliche({ inhalt: t }, ohneKi(l));
+      assert.equal(r.ok, false, t); assert.equal(l.veroeffentlicht, 0, t); assert.equal((l.blockiert[0] as { quelle: string }).quelle, "regel", t);
+    }
+  });
+  await fall("KI aus 3: Grooming-Kombination mit eigenen Nachrichten weiter blockiert", async () => {
+    const l = neu(); const r = await pruefeUndVeroeffentliche({ inhalt: "bist du allein zuhause?" }, ohneKi(l, { kontext_eigene: ["wie alt bist du?"] }));
+    assert.equal(r.ok, false); assert.equal(l.veroeffentlicht, 0);
+  });
+  await fall("KI aus 4: Vorprüfung (Flut/Sperre/Rechte) gilt unverändert", async () => {
+    const l = neu(); const r = await pruefeUndVeroeffentliche({ inhalt: "x" }, ohneKi(l, { ok: false, grund: "gesperrt" }));
+    assert.equal((r as { code: string }).code, "gesperrt"); assert.equal(l.veroeffentlicht, 0);
+  });
+  await fall("KI aus 5: nie „nicht geprüft“ – kein Schlüssel nötig, kein Netzaufruf", () => assert.equal(netz, 0));
+  globalThis.fetch = echtesFetch;
+}
 
 // ---------------- KI-Aufruf ----------------
 const antwort = (body: unknown, status = 200) => async () => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });

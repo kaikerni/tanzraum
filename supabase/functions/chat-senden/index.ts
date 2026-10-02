@@ -4,20 +4,27 @@
 // zu schreiben (direktes Einfuegen ist per RLS gesperrt). Ablauf:
 //   1. Anmeldung pruefen (Nutzer-JWT)
 //   2. schutz_vorpruefung (als Nutzer): Schreibrecht, Schreibsperre, Flut, Wiederholung, Kontext
-//   3. feste Schutzregeln, danach externe KI-Pruefung (nur Text + kurzer Kontext, keine Namen/IDs/Tokens)
+//   3. feste Schutzregeln; externe KI-Pruefung NUR wenn CHAT_AI_MODERATION_ENABLED=true (Standard: AUS – dann wird keine
+//      Nachricht an einen KI-Anbieter uebertragen und kein Schluessel benoetigt)
 //   4. nur bei Freigabe: schutz_veroeffentlichen (Service) -> Speicherung -> Realtime an die anderen Nutzer
-//   Blockiert/auffaellig/KI nicht erreichbar: nichts wird gespeichert oder verteilt; der Absender bekommt eine neutrale Meldung.
+//   Blockiert/auffaellig/(eingeschaltete) KI nicht erreichbar: nichts wird gespeichert oder verteilt; der Absender bekommt eine neutrale Meldung.
 //
 // POST { gespraech_id, art: "neu" | "bearbeiten", nachricht_id?, nachricht: { inhalt, antwort_auf, bild_pfad, anhang, umfrage, standort, sticker } }
+// POST { nur_status: true } -> { ok: true, ki_aktiv } (nur der Schalter, keine Daten; fuer die Anzeige in der Moderation)
 //
-// Secrets (nur serverseitig, nie im Browser): ANTHROPIC_API_KEY (Pflicht – ohne Schluessel wird nichts veroeffentlicht),
-// optional SCHUTZ_KI_MODELL (Standard claude-haiku-4-5-20251001).
-// TODO (rechtlich): AVV mit dem KI-Anbieter, Datenschutzerklaerung, ggf. DSFA – siehe _shared/schutzpruefung.ts.
+// Server-Konfiguration (nur Supabase-Secrets, nie im Browser, nie im Repository, nie in Logs):
+//   CHAT_AI_MODERATION_ENABLED – externe KI-Pruefung nur bei genau "true". Fehlt der Wert: AUS (Standard).
+//   ANTHROPIC_API_KEY          – wird nur gelesen, wenn die KI-Pruefung eingeschaltet ist; schaltet sie selbst NICHT ein.
+//   SCHUTZ_KI_MODELL           – optional (Standard claude-haiku-4-5-20251001).
+// TODO (rechtlich): Externe KI erst nach separater datenschutzrechtlicher Pruefung und Freigabe aktivieren –
+// siehe docs/chat-schutzpruefung.md („Rechtliche Prüfung vor Aktivierung externer KI“).
 
 import { CORS, json } from "../_shared/mail.ts";
 import { angemeldet, dienst, UUID } from "../_shared/zugriff.ts";
-import { kiPruefen, pruefeUndVeroeffentliche, TEXTE, type Nachricht, type Vorpruefung } from "../_shared/schutzpruefung.ts";
+import { kiAktiviert, kiPruefen, pruefeUndVeroeffentliche, TEXTE, type Nachricht, type Vorpruefung } from "../_shared/schutzpruefung.ts";
 
+// Standard: externe KI AUS. Nur eine bewusste Server-Konfiguration schaltet sie ein.
+const KI_AKTIV = kiAktiviert(Deno.env.get("CHAT_AI_MODERATION_ENABLED"));
 const MODELL = Deno.env.get("SCHUTZ_KI_MODELL") || "claude-haiku-4-5-20251001";
 
 function uhrzeit(iso?: string): string {
@@ -62,6 +69,7 @@ Deno.serve(async (req) => {
   } catch {
     return json({ ok: false, code: "ungueltig", fehler: "Ungültige Anfrage." }, 400);
   }
+  if (body.nur_status === true) return json({ ok: true, ki_aktiv: KI_AKTIV });
   const gespraechId = body.gespraech_id;
   const art = body.art === "bearbeiten" ? "bearbeiten" : "neu";
   const nachrichtId = typeof body.nachricht_id === "string" && UUID.test(body.nachricht_id) ? body.nachricht_id : null;
@@ -71,7 +79,8 @@ Deno.serve(async (req) => {
   }
 
   const service = dienst();
-  const apiKey = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
+  // Schluessel nur lesen, wenn die externe KI ausdruecklich eingeschaltet ist
+  const apiKey = KI_AKTIV ? Deno.env.get("ANTHROPIC_API_KEY") ?? "" : "";
 
   try {
     const ergebnis = await pruefeUndVeroeffentliche(nachricht, {
@@ -80,7 +89,7 @@ Deno.serve(async (req) => {
         if (error) return { ok: false, grund: "keine_rechte" };
         return data as Vorpruefung;
       },
-      ki: (text, k, hinweis) => kiPruefen(text, k, hinweis, { apiKey, modell: MODELL, timeoutMs: 7000, fetch }),
+      ki: KI_AKTIV ? (text, k, hinweis) => kiPruefen(text, k, hinweis, { apiKey, modell: MODELL, timeoutMs: 7000, fetch }) : null,
       blockieren: async (e) => {
         const { error } = await service.rpc("schutz_blockieren", {
           p_user_id: sitzung.userId, p_gespraech_id: gespraechId, p_quelle: e.quelle, p_ergebnis: e.ergebnis,
