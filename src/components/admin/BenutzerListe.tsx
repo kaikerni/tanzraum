@@ -33,6 +33,8 @@ export type ListenBenutzer = {
   gesperrt: boolean;
   registriert_am: string;
   zuletzt_angemeldet: string | null;
+  // nur fuer die TanzRaum-Administration: 'aus' = Person hat den Online-Status ausgeschaltet (nur die Einstellung, keine Aktivitaet)
+  online_status?: "online" | "offline" | "aus" | null;
   loeschen_ab: string | null;
   loeschung_durch_admin: boolean;
   blockiert: string | null;
@@ -83,6 +85,27 @@ function StatusBadge({ b }: { b: ListenBenutzer }) {
   if (b.loeschen_ab) return <span className="rounded-full bg-brand-gold-wash px-2 py-0.5 text-[11.5px] font-semibold text-brand-ink">Löschung geplant</span>;
   if (b.gesperrt) return <span className="rounded-full bg-brand-red-wash px-2 py-0.5 text-[11.5px] font-semibold text-brand-red">Deaktiviert</span>;
   return <span className="rounded-full bg-brand-green-wash px-2 py-0.5 text-[11.5px] font-semibold text-brand-green">Aktiv</span>;
+}
+
+function OnlineBadge({ b }: { b: ListenBenutzer }) {
+  if (!b.online_status) return null;
+  if (b.online_status === "aus")
+    return (
+      <span className="inline-flex items-center gap-1 whitespace-nowrap text-[11.5px] font-semibold text-brand-ink-soft" title="Die Person hat den Online-Status ausgeschaltet – für andere Nutzer nicht sichtbar.">
+        <span className="h-2 w-2 rounded-full border border-brand-ink-faint bg-white" aria-hidden /> Online-Status AUS
+      </span>
+    );
+  if (b.online_status === "online")
+    return (
+      <span className="inline-flex items-center gap-1 whitespace-nowrap text-[11.5px] font-semibold text-brand-green">
+        <span className="h-2 w-2 rounded-full bg-brand-green" aria-hidden /> Online
+      </span>
+    );
+  return (
+    <span className="inline-flex items-center gap-1 whitespace-nowrap text-[11.5px] text-brand-ink-faint">
+      <span className="h-2 w-2 rounded-full bg-brand-line" aria-hidden /> Offline
+    </span>
+  );
 }
 
 function VereinText({ b }: { b: ListenBenutzer }) {
@@ -191,6 +214,8 @@ export function BenutzerListe({
               <option value="">Alle</option>
               <option value="aktiv">Aktiv</option>
               <option value="deaktiviert">Deaktiviert</option>
+              <option value="online">Gerade online</option>
+              <option value="online_aus">Online-Status AUS</option>
             </select>
           </label>
           <label className="flex flex-col gap-1 text-[12px] font-semibold text-brand-ink-soft">
@@ -297,7 +322,10 @@ export function BenutzerListe({
                       <VereinText b={b} />
                     </td>
                     <td className="px-3 py-2.5">
-                      <StatusBadge b={b} />
+                      <span className="flex flex-col items-start gap-1">
+                        <StatusBadge b={b} />
+                        <OnlineBadge b={b} />
+                      </span>
                     </td>
                     <td className="px-3 py-2.5 text-brand-ink-soft">
                       <span className="block">{datum(b.registriert_am)}</span>
@@ -326,6 +354,7 @@ export function BenutzerListe({
                   </span>
                   <span className="flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-brand-ink-soft">
                     <TarifBadge b={b} />
+                    <OnlineBadge b={b} />
                     {b.verein && (
                       <span className="inline-flex min-w-0 items-center gap-1">
                         <Building2 size={13} className="shrink-0 text-brand-gold" />
@@ -421,6 +450,14 @@ export function BenutzerListe({
                 </Angabe>
                 <Angabe titel="Registriert">{datum(auswahl.registriert_am)}</Angabe>
                 <Angabe titel="Zuletzt angemeldet">{datum(auswahl.zuletzt_angemeldet)}</Angabe>
+                {auswahl.online_status && (
+                  <Angabe titel="Online-Status">
+                    <OnlineBadge b={auswahl} />
+                    {auswahl.online_status === "aus" && (
+                      <span className="mt-0.5 block text-[12px] text-brand-ink-soft">Von der Person ausgeschaltet – für andere Nutzer nicht sichtbar.</span>
+                    )}
+                  </Angabe>
+                )}
               </dl>
 
               <div className="flex flex-wrap gap-2">

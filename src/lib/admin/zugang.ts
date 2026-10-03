@@ -21,6 +21,7 @@ export type PlattformStatistik = {
   mit_zuordnung: number;
   ohne_zuordnung: number;
   online_jetzt: number;
+  online_aus?: number;
   aktiv_24h: number;
   neu_7_tage: number;
   neu_30_tage: number;

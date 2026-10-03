@@ -65,9 +65,16 @@ Stand: 29.09.2026 · Migrationen `20260929135109_plattform_logik`, `202609291356
 - `online_uebersicht()` – Zahlen für alle (gesamt, eigener Verein) und Namen nur von Kontakten/Vereinsmitgliedern mit
   Schalter `online_sichtbar` an, nie unter 16, nie blockierte Personen, max. 12.
 - Schalter in den Einstellungen („Online-Status“), Standard an (seit 03.10.2026, Migration 20261003150000), jederzeit abschaltbar.
+- Online-Status AUS: für andere Nutzer weder angezeigt noch gezählt (`online_anzahl`, `online_uebersicht`, Vereinszahl,
+  `admin_plattform_statistik.online_jetzt`). Nur die TanzRaum-Administration sieht in *Administration → Benutzer* je Konto
+  „Online“ / „Offline“ / „Online-Status AUS“ (`admin_benutzer_liste.online_status`, Filter „Gerade online“ und
+  „Online-Status AUS“) und in der Plattform-Statistik die Anzahl `online_aus`. Bei AUS wird nur die Einstellung gezeigt,
+  keine Aktivität. Ändern kann nur die Person selbst (`online_sichtbar_setzen` wirkt nur auf das eigene Konto).
+- Wichtig im Code: `supabase.rpc()` sendet erst mit `then`/`await`. `void supabase.rpc(...)` allein schickt nichts – deshalb
+  blieb `zuletzt_online` bis 03.10.2026 leer.
 - Zentrale Anzeige in allen Dashboards (Free/Basic/Verein, Administration, JuryRaum): `OnlineUsers`
   („🟢 N TanzRaum-Nutzer online“, anklickbar) und `DatumUhrzeit`; Administration und JuryRaum über `DashboardStatus`.
-  - `online_anzahl()` – dieselbe Zahl für alle (online = aktiv in den letzten 3 Minuten, nicht gesperrt); die Anzeige
+  - `online_anzahl()` – dieselbe Zahl für alle (online = aktiv in den letzten 3 Minuten, Online-Status an, nicht gesperrt); die Anzeige
     fragt sie höchstens alle 60 s ab und nur bei sichtbarem Tab.
   - `online_liste(p_suche, p_limit)` – erst beim Öffnen: nur mit eingeschaltetem Online-Status, nie unter 16, nie blockiert; FREE sieht nur
     Kontakte/Vereinsbeziehungen, ab BASIC zusätzlich öffentliche Profile. Keine Sonderrechte für die Administration,

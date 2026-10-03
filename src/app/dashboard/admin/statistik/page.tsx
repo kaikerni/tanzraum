@@ -33,7 +33,12 @@ export default async function StatistikSeite() {
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Kennzahl label="Nutzer gesamt" wert={s.nutzer_gesamt} zusatz={`+${s.neu_30_tage} in 30 Tagen`} />
-        <Kennzahl label="Gerade online" wert={s.online_jetzt} zusatz={`${s.aktiv_24h} aktiv in 24 h`} farbe="text-brand-green" />
+        <Kennzahl
+          label="Gerade online"
+          wert={s.online_jetzt}
+          zusatz={`${s.aktiv_24h} aktiv in 24 h${s.online_aus != null ? ` · ${s.online_aus} mit Online-Status AUS` : ""}`}
+          farbe="text-brand-green"
+        />
         <Kennzahl label="Neu diese Woche" wert={s.neu_7_tage} zusatz="Registrierungen" farbe="text-brand-blue" />
         <Kennzahl label="Vereine" wert={s.vereine_gesamt} zusatz={`${s.lizenzen_aktiv} mit aktiver Lizenz`} farbe="text-brand-gold" />
         <Kennzahl label="Tanzgruppen" wert={s.gruppen_gesamt} />

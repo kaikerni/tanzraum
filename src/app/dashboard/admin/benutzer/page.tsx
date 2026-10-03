@@ -35,7 +35,7 @@ export default async function BenutzerSeite({ searchParams }: { searchParams: Pr
   const filter: ListenFilter = {
     lq: (sp.lq ?? "").trim().slice(0, 100),
     tarif: nurWenn(sp.tarif, ["free", "basic", "verein"]),
-    status: nurWenn(sp.status, ["aktiv", "deaktiviert"]),
+    status: nurWenn(sp.status, ["aktiv", "deaktiviert", "online", "online_aus"]),
     verein: sp.verein && UUID.test(sp.verein) ? sp.verein : "",
     rolle: nurWenn(sp.rolle, ["admin", "trainer", "betreuer", "mitglied", "eltern"]),
     sort: nurWenn(sp.sort, ["registriert", "name", "handle", "tarif", "verein"]) || "registriert",
