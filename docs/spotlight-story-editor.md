@@ -66,3 +66,24 @@ werden wie bisher angezeigt.
 - **Musikrechte (GEMA o. ä.)**: Musik in Stories ist für alle Betrachter hörbar. Ob das für hochgeladene Titel
   zulässig ist, muss rechtlich geklärt werden – technisch hängt es am bestehenden Musik-Schalter (derzeit aus).
 - **Datenschutzerklärung**: Videos, Standort-Ortsnamen und Erwähnungen in Spotlights ggf. ergänzen.
+
+## Übersicht als Story-Leiste (03.10.2026)
+
+Die Spotlight-Übersicht (`SpotlightLeiste`, Seite `/dashboard/spotlight` und Personenprofil) zeigt keine rechteckigen Kacheln mehr. Stattdessen gibt es eine runde Story-Leiste. Geändert wurde nur die Darstellung; Ansicht, Editor, Daten, Rechte, Ablauf und Sichtbarkeit sind unverändert.
+
+- **Kreise:** Ø 76 px mobil, 90 px Tablet, 106 px Desktop, einschließlich Ring. Vorschau ist das neueste Foto, der Text-Hintergrund oder das Profilbild bzw. die Initialen. Der Name steht darunter, höchstens zweizeilig.
+- **Ringe** (`globals.css`, `.spotlight-ring-*`), alle gleich groß:
+  - neu: Verlauf Rot/Gold/Schwarz mit dezentem Glow, Name fett
+  - gesehen: dezent grau
+  - eigenes Spotlight: feines Gold
+  - kein eigenes: gestrichelt mit ＋
+- **„Mein Spotlight“** steht immer am Anfang:
+  - ohne eigenes Spotlight: ＋ öffnet den Editor
+  - mit eigenem: das Bild öffnet die eigenen Spotlights, der kleine ＋-Knopf öffnet den Editor
+  - FREE: nur ansehen
+- **Scrollen:** Nur die Leiste scrollt horizontal (Wischen, Trackpad, Snap), ohne sichtbare Scrollleiste und ohne Querscrollen der Seite. Ab 640 px gibt es dezente Pfeile links und rechts mit einem Verlauf am Rand.
+- **Kopf:** Die Seite zeigt „Stories“ und „n neu“.
+- **Tests:**
+  - `st-test`: 320, 360, 390, 430, 768, 1024, 1440 und 1920 px; Touch-Wischen, Pfeile, Öffnen, Editor, eigenes Spotlight, FREE, Profil
+  - `sp-test`: Ansicht, Editor, Veröffentlichen
+  - Beide bestanden.
