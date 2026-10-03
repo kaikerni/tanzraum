@@ -31,12 +31,13 @@ export type LizenzZeile = {
   notiz: string | null;
 };
 
-type Person = { userId: string; name: string; handle: string | null; avatarUrl: string | null; email: string | null; tarif: string };
+export type FreischaltPerson = { userId: string; name: string; handle: string | null; avatarUrl: string | null; email: string | null; tarif: string };
+type Person = FreischaltPerson;
 
 const datum = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" }) : "–");
 const heute = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" });
 
-function Freischaltkarte({ person, onFertig }: { person: Person; onFertig: (r: AktionsErgebnis) => void }) {
+export function Freischaltkarte({ person, onFertig }: { person: Person; onFertig: (r: AktionsErgebnis) => void }) {
   const [tarif, setTarif] = useState<"free" | "basic" | "verein">("basic");
   const [art, setArt] = useState<"kostenlos" | "bezahlt">("kostenlos");
   const [befristet, setBefristet] = useState(false);
