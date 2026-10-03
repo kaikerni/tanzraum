@@ -105,19 +105,28 @@ export function VereinslizenzKarte({
           </p>
         </>
       ) : (
-        <p className="text-[13.5px] text-brand-ink-soft">
-          Mit der Vereinslizenz erhalten alle aktiven Mitglieder VEREIN-Zugang –
-          ohne Begrenzung der Mitgliederzahl.
-        </p>
+        <div className="flex flex-col gap-1.5">
+          <p className="text-[14px] font-semibold text-brand-ink">
+            Für diesen Verein ist derzeit keine aktive Vereinslizenz vorhanden.
+          </p>
+          <p className="text-[13.5px] text-brand-ink-soft">
+            Mit der Vereinslizenz werden die Vereinsfunktionen freigeschaltet, und alle aktiven Mitglieder erhalten
+            VEREIN-Zugang – ohne Begrenzung der Mitgliederzahl. Deine Vereinsdaten bleiben in jedem Fall erhalten.
+          </p>
+        </div>
       )}
       {verwalten && (
         <div>
           <Link
             href={`/dashboard/tarif?verein=${vereinId}#verein`}
-            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-brand-line bg-white px-4 text-[13.5px] font-semibold text-brand-ink hover:bg-brand-bg"
+            className={
+              status.aktiv
+                ? "inline-flex min-h-10 items-center gap-2 rounded-xl border border-brand-line bg-white px-4 text-[13.5px] font-semibold text-brand-ink hover:bg-brand-bg"
+                : "btn-primary inline-flex min-h-11 items-center gap-2"
+            }
           >
             <CreditCard size={15} />{" "}
-            {status.aktiv ? "Lizenz verwalten" : "Vereinslizenz kaufen"}
+            {status.aktiv ? "Lizenz verwalten" : "Vereinslizenz aktivieren"}
           </Link>
         </div>
       )}

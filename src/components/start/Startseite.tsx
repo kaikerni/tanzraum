@@ -851,7 +851,7 @@ export function Startseite({
                 Chat, TeamCloud, Fahrgemeinschaften – und Turniere nur, wenn ihr sie braucht.
               </p>
               <ul className="mt-6 grid grid-cols-1 gap-2 text-[14.5px] sm:grid-cols-2">
-                {["Verein registrieren", "Lizenz abschließen", "Bereiche einrichten", "Mitglieder einladen"].map((s, i) => (
+                {["Vereinslizenz kaufen", "Verein wird angelegt", "Bereiche einrichten", "Mitglieder einladen"].map((s, i) => (
                   <li key={s} className="flex items-center gap-2.5">
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/20 text-[13px] font-bold">{i + 1}</span>
                     {s}
@@ -871,7 +871,7 @@ export function Startseite({
                 href={angemeldet ? "/dashboard/tarif" : "/signup?ziel=verein"}
                 className="mt-8 inline-flex min-h-12 items-center rounded-xl bg-white px-6 text-[15px] font-bold text-brand-red hover:bg-brand-red-wash"
               >
-                {angemeldet ? "Vereinslizenz ansehen" : "Verein registrieren"}
+                {angemeldet ? "Vereinslizenz ansehen" : "Verein gründen"}
               </Link>
             </Einblenden>
             <Einblenden verzoegerung={120} className="flex justify-center">

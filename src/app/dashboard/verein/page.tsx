@@ -10,6 +10,7 @@ import {
 } from "@/lib/verein/getVerein";
 import { basisUrl } from "@/lib/url";
 import { OhneVerein } from "@/components/verein/OhneVerein";
+import type { VereinsgruendungStatus } from "@/lib/tarife";
 import { VereinAnsicht } from "@/components/verein/VereinAnsicht";
 import type { VereinslizenzStatus } from "@/components/verein/VereinslizenzKarte";
 import { MeineBeitraege } from "@/components/finanzen/MeineBeitraege";
@@ -29,7 +30,7 @@ export default async function MeinVereinSeite({
   if (!daten) redirect("/login");
 
   if (daten.vereine.length === 0) {
-    const { data: anfragenRoh } = await supabase.rpc("meine_beitrittsanfragen");
+    const [{ data: anfragenRoh }, { data: gruendung }] = await Promise.all([supabase.rpc("meine_beitrittsanfragen"), supabase.rpc("vereinsgruendung_status")]);
     // deno-lint-ignore no-explicit-any
     const anfragen = ((anfragenRoh ?? []) as any[]).map((a) => ({ id: a.id, vereinName: a.verein_name, status: a.status, erstelltAm: a.erstellt_am }));
     return (
@@ -41,11 +42,11 @@ export default async function MeinVereinSeite({
         <TanzRaumAssistant
           variant="setup"
           title="So kommst du in deinen Verein"
-          message="Es gibt drei Wege: Suche deinen Verein und frage den Beitritt an – der Verein entscheidet. Hat dein Verein dir einen Einladungslink geschickt, löst du ihn bei „Einladung einlösen“ ein. Möchtest du deinen Verein neu in TanzRaum anlegen, nutzt du „Verein registrieren“ – du wirst dann Vereinsadmin."
+          message="Es gibt drei Wege: Suche deinen Verein und frage den Beitritt an – der Verein entscheidet. Hat dein Verein dir einen Einladungslink geschickt, löst du ihn bei „Einladung einlösen“ ein. Möchtest du deinen Verein neu in TanzRaum gründen, brauchst du die Vereinslizenz: Sobald die Zahlung bestätigt ist, wird dein Verein angelegt und du wirst Vereinsadmin."
         >
-          Die Vereinsbereiche (Training, Kalender, Mitglieder …) schaltet anschließend die Verein-Lizenz frei.
+          Die Vereinsbereiche (Training, Kalender, Mitglieder …) schaltet die Vereinslizenz frei.
         </TanzRaumAssistant>
-        <OhneVerein anfragen={anfragen} />
+        <OhneVerein anfragen={anfragen} gruendung={(gruendung as VereinsgruendungStatus | null) ?? null} />
       </div>
     );
   }

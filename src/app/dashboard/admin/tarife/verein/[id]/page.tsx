@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 import { VereinslizenzKarte, type VereinslizenzStatus } from "@/components/verein/VereinslizenzKarte";
 import { LizenzManuell, VereinsadminEinladung, type AdminEinladung } from "@/components/admin/VereinVerwaltungAdmin";
+import { VereinLoeschenAdmin } from "@/components/admin/VereinLoeschenAdmin";
 import { basisUrl } from "@/lib/url";
 
 export const metadata = { title: "Verein – Tarife" };
@@ -93,6 +94,7 @@ export default async function AdminVereinTarifSeite({ params, searchParams }: { 
           Aus Datenschutzgründen sieht die TanzRaum-Administration keine Namen oder persönlichen Daten von Vereinsmitgliedern.
         </p>
       </section>
+      <VereinLoeschenAdmin vereinId={id} vereinName={verein.name} />
     </div>
   );
 }

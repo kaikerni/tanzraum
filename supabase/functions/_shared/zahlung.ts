@@ -202,16 +202,22 @@ export async function ereignisErgebnis(admin: SupabaseClient, anbieter: string, 
 // TanzRaum-Rechnung zu einer erfolgreichen Zahlung (bestehende Funktionen erstelle_rechnung / rechnung-versenden)
 export async function rechnungErstellen(
   admin: SupabaseClient,
-  abo: { inhaber: string; user_id: string | null; verein_id: string | null; tarif: string; periode: string },
+  abo: { id?: string; inhaber: string; user_id: string | null; verein_id: string | null; tarif: string; periode: string },
   betragEuro: number,
   zahlungsweg: string,
   zeitraum?: { von: string | null; bis: string | null },
 ) {
   try {
+    // Vereinsgruendung: der Verein entsteht erst mit der Zahlungsbestaetigung (abo_aktualisieren) – Verein frisch nachladen
+    let vereinId = abo.verein_id;
+    if (abo.inhaber === "verein" && !vereinId && abo.id) {
+      const { data } = await admin.from("abos").select("verein_id").eq("id", abo.id).maybeSingle();
+      vereinId = (data as { verein_id: string | null } | null)?.verein_id ?? null;
+    }
     const { data: id, error } = await admin.rpc("erstelle_rechnung", {
       p_typ: abo.tarif,
-      p_ziel_user_id: abo.inhaber === "person" ? abo.user_id : null,
-      p_ziel_verein_id: abo.inhaber === "verein" ? abo.verein_id : null,
+      p_ziel_user_id: abo.inhaber === "person" || !vereinId ? abo.user_id : null,
+      p_ziel_verein_id: abo.inhaber === "verein" ? vereinId : null,
       p_tarif: abo.tarif,
       p_periode: abo.periode,
       p_betrag: betragEuro,

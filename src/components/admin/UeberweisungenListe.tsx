@@ -14,6 +14,8 @@ export type UeberweisungZeile = {
   betrag_cent: number;
   referenz: string;
   verein_name: string;
+  // Vereinsgruendung: der Verein entsteht erst mit der Bestaetigung des Zahlungseingangs
+  gruendung?: boolean;
   empfaenger_email: string | null;
   faellig_am: string;
   erstellt_am: string;
@@ -46,7 +48,8 @@ export function UeberweisungenListe({ liste }: { liste: UeberweisungZeile[] }) {
             <li key={u.id} className="flex flex-col gap-2 rounded-xl border border-brand-line p-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex min-w-0 flex-col gap-0.5 text-[13.5px]">
                 <span className="font-bold text-brand-ink">
-                  {u.verein_name} · {euro(u.betrag_cent)} · <span className="font-mono">{u.referenz}</span>
+                  {u.verein_name}
+                  {u.gruendung ? " (Neugründung)" : ""} · {euro(u.betrag_cent)} · <span className="font-mono">{u.referenz}</span>
                 </span>
                 <span className="text-brand-ink-soft">
                   {u.art === "verlaengerung" ? `Verlängerung (Lizenz bis ${datum(u.lizenz_bis)})` : "Neue Vereinslizenz"} · beauftragt {datum(u.erstellt_am)} ·{" "}
@@ -59,7 +62,7 @@ export function UeberweisungenListe({ liste }: { liste: UeberweisungZeile[] }) {
                   type="button"
                   disabled={laeuft}
                   onClick={() => {
-                    if (window.confirm(`Ist ${euro(u.betrag_cent)} von ${u.verein_name} (${u.referenz}) auf deinem Konto eingegangen? Die Lizenz wird dann freigeschaltet und die Rechnung versendet.`)) {
+                    if (window.confirm(`Ist ${euro(u.betrag_cent)} von ${u.verein_name} (${u.referenz}) auf deinem Konto eingegangen? ${u.gruendung ? "Der Verein wird dann angelegt, die Lizenz freigeschaltet, die bestellende Person wird Vereinsadmin und die Rechnung wird versendet." : "Die Lizenz wird dann freigeschaltet und die Rechnung versendet."}`)) {
                       aktion(() => ueberweisungBestaetigen(u.id));
                     }
                   }}

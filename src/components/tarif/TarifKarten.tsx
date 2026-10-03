@@ -1,14 +1,13 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, CreditCard, Building2, Landmark } from "lucide-react";
 import { zahlungAufruf } from "./zahlungAufruf";
-import { ueberweisungBeantragen, vereinFuerLizenzAnlegen } from "@/app/dashboard/tarif/actions";
+import { ueberweisungBeantragen, vereinsgruendungVorbereiten } from "@/app/dashboard/tarif/actions";
 import { TARIF_EINLEITUNG, TARIF_LEISTUNGEN, TURNIER_ANMELDUNG_HINWEIS, leistungText } from "@/lib/tarif-leistungen";
-import { SendenButton, Meldung, LEERES_ERGEBNIS } from "@/components/ui/SendenButton";
-import { euro, gratisMonate, jahrKurz, type BezahlTarif, type Periode, type Preise } from "@/lib/tarife";
+import { euro, gratisMonate, jahrKurz, type BezahlTarif, type Periode, type Preise, type VereinsgruendungStatus } from "@/lib/tarife";
 import { LEISTUNGSBEGINN_TEXT } from "@/lib/recht/leistungsbeginn";
 
 type AdminVerein = { id: string; name: string; lizenz: boolean };
@@ -25,6 +24,7 @@ export function TarifKarten({
   wunsch,
   ueberweisungMoeglich = false,
   speicher,
+  gruendung = null,
 }: {
   preise: Preise;
   effektiv: string;
@@ -38,6 +38,8 @@ export function TarifKarten({
   ueberweisungMoeglich?: boolean;
   // Speicherkontingente in MB (zentral, speicher_kontingente_oeffentlich)
   speicher?: Record<string, number>;
+  // Verein gruenden (ohne eigenen Verein): Bestellung + Zahlung, Verein entsteht erst nach bestaetigter Zahlung
+  gruendung?: VereinsgruendungStatus | null;
 }) {
   const [periode, setPeriode] = useState<Periode>(startPeriode);
   const [laedt, setLaedt] = useState<string | null>(null);
@@ -47,7 +49,11 @@ export function TarifKarten({
   const [vereinId, setVereinId] = useState<string>(
     kaufbar.find((v) => v.id === vorgewaehlterVerein)?.id ?? kaufbar[0]?.id ?? "",
   );
-  const [neu, anlegen] = useActionState(vereinFuerLizenzAnlegen, LEERES_ERGEBNIS);
+  // Gruendungsmodus: keine eigenen Vereine als Vereinsadmin -> Lizenz fuer einen neuen Verein (Name/Kuerzel)
+  const gruendungsModus = adminVereine.length === 0;
+  const [gName, setGName] = useState(gruendung?.bestellung?.name ?? "");
+  const [gKuerzel, setGKuerzel] = useState(gruendung?.bestellung?.kuerzel ?? "");
+  const gNameOk = gName.trim().length >= 2;
   const router = useRouter();
   const inklusive = jahrKurz(preise, "basic");
   const [ueLaeuft, ueStarten] = useTransition();
@@ -56,7 +62,11 @@ export function TarifKarten({
   function perUeberweisung() {
     setUeMeldung(null);
     ueStarten(async () => {
-      const r = await ueberweisungBeantragen(vereinId, leistungsbeginn);
+      if (gruendungsModus) {
+        const v = await vereinsgruendungVorbereiten(gName, gKuerzel);
+        if (v.error) return setUeMeldung(v);
+      }
+      const r = await ueberweisungBeantragen(gruendungsModus ? null : vereinId, leistungsbeginn);
       setUeMeldung(r);
       if (!r.error) {
         router.refresh();
@@ -68,11 +78,20 @@ export function TarifKarten({
   async function kaufen(tarif: BezahlTarif, anbieter: "stripe" | "paypal") {
     setFehler(null);
     setLaedt(`${tarif}-${anbieter}`);
+    // Vereinsgruendung: zuerst nur die Bestellung speichern – der Verein entsteht erst nach bestaetigter Zahlung
+    if (tarif === "verein" && gruendungsModus) {
+      const v = await vereinsgruendungVorbereiten(gName, gKuerzel);
+      if (v.error) {
+        setLaedt(null);
+        setFehler({ tarif, text: v.error });
+        return;
+      }
+    }
     const { daten, fehler } = await zahlungAufruf<{ url?: string }>("zahlung-starten", {
       tarif,
       periode,
       anbieter,
-      verein_id: tarif === "verein" ? vereinId || null : null,
+      verein_id: tarif === "verein" && !gruendungsModus ? vereinId || null : null,
       leistungsbeginn,
     });
     if (fehler || !daten?.url) {
@@ -142,6 +161,49 @@ export function TarifKarten({
         {tarif === "verein" && ueMeldung?.error && <p className="form-error">{ueMeldung.error}</p>}
         {tarif === "verein" && ueMeldung?.ok && <p className="form-success">{ueMeldung.ok}</p>}
         {fehler?.tarif === tarif && <p className="form-error">{fehler.text}</p>}
+      </div>
+    );
+  }
+
+  // Verein gruenden: Name/Kuerzel + Zahlung. Vor bestaetigter Zahlung entsteht kein Verein (serverseitig erzwungen).
+  // Als Funktion (nicht als Komponente) aufgerufen, damit die Eingabefelder beim Tippen nicht neu entstehen.
+  function vereinGruenden() {
+    const b = gruendung?.bestellung ?? null;
+    if (gruendung?.im_verein) {
+      return (
+        <div className={hinweis}>
+          Du bist bereits einem Verein zugeordnet. In TanzRaum ist jede Person genau einem Verein zugeordnet – einen eigenen Verein kannst du gründen,
+          wenn du dort nicht mehr Mitglied bist.
+        </div>
+      );
+    }
+    if (b?.zahlung?.laeuft) {
+      return (
+        <div className={hinweis}>
+          Deine Vereinsgründung „{b.name}“ ist bestellt, die Zahlung läuft (siehe oben). Dein Verein wird angelegt, sobald sie bestätigt ist.
+        </div>
+      );
+    }
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2 rounded-xl border border-brand-line bg-brand-bg/60 p-3">
+          <p className="flex items-center gap-2 text-[14px] font-bold text-brand-ink">
+            <Building2 size={16} className="text-brand-gold" /> Verein gründen
+          </p>
+          <p className="text-[12.5px] leading-snug text-brand-ink-soft">
+            Gib den Namen deines Vereins an und wähle die Zahlungsart. Dein Verein wird angelegt, sobald die Zahlung bestätigt ist – du wirst
+            automatisch Vereinsadmin. Vorher entsteht kein Verein.
+          </p>
+          <label className="field">
+            <span>Vereinsname</span>
+            <input value={gName} onChange={(e) => setGName(e.target.value)} maxLength={120} required placeholder="z. B. Karnevalsclub Musterstadt" />
+          </label>
+          <label className="field">
+            <span>Kürzel (optional)</span>
+            <input value={gKuerzel} onChange={(e) => setGKuerzel(e.target.value)} maxLength={20} placeholder="z. B. KCM" />
+          </label>
+        </div>
+        <Kaufknoepfe tarif="verein" gesperrt={!gNameOk} />
       </div>
     );
   }
@@ -314,25 +376,7 @@ export function TarifKarten({
                 </Link>
               </div>
             ) : (
-              <form action={anlegen} className="flex flex-col gap-2 rounded-xl border border-brand-line bg-brand-bg/60 p-3">
-                <p className="text-[14px] font-bold text-brand-ink">Noch keinen Verein?</p>
-                <p className="text-[12.5px] leading-snug text-brand-ink-soft">
-                  Du hast aktuell noch keinen Verein, den du verwaltest? Registriere deinen Verein und werde Vereinsadmin. Anschließend kannst du
-                  die Vereinslizenz abschließen.
-                </p>
-                <label className="field">
-                  <span>Vereinsname</span>
-                  <input name="name" required placeholder="z. B. Karnevalsclub Musterstadt" />
-                </label>
-                <label className="field">
-                  <span>Kürzel (optional)</span>
-                  <input name="kuerzel" placeholder="z. B. KCM" />
-                </label>
-                <Meldung ergebnis={neu} />
-                <SendenButton laedtText="Wird registriert …" variante="sekundaer">
-                  Verein registrieren
-                </SendenButton>
-              </form>
+              vereinGruenden()
             )}
           </div>
         </section>

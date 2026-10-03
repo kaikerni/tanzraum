@@ -5,11 +5,11 @@ export default function OnboardingVereinPage() {
     <div className="card">
       <div className="mb-1 text-[12px] font-semibold text-brand-ink-soft">Schritt 2 von 3</div>
       <h1 className="mb-1 font-display text-2xl font-bold text-brand-ink">
-        Möchtest du einen Verein registrieren?
+        Möchtest du einen Verein gründen?
       </h1>
       <p className="mb-5 text-[13.5px] text-brand-ink-soft">
-        Vereinsverwaltung gibt es mit der Verein-Lizenz: Verein registrieren, danach die Lizenz abschließen und Mitglieder einladen.
-        Tanzt du einfach in einem Verein? Dann überspringe diesen Schritt – dein Verein lädt dich ein.
+        Vereinsverwaltung gibt es mit der Vereinslizenz: Lizenz kaufen – nach bestätigter Zahlung wird dein Verein angelegt und du wirst Vereinsadmin.
+        Tanzt du einfach in einem Verein? Dann geh einfach weiter – dein Verein lädt dich ein.
       </p>
       <VereinForm />
     </div>

@@ -5,18 +5,34 @@ import { VEREINS_MODULE } from "@/lib/navigation";
 import { adminSitzung, type Vereinskarte } from "@/lib/admin/zugang";
 import { VereinAnlegenAdmin } from "@/components/admin/VereinVerwaltungAdmin";
 import { VereinswechselAdmin } from "@/components/admin/VereinswechselAdmin";
-import type { AdminVereinswechsel } from "./actions";
+import type { AdminGruendung, AdminVereinswechsel } from "./actions";
+import { VereinsgruendungenAdmin } from "@/components/admin/VereinsgruendungenAdmin";
 
 export const metadata = { title: "Vereine – TanzRaum-Administration" };
 
 // Vereinskarten nur mit Zahlen (Mitglieder, Gruppen, online) – keine Namen von Mitgliedern
-export default async function AdminVereineSeite() {
+export default async function AdminVereineSeite({ searchParams }: { searchParams: Promise<{ geloescht?: string }> }) {
   const { supabase } = await adminSitzung("/dashboard/admin/vereine");
-  const [{ data }, { data: lizenzen }, { data: wechselRoh }] = await Promise.all([
+  const [{ data }, { data: lizenzen }, { data: wechselRoh }, { data: gruendungenRoh }, { geloescht }] = await Promise.all([
     supabase.rpc("admin_vereinskarten"),
     supabase.rpc("admin_vereinslizenzen"),
     supabase.rpc("admin_vereinswechsel_liste"),
+    supabase.rpc("admin_vereinsgruendungen"),
+    searchParams,
   ]);
+  // deno-lint-ignore no-explicit-any
+  const gruendungen: AdminGruendung[] = ((gruendungenRoh ?? []) as any[]).map((g) => ({
+    id: g.id,
+    name: g.name,
+    status: g.status,
+    person: g.person ?? null,
+    anbieter: g.anbieter ?? null,
+    zahlungStatus: g.zahlung_status ?? null,
+    vereinId: g.verein_id ?? null,
+    hinweis: g.hinweis ?? null,
+    erstelltAm: g.erstellt_am,
+    abgeschlossenAm: g.abgeschlossen_am ?? null,
+  }));
   // deno-lint-ignore no-explicit-any
   const wechsel: AdminVereinswechsel[] = ((wechselRoh ?? []) as any[]).map((w) => ({
     id: w.id,
@@ -53,7 +69,13 @@ export default async function AdminVereineSeite() {
         </h1>
         <p className="text-[13.5px] text-brand-ink-soft">{vereine.length} Vereine · nur zusammengefasste Zahlen, keine Mitgliederdaten.</p>
       </div>
+      {geloescht && (
+        <p className="rounded-xl border border-brand-green/30 bg-brand-green-wash px-4 py-3 text-[14px] font-semibold text-brand-green">
+          Verein „{geloescht}“ wurde gelöscht. Die Löschung steht im Protokoll.
+        </p>
+      )}
       <VereinAnlegenAdmin />
+      <VereinsgruendungenAdmin gruendungen={gruendungen} />
       <VereinswechselAdmin wechsel={wechsel} />
       {vereine.length === 0 ? (
         <p className={`${KARTE} text-[14px] text-brand-ink-soft`}>Noch keine Vereine registriert.</p>

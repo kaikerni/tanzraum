@@ -43,11 +43,15 @@ Deno.serve(async (req) => {
   const { data: z } = await admin.from("zahlungsaufforderungen").select("*").eq("id", id).maybeSingle();
   if (!z) return json({ error: "Zahlungsaufforderung nicht gefunden." }, 404);
   if (z.status !== "offen") return json({ error: "Diese Zahlungsaufforderung ist nicht mehr offen." }, 400);
-  const [{ data: v }, { data: a }, { data: abo }] = await Promise.all([
-    admin.from("vereine").select("name, strasse, hausnummer, plz, ort").eq("id", z.verein_id).maybeSingle(),
+  // Vereinsgruendung: der Verein entsteht erst nach dem Zahlungseingang – bis dahin gilt der bestellte Name
+  const gruendung = !z.verein_id;
+  const [{ data: vDb }, { data: a }, { data: abo }, { data: bestellung }] = await Promise.all([
+    z.verein_id ? admin.from("vereine").select("name, strasse, hausnummer, plz, ort").eq("id", z.verein_id).maybeSingle() : Promise.resolve({ data: null }),
     admin.from("plattform_anbieter").select("*").eq("id", true).maybeSingle(),
     z.abo_id ? admin.from("abos").select("laeuft_bis").eq("id", z.abo_id).maybeSingle() : Promise.resolve({ data: null }),
+    gruendung && z.abo_id ? admin.from("vereinsgruendungen").select("verein_name").eq("abo_id", z.abo_id).maybeSingle() : Promise.resolve({ data: null }),
   ]);
+  const v = vDb ?? (bestellung ? { name: (bestellung as { verein_name: string }).verein_name, strasse: null, hausnummer: null, plz: null, ort: null } : null);
   if (!v || !a) return json({ error: "Zahlungsaufforderung nicht gefunden." }, 404);
   if (!a.iban || !a.bank_inhaber) return json({ error: "Die Bankverbindung ist noch nicht hinterlegt." }, 400);
 
@@ -98,7 +102,9 @@ Deno.serve(async (req) => {
   const einleitung =
     z.art === "verlaengerung"
       ? `die Vereinslizenz von <strong>${esc(vereinName)}</strong> läuft am <strong>${esc(datumDe((abo as { laeuft_bis?: string } | null)?.laeuft_bis ?? z.faellig_am))}</strong> ab. Damit sie ohne Unterbrechung ein weiteres Jahr weiterläuft, überweise bitte den Jahresbeitrag.`
-      : `vielen Dank für deine Bestellung der TanzRaum-Vereinslizenz für <strong>${esc(vereinName)}</strong>. Bitte überweise den Jahresbeitrag – die Lizenz wird freigeschaltet, sobald die Zahlung eingegangen ist.`;
+      : gruendung
+        ? `vielen Dank für deine Bestellung der TanzRaum-Vereinslizenz für deinen neuen Verein <strong>${esc(vereinName)}</strong>. Bitte überweise den Jahresbeitrag – sobald die Zahlung eingegangen ist, wird dein Verein in TanzRaum angelegt, die Vereinslizenz freigeschaltet und du wirst automatisch Vereinsadmin.`
+        : `vielen Dank für deine Bestellung der TanzRaum-Vereinslizenz für <strong>${esc(vereinName)}</strong>. Bitte überweise den Jahresbeitrag – die Lizenz wird freigeschaltet, sobald die Zahlung eingegangen ist.`;
   const html = layout({
     vorschau: `Zahlungsaufforderung ${z.referenz}: ${euro(z.betrag_cent / 100)} für die TanzRaum-Vereinslizenz.`,
     titel: "Zahlungsaufforderung Vereinslizenz",
@@ -137,7 +143,9 @@ Deno.serve(async (req) => {
         vorschau: `${vereinName}: ${euro(z.betrag_cent / 100)} per Überweisung erwartet.`,
         titel: "Überweisung erwartet",
         absaetze: [
-          `<strong>${esc(vereinName)}</strong> hat die Vereinslizenz ${z.art === "verlaengerung" ? "zur Verlängerung" : "neu"} per Überweisung bestellt.`,
+          gruendung
+            ? `Neue Vereinsgründung <strong>${esc(vereinName)}</strong>: Vereinslizenz per Überweisung bestellt. Der Verein wird erst angelegt, wenn du den Zahlungseingang bestätigst.`
+            : `<strong>${esc(vereinName)}</strong> hat die Vereinslizenz ${z.art === "verlaengerung" ? "zur Verlängerung" : "neu"} per Überweisung bestellt.`,
           `Betrag: <strong>${esc(euro(z.betrag_cent / 100))}</strong> · Verwendungszweck: <strong>${esc(z.referenz)}</strong> · zahlbar bis ${esc(datumDe(z.faellig_am))}`,
           "Sobald das Geld eingegangen ist: TanzRaum-Administration → Rechnungen → „Offene Überweisungen“ → „Zahlung eingegangen“.",
         ],

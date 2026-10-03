@@ -127,6 +127,22 @@ export type MeinTarifStatus = {
   ueberweisung_moeglich: boolean;
 };
 
+// Verein gruenden (vereinsgruendung_status): nur Bestellung + Zahlung – der Verein entsteht erst nach bestaetigter Zahlung
+export type VereinsgruendungStatus = {
+  im_verein: boolean;
+  bestellung: {
+    id: string;
+    name: string;
+    kuerzel: string | null;
+    erstellt_am: string;
+    zahlung: { anbieter: string; status: string; periode: string; preis_cent: number; laeuft: boolean } | null;
+    ueberweisung: OffeneUeberweisung | null;
+  } | null;
+  gegruendet: { verein_id: string | null; name: string; am: string; hinweis: string | null } | null;
+  bank: Bankverbindung | null;
+  ueberweisung_moeglich: boolean;
+};
+
 export const ibanLesbar = (iban: string | null | undefined) => (iban ?? "").replace(/(.{4})/g, "$1 ").trim();
 
 // Tage bis zu einem Zeitpunkt (aufgerundet, nie negativ)

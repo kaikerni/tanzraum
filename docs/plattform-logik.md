@@ -16,9 +16,10 @@ Stand: 29.09.2026 · Migrationen `20260929135109_plattform_logik`, `202609291356
   (`pruefe_vereinslizenz_zuordnung`): In einem Verein ohne Lizenz darf nur die erste Person (der Vereinsadmin bei der
   Registrierung) eingetragen sein. Jede weitere Zuordnung wird von der Datenbank abgelehnt – egal über welchen Weg
   (Einladung, Hinzufügen, Antrag).
-- **Verein registrieren:** Verein anlegen (`verein_anlegen`, man wird Vereinsadmin) → weiter zu „Mein Tarif“ →
-  Verein-Lizenz abschließen (Freischaltung nur per Zahlungs-Webhook) → Vereinsdaten und Bereiche einrichten →
-  Mitglieder einladen. Texte in Onboarding, „Mein Verein“ und Tarifseite entsprechend.
+- **Verein gründen (seit 03.10.2026):** Ein Verein entsteht nur zusammen mit einer bezahlten Vereinslizenz.
+  „Mein Tarif“ → Vereinsname eingeben → Lastschrift, PayPal oder Überweisung → erst nach bestätigter Zahlung legt die
+  Datenbank Verein, Lizenz und Vereinsadmin in einem Schritt an (`vereinsgruendung_abschliessen`).
+  `verein_anlegen` ist für normale Nutzer gesperrt. Details: `vereinsgruendung.md`.
 - **Genau ein Verein je Person** und Freigabe durch den bisherigen Verein: unverändert (siehe `mitgliedsantraege.md`).
 - **„Verein, in dem ich tanze“** (`profiles.verein_angabe`, ≤ 100 Zeichen): freiwilliger Freitext in den Einstellungen,
   änderbar/löschbar, ohne Rechte und ohne Verknüpfung. Angezeigt im Profil (TanzRaum-Netzwerk) nur, wenn das Profil

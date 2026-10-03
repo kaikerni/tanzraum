@@ -6,7 +6,8 @@ import { KARTE } from "@/components/dashboard/Karten";
 import { TarifKarten } from "@/components/tarif/TarifKarten";
 import { LizenzKarte } from "@/components/tarif/LizenzKarte";
 import { OffeneUeberweisung } from "@/components/tarif/OffeneUeberweisung";
-import { TARIF_LABEL, datum, getPreise, type MeinTarifStatus } from "@/lib/tarife";
+import { TARIF_LABEL, datum, getPreise, type MeinTarifStatus, type VereinsgruendungStatus } from "@/lib/tarife";
+import { GruendungZuruecknehmen } from "@/components/tarif/GruendungZuruecknehmen";
 import { lizenzStatus, restTage } from "@/lib/lizenz";
 import { speicherKontingente } from "@/lib/speicher";
 
@@ -56,8 +57,16 @@ export default async function MeinTarifSeite({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: statusRoh }, preise, sp, speicher] = await Promise.all([supabase.rpc("mein_tarif_status"), getPreise(supabase), searchParams, speicherKontingente(supabase)]);
+  const [{ data: statusRoh }, preise, sp, speicher, { data: gruendungRoh }] = await Promise.all([
+    supabase.rpc("mein_tarif_status"),
+    getPreise(supabase),
+    searchParams,
+    speicherKontingente(supabase),
+    supabase.rpc("vereinsgruendung_status"),
+  ]);
   const status = statusRoh as MeinTarifStatus | null;
+  const gruendung = (gruendungRoh as VereinsgruendungStatus | null) ?? null;
+  const bestellung = gruendung?.bestellung ?? null;
   if (!status?.zugang) redirect("/dashboard");
   const z = status.zugang;
 
@@ -74,7 +83,52 @@ export default async function MeinTarifSeite({
         <p className="form-success">
           Danke! Sobald der Zahlungsanbieter die Zahlung bestätigt, wird dein Tarif freigeschaltet – bei Karte und PayPal
           meist innerhalb weniger Sekunden, bei SEPA-Lastschrift nach dem Zahlungseingang (in der Regel 3–5 Werktage).
+          {bestellung && " Bei einer Vereinsgründung wird dein Verein angelegt, sobald die Zahlung bestätigt ist – du wirst automatisch Vereinsadmin."}
         </p>
+      )}
+
+      {gruendung?.gegruendet && (
+        <section className={`${KARTE} flex flex-col gap-2 border-brand-green/40`}>
+          <p className="flex items-center gap-2 text-[15px] font-bold text-brand-ink">
+            <CheckCircle2 size={18} className="text-brand-green" /> Dein Verein „{gruendung.gegruendet.name}“ ist angelegt
+          </p>
+          <p className="text-[13px] text-brand-ink-soft">
+            {gruendung.gegruendet.hinweis ?? "Die Vereinslizenz ist aktiv und du bist Vereinsadmin. Richte jetzt Vereinsdaten, Tanzgruppen und Mitglieder ein."}
+          </p>
+          {!gruendung.gegruendet.hinweis && (
+            <Link href="/dashboard/verein" className="btn-primary inline-flex min-h-11 w-fit items-center gap-2">
+              <Building2 size={16} /> Zum Vereinsbereich
+            </Link>
+          )}
+        </section>
+      )}
+
+      {bestellung && (bestellung.ueberweisung || bestellung.zahlung?.laeuft) && (
+        <section className={`${KARTE} flex flex-col gap-3`}>
+          <h2 className="flex items-center gap-2 text-[16px] font-bold text-brand-ink">
+            <Building2 size={18} className="text-brand-gold" /> Deine Vereinsgründung: {bestellung.name}
+          </h2>
+          <p className="text-[13px] text-brand-ink-soft">
+            Noch ist kein Verein angelegt. Sobald die Zahlung bestätigt ist, legt TanzRaum deinen Verein an, schaltet die Vereinslizenz frei und macht
+            dich zum Vereinsadmin.
+          </p>
+          {bestellung.ueberweisung ? (
+            <OffeneUeberweisung u={bestellung.ueberweisung} bank={gruendung?.bank ?? null} verein={bestellung.name} gruendung />
+          ) : (
+            <p className="rounded-xl bg-brand-bg px-3 py-2 text-[13px] font-semibold text-brand-ink">
+              Zahlung per {bestellung.zahlung?.anbieter === "paypal" ? "PayPal" : "Lastschrift"} läuft – wir warten auf die Bestätigung des
+              Zahlungsanbieters (bei Lastschrift in der Regel 3–5 Werktage).
+            </p>
+          )}
+        </section>
+      )}
+      {bestellung && !bestellung.ueberweisung && !bestellung.zahlung?.laeuft && (
+        <section className={`${KARTE} flex flex-wrap items-center gap-3`}>
+          <p className="min-w-0 flex-1 text-[13px] text-brand-ink">
+            <strong>Vereinsgründung „{bestellung.name}“</strong> – noch nicht bezahlt. Wähle unten bei „Verein“ eine Zahlungsart.
+          </p>
+          <GruendungZuruecknehmen />
+        </section>
       )}
       {sp.zahlung === "abgebrochen" && <p className="form-error">Die Zahlung wurde abgebrochen. Es wurde nichts berechnet.</p>}
 
@@ -144,6 +198,7 @@ export default async function MeinTarifSeite({
           vorgewaehlterVerein={sp.verein ?? null}
           wunsch={sp.wunsch === "basic" || sp.wunsch === "verein" ? sp.wunsch : null}
           speicher={speicher}
+          gruendung={gruendung}
         />
       ) : (
         <p className="form-error">Die Preise konnten gerade nicht geladen werden. Bitte versuche es später erneut.</p>

@@ -1,25 +1,31 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { AktionsErgebnis } from "@/components/ui/SendenButton";
 import { LEISTUNGSBEGINN_TEXT, LEISTUNGSBEGINN_VERSION } from "@/lib/recht/leistungsbeginn";
 
-// Verein anlegen, um danach direkt die Vereinslizenz zu kaufen (Kauf = Lizenz fuer den eigenen Verein)
-export async function vereinFuerLizenzAnlegen(_prev: AktionsErgebnis, formData: FormData): Promise<AktionsErgebnis> {
-  const name = String(formData.get("name") ?? "").trim();
-  const kuerzel = String(formData.get("kuerzel") ?? "").trim();
-  if (!name) return { error: "Bitte einen Vereinsnamen angeben." };
+// ---------------- Verein gruenden ----------------
+// Ein Verein entsteht nur zusammen mit der Vereinslizenz: hier wird nur die Bestellung (Name, Kuerzel) gespeichert.
+// Verein, Lizenz und Vereinsadmin legt die Datenbank erst nach bestaetigter Zahlung an (vereinsgruendung_abschliessen).
+const nutzerFehler = (error: { code?: string; message: string } | null, neutral: string) =>
+  error?.code === "P0001" || error?.code === "42501" ? error.message : neutral;
+
+export async function vereinsgruendungVorbereiten(name: string, kuerzel: string): Promise<AktionsErgebnis> {
+  const n = name.trim();
+  if (n.length < 2 || n.length > 120) return { error: "Bitte gib den Namen deines Vereins an (2 bis 120 Zeichen)." };
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  const { data, error } = await supabase.rpc("verein_anlegen", { p_name: name, p_kuerzel: kuerzel || null });
-  if (error || !data) return { error: error?.message ?? "Verein konnte nicht angelegt werden." };
-  revalidatePath("/dashboard", "layout");
-  redirect(`/dashboard/tarif?verein=${data}#verein`);
+  const { error } = await supabase.rpc("vereinsgruendung_vorbereiten", { p_name: n, p_kuerzel: kuerzel.trim().slice(0, 20) || null });
+  if (error) return { error: nutzerFehler(error, "Das hat gerade nicht geklappt. Bitte versuche es später erneut.") };
+  return { error: null };
+}
+
+export async function vereinsgruendungAbbrechen(): Promise<AktionsErgebnis> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("vereinsgruendung_abbrechen");
+  if (error) return { error: nutzerFehler(error, "Das hat gerade nicht geklappt.") };
+  revalidatePath("/dashboard/tarif");
+  return { error: null, ok: "Die Vereinsgründung wurde zurückgenommen." };
 }
 
 // ---------------- Vereinslizenz per Ueberweisung ----------------
@@ -36,9 +42,10 @@ async function fehlerAusFunktion(error: unknown, neutral: string): Promise<strin
   return neutral;
 }
 
-export async function ueberweisungBeantragen(vereinId: string, leistungsbeginn: boolean): Promise<AktionsErgebnis> {
+// vereinId null = Vereinsgruendung (Bestellung vorher mit vereinsgruendungVorbereiten gespeichert)
+export async function ueberweisungBeantragen(vereinId: string | null, leistungsbeginn: boolean): Promise<AktionsErgebnis> {
   if (!leistungsbeginn) return { error: "Bitte bestätige zuerst, dass TanzRaum vor Ablauf der Widerrufsfrist mit der Leistung beginnen soll." };
-  if (!/^[0-9a-f-]{36}$/i.test(vereinId)) return { error: "Bitte wähle den Verein aus." };
+  if (vereinId !== null && !/^[0-9a-f-]{36}$/i.test(vereinId)) return { error: "Bitte wähle den Verein aus." };
   const supabase = await createClient();
   const { data: id, error } = await supabase.rpc("ueberweisung_beantragen", {
     p_verein_id: vereinId,

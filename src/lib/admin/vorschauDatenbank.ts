@@ -491,6 +491,8 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
         ? [{ id: "00000000-0000-4000-8000-0000000000b3", name: "Mia Beispiel", geschlecht: "weiblich", nachricht: "Ich tanze seit zwei Jahren und würde gern bei euch mitmachen.", erstellt_am: new Date().toISOString() }]
         : [],
     offene_eltern_bestaetigungen: [],
+    // Verein gruenden: in der Vorschau keine Bestellung (Hinweis „Vereinslizenz erforderlich“)
+    vereinsgruendung_status: { im_verein: mitVerein, bestellung: null, gegruendet: null, bank: null, ueberweisung_moeglich: false },
     mein_tarif_status: {
       abos: ansicht === "basic" ? [{ id: "0e000000-0000-4000-8000-000000000a01", tarif: "basic", status: "active", periode: "jahr", anbieter: "stripe", laeuft_bis: tag(200), preis_cent: 2990, pause_grund: null, pausiert_am: null, pause_verein: null, gekuendigt_zum: null }] : [],
       zugang: { effektiv: tarif, verein_id: mitVerein ? V : null, vereinszugang: mitVerein, plattform_admin: false, persoenlicher_tarif: mitVerein ? "free" : tarif, persoenlich_aktiv_bis: null },

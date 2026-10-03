@@ -23,6 +23,7 @@ const AKTION: Record<string, string> = {
   tarif_geaendert: "Lizenz geändert",
   navigation_geaendert: "Navigation geändert",
   speicher_geaendert: "Speicherlimit geändert",
+  verein_geloescht: "Verein gelöscht",
   nutzer_gesperrt: "Nutzer gesperrt",
   nutzer_entsperrt: "Nutzer entsperrt",
   meldung_bearbeitet: "Meldung bearbeitet",
@@ -61,6 +62,10 @@ function detailText(aktion: string, d: Record<string, unknown>): string {
     const mbT = (x: unknown) => (typeof x === "number" ? `${x.toLocaleString("de-DE")} MB` : "–");
     teile.push(`${d.bereich}: ${mbT(d.alt_mb)} → ${mbT(d.neu_mb)}`);
     if (typeof d.alt_aktiv === "boolean" && d.alt_aktiv !== d.neu_aktiv) teile.push(d.neu_aktiv ? "Uploads wieder erlaubt" : "Uploads gesperrt");
+  }
+  if (aktion === "verein_geloescht" && typeof d.name === "string") {
+    const n = (x: unknown) => (typeof x === "number" ? x : Number(x ?? 0));
+    teile.push(`„${d.name}“ · ${n(d.konten)} Mitglieder mit Konto · ${n(d.gruppen)} Tanzgruppen · ${n(d.dateien)} Dateien`);
   }
   if (typeof d.zugang === "string") teile.push(`${String(d.zugang).toUpperCase()}${d.art ? ` (${d.art})` : ""}${d.bis ? ` bis ${d.bis}` : ""}`);
   if (typeof d.lizenzart === "string") teile.push(String(d.lizenzart));

@@ -10,7 +10,7 @@ const KNOPF =
   "inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-brand-line bg-white px-3.5 text-[13px] font-semibold text-brand-ink hover:bg-brand-bg disabled:opacity-50";
 
 // Offene Zahlungsaufforderung eines Vereins: Bankverbindung zum Abtippen/Kopieren, PDF, erneut senden, zurueckziehen
-export function OffeneUeberweisung({ u, bank, verein }: { u: Offen; bank: Bankverbindung | null; verein: string }) {
+export function OffeneUeberweisung({ u, bank, verein, gruendung = false }: { u: Offen; bank: Bankverbindung | null; verein: string; gruendung?: boolean }) {
   const [laeuft, starte] = useTransition();
   const [meldung, setMeldung] = useState<AktionsErgebnis | null>(null);
   const [kopiert, setKopiert] = useState<string | null>(null);
@@ -37,13 +37,19 @@ export function OffeneUeberweisung({ u, bank, verein }: { u: Offen; bank: Bankve
     <div className="flex flex-col gap-3 rounded-2xl border-2 border-brand-gold/50 bg-brand-gold-wash p-4">
       <div className="flex items-center gap-2 text-[15px] font-extrabold text-brand-ink">
         <Landmark size={18} className="text-brand-gold" />
-        {u.art === "verlaengerung" ? `Verlängerung ${verein}: Überweisung offen` : `Vereinslizenz ${verein}: Überweisung offen`}
+        {u.art === "verlaengerung"
+          ? `Verlängerung ${verein}: Überweisung offen`
+          : gruendung
+            ? `Vereinsgründung ${verein}: Überweisung offen`
+            : `Vereinslizenz ${verein}: Überweisung offen`}
       </div>
       <p className="text-[13px] text-brand-ink">
         Bitte überweise <strong>{euro(u.betrag_cent)}</strong> bis zum <strong>{datum(u.faellig_am)}</strong>.{" "}
         {u.art === "verlaengerung"
           ? "Nach Zahlungseingang verlängert sich die Lizenz nahtlos um ein Jahr."
-          : "Die Lizenz wird freigeschaltet, sobald die Zahlung eingegangen ist (meist 1–3 Werktage)."}
+          : gruendung
+            ? "Sobald die Zahlung eingegangen ist (meist 1–3 Werktage), wird dein Verein angelegt und die Lizenz freigeschaltet – du wirst automatisch Vereinsadmin."
+            : "Die Lizenz wird freigeschaltet, sobald die Zahlung eingegangen ist (meist 1–3 Werktage)."}
       </p>
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 rounded-xl bg-white p-3 text-[13.5px]">
         {zeilen.map(([k, v, kopierbar]) => (

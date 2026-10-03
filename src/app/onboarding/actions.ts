@@ -50,32 +50,6 @@ export async function tarifWaehlen(tarif: "free" | "basic" | "verein", periode: 
   redirect("/onboarding/verein");
 }
 
-export async function vereinAnlegen(formData: FormData) {
-  const name = String(formData.get("name") ?? "").trim();
-  const kuerzel = String(formData.get("kuerzel") ?? "").trim();
-  if (!name) return { error: "Bitte einen Vereinsnamen angeben." };
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  // Verein + eigene Admin-Mitgliedschaft atomar in der DB (direktes Eintragen in fremde Vereine ist gesperrt).
-  const { data: vereinId, error: vereinError } = await supabase.rpc("verein_anlegen", {
-    p_name: name,
-    p_kuerzel: kuerzel || null,
-  });
-  if (vereinError || !vereinId) return { error: vereinError?.message ?? "Verein konnte nicht angelegt werden." };
-
-  await supabase
-    .from("onboarding_progress")
-    .update({ verein_id: vereinId as string, current_step: 3, updated_at: new Date().toISOString() })
-    .eq("user_id", user.id);
-
-  redirect("/onboarding/fertig");
-}
-
 export async function vereinSchrittUeberspringen() {
   const supabase = await createClient();
   const {

@@ -123,3 +123,69 @@ export async function adminVereinswechselDurchfuehren(anfrageId: string, grund: 
   revalidatePath("/dashboard/admin/protokoll");
   return { error: null, ok: "Vereinswechsel durchgeführt und protokolliert." };
 }
+
+// ---------------- Verein endgueltig loeschen (nur TanzRaum-Admin) ----------------
+// Die Datenbank prueft Admin-Recht, Namensbestaetigung und Hindernisse (Rechnungen, laufende bezahlte Lizenz, offene Ueberweisung)
+// und protokolliert die Loeschung. Es wird nie automatisch geloescht.
+export type VereinLoeschPruefung = {
+  name: string;
+  angelegt: string;
+  lizenz: boolean;
+  zahlen: { label: string; wert: number }[];
+  hindernisse: string[];
+};
+
+export async function vereinLoeschenPruefen(vereinId: string): Promise<{ error: string | null; pruefung?: VereinLoeschPruefung }> {
+  if (!UUID.test(vereinId)) return { error: "Ungültiger Verein." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("admin_verein_loeschen_pruefen", { p_verein_id: vereinId });
+  if (error || !data) return { error: error ? meldung(error) : "Verein nicht gefunden." };
+  // deno-lint-ignore no-explicit-any
+  const d = data as any;
+  const z = (label: string, wert: unknown) => ({ label, wert: Number(wert ?? 0) });
+  return {
+    error: null,
+    pruefung: {
+      name: d.name,
+      angelegt: d.angelegt,
+      lizenz: d.lizenz === true,
+      zahlen: [
+        z("Mitglieder mit Konto", d.konten),
+        z("Mitglieder (Stammdaten)", d.mitglieder),
+        z("Tanzgruppen", d.gruppen),
+        z("Trainings", d.trainings),
+        z("Termine", d.termine),
+        z("Dateien (TeamCloud)", d.dateien),
+        z("Musiktitel", d.musik),
+        z("News", d.news),
+        z("Kostüme", d.kostueme),
+        z("Kassenbuch-Einträge", d.kassenbuch),
+        z("Chats", d.chats),
+      ],
+      hindernisse: Array.isArray(d.hindernisse) ? d.hindernisse.map(String) : [],
+    },
+  };
+}
+
+export async function vereinEndgueltigLoeschen(vereinId: string, nameBestaetigung: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(vereinId)) return { error: "Ungültiger Verein." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_verein_endgueltig_loeschen", { p_verein_id: vereinId, p_name_bestaetigung: nameBestaetigung });
+  if (error) return { error: meldung(error) };
+  neuLaden();
+  revalidatePath("/dashboard/admin/protokoll");
+  redirect(`/dashboard/admin/vereine?geloescht=${encodeURIComponent(nameBestaetigung.trim())}`);
+}
+
+export type AdminGruendung = {
+  id: string;
+  name: string;
+  status: "offen" | "abgeschlossen" | "abgebrochen";
+  person: string | null;
+  anbieter: string | null;
+  zahlungStatus: string | null;
+  vereinId: string | null;
+  hinweis: string | null;
+  erstelltAm: string;
+  abgeschlossenAm: string | null;
+};
