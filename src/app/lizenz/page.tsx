@@ -3,7 +3,7 @@ import { RechtsSeite, Abschnitt } from "@/components/recht/RechtsSeite";
 import { createClient } from "@/lib/supabase/server";
 import { getAnbieter } from "@/lib/recht/anbieter";
 import { euro, getPreise, jahrHinweis } from "@/lib/tarife";
-import { ABDECKUNG_ENDE_TEXT, BASIC_PAUSE_TEXT, KEIN_BASIC_NOETIG_TEXT, MITGLIEDERIMPORT_TEXT, TARIF_LEISTUNGEN, VEREINSLIZENZ_TEXT } from "@/lib/tarif-leistungen";
+import { ABDECKUNG_ENDE_TEXT, BASIC_PAUSE_TEXT, KEIN_BASIC_NOETIG_TEXT, MITGLIEDERIMPORT_TEXT, TARIF_EINLEITUNG, TARIF_LEISTUNGEN, TURNIER_ANMELDUNG_HINWEIS, VEREINSLIZENZ_TEXT } from "@/lib/tarif-leistungen";
 
 export const metadata = { title: "Lizenzen" };
 // Preise live aus tarif_preise
@@ -26,6 +26,7 @@ export default async function LizenzSeite() {
 
       <Abschnitt titel="FREE">
         <p>Kostenlos – ohne Laufzeit und ohne Zahlungsdaten.</p>
+        <p>{TURNIER_ANMELDUNG_HINWEIS}</p>
       </Abschnitt>
 
       <Abschnitt titel="BASIC – persönliche Lizenz">
@@ -36,6 +37,7 @@ export default async function LizenzSeite() {
         ) : (
           <p>Die aktuellen Preise können gerade nicht geladen werden.</p>
         )}
+        <p>{TARIF_EINLEITUNG.basic}</p>
         <ul>
           {TARIF_LEISTUNGEN.basic.filter((l) => !l.bald).map((l) => (
             <li key={l.text}>{l.text}</li>
@@ -56,7 +58,7 @@ export default async function LizenzSeite() {
         <p>{KEIN_BASIC_NOETIG_TEXT}</p>
         <p>{ABDECKUNG_ENDE_TEXT}</p>
         <p>
-          <strong>VEREIN enthält unter anderem:</strong>
+          <strong>VEREIN enthält unter anderem:</strong> {TARIF_EINLEITUNG.verein}
         </p>
         <ul>
           {TARIF_LEISTUNGEN.verein.filter((l) => !l.bald).map((l) => (

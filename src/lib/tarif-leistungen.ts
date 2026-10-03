@@ -6,45 +6,56 @@ export type Leistung = { text: string; bald?: boolean };
 
 export const TARIF_LEISTUNGEN: Record<"free" | "basic" | "verein", Leistung[]> = {
   free: [
-    { text: "Dashboard mit deinen Terminen" },
-    { text: "Turnierkalender, Ausschreibungen & Ergebnisse" },
-    { text: "Eigenes Profil & Einstellungen" },
+    { text: "Dashboard mit deinen persönlichen Terminen" },
+    { text: "Turnierkalender mit Ausschreibungen & Ergebnissen" },
+    { text: "Eigenes Profil & persönliche Einstellungen" },
     { text: "Nutzer suchen und freigegebene Profile ansehen" },
-    { text: "Direktnachricht aus dem Profil – mit Zustell- und Lesestatus" },
+    { text: "Direktnachrichten aus Profilen inklusive Zustell- und Lesestatus" },
     { text: "Spotlights ansehen" },
-    { text: "TanzRaum Börse: kaufen, verkaufen, tauschen, verschenken, suchen" },
-    { text: "Freiwillige Angabe „Verein, in dem ich tanze“" },
+    { text: "TanzRaum Börse – kaufen, verkaufen, tauschen, verschenken oder suchen" },
+    { text: "Verein angeben – freiwillige Angabe, in welchem Verein du tanzt" },
   ],
+  // Einleitung „Alles aus Free – plus:“ steht in TARIF_EINLEITUNG
   basic: [
-    { text: "Alles aus FREE" },
-    { text: "TanzRaum-Netzwerk: Buddys, Buddy-Anfragen, Map & Vereine entdecken" },
+    { text: "TanzRaum-Netzwerk – Buddys, Buddy-Anfragen, Map & Vereine entdecken" },
     { text: "Eigene Spotlights erstellen und verwalten" },
-    { text: "Vollständiger Messenger: Chatübersicht, Gruppenchats, Bilder, Videos, Dateien, Sprachnachrichten" },
-    { text: "Eigener Kalender mit Kalender-Abo fürs Handy (iCal)" },
-    { text: "TeamCloud: 100 MB eigener Speicher für Dokumente & Musik" },
+    { text: "Vollständiger Messenger – Chatübersicht, Gruppenchats, Bilder, Videos, Dateien & Sprachnachrichten" },
+    { text: "Eigener Kalender inklusive Kalender-Abo fürs Smartphone (iCal)" },
+    { text: "TeamCloud mit 100 MB persönlichem Speicher für Dokumente & Musik" },
   ],
+  // Einleitung „Alles aus Basic – für euren gesamten Verein“ steht in TARIF_EINLEITUNG
   verein: [
-    { text: "Alles aus BASIC – für alle aktiven Mitglieder deines Vereins" },
-    { text: "Unbegrenzte Anzahl aktiver Vereinsmitglieder" },
+    { text: "Unbegrenzt viele aktive Vereinsmitglieder" },
     { text: "Mitgliederverwaltung mit Rollen & Rechten" },
     { text: "Mitgliederimport aus CSV/Excel" },
-    { text: "Mitglieder-Einladungen per E-Mail oder persönlichem Einladungslink" },
+    { text: "Mitglieder einladen per E-Mail oder persönlichem Einladungslink" },
     { text: "Digitale Mitgliedsanträge mit Unterschrift & PDF" },
     { text: "Gruppenverwaltung mit Trainer- und Betreuerzuordnung" },
     { text: "Trainingsverwaltung mit Trainings-Abmeldungen & Anwesenheit" },
     { text: "Vereinskalender & Saisonplanung" },
-    { text: "Vereinskommunikation: Vereinschat, News & Umfragen" },
-    { text: "TeamCloud: 500 MB Vereinsspeicher" },
-    { text: "Turniere & Starterlisten (abschaltbar)" },
-    { text: "Trainer-Netzwerk für eure Trainer/innen & Vereinsstatistiken" },
-    { text: "Fahrgemeinschaften für alle Mitglieder" },
-    { text: "Kostüme & Requisiten: Inventar, Ausgabe, Rückgabe" },
-    { text: "Finanzen: Kassenbuch mit Belegen, Mitgliedsbeiträge" },
+    { text: "Vereinskommunikation mit Vereinschat, News & Umfragen" },
+    { text: "TeamCloud mit 500 MB Vereinsspeicher" },
+    { text: "Turniere & Starterlisten – bei Bedarf abschaltbar" },
+    { text: "Trainer-Netzwerk für eure Trainerinnen & Trainer" },
+    { text: "Vereinsstatistiken" },
+    { text: "Fahrgemeinschaften für eure Mitglieder" },
+    { text: "Kostüme & Requisiten – Inventar, Ausgabe & Rückgabe" },
+    { text: "Finanzen – Kassenbuch mit Belegen & Mitgliedsbeiträgen" },
     { text: "Ehrungen & Orden" },
-    { text: "Vereinsbereich und Vereinsadmin-Funktionen: Bereiche und Zugriffe selbst einstellen" },
+    { text: "Vereinsbereich & Vereinsadmin – Bereiche und Zugriffe selbst einstellen" },
     { text: "Support & Fernwartung" },
   ],
 };
+
+// Einleitung ueber der Leistungsliste (Tarifkarten, Lizenzübersicht)
+export const TARIF_EINLEITUNG: Record<"basic" | "verein", string> = {
+  basic: "Alles aus Free – plus:",
+  verein: "Alles aus Basic – für euren gesamten Verein",
+};
+
+// Turniere: TanzRaum zeigt Informationen, angemeldet wird ausschliesslich beim BDK
+export const TURNIER_ANMELDUNG_HINWEIS =
+  "Die Turnieranmeldung erfolgt ausschließlich über die offizielle Seite des Bund Deutscher Karneval e. V.";
 
 // Kurzfassung fuer die Tarifkarten der Startseite
 export const TARIF_KURZ: Record<"free" | "basic" | "verein", string[]> = {

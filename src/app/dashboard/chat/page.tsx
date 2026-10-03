@@ -85,7 +85,7 @@ export default async function TanzRaumChat() {
           userId={user.id}
           meinName={profil?.vorname || (profil?.handle ? `@${profil.handle}` : "Jemand")}
           zurueckHref="/dashboard"
-          tanzraum={{ maxLaenge: s.max_laenge || 1000, regelnBestaetigt: s.regeln_bestaetigt, online: typeof online === "number" ? online : null }}
+          tanzraum={{ maxLaenge: s.max_laenge || 1000, regelnBestaetigt: s.regeln_bestaetigt, online: typeof online === "number" ? Math.max(online, 1) : null }}
         />
       </section>
     </div>

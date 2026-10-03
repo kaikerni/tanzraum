@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import { Check, CreditCard, Building2, Landmark } from "lucide-react";
 import { zahlungAufruf } from "./zahlungAufruf";
 import { ueberweisungBeantragen, vereinFuerLizenzAnlegen } from "@/app/dashboard/tarif/actions";
-import { TARIF_LEISTUNGEN } from "@/lib/tarif-leistungen";
+import { TARIF_EINLEITUNG, TARIF_LEISTUNGEN, TURNIER_ANMELDUNG_HINWEIS } from "@/lib/tarif-leistungen";
 import { SendenButton, Meldung, LEERES_ERGEBNIS } from "@/components/ui/SendenButton";
-import { euro, gratisMonate, jahrHinweis, jahrKurz, type BezahlTarif, type Periode, type Preise } from "@/lib/tarife";
+import { euro, gratisMonate, jahrKurz, type BezahlTarif, type Periode, type Preise } from "@/lib/tarife";
 import { LEISTUNGSBEGINN_TEXT } from "@/lib/recht/leistungsbeginn";
 
 type AdminVerein = { id: string; name: string; lizenz: boolean };
@@ -146,60 +146,78 @@ export function TarifKarten({
   function Preis({ tarif }: { tarif: BezahlTarif }) {
     const p = preise[tarif][periode];
     const gratis = gratisMonate(preise, tarif);
+    const anderer = periode === "jahr" ? `${euro(preise[tarif].monat)} / Monat` : `${euro(preise[tarif].jahr)} / Jahr`;
     return (
-      <div className="flex flex-col gap-1">
-        <div className="text-[28px] font-extrabold leading-none text-brand-ink">
-          {euro(p)}
-          <span className="text-[14px] font-semibold text-brand-ink-soft"> / {periode === "jahr" ? "Jahr" : "Monat"}</span>
+      <div className="flex flex-col gap-1.5">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="text-[28px] font-extrabold leading-none text-brand-ink">{euro(p)}</span>
+          <span className="text-[14px] font-semibold text-brand-ink-soft">/ {periode === "jahr" ? "Jahr" : "Monat"}</span>
+          <span className="text-[12.5px] text-brand-ink-soft">oder {anderer}</span>
         </div>
-        {periode === "jahr" ? (
-          <div className="text-[12.5px] text-brand-ink-soft">
-            oder {euro(preise[tarif].monat)} pro Monat bei monatlicher Zahlung
-            {gratis > 0 && (
-              <span className="mt-1 block w-fit rounded-full bg-brand-green-wash px-2.5 py-0.5 text-[12px] font-bold text-brand-green">{jahrKurz(preise, tarif)}</span>
-            )}
-            {jahrHinweis(preise, tarif) && <span className="mt-1 block">{jahrHinweis(preise, tarif)}</span>}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-0.5 text-[12.5px] text-brand-ink-soft">
-            <span>oder {euro(preise[tarif].jahr)} pro Jahr bei jährlicher Zahlung</span>
-            <button type="button" onClick={() => setPeriode("jahr")} className="w-fit text-left font-semibold text-brand-green hover:underline">
-              💡 Jährlich zahlen{gratis > 0 ? ` – ${jahrKurz(preise, tarif)}` : ""} →
+        {gratis > 0 &&
+          (periode === "jahr" ? (
+            <span className="w-fit rounded-full bg-brand-green-wash px-2.5 py-0.5 text-[12px] font-bold text-brand-green">💡 Jährlich zahlen – {jahrKurz(preise, tarif)}</span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setPeriode("jahr")}
+              className="w-fit rounded-full bg-brand-green-wash px-2.5 py-0.5 text-left text-[12px] font-bold text-brand-green hover:underline"
+            >
+              💡 Jährlich zahlen – {jahrKurz(preise, tarif)} →
             </button>
-          </div>
-        )}
-        <div className="text-[12px] text-brand-ink-soft">
-          Abrechnung {periode === "jahr" ? "jährlich im Voraus" : "monatlich im Voraus"}, verlängert sich automatisch, jederzeit zum Laufzeitende kündbar.
-        </div>
+          ))}
+        <p className="text-[12px] leading-snug text-brand-ink-soft">
+          Abrechnung monatlich bzw. jährlich im Voraus. Verlängert sich automatisch und ist zum Ende der jeweiligen Laufzeit kündbar.
+        </p>
       </div>
     );
   }
 
   function Liste({ tarif }: { tarif: "free" | BezahlTarif }) {
     return (
-      <ul className="flex flex-col gap-2 text-[13.5px] text-brand-ink">
-        {TARIF_LEISTUNGEN[tarif].map((l) => (
-          <li key={l.text} className={`flex gap-2 ${l.bald ? "text-brand-ink-soft" : ""}`}>
-            <Check size={16} className={`mt-0.5 shrink-0 ${l.bald ? "text-brand-ink-soft" : "text-brand-red"}`} />
-            <span>
-              {l.text}
-              {l.bald && <span className="ml-1.5 rounded-full bg-brand-bg px-2 py-0.5 text-[11px] font-semibold">bald</span>}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <div className="flex flex-col gap-2">
+        {tarif !== "free" && <p className="text-[13px] font-bold text-brand-ink">{TARIF_EINLEITUNG[tarif]}</p>}
+        <ul className="flex flex-col gap-1.5 text-[13.5px] leading-snug text-brand-ink">
+          {TARIF_LEISTUNGEN[tarif].map((l) => (
+            <li key={l.text} className={`flex gap-2 ${l.bald ? "text-brand-ink-soft" : ""}`}>
+              <Check size={16} className={`mt-0.5 shrink-0 ${l.bald ? "text-brand-ink-soft" : FARBE[tarif].haken}`} />
+              <span className="min-w-0 [overflow-wrap:anywhere]">
+                {l.text}
+                {l.bald && <span className="ml-1.5 rounded-full bg-brand-bg px-2 py-0.5 text-[11px] font-semibold">bald</span>}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
     );
   }
 
-  const karte = (hervor: boolean) =>
-    `flex flex-col gap-4 rounded-[var(--radius-l)] border bg-white p-5 shadow-[var(--shadow)] ${hervor ? "border-brand-red ring-2 ring-brand-red/20" : "border-brand-line"}`;
+  // Jeder Tarif mit eigener Akzentfarbe (Kopfleiste und Haken), der passende bzw. gewuenschte Tarif zusaetzlich hervorgehoben
+  const FARBE = {
+    free: { leiste: "border-t-brand-ink-faint", haken: "text-brand-ink-soft", punkt: "bg-brand-ink-faint" },
+    basic: { leiste: "border-t-brand-red", haken: "text-brand-red", punkt: "bg-brand-red" },
+    verein: { leiste: "border-t-brand-gold", haken: "text-brand-gold", punkt: "bg-brand-gold" },
+  } as const;
+  const karte = (tarif: "free" | BezahlTarif, hervor: boolean) =>
+    `flex min-w-0 flex-col gap-4 rounded-[var(--radius-l)] border border-t-4 bg-white p-4 shadow-[var(--shadow)] sm:p-5 ${FARBE[tarif].leiste} ${
+      hervor ? "border-x-brand-red/40 border-b-brand-red/40 ring-2 ring-brand-red/15" : "border-x-brand-line border-b-brand-line"
+    }`;
   const hinweis = "rounded-xl bg-brand-bg px-3 py-2 text-[13px] font-semibold text-brand-ink";
+  const Kopf = ({ tarif, titel, zusatz }: { tarif: "free" | BezahlTarif; titel: string; zusatz: string }) => (
+    <div className="flex flex-col gap-0.5">
+      <h3 className="flex items-center gap-2 text-[19px] font-extrabold text-brand-ink">
+        <span aria-hidden className={`h-2.5 w-2.5 rounded-full ${FARBE[tarif].punkt}`} />
+        {titel}
+      </h3>
+      <div className="text-[13px] font-semibold text-brand-ink-soft">{zusatz}</div>
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-[18px] font-bold text-brand-ink">Tarife</h2>
-        <div className="inline-flex rounded-full border border-brand-line bg-white p-1 text-[13px]">
+        <div className="inline-flex max-w-full rounded-full border border-brand-line bg-white p-1 text-[13px]">
           {(["monat", "jahr"] as const).map((p) => (
             <button
               key={p}
@@ -222,47 +240,48 @@ export function TarifKarten({
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* FREE */}
-        <section className={karte(effektiv === "free")}>
-          <div>
-            <div className="text-[19px] font-extrabold text-brand-ink">Free</div>
-            <div className="text-[28px] font-extrabold text-brand-ink">0 €</div>
-            <div className="text-[12.5px] text-brand-ink-soft">dauerhaft kostenlos</div>
+        <section className={karte("free", effektiv === "free")}>
+          <Kopf tarif="free" titel="Free" zusatz="dauerhaft kostenlos" />
+          <div className="flex flex-col gap-1.5">
+            <div className="text-[28px] font-extrabold leading-none text-brand-ink">0 €</div>
+            <p className="text-[13px] leading-snug text-brand-ink-soft">
+              Für alle, die TanzRaum entdecken und die wichtigsten Funktionen kostenlos nutzen möchten.
+            </p>
           </div>
           <Liste tarif="free" />
-          {effektiv === "free" && <div className={hinweis}>Dein aktueller Tarif</div>}
+          <p className="text-[12.5px] font-semibold text-brand-ink-soft">Keine Vereinsmitgliedschaft erforderlich.</p>
+          {effektiv === "free" && <div className={`mt-auto ${hinweis}`}>Dein aktueller Tarif</div>}
         </section>
 
         {/* BASIC */}
-        <section className={karte(wunsch === "basic" || persoenlich === "basic")}>
-          <div>
-            <div className="text-[19px] font-extrabold text-brand-ink">Basic</div>
-            <div className="text-[12.5px] text-brand-ink-soft">für dich persönlich</div>
-          </div>
+        <section className={karte("basic", wunsch === "basic" || persoenlich === "basic")}>
+          <Kopf tarif="basic" titel="Basic" zusatz="Für dich persönlich" />
           <Preis tarif="basic" />
           <Liste tarif="basic" />
-          <div className="mt-auto">
+          <p className="text-[12.5px] leading-snug text-brand-ink-soft">
+            Basic ist deine persönliche TanzRaum-Lizenz. Du brauchst dafür keinen Verein und keine Vereinsmitgliedschaft.
+          </p>
+          <div className="mt-auto flex flex-col gap-2">
             {persoenlich === "basic" ? (
               <div className={hinweis}>Deine BASIC-Lizenz ist eingerichtet (siehe oben)</div>
             ) : vereinszugang ? (
               <div className={hinweis}>Über {vereinName ?? "deinen Verein"} hast du bereits VEREIN-Zugang – BASIC brauchst du nicht.</div>
             ) : (
-              <Kaufknoepfe tarif="basic" />
+              <>
+                <p className="text-[12px] text-brand-ink-soft">
+                  <span className="font-semibold text-brand-ink">Zahlung:</span> Karte · Apple Pay · Google Pay · Lastschrift · PayPal
+                </p>
+                <Kaufknoepfe tarif="basic" />
+              </>
             )}
           </div>
         </section>
 
         {/* VEREIN */}
-        <section id="verein" className={karte(wunsch === "verein")}>
-          <div>
-            <div className="text-[19px] font-extrabold text-brand-ink">Verein</div>
-            <div className="text-[12.5px] text-brand-ink-soft">Lizenz für deinen ganzen Verein</div>
-          </div>
+        <section id="verein" className={karte("verein", wunsch === "verein")}>
+          <Kopf tarif="verein" titel="Verein" zusatz="Eine Lizenz für euren gesamten Verein" />
           <Preis tarif="verein" />
           <Liste tarif="verein" />
-          <p className="text-[12px] text-brand-ink-soft">
-            Unbegrenzt viele Mitglieder. Wer aktiv im Verein ist, ist automatisch abgedeckt; wer aus dem Verein entfernt wird,
-            verliert die Abdeckung. Eine eigene BASIC-Lizenz wird währenddessen pausiert – keine doppelte Zahlung.
-          </p>
           <div className="mt-auto flex flex-col gap-3">
             {kaufbar.length > 0 ? (
               <>
@@ -292,10 +311,11 @@ export function TarifKarten({
                 </Link>
               </div>
             ) : (
-              <form action={anlegen} className="flex flex-col gap-2">
-                <p className="text-[12.5px] text-brand-ink-soft">
-                  Die Lizenz kauft der Vereinsadmin. Du hast noch keinen Verein, den du verwaltest – registriere ihn hier (du wirst
-                  Vereinsadmin) und schließe danach die Lizenz ab.
+              <form action={anlegen} className="flex flex-col gap-2 rounded-xl border border-brand-line bg-brand-bg/60 p-3">
+                <p className="text-[14px] font-bold text-brand-ink">Noch keinen Verein?</p>
+                <p className="text-[12.5px] leading-snug text-brand-ink-soft">
+                  Du hast aktuell noch keinen Verein, den du verwaltest? Registriere deinen Verein und werde Vereinsadmin. Anschließend kannst du
+                  die Vereinslizenz abschließen.
                 </p>
                 <label className="field">
                   <span>Vereinsname</span>
@@ -315,17 +335,33 @@ export function TarifKarten({
         </section>
       </div>
 
-      <p className="text-[12px] text-brand-ink-soft">
-        Mit dem Kauf akzeptierst du die{" "}
-        <Link href="/nutzungsbedingungen" className="underline">
-          Nutzungsbedingungen
-        </Link>{" "}
-        – Hinweise zur Verarbeitung deiner Daten findest du in der{" "}
-        <Link href="/datenschutz" className="underline">
-          Datenschutzerklärung
-        </Link>
-        . Freigeschaltet wird dein Tarif, sobald der Zahlungsanbieter die Zahlung bestätigt.
-      </p>
+      {/* Vereinslizenz – Erklaerung (entspricht der bestehenden Lizenzlogik: Abdeckung aktiver Mitglieder, BASIC-Pause) */}
+      <section className="flex flex-col gap-2 rounded-[var(--radius-l)] border border-brand-gold/40 bg-brand-gold-wash/40 p-4 sm:p-5">
+        <h3 className="flex items-center gap-2 text-[16px] font-extrabold text-brand-ink">
+          <Building2 size={18} className="text-brand-gold" /> Eine Lizenz. Der ganze Verein.
+        </h3>
+        <ul className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-[13.5px] leading-snug text-brand-ink md:grid-cols-2">
+          <li>Unbegrenzt viele aktive Mitglieder können über die Vereinslizenz abgedeckt werden.</li>
+          <li>Wer aktiv eurem Verein zugeordnet ist, ist automatisch über die Vereinslizenz abgedeckt.</li>
+          <li>Wird ein Mitglied aus dem Verein entfernt, endet seine Abdeckung durch die Vereinslizenz.</li>
+          <li>Eine eigene Basic-Lizenz wird während der Abdeckung durch die Vereinslizenz pausiert, sodass keine doppelte Zahlung entsteht.</li>
+        </ul>
+      </section>
+
+      <div className="flex flex-col gap-1 text-[12px] text-brand-ink-soft">
+        <p>🏆 {TURNIER_ANMELDUNG_HINWEIS} TanzRaum stellt Turnierinformationen, Ausschreibungen, Starterlisten und Ergebnisse bereit.</p>
+        <p>
+          Mit dem Kauf akzeptierst du die{" "}
+          <Link href="/nutzungsbedingungen" className="underline">
+            Nutzungsbedingungen
+          </Link>{" "}
+          – Hinweise zur Verarbeitung deiner Daten findest du in der{" "}
+          <Link href="/datenschutz" className="underline">
+            Datenschutzerklärung
+          </Link>
+          . Freigeschaltet wird dein Tarif, sobald der Zahlungsanbieter die Zahlung bestätigt.
+        </p>
+      </div>
     </div>
   );
 }

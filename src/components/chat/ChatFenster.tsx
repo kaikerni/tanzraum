@@ -1012,8 +1012,8 @@ export function ChatFenster({
                     onKeyDown={(e) => e.key === "Enter" && setAuswahl(gewaehlt ? null : n.id)}
                     className={`relative max-w-[82%] cursor-pointer rounded-2xl text-[14.5px] leading-snug sm:max-w-[65%] ${
                       nurSticker
-                        ? "px-1 pb-1 pt-1 text-brand-ink"
-                        : `px-3 pb-1.5 pt-2 shadow-[0_1px_1px_rgba(27,33,48,0.08)] ${n.eigene ? "bg-[#fde4e6] text-brand-ink" : "bg-white text-brand-ink"}`
+                        ? `px-1 pt-1 text-brand-ink ${n.reaktionen.length > 0 ? "pb-5" : "pb-1"}`
+                        : `px-3 pt-2 shadow-[0_1px_1px_rgba(27,33,48,0.08)] ${n.reaktionen.length > 0 ? "pb-5" : "pb-1.5"} ${n.eigene ? "bg-[#fde4e6] text-brand-ink" : "bg-white text-brand-ink"}`
                     } ${neuerAbsender && !nurSticker ? (n.eigene ? "rounded-tr-md" : "rounded-tl-md") : ""} ${gewaehlt ? "ring-2 ring-brand-red/50" : ""} ${markiert === n.id ? "ring-4 ring-brand-gold/70" : ""}`}
                   >
                     {n.weitergeleitet && (
