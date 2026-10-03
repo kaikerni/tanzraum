@@ -132,3 +132,24 @@ A = vollständig vorhanden · B = teilweise vorhanden · C = fehlte
 1. Migration `20261003090000_…` im Supabase SQL Editor ausführen. Sie enthält `drop constraint`/`drop function`, deshalb geht das nicht automatisch.
 2. Danach prüfen und registrieren; Edge Functions `send-beitritt-einladung` und `chat-senden` deployen.
 3. Erst dann die ISO einspielen.
+
+## 9. Korrektur der Migration (03.10.2026, nach dem ersten Einspielversuch)
+
+Der erste Versuch im Supabase SQL Editor brach mit „verein_person_hinzufuegen: Stelle nicht gefunden“ ab. Da alles in einer Transaktion lief, wurde nichts geändert.
+
+**Ursache:**
+- Die Migration hat drei bestehende Funktionen per Textsuche angepasst, mit mehrzeiligen Suchtexten.
+- Beim Einfügen in den Editor werden Zeilenenden zu CR+LF. Die Funktionen in der Datenbank haben aber nur LF.
+- Die Funktion selbst war in Produktion unverändert und byte-identisch mit dem getesteten Stand.
+
+**Korrektur:**
+- `verein_person_hinzufuegen`, `invite_einloesen(uuid, boolean)` und `lizenz_ablauf_hinweise_senden` werden jetzt vollständig neu definiert. Die Logik ist dieselbe wie vorher.
+- Eine Vorabprüfung vergleicht jede ersetzte Funktion mit ihrem erwarteten Stand, unabhängig von Zeilenenden, Leerraum und Kommentaren. Bei einer Abweichung bricht die Migration vor jeder Änderung ab.
+- Ein erneutes Ausführen nach erfolgreichem Lauf ist erlaubt.
+
+**Geprüft:**
+- auf einem Produktions-Nachbau mit CR+LF, auch mit erneutem Ausführen
+- mit LF-Zeilenenden
+- im Negativtest mit einer abweichenden Funktion: Abbruch, nichts geändert
+- Der Datenbank-Endstand (Funktionen, Rechte, Spalten, Constraints, RLS, Indizes) ist identisch mit der ursprünglich getesteten Fassung.
+- Alle SQL-Tests sind grün.

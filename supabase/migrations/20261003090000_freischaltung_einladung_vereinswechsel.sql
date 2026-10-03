@@ -9,6 +9,40 @@
 --      Aufnahme angefragt hat und der bisherige Verein nicht freigibt (abgelehnt oder offen). Protokoll in admin_protokoll.
 --   D) Mitgliederimport: neutraler Hinweis auf bestehende TanzRaum-Konten (kein Konto, kein Wechsel wird erzeugt).
 -- Bestehende Daten werden nicht geaendert.
+--
+-- Hinweis zur Ausfuehrung im Supabase SQL Editor: Die bestehenden Funktionen verein_person_hinzufuegen, invite_einloesen und
+-- lizenz_ablauf_hinweise_senden werden hier vollstaendig neu definiert (keine Textsuche im vorhandenen Funktionscode).
+-- Dadurch spielt es keine Rolle, ob der Editor Zeilenenden als LF oder CR+LF uebertraegt. Damit dabei keine abweichende
+-- Fassung ueberschrieben wird, prueft der erste Block jede ersetzte Funktion gegen ihren erwarteten Stand.
+
+-- =============================================================================================
+-- Vorabpruefung: ersetzte Funktionen muessen dem erwarteten Stand entsprechen (Vergleich ohne Zeilenenden, Leerraum,
+-- Kommentare). Erlaubt sind der Stand vor dieser Migration und der Stand danach (erneutes Ausfuehren).
+-- Bei Abweichung: Abbruch vor jeder Aenderung.
+-- =============================================================================================
+do $pruef$
+declare
+  r record;
+  v_fp text;
+begin
+  for r in select * from (values
+    ('public.tarif_neu_berechnen_person(uuid, text)', 'a6ccdee3d48e1b6b57eb90ef28234ad1', '0fa3a686a8b4d556257d8f6f96088f7b'),
+    ('public.lizenz_ablauf_hinweise_senden()', 'd6121cd3171c876fa66ade6fe8ef41e4', 'b7455daf30010717b671fb335d1a6cb2'),
+    ('public.verein_person_hinzufuegen(uuid, text, uuid, uuid)', '775282e84f9d88983e7d3274d0cd6818', '60deab30e94baf0aa65d3967c0639d20'),
+    ('public.invite_einloesen(uuid)', '2a7c6835245e37ad165c767e7d576c96', '55a54c0a7c0fa807c8e26d46e205091d'),
+    ('public.freigabe_anfragen(uuid)', 'f4b8b054fa113f3b8667ae4a2c09ed51', '4f64b1bd25ebd165925e93a95d9408e0'),
+    ('public.freigabe_entscheiden(uuid, boolean)', 'a6db029a7ba926289f8620208ded7a35', '1a61fc0f34b58d235dc4e62ca9aeff93')
+  ) t(funktion, vorher, nachher)
+  loop
+    if to_regprocedure(r.funktion) is null then
+      raise exception 'Vorabpruefung: Funktion % fehlt – Migration abgebrochen, nichts geaendert.', r.funktion;
+    end if;
+    v_fp := md5(btrim(regexp_replace(regexp_replace(pg_get_functiondef(to_regprocedure(r.funktion)), '--[^' || chr(13) || chr(10) || ']*', '', 'g'), '\s+', ' ', 'g')));
+    if v_fp not in (r.vorher, r.nachher) then
+      raise exception 'Vorabpruefung: % weicht vom erwarteten Stand ab (Fingerabdruck %) – Migration abgebrochen, nichts geaendert.', r.funktion, v_fp;
+    end if;
+  end loop;
+end $pruef$;
 
 -- =============================================================================================
 -- A) Persoenliche VEREIN-Freischaltung in abos zulassen (nur manuell + kostenlos)
@@ -263,17 +297,47 @@ $function$;
 revoke all on function public.freischaltung_einladung_annehmen(uuid) from public, anon;
 grant execute on function public.freischaltung_einladung_annehmen(uuid) to authenticated;
 
--- Ablaufhinweis: persoenliche Lizenz mit richtigem Tarifnamen (BASIC bzw. VEREIN)
-do $$
+-- Ablaufhinweis: persoenliche Lizenz mit richtigem Tarifnamen (BASIC bzw. VEREIN) – vollstaendige Fassung
+-- (bisherige Logik unveraendert; neu: a.tarif in der Abfrage und 'Deine ' || upper(r.tarif) || '-Lizenz …')
+CREATE OR REPLACE FUNCTION public.lizenz_ablauf_hinweise_senden()
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
 declare
-  d text := pg_get_functiondef('public.lizenz_ablauf_hinweise_senden()'::regprocedure);
-  alt text := $a$'Deine BASIC-Lizenz ist noch '$a$;
+  r record;
+  n int := 0;
+  v_tage int;
 begin
-  if position(alt in d) = 0 then raise exception 'lizenz_ablauf_hinweise_senden: Stelle nicht gefunden'; end if;
-  d := replace(d, 'select a.id, a.inhaber, a.user_id, a.verein_id, a.laeuft_bis from abos a', 'select a.id, a.inhaber, a.user_id, a.verein_id, a.laeuft_bis, a.tarif from abos a');
-  d := replace(d, alt, $n$'Deine ' || upper(r.tarif) || '-Lizenz ist noch '$n$);
-  execute d;
-end $$;
+  for r in
+    select a.id, a.inhaber, a.user_id, a.verein_id, a.laeuft_bis, a.tarif from abos a
+    where abo_gilt(a) and a.laeuft_bis is not null and a.laeuft_bis > now() and a.laeuft_bis <= now() + interval '14 days'
+      and (a.status = 'cancelled' or a.anbieter in ('manuell', 'ueberweisung'))
+  loop
+    v_tage := greatest(0, ((r.laeuft_bis at time zone 'Europe/Berlin')::date - (now() at time zone 'Europe/Berlin')::date));
+    continue when v_tage > 14;
+    -- je Lizenz hoechstens zwei Hinweise: bei <= 14 und bei <= 3 Tagen
+    if not exists (select 1 from lizenz_ablauf_hinweise h where h.schluessel = r.id || ':' || case when v_tage <= 3 then '3' else '14' end) then
+      insert into lizenz_ablauf_hinweise (schluessel) values (r.id || ':' || case when v_tage <= 3 then '3' else '14' end);
+      if r.inhaber = 'person' then
+        insert into benachrichtigungen (user_id, typ, text)
+        values (r.user_id, 'lizenz_ablauf', 'Deine ' || upper(r.tarif) || '-Lizenz ist noch ' || v_tage || ' Tag' || case when v_tage = 1 then '' else 'e' end
+                || ' gültig (bis ' || to_char(r.laeuft_bis at time zone 'Europe/Berlin', 'DD.MM.YYYY') || ').');
+      else
+        insert into benachrichtigungen (user_id, typ, text)
+        select vm.user_id, 'lizenz_ablauf', 'Die Vereinslizenz von ' || v.name || ' ist noch ' || v_tage || ' Tag' || case when v_tage = 1 then '' else 'e' end
+               || ' gültig (bis ' || to_char(r.laeuft_bis at time zone 'Europe/Berlin', 'DD.MM.YYYY') || ').'
+        from vereins_mitglieder vm join rollen ro on ro.id = vm.rolle_id join vereine v on v.id = vm.verein_id
+        where vm.verein_id = r.verein_id and vm.user_id is not null and coalesce(vm.aktiv, true) and rollen_typ(ro.name) = 'admin';
+      end if;
+      n := n + 1;
+    end if;
+  end loop;
+  delete from lizenz_ablauf_hinweise where erstellt_am < now() - interval '400 days';
+  return n;
+end;
+$function$;
 
 -- =============================================================================================
 -- B) Vereinswechsel nur mit ausdruecklicher Zustimmung der Person
@@ -362,51 +426,178 @@ end;
 $function$;
 revoke all on function public.vereinswechsel_anfragen_anlegen(uuid, uuid, uuid, uuid, uuid, boolean) from public, anon, authenticated;
 
--- Person hinzufuegen (Verein B): bei bestehender Vereinszuordnung nur Anfrage an die Person – kein Wechsel ohne Zustimmung
-do $mig$
+-- Person hinzufuegen (Verein B): bei bestehender Vereinszuordnung nur Anfrage an die Person – kein Wechsel ohne Zustimmung.
+-- Vollstaendige Fassung (bisherige Logik unveraendert; geaendert nur der Block „if v_bisher is not null“:
+-- statt direkter Freigabe-Anfrage an den bisherigen Verein → Zustimmung der Person, Status 'zustimmung_angefragt')
+CREATE OR REPLACE FUNCTION public.verein_person_hinzufuegen(p_verein_id uuid, p_suche text, p_rolle_id uuid DEFAULT NULL::uuid, p_gruppe_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
 declare
-  d text := pg_get_functiondef('public.verein_person_hinzufuegen(uuid, text, uuid, uuid)'::regprocedure);
-  ende text := $x$    return jsonb_build_object('status', 'freigabe_angefragt', 'name', v_name);
-  end if;$x$;
-  a int := position('  if v_bisher is not null then' in d);
-  b int := position(ende in d);
+  v_suche text := btrim(coalesce(p_suche, ''));
+  v_user uuid;
+  v_bisher uuid;
+  v_rolle uuid;
+  v_vm uuid;
+  v_antrag uuid;
+  v_name text;
 begin
-  if a = 0 or b = 0 or b < a then raise exception 'verein_person_hinzufuegen: Stelle nicht gefunden'; end if;
-  d := substr(d, 1, a - 1) || $neu$  if v_bisher is not null then
+  if not darf_antraege(p_verein_id) then
+    raise exception 'Personen hinzufügen dürfen Vereinsadmins und Personen mit dem Bereich „Mitgliedsanträge“.' using errcode = '42501';
+  end if;
+  if not verein_hat_lizenz(p_verein_id) then
+    raise exception 'Personen hinzufügen ist mit der Vereinslizenz möglich.' using errcode = '42501';
+  end if;
+  if char_length(v_suche) < 2 or char_length(v_suche) > 200 then
+    return jsonb_build_object('status', 'nicht_gefunden');
+  end if;
+  if position('@' in ltrim(v_suche, '@')) > 0 then
+    select u.id into v_user from auth.users u where lower(u.email) = lower(v_suche);
+  else
+    select p.id into v_user from profiles p where lower(p.handle) = lower(ltrim(v_suche, '@'));
+  end if;
+  if v_user is null or exists (select 1 from profiles p where p.id = v_user and coalesce(p.gesperrt, false)) then
+    return jsonb_build_object('status', 'nicht_gefunden');
+  end if;
+
+  select vm.verein_id into v_bisher from vereins_mitglieder vm where vm.user_id = v_user;
+  if v_bisher = p_verein_id then
+    return jsonb_build_object('status', 'schon_mitglied');
+  end if;
+  if p_rolle_id is not null and not exists (select 1 from rollen r where r.id = p_rolle_id) then
+    raise exception 'Unbekannte Rolle.' using errcode = 'P0001';
+  end if;
+  v_rolle := coalesce(p_rolle_id, (select r.id from rollen r where rollen_typ(r.name) = 'mitglied' order by r.name limit 1));
+  if p_gruppe_id is not null and not exists (select 1 from gruppen g where g.id = p_gruppe_id and g.verein_id = p_verein_id) then
+    raise exception 'Die Gruppe gehört nicht zu diesem Verein.' using errcode = 'P0001';
+  end if;
+  select a.anzeige into v_name from anzeige_namen(array[v_user]) a;
+
+  if v_bisher is not null then
     -- Kein erzwungener Wechsel: die Person entscheidet selbst; danach entscheidet der bisherige Verein
     perform vereinswechsel_anfragen_anlegen(v_user, v_bisher, p_verein_id, v_rolle, auth.uid(), false);
     return jsonb_build_object('status', 'zustimmung_angefragt', 'name', v_name);
-  end if;$neu$ || substr(d, b + length(ende));
-  execute d;
-end
-$mig$;
+  end if;
 
--- Einladung einloesen: mit p_wechsel_bestaetigt = true hat die Person dem Wechsel auf der Einladungsseite ausdruecklich zugestimmt
-do $mig$
+  insert into vereins_mitglieder (user_id, verein_id, rolle_id, hinzugefuegt_von)
+  values (v_user, p_verein_id, v_rolle, auth.uid())
+  returning id into v_vm;
+  if p_gruppe_id is not null then
+    insert into gruppen_mitglieder (gruppe_id, vereins_mitglied_id, funktion) values (p_gruppe_id, v_vm, 'mitglied') on conflict do nothing;
+  end if;
+  v_antrag := vereinsbeitritt_vorbereiten(v_vm, auth.uid());
+  return jsonb_build_object('status', 'hinzugefuegt', 'name', v_name, 'antrag_id', v_antrag,
+    'benachrichtigung', antrag_einstellung(p_verein_id, 'hinzufuegen_benachrichtigung', 'app_email'));
+end;
+$function$;
+
+-- Einladung einloesen: mit p_wechsel_bestaetigt = true hat die Person dem Wechsel auf der Einladungsseite ausdruecklich zugestimmt.
+-- Vollstaendige Fassung = bisheriges invite_einloesen(uuid) mit zwei Aenderungen im Wechselfall (Anfrage ueber
+-- vereinswechsel_anfragen_anlegen mit Zustimmung; Meldung je nach Zustimmung). invite_einloesen(uuid) bleibt als Aufruf erhalten.
+CREATE OR REPLACE FUNCTION public.invite_einloesen(p_token uuid, p_wechsel_bestaetigt boolean)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
 declare
-  d text := pg_get_functiondef('public.invite_einloesen(uuid)'::regprocedure);
-  alt text;
+  v_row einladungen%rowtype;
+  v_m mitglieder%rowtype;
+  v_verein_name text;
+  v_existing_id uuid;
+  v_bisher uuid;
+  v_vm_id uuid;
+  v_antrag uuid;
+  v_gruppe uuid;
 begin
-  alt := $a$      if not exists (select 1 from vereinswechsel_anfragen w where w.mitglied_user_id = auth.uid() and w.ziel_verein_id = v_row.verein_id and w.status = 'offen') then
-        insert into vereinswechsel_anfragen (quell_verein_id, ziel_verein_id, mitglied_user_id, vorgeschlagene_rolle_id, angefragt_von, status)
-        values (v_bisher, v_row.verein_id, auth.uid(), v_row.rolle_id, v_row.created_by, 'offen');
-        perform antrag_verwaltung_benachrichtigen(v_bisher,
-          'Freigabe angefragt: Der Verein ' || coalesce(v_verein_name, '') || ' möchte '
-          || coalesce((select a.anzeige from anzeige_namen(array[auth.uid()]) a), 'eine Person')
-          || ' aufnehmen. Bitte unter „Mitgliedsanträge“ freigeben oder ablehnen.');
-      end if;$a$;
-  if position(alt in d) = 0 then raise exception 'invite_einloesen: Wechselblock nicht gefunden'; end if;
-  d := replace(d, alt, $n$      perform vereinswechsel_anfragen_anlegen(auth.uid(), v_bisher, v_row.verein_id, v_row.rolle_id, v_row.created_by, p_wechsel_bestaetigt);$n$);
-  alt := $a$        'Du bist noch einem anderen Verein zugeordnet. Wir haben deinen bisherigen Verein um Freigabe gebeten – danach wirst du ' ||
-        coalesce(v_verein_name, 'dem neuen Verein') || ' hinzugefügt.');$a$;
-  if position(alt in d) = 0 then raise exception 'invite_einloesen: Meldung nicht gefunden'; end if;
-  d := replace(d, alt, $n$        case when p_wechsel_bestaetigt
+  if auth.uid() is null then
+    return jsonb_build_object('success', false, 'error', 'Bitte zuerst anmelden.');
+  end if;
+  select * into v_row from einladungen where token = p_token for update;
+  if not found then
+    return jsonb_build_object('success', false, 'error', 'Einladungslink ungültig.');
+  end if;
+  if v_row.revoked then
+    return jsonb_build_object('success', false, 'error', 'Dieser Einladungslink wurde zurückgezogen.');
+  end if;
+  if v_row.expires_at is not null and v_row.expires_at < now() then
+    return jsonb_build_object('success', false, 'error', 'Dieser Einladungslink ist abgelaufen.');
+  end if;
+  if v_row.uses >= v_row.max_uses then
+    return jsonb_build_object('success', false, 'error', 'Dieser Einladungslink wurde bereits verwendet.');
+  end if;
+  -- Persoenliche Einladung: der Stammdatensatz darf noch mit keinem Konto verbunden sein
+  if v_row.mitglied_id is not null then
+    select * into v_m from mitglieder where id = v_row.mitglied_id for update;
+    if not found or v_m.verein_id <> v_row.verein_id then
+      return jsonb_build_object('success', false, 'error', 'Einladungslink ungültig.');
+    end if;
+    if v_m.vereins_mitglied_id is not null then
+      return jsonb_build_object('success', false, 'error', 'Diese Einladung wurde bereits verwendet.');
+    end if;
+    v_gruppe := v_m.gruppe_id;
+  end if;
+  select name into v_verein_name from vereine where id = v_row.verein_id;
+
+  select id into v_existing_id from vereins_mitglieder where user_id = auth.uid() and verein_id = v_row.verein_id;
+  if v_existing_id is not null and v_row.gruppe_id is null and v_row.mitglied_id is null then
+    return jsonb_build_object('success', false, 'error', 'Du bist bereits Mitglied in diesem Verein.');
+  end if;
+  if v_existing_id is not null and v_row.mitglied_id is not null
+     and exists (select 1 from mitglieder x where x.vereins_mitglied_id = v_existing_id) then
+    return jsonb_build_object('success', false, 'error', 'Dein Konto ist in diesem Verein bereits mit einem Mitglied verbunden.');
+  end if;
+
+  if v_existing_id is null then
+    select verein_id into v_bisher from vereins_mitglieder where user_id = auth.uid();
+    if v_bisher is not null then
+      perform vereinswechsel_anfragen_anlegen(auth.uid(), v_bisher, v_row.verein_id, v_row.rolle_id, v_row.created_by, p_wechsel_bestaetigt);
+      -- Persoenliche Einladung: Konto vormerken – die Verbindung entsteht automatisch beim Wechsel
+      if v_row.mitglied_id is not null then
+        update mitglieder set user_id = auth.uid(), updated_at = now() where id = v_row.mitglied_id;
+      end if;
+      update einladungen set uses = uses + 1 where id = v_row.id;
+      return jsonb_build_object('success', false, 'error',
+        case when p_wechsel_bestaetigt
           then 'Danke! Dein bisheriger Verein wurde um Freigabe gebeten – danach wirst du ' || coalesce(v_verein_name, 'dem neuen Verein') || ' zugeordnet.'
-          else 'Du bist noch einem anderen Verein zugeordnet. Bitte bestätige den Vereinswechsel im Dashboard.' end);$n$);
-  d := replace(d, 'FUNCTION public.invite_einloesen(p_token uuid)', 'FUNCTION public.invite_einloesen(p_token uuid, p_wechsel_bestaetigt boolean)');
-  execute d;
-end
-$mig$;
+          else 'Du bist noch einem anderen Verein zugeordnet. Bitte bestätige den Vereinswechsel im Dashboard.' end);
+    end if;
+    if v_row.mitglied_id is not null and v_row.rolle_id is null then
+      select r.id into v_row.rolle_id from rollen r
+      where r.name = case when (select geschlecht_normal(p.geschlecht) from profiles p where p.id = auth.uid()) = 'weiblich' then 'Tänzerin' else 'Tänzer' end;
+    end if;
+    insert into vereins_mitglieder (user_id, verein_id, rolle_id, hinzugefuegt_von)
+    values (auth.uid(), v_row.verein_id, v_row.rolle_id, v_row.created_by)
+    returning id into v_vm_id;
+    -- Kein Mitgliedsantrag: Vereinsadmin-Einladung der Plattform, oder persoenliche Einladung eines bereits
+    -- im Verein gefuehrten (importierten/angelegten) Mitglieds
+    if v_row.mitglied_id is null
+       and not (exists (select 1 from rollen r where r.id = v_row.rolle_id and rollen_typ(r.name) = 'admin')
+                and exists (select 1 from profiles p where p.id = v_row.created_by and p.ist_plattform_admin)) then
+      v_antrag := vereinsbeitritt_vorbereiten(v_vm_id, v_row.created_by);
+    end if;
+  else
+    v_vm_id := v_existing_id;
+  end if;
+
+  if v_row.mitglied_id is not null then
+    update mitglieder set user_id = auth.uid(), vereins_mitglied_id = v_vm_id, updated_at = now() where id = v_row.mitglied_id;
+  end if;
+  v_gruppe := coalesce(v_row.gruppe_id, v_gruppe);
+  if v_gruppe is not null then
+    begin
+      insert into gruppen_mitglieder (gruppe_id, vereins_mitglied_id, funktion) values (v_gruppe, v_vm_id, 'mitglied')
+      on conflict do nothing;
+    exception when others then null;
+    end;
+  end if;
+
+  update einladungen set uses = uses + 1 where id = v_row.id;
+  return jsonb_build_object('success', true, 'verein_name', v_verein_name, 'verein_id', v_row.verein_id, 'antrag_id', v_antrag);
+end;
+$function$;
 revoke all on function public.invite_einloesen(uuid, boolean) from public, anon;
 grant execute on function public.invite_einloesen(uuid, boolean) to authenticated;
 -- bisherige Signatur bleibt erhalten (ohne Zustimmung → Bestaetigung im Dashboard)
