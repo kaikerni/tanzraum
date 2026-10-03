@@ -1,0 +1,51 @@
+import type { Metadata } from "next";
+import { createClient } from "@/lib/supabase/server";
+import { getPreise } from "@/lib/tarife";
+import { Startseite } from "@/components/start/Startseite";
+import { getOeffentlicheUpdates } from "@/lib/updates/getUpdates";
+import { getAnbieter } from "@/lib/recht/anbieter";
+
+export const metadata: Metadata = {
+  title: "TanzRaum – Die digitale Plattform für den Tanzsport",
+  description:
+    "TanzRaum verbindet Tänzer, Fans, Trainer, Betreuer und Vereine: Training, Kalender, Messenger, TanzRaum-Netzwerk mit Spotlight und Vereinsverwaltung – an einem Ort. Kostenlos starten.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "de_DE",
+    siteName: "TanzRaum",
+    title: "TanzRaum – Dein digitaler Raum für Tanzsport",
+    description: "Alles, was deinen Tanzsport, dein Team und deinen Verein digital verbindet – an einem Ort.",
+    images: [{ url: "/og-tanzraum.jpg", width: 1200, height: 630, alt: "TanzRaum – Die Plattform für Tanzsport & Gemeinschaft" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TanzRaum – Dein digitaler Raum für Tanzsport",
+    description: "Training, Kalender, Chat, Spotlight und Vereinsverwaltung für den Tanzsport.",
+    images: ["/og-tanzraum.jpg"],
+  },
+};
+
+// Startseite immer sichtbar – angemeldete Nutzer sehen statt „Anmelden/Registrieren“ den Weg zum Dashboard.
+// (Die installierte App startet direkt im Dashboard, siehe manifest start_url.)
+export default async function Home() {
+  const supabase = await createClient();
+  const [
+    {
+      data: { user },
+    },
+    preise,
+    neuigkeiten,
+    anbieter,
+  ] = await Promise.all([supabase.auth.getUser(), getPreise(supabase), getOeffentlicheUpdates(supabase, 3), getAnbieter()]);
+  // Gleicher Preishinweis wie in Lizenzübersicht und Nutzungsbedingungen
+  const preisHinweis = anbieter
+    ? `Alle Preise sind Endpreise.${anbieter.kleinunternehmer ? ` ${anbieter.kleinunternehmerHinweis}` : " Sie enthalten die gesetzliche Umsatzsteuer."}`
+    : null;
+  let vorname: string | null = null;
+  if (user) {
+    const { data } = await supabase.from("profiles").select("vorname").eq("id", user.id).maybeSingle();
+    vorname = (data?.vorname as string | null) ?? "";
+  }
+  return <Startseite preise={preise} angemeldet={user ? { vorname } : null} neuigkeiten={neuigkeiten} preisHinweis={preisHinweis} />;
+}

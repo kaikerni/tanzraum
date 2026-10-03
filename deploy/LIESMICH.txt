@@ -1,0 +1,81 @@
+TanzRaum – App-Paket
+====================
+
+Die App braucht einen Server mit Node.js. Ein normaler IONOS-Webspace (HTML/PHP) reicht NICHT.
+Empfohlen: IONOS VPS mit Ubuntu 24.04 (mind. 1 GB RAM, besser 2 GB).
+
+Erstinstallation auf dem VPS
+----------------------------
+1. Paket hochladen (Windows: PowerShell, Mac: Terminal; IP und root-Passwort stehen im IONOS Cloud Panel):
+     scp tanzraum-app.zip root@DEINE-SERVER-IP:/root/
+2. Auf dem Server anmelden:
+     ssh root@DEINE-SERVER-IP
+3. Entpacken und installieren:
+     apt update && apt install -y unzip
+     unzip -o tanzraum-app.zip -d tanzraum-app
+     cd tanzraum-app && bash installieren.sh
+   Das Skript richtet Node.js, nginx, Firewall und den Dienst "tanzraum" ein.
+4. DNS bei IONOS auf den Server umstellen (A-Einträge für @ und www = Server-IP; MX/TXT NICHT ändern),
+   warten bis es wirkt, dann nochmals:  cd /root/tanzraum-app && bash installieren.sh
+   -> jetzt wird das HTTPS-Zertifikat geholt (erneuert sich automatisch).
+
+Update auf eine neue Version
+----------------------------
+     scp tanzraum-app.zip root@DEINE-SERVER-IP:/root/
+     ssh root@DEINE-SERVER-IP
+     rm -rf tanzraum-app && unzip -o tanzraum-app.zip -d tanzraum-app && cd tanzraum-app && bash installieren.sh
+Die Einstellungen in /opt/tanzraum/.env bleiben erhalten.
+Die Nutzer müssen dafür nichts tun: TanzRaum ist eine Web-App. Beim nächsten Laden bekommen sie die neue Version;
+wer TanzRaum gerade offen hat, sieht einen dezenten Hinweis „Eine neue TanzRaum-Version ist da – Neu laden“.
+Version und Build: https://tanzraum.app/api/version (Details: docs/updates-versionen.md im Quellcode).
+
+nginx und Anmelde-Cookies
+-------------------------
+installieren.sh legt /etc/nginx/conf.d/tanzraum-proxy-puffer.conf an (proxy_buffer_size 16k usw.).
+Grund: Anmelden und Passwort-Zurücksetzen senden das Supabase-Sitzungs-Cookie (3-4 KB). Mit dem nginx-Standard
+(4 KB) antwortet nginx sonst mit 502 ("upstream sent too big header") und im Browser erscheint
+"Application error: a client-side exception has occurred".
+
+Prüfung am Ende von installieren.sh
+-----------------------------------
+Das Skript prüft zum Schluss, ob auf Port 3000 wirklich die gerade installierte Version antwortet (Build-Kennung).
+Läuft dort noch ein alter Prozess, meldet es das mit dem belegenden Prozess. Außerdem zeigt es, ob der nginx-Puffer
+für Anmelde-Cookies aktiv ist (und bei einem Konflikt die Meldung von nginx -t).
+
+Alter Service Worker, www-Adresse
+---------------------------------
+Ein früherer Web-Auftritt auf dieser Domain hat im Browser mancher Besucher "/service-worker.js" installiert.
+Die App liefert unter dieser Adresse einen Abschalt-Worker aus und meldet fremde Worker beim Laden ab – ohne dass
+jemand den Browser-Cache löschen muss. TanzRaums eigener Worker ist /sw.js (Push). www.tanzraum.app leitet auf
+tanzraum.app um.
+
+Google Maps (Karte im Netzwerk, Ortssuche)
+------------------------------------------
+TanzRaum nutzt Google Maps. Dafür braucht es zwei Schlüssel aus der Google Cloud Console
+(console.cloud.google.com → Projekt → "APIs & Dienste"; ein Rechnungskonto muss hinterlegt sein):
+  1. Browser-Schlüssel: API "Maps JavaScript API" aktivieren, Schlüssel anlegen,
+     Einschränkung "Websites" = https://tanzraum.app/*  und API-Einschränkung = Maps JavaScript API.
+  2. Server-Schlüssel: API "Geocoding API" aktivieren, zweiten Schlüssel anlegen,
+     Einschränkung "IP-Adressen" = Server-IP  und API-Einschränkung = Geocoding API.
+Beide direkt auf dem Server eintragen (nicht per Chat/E-Mail weitergeben):
+     nano /opt/tanzraum/.env
+       GOOGLE_MAPS_BROWSER_KEY=...
+       GOOGLE_MAPS_SERVER_KEY=...
+     systemctl restart tanzraum
+Ohne Schlüssel zeigt die Netzwerk-Seite "Karte wird eingerichtet" (Listenansicht geht), die Ortssuche meldet
+"gerade nicht verfügbar". Links wie "Auf der Karte zeigen" funktionieren auch ohne Schlüssel.
+
+Nützliche Befehle
+-----------------
+     systemctl status tanzraum        Läuft die App?
+     journalctl -u tanzraum -f        Protokoll live ansehen
+     systemctl restart tanzraum       Neu starten
+
+Supabase-Einstellungen für die Adresse
+--------------------------------------
+Supabase → Authentication → URL Configuration
+    Site URL:       https://tanzraum.app
+    Redirect URLs:  https://tanzraum.app/**
+Edge-Function-Secret TANZRAUM_APP_URL = https://tanzraum.app
+
+Die Datei .env enthält nur öffentliche Werte (Supabase-URL und Publishable Key) – keine Geheimnisse.

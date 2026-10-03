@@ -1,0 +1,92 @@
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
+
+type CookieToSet = { name: string; value: string; options: CookieOptions };
+
+// "/neu": oeffentliche Neuigkeiten (Landingpage „Mehr erfahren“), "/api/version": laufende Version (Update-Hinweis)
+// "/einladung": Einladungslink zeigt ohne Anmeldung nur Verein + Rolle und fuehrt zu Registrierung/Anmeldung
+// "/eltern": Zustimmung eines Elternteils ohne eigenes TanzRaum-Konto (nur mit einmaligem Link)
+const OEFFENTLICHE_PFADE = ["/login", "/signup", "/gesperrt", "/auth", "/passwort-vergessen", "/passwort-neu", "/impressum", "/datenschutz", "/nutzungsbedingungen", "/eltern", "/kontakt", "/lizenz", "/konto", "/neu", "/api/version", "/einladung", "/freischaltung"];
+
+// "/" = oeffentliche Startseite (angemeldet leitet die Seite selbst ins Dashboard weiter)
+function istOeffentlich(pathname: string) {
+  if (pathname === "/" || pathname === "/robots.txt" || pathname === "/sitemap.xml") return true;
+  return OEFFENTLICHE_PFADE.some(
+    (pfad) => pathname === pfad || pathname.startsWith(`${pfad}/`),
+  );
+}
+
+// Next.js laeuft hinter nginx auf 127.0.0.1:3000; request.nextUrl zeigt dort auf
+// http://localhost:3000. Weiterleitungen muessen die oeffentliche Adresse verwenden,
+// die nginx per X-Forwarded-Host/-Proto mitgibt (lokal ohne nginx: Host-Header).
+export function oeffentlicheUrl(request: NextRequest) {
+  const url = request.nextUrl.clone();
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  const proto = request.headers.get("x-forwarded-proto");
+  if (proto === "http" || proto === "https") url.protocol = `${proto}:`;
+  if (host) {
+    url.host = host;
+    // Der interne Port (3000) darf nicht erhalten bleiben, wenn der Host keinen eigenen hat.
+    if (!/:\d+$/.test(host)) url.port = "";
+  }
+  return url;
+}
+
+// Einheitliche Adresse: www.tanzraum.app -> tanzraum.app (308, Methode bleibt erhalten).
+// Sitzungs-Cookies gelten je Hostname, und Supabase Auth erlaubt als Weiterleitungsziel nur die Hauptadresse.
+export function zurHauptadresse(request: NextRequest) {
+  const host = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "").split(",")[0].trim().toLowerCase();
+  if (!host.startsWith("www.")) return null;
+  const url = oeffentlicheUrl(request);
+  url.host = host.slice(4);
+  return NextResponse.redirect(url, 308);
+}
+
+export async function updateSession(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet: CookieToSet[]) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          );
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options),
+          );
+        },
+      },
+    },
+  );
+
+  // WICHTIG: getUser() nicht weglassen/durch getSession() ersetzen -- nur getUser()
+  // validiert das Token serverseitig bei Supabase Auth statt dem Cookie zu vertrauen.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { pathname } = request.nextUrl;
+
+  if (!user && !istOeffentlich(pathname)) {
+    const url = oeffentlicheUrl(request);
+    url.pathname = "/login";
+    url.searchParams.set("weiter", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  if (user && (pathname === "/login" || pathname === "/signup")) {
+    const url = oeffentlicheUrl(request);
+    url.pathname = "/dashboard";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
+  return supabaseResponse;
+}
