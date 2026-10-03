@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Undo2 } from "lucide-react";
-import { kontoLoeschenAdmin, kontoLoeschungAbbrechenAdmin } from "@/app/dashboard/admin/actions";
+import { AlertTriangle, Info, Trash2, Undo2 } from "lucide-react";
+import { kontoLoeschenAdmin, kontoLoeschPruefungAdmin, kontoLoeschungAbbrechenAdmin } from "@/app/dashboard/admin/actions";
 import type { AktionsErgebnis } from "@/components/ui/SendenButton";
 
 export type Benutzer = {
@@ -33,6 +33,21 @@ export function BenutzerZeile({ b }: { b: Benutzer }) {
   const [sofort, setSofort] = useState(false);
   const [bestaetigt, setBestaetigt] = useState(false);
   const [meldung, setMeldung] = useState<AktionsErgebnis | null>(null);
+  // Vorab-Pruefung beim Oeffnen: konkrete Gruende statt eines still deaktivierten Knopfs
+  const [pruefung, setPruefung] = useState<{ hindernisse: string[]; hinweise: string[]; fehler: string | null } | null>(null);
+  useEffect(() => {
+    if (!offen) return;
+    let aktiv = true;
+    setPruefung(null);
+    kontoLoeschPruefungAdmin(b.user_id).then((r) => {
+      if (aktiv) setPruefung({ hindernisse: r.hindernisse, hinweise: r.hinweise, fehler: r.error });
+    });
+    return () => {
+      aktiv = false;
+    };
+  }, [offen, b.user_id]);
+  const gesperrt = !pruefung || !!pruefung.fehler || pruefung.hindernisse.length > 0;
+  const fehlt = [!grund.trim() ? "Grund angeben" : null, !bestaetigt ? "Bestätigung ankreuzen" : null].filter(Boolean) as string[];
   const aktion = (f: () => Promise<AktionsErgebnis>) =>
     starte(async () => {
       const r = await f();
@@ -94,6 +109,29 @@ export function BenutzerZeile({ b }: { b: Benutzer }) {
 
       {offen && (
         <div className="flex flex-col gap-3 rounded-xl border border-brand-red/30 bg-brand-red-wash/40 p-3">
+          {!pruefung && <p className="text-[13px] text-brand-ink-soft">Löschung wird geprüft …</p>}
+          {pruefung?.fehler && <p className="form-error">{pruefung.fehler}</p>}
+          {pruefung && pruefung.hindernisse.length > 0 && (
+            <div className="flex flex-col gap-1 rounded-xl border border-brand-red/40 bg-white px-3 py-2.5">
+              <p className="flex items-center gap-1.5 text-[13.5px] font-bold text-brand-red">
+                <AlertTriangle size={15} /> Löschen derzeit nicht möglich, weil …
+              </p>
+              <ul className="list-disc pl-5 text-[13px] text-brand-ink">
+                {pruefung.hindernisse.map((h) => (
+                  <li key={h}>{h}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {pruefung && pruefung.hinweise.length > 0 && (
+            <div className="flex flex-col gap-1 rounded-xl border border-brand-line bg-white px-3 py-2.5 text-[13px] text-brand-ink">
+              {pruefung.hinweise.map((h) => (
+                <p key={h} className="flex items-start gap-1.5">
+                  <Info size={14} className="mt-0.5 shrink-0 text-brand-blue" /> {h}
+                </p>
+              ))}
+            </div>
+          )}
           <label className="field">
             <span>Grund (wird protokolliert, nicht an die Person geschickt)</span>
             <textarea rows={2} maxLength={500} value={grund} onChange={(e) => setGrund(e.target.value)} placeholder="z. B. Wunsch per E-Mail vom …, Verstoß gegen die Nutzungsbedingungen" />
@@ -122,7 +160,7 @@ export function BenutzerZeile({ b }: { b: Benutzer }) {
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              disabled={laeuft || !bestaetigt || !grund.trim()}
+              disabled={laeuft || gesperrt || !bestaetigt || !grund.trim()}
               onClick={() => aktion(() => kontoLoeschenAdmin(b.user_id, grund, sofort || !!geplant))}
               className={`${KNOPF} border-brand-red bg-brand-red text-white hover:bg-brand-red-deep`}
             >
@@ -132,6 +170,7 @@ export function BenutzerZeile({ b }: { b: Benutzer }) {
               Abbrechen
             </button>
           </div>
+          {pruefung && !gesperrt && fehlt.length > 0 && <p className="text-[12.5px] font-semibold text-brand-ink-soft">Noch offen: {fehlt.join(" und ")}.</p>}
         </div>
       )}
       {meldung?.error && <p className="form-error">{meldung.error}</p>}

@@ -86,6 +86,17 @@ export async function kontoLoeschenAdmin(userId: string, grund: string, sofort: 
   return { error: null, ok: `Das Konto ist gesperrt und wird am ${am} endgültig gelöscht.` };
 }
 
+// Vorab-Pruefung: was dem Loeschen entgegensteht (konkrete Gruende) und was mit der Loeschung endet
+export async function kontoLoeschPruefungAdmin(userId: string): Promise<{ error: string | null; hindernisse: string[]; hinweise: string[] }> {
+  if (!UUID.test(userId)) return { error: "Ungültige Auswahl.", hindernisse: [], hinweise: [] };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("admin_konto_loeschung_pruefen", { p_user: userId });
+  if (error) return { error: freundlicherFehler(error), hindernisse: [], hinweise: [] };
+  const d = (data ?? {}) as { hindernisse?: unknown; hinweise?: unknown };
+  const liste = (x: unknown) => (Array.isArray(x) ? x.map(String) : []);
+  return { error: null, hindernisse: liste(d.hindernisse), hinweise: liste(d.hinweise) };
+}
+
 export async function kontoLoeschungAbbrechenAdmin(userId: string): Promise<AktionsErgebnis> {
   if (!UUID.test(userId)) return { error: "Ungültige Auswahl." };
   const supabase = await createClient();
