@@ -61,6 +61,7 @@ import { SmileyAuswahl } from "./SmileyAuswahl";
 import { bildVerkleinern } from "@/lib/medien/bild";
 import { videoVorbereiten } from "@/lib/medien/video";
 import { SCHNELL_REAKTIONEN, stickerInfo, stickerUrl } from "@/lib/chat/sticker";
+import { SCHNELL_EMOJIS } from "@/lib/chat/emojis";
 import { sperrgrundText } from "@/lib/chat/sperrgrund";
 import { Sprachaufnahme } from "./Sprachaufnahme";
 import { useAnruf } from "./AnrufProvider";
@@ -1130,8 +1131,9 @@ export function ChatFenster({
       {/* Aktionen fuer die angetippte Nachricht */}
       {ausgewaehlt && !ausgewaehlt.geloescht && (
         <div className="border-t border-brand-line bg-white">
-          <div className="flex items-center justify-center gap-0.5 overflow-x-auto px-2 pt-1.5" role="group" aria-label="Mit TanzRaum-Smiley reagieren">
-            {[...SCHNELL_REAKTIONEN, ...(meineReaktion && !SCHNELL_REAKTIONEN.includes(meineReaktion) ? [meineReaktion] : [])].map((id) => {
+          <div className="overflow-x-auto px-2 pt-1.5">
+          <div className="mx-auto flex w-max items-center gap-0.5" role="group" aria-label="Mit TanzRaum-Smiley oder Smiley reagieren">
+            {[...SCHNELL_REAKTIONEN.slice(0, 4), ...SCHNELL_EMOJIS.slice(0, 3), ...SCHNELL_REAKTIONEN.slice(4), ...(meineReaktion && !SCHNELL_REAKTIONEN.includes(meineReaktion) && !SCHNELL_EMOJIS.slice(0, 3).includes(meineReaktion) ? [meineReaktion] : [])].map((id) => {
               const meine = meineReaktion === id;
               return (
                 <button
@@ -1149,13 +1151,14 @@ export function ChatFenster({
             })}
             <button
               type="button"
-              aria-label="Weitere TanzRaum-Smileys"
+              aria-label="Weitere TanzRaum-Smileys und Smileys"
               aria-expanded={reaktionAuswahl}
               onClick={() => setReaktionAuswahl(!reaktionAuswahl)}
               className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-brand-line text-brand-ink-soft hover:bg-brand-bg ${reaktionAuswahl ? "bg-brand-bg" : ""}`}
             >
               <Plus size={18} />
             </button>
+          </div>
           </div>
           {reaktionAuswahl && <SmileyAuswahl hoehe="h-[200px]" onWahl={(id) => reaktionSetzen(id)} onEmoji={(e) => reaktionSetzen(e)} />}
         </div>
