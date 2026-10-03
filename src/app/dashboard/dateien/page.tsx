@@ -4,6 +4,7 @@ import { Download, FileText, Folder, HardDrive, Image as BildIcon, Music, Trash2
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardData } from "@/lib/dashboard/getDashboardData";
 import { getDateien, getSpeicher, groesseText, type Datei, type Speicher } from "@/lib/dateien/getDateien";
+import { SpeicherReduziert } from "@/components/speicher/SpeicherReduziert";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { Hochladen } from "@/components/dateien/Hochladen";
@@ -104,7 +105,7 @@ function DateiListe({ dateien, darfLoeschen }: { dateien: Datei[]; darfLoeschen:
   );
 }
 
-// TeamCloud des Vereins (500 MB) und eigene Dateien (100 MB, ab BASIC)
+// TeamCloud des Vereins und eigene Dateien (ab BASIC) – Kontingente zentral in der Datenbank (Admin: Speicher & Kontingente)
 export default async function DateienSeite({ searchParams }: { searchParams: Promise<{ bereich?: string }> }) {
   const supabase = await createClient();
   const {
@@ -173,6 +174,7 @@ export default async function DateienSeite({ searchParams }: { searchParams: Pro
       <section className={KARTE}>
         <KarteKopf icon={HardDrive} titel="Speicher" />
         <SpeicherBalken s={speicher} />
+        <SpeicherReduziert belegt={speicher.belegt} limit={speicher.limit} />
       </section>
 
       {speicher.darfHochladen ? (

@@ -1,3 +1,4 @@
+import { mbText } from "@/lib/speicher";
 // Zentrale Quelle fuer Leistungsumfang und Tarifregeln (Startseite, „Mein Tarif“, Lizenzübersicht, Kai).
 // Preise kommen aus der Datenbank (tarif_preise, siehe src/lib/tarife.ts) – hier stehen nur Texte.
 // Aufgefuehrt wird nur, was in TanzRaum produktiv verfuegbar ist. "bald" = Bereich noch nicht freigeschaltet
@@ -21,7 +22,7 @@ export const TARIF_LEISTUNGEN: Record<"free" | "basic" | "verein", Leistung[]> =
     { text: "Eigene Spotlights erstellen und verwalten" },
     { text: "Vollständiger Messenger – Chatübersicht, Gruppenchats, Bilder, Videos, Dateien & Sprachnachrichten" },
     { text: "Eigener Kalender inklusive Kalender-Abo fürs Smartphone (iCal)" },
-    { text: "TeamCloud mit 100 MB persönlichem Speicher für Dokumente & Musik" },
+    { text: "TeamCloud mit {speicher:teamcloud_persoenlich} persönlichem Speicher für Dokumente & Musik" },
   ],
   // Einleitung „Alles aus Basic – für euren gesamten Verein“ steht in TARIF_EINLEITUNG
   verein: [
@@ -34,7 +35,7 @@ export const TARIF_LEISTUNGEN: Record<"free" | "basic" | "verein", Leistung[]> =
     { text: "Trainingsverwaltung mit Trainings-Abmeldungen & Anwesenheit" },
     { text: "Vereinskalender & Saisonplanung" },
     { text: "Vereinskommunikation mit Vereinschat, News & Umfragen" },
-    { text: "TeamCloud mit 500 MB Vereinsspeicher" },
+    { text: "TeamCloud mit {speicher:teamcloud_verein} Vereinsspeicher" },
     { text: "Turniere & Starterlisten – bei Bedarf abschaltbar" },
     { text: "Trainer-Netzwerk für eure Trainerinnen & Trainer" },
     { text: "Vereinsstatistiken" },
@@ -88,3 +89,9 @@ export const ABDECKUNG_ENDE_TEXT =
   "Ist ein Mitglied dem Verein nicht mehr zugeordnet (z. B. entfernt oder deaktiviert), endet für diese Person die Abdeckung durch die Vereinslizenz. Eine vorher bestehende eigene BASIC-Lizenz läuft dann automatisch weiter.";
 export const MITGLIEDERIMPORT_TEXT =
   "Importiere deine bestehende Mitgliederliste aus deiner bisherigen Vereinssoftware per CSV oder Excel. Wähle selbst aus, welche Daten übernommen werden, und lade deine Mitglieder anschließend per E-Mail oder persönlichem Einladungslink zu TanzRaum ein. Der Import erstellt kein TanzRaum-Konto – jedes Mitglied registriert sich selbst.";
+
+// Speichergroessen kommen aus der zentralen Konfiguration (Admin: Speicher & Kontingente) – nie fest im Text.
+// „{speicher:schluessel}“ wird durch den aktuellen Wert ersetzt (ohne Wert entfaellt die Angabe).
+export function leistungText(text: string, speicher?: Record<string, number>): string {
+  return text.replace(/\{speicher:([a-z0-9_]+)\} ?/g, (_, k: string) => (speicher && typeof speicher[k] === "number" ? `${mbText(speicher[k])} ` : ""));
+}

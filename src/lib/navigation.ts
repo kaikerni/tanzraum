@@ -46,8 +46,7 @@ import {
   History,
   ListOrdered,
   KeyRound,
-  type LucideIcon,
-} from "lucide-react";
+  type LucideIcon, HardDrive } from "lucide-react";
 
 export type Tarif = "free" | "basic" | "verein";
 
@@ -244,6 +243,7 @@ export const ADMIN_NAV: NavEintrag[] = [
   { href: "/dashboard/admin/vorschau", label: "Ansicht als …", kurz: "Ansicht", icon: Eye, tarif: "free" },
   { href: "/dashboard/admin/anbieter", label: "Anbieterangaben", icon: FileText, tarif: "free" },
   { href: "/dashboard/admin/navigation", label: "Navigation & Bereiche", kurz: "Navigation", icon: ListOrdered, tarif: "free" },
+  { href: "/dashboard/admin/speicher", label: "Speicher & Kontingente", kurz: "Speicher", icon: HardDrive, tarif: "free" },
   { href: "/dashboard/admin/protokoll", label: "Protokoll", icon: History, tarif: "free" },
   { href: "/dashboard/einstellungen", label: "Einstellungen", icon: Settings, tarif: "free" },
 ];

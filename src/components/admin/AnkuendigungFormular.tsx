@@ -3,6 +3,7 @@
 import { useActionState, useState, useTransition } from "react";
 import { ImagePlus, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { speicherVorpruefung } from "@/lib/speicher";
 import { ankuendigungBildUrl } from "@/lib/news/getNews";
 import { ankuendigungAnlegen, ankuendigungBeenden, ankuendigungLoeschen } from "@/app/dashboard/admin/ankuendigungen/actions";
 import { SendenButton, Meldung, LEERES_ERGEBNIS } from "@/components/ui/SendenButton";
@@ -23,6 +24,11 @@ export function BildAuswahl() {
     if (datei.size > 5 * 1024 * 1024) return setFehler("Das Bild darf höchstens 5 MB groß sein.");
     setLaedt(true);
     const neu = `${new Date().getFullYear()}/${crypto.randomUUID()}.${endung}`;
+    const speicher = await speicherVorpruefung(createClient(), "ankuendigungen", neu, datei.size);
+    if (speicher) {
+      setLaedt(false);
+      return setFehler(speicher);
+    }
     const { error } = await createClient().storage.from("ankuendigungen").upload(neu, datei, { contentType: datei.type, cacheControl: "31536000" });
     setLaedt(false);
     if (error) return setFehler("Das Bild konnte nicht hochgeladen werden.");

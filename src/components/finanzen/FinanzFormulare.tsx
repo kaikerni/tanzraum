@@ -3,6 +3,7 @@
 import { useActionState, useState, useTransition } from "react";
 import { Bell, CheckCircle2, Paperclip, Pencil, RotateCcw, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { speicherVorpruefung } from "@/lib/speicher";
 import {
   beitragBezahlt,
   beitragErinnern,
@@ -48,6 +49,8 @@ export function BuchungFormular({ vereinId, buchung, fertig }: { vereinId: strin
         if (datei.size > BELEG_MAX) return setErgebnis({ error: "Der Beleg darf höchstens 10 MB groß sein." });
         const sicher = datei.name.replace(/[^A-Za-z0-9._-]+/g, "-").slice(-80) || "beleg";
         const pfad = `${vereinId}/${crypto.randomUUID()}/${sicher}`;
+        const speicher = await speicherVorpruefung(createClient(), BELEG_BUCKET, pfad, datei.size);
+        if (speicher) return setErgebnis({ error: speicher });
         const { error } = await createClient().storage.from(BELEG_BUCKET).upload(pfad, datei, { contentType: datei.type || "application/pdf", upsert: false });
         if (error) return setErgebnis({ error: "Beleg konnte nicht hochgeladen werden (PDF, JPG, PNG, WebP; max. 10 MB)." });
         fd.set("beleg_pfad", pfad);

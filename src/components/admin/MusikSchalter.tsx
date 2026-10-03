@@ -4,9 +4,10 @@ import { useState, useTransition } from "react";
 import { Music } from "lucide-react";
 import { musikEinstellen } from "@/app/dashboard/admin/actions";
 import type { AktionsErgebnis } from "@/components/ui/SendenButton";
+import { mbText } from "@/lib/speicher";
 
 // Schalter der TanzRaum-Administration: Musikbereich fuer alle an/aus (z. B. bis genug Speicher gebucht ist)
-export function MusikSchalter({ aktiv: start }: { aktiv: boolean }) {
+export function MusikSchalter({ aktiv: start, speicher }: { aktiv: boolean; speicher?: Record<string, number> }) {
   const [aktiv, setAktiv] = useState(start);
   const [laeuft, starte] = useTransition();
   const [meldung, setMeldung] = useState<AktionsErgebnis | null>(null);
@@ -32,7 +33,7 @@ export function MusikSchalter({ aktiv: start }: { aktiv: boolean }) {
             <span className="block text-[16px] font-bold text-brand-ink">Musikbereich</span>
             <span className="block text-[13px] text-brand-ink-soft">
               {aktiv
-                ? "Eingeschaltet – Vereine (1 GB) und BASIC-Nutzer (200 MB) können Musik hochladen und abspielen."
+                ? `Eingeschaltet – Vereine${speicher?.musik_verein !== undefined ? ` (${mbText(speicher.musik_verein)})` : ""} und BASIC-Nutzer${speicher?.musik_persoenlich !== undefined ? ` (${mbText(speicher.musik_persoenlich)})` : ""} können Musik hochladen und abspielen.`
                 : "Ausgeschaltet – kein Menüpunkt, keine Uploads, keine Wiedergabe. Gespeichertes bleibt erhalten."}
             </span>
           </span>

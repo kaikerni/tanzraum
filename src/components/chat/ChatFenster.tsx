@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { AdminMarke, ADMIN_KENNUNG } from "./AdminMarke";
 import { createClient } from "@/lib/supabase/client";
+import { speicherVorpruefung } from "@/lib/speicher";
 import { alsNachricht, type ChatKopf, type ChatNachricht, type Umfrage } from "@/lib/chat/getChat";
 import {
   chatEinstellung,
@@ -474,6 +475,8 @@ export function ChatFenster({
   async function dateiHochladen(blob: Blob, name: string) {
     const endung = (name.split(".").pop() ?? "bin").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8) || "bin";
     const pfad = `${kopf.id}/${crypto.randomUUID()}.${endung}`;
+    const speicher = await speicherVorpruefung(supabase, "chat-dateien", pfad, blob.size);
+    if (speicher) throw new Error(speicher);
     const { error } = await supabase.storage.from("chat-dateien").upload(pfad, blob, { contentType: blob.type || "application/octet-stream" });
     if (error) throw new Error("Die Datei konnte nicht hochgeladen werden (max. 25 MB, nur Dokumente, Videos und Audio).");
     return pfad;
@@ -536,6 +539,8 @@ export function ChatFenster({
             setMedienStatus(`Foto wird gesendet …${nr}`);
             const blob = await bildVerkleinern(m.datei);
             const bildPfad = `${kopf.id}/${crypto.randomUUID()}.${blob.type === "image/gif" ? "gif" : "jpg"}`;
+            const speicher = await speicherVorpruefung(supabase, "chat-bilder", bildPfad, blob.size);
+            if (speicher) throw new Error(speicher);
             const { error } = await supabase.storage.from("chat-bilder").upload(bildPfad, blob, { contentType: blob.type || "image/jpeg" });
             if (error) throw new Error("Das Bild konnte nicht hochgeladen werden (max. 5 MB).");
             await einfuegen({ inhalt: i === 0 ? inhalt : "", bild_pfad: bildPfad }, i === 0);

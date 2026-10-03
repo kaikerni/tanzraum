@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { ImageUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { speicherVorpruefung } from "@/lib/speicher";
 import { logoSpeichern } from "@/app/dashboard/verein/actions";
 
 const ERLAUBT = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
@@ -26,6 +27,11 @@ export function LogoUpload({ vereinId }: { vereinId: string }) {
     const supabase = createClient();
     const endung = datei.name.split(".").pop()?.toLowerCase() || "png";
     const pfad = `${vereinId}/logo-${Date.now()}.${endung}`;
+    const speicher = await speicherVorpruefung(supabase, "verein-logos", pfad, datei.size);
+    if (speicher) {
+      setStatus({ fehler: speicher });
+      return;
+    }
     const { error } = await supabase.storage.from("verein-logos").upload(pfad, datei, {
       contentType: datei.type,
       upsert: false,

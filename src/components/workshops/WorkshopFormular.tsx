@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, Send, Save, Trash2, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { speicherVorpruefung } from "@/lib/speicher";
 import { bildVerkleinern } from "@/lib/medien/bild";
 import { Meldung, type AktionsErgebnis } from "@/components/ui/SendenButton";
 import { BUNDESLAENDER, WORKSHOP_KATEGORIEN, type Workshop } from "@/lib/workshops/workshops";
@@ -78,6 +79,8 @@ export function WorkshopFormular({
     try {
       const blob = await bildVerkleinern(f, 1600);
       const pfad = `${userId}/${crypto.randomUUID()}.jpg`;
+      const speicher = await speicherVorpruefung(createClient(), "workshops", pfad, blob.size);
+      if (speicher) return setMeldung({ error: speicher });
       const { error } = await createClient().storage.from("workshops").upload(pfad, blob, { contentType: "image/jpeg" });
       if (error) throw error;
       setW((alt) => ({ ...alt, bild_pfad: pfad }));

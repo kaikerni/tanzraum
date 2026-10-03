@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, Printer, Upload, X } from "lucide-react";
 import { antragEntscheiden, freigabeEntscheiden, papierVermerken, personHinzufuegen } from "@/app/dashboard/mitgliedsantraege/actions";
 import { createClient } from "@/lib/supabase/client";
+import { speicherVorpruefung } from "@/lib/speicher";
 import { LEERES_ERGEBNIS, Meldung, SendenButton, type AktionsErgebnis } from "@/components/ui/SendenButton";
 
 const EINGABE = "w-full rounded-lg border border-brand-line bg-white px-3 py-2.5 text-[13.5px] text-brand-ink outline-none focus:border-brand-red";
@@ -154,6 +155,11 @@ export function PapierHochladen({ antragId, vereinId, text = "Unterschriebenen A
     setStatus({ error: null, laedt: true });
     const endung = datei.type === "application/pdf" ? "pdf" : datei.type === "image/png" ? "png" : "jpg";
     const pfad = `${vereinId}/${antragId}/papier-${Date.now()}.${endung}`;
+    const speicher = await speicherVorpruefung(createClient(), "mitgliedsantraege", pfad, datei.size);
+    if (speicher) {
+      setStatus({ error: speicher });
+      return;
+    }
     const { error } = await createClient().storage.from("mitgliedsantraege").upload(pfad, datei, { contentType: datei.type, upsert: false });
     if (error) {
       setStatus({ error: "Hochladen fehlgeschlagen." });

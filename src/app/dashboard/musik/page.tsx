@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Building2, Music, Search, Upload, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardData } from "@/lib/dashboard/getDashboardData";
+import { SpeicherReduziert } from "@/components/speicher/SpeicherReduziert";
 import { KARTE } from "@/components/dashboard/Karten";
 import { KarteKopf } from "@/components/dashboard/KarteKopf";
 import { MusikHochladen, type GruppeAuswahl } from "@/components/musik/MusikHochladen";
@@ -23,6 +24,7 @@ function Speicher({ belegt, limit }: { belegt: number; limit: number }) {
       <div className="h-2 overflow-hidden rounded-full bg-brand-bg">
         <div className={`h-full rounded-full ${anteil >= 90 ? "bg-brand-red" : "bg-brand-green"}`} style={{ width: `${anteil}%` }} />
       </div>
+      <SpeicherReduziert belegt={belegt} limit={limit} />
     </div>
   );
 }

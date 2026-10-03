@@ -4,6 +4,7 @@ import { useActionState, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, FileUp, Printer, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { speicherVorpruefung } from "@/lib/speicher";
 import { SendenButton, Meldung, LEERES_ERGEBNIS, type AktionsErgebnis } from "@/components/ui/SendenButton";
 import {
   bestellungVorbereiten,
@@ -196,6 +197,11 @@ export function DokumentUpload({ vereinId, vorgangId }: { vereinId: string; vorg
     const supabase = createClient();
     const endung = (datei.name.split(".").pop() ?? "pdf").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5) || "pdf";
     const pfad = `${vereinId}/${vorgangId}/${crypto.randomUUID()}.${endung}`;
+    const speicher = await speicherVorpruefung(supabase, "ehrungs-dokumente", pfad, datei.size);
+    if (speicher) {
+      setStatus({ fehler: speicher });
+      return;
+    }
     const { error } = await supabase.storage.from("ehrungs-dokumente").upload(pfad, datei, { contentType: datei.type, upsert: false });
     if (error) {
       setStatus({ fehler: "Hochladen fehlgeschlagen – nur Vereinsadmins können Dokumente zu Ehrungen ablegen." });

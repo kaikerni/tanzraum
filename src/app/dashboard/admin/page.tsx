@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Flag, ShieldCheck, CreditCard, Medal, Building2, Receipt, Megaphone, BarChart3, LifeBuoy, Eye, Store, Users, Sparkles, KeyRound, Shield, GraduationCap, MessageSquareText, ListOrdered, History, ShieldAlert } from "lucide-react";
+import { Flag, ShieldCheck, CreditCard, Medal, Building2, Receipt, Megaphone, BarChart3, LifeBuoy, Eye, Store, Users, Sparkles, KeyRound, Shield, GraduationCap, MessageSquareText, ListOrdered, History, ShieldAlert, HardDrive } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { speicherKontingente } from "@/lib/speicher";
 import { versionText } from "@/lib/version";
 import { KARTE } from "@/components/dashboard/Karten";
 import { DashboardStatus } from "@/components/dashboard/DashboardStatus";
@@ -27,7 +28,7 @@ export default async function AdminSeite() {
   const boerseMeldungen = Number((boerse as { zahlen?: { offene_meldungen?: number } } | null)?.zahlen?.offene_meldungen ?? 0);
   const { data: spotlightEinstellung } = await supabase.from("plattform_einstellungen").select("spotlights_aktiv, spotlights_tarife, musik_aktiv, juryraum_aktiv").eq("id", true).maybeSingle();
   const { data: laufend } = await supabase.rpc("admin_benutzer_suche", { p_q: "" });
-  const [{ data: pruefen }, { data: treffMeldungen }] = await Promise.all([supabase.rpc("workshops_pruefen"), supabase.rpc("treff_meldungen", { p_status: "offen" })]);
+  const [{ data: pruefen }, { data: treffMeldungen }, speicher] = await Promise.all([supabase.rpc("workshops_pruefen"), supabase.rpc("treff_meldungen", { p_status: "offen" }), speicherKontingente(supabase)]);
   const workshopsOffen = ((pruefen ?? []) as { status: string }[]).filter((w) => w.status === "eingereicht").length;
   const treffOffen = ((treffMeldungen ?? []) as unknown[]).length;
   const { data: schutz } = await supabase.rpc("schutz_statistik", { p_tage: 7 });
@@ -89,6 +90,7 @@ export default async function AdminSeite() {
       marke: chatFaelle > 0 ? `${chatFaelle} offen` : chatUngeprueft > 0 ? "Prüfung gestört" : null,
     },
     { href: "/dashboard/admin/navigation", icon: ListOrdered, farbe: "bg-brand-blue-wash text-brand-blue", titel: "Navigation & Bereiche", text: "Welche Bereiche FREE, BASIC und VEREIN im Menü sehen (nur Anzeige)" },
+    { href: "/dashboard/admin/speicher", icon: HardDrive, farbe: "bg-brand-red-wash text-brand-red", titel: "Speicher & Kontingente", text: "TanzRaum-Speicher, Kontingente je Bereich (TeamCloud, Musik, Chat …) und Verbrauch" },
     { href: "/dashboard/admin/protokoll", icon: History, farbe: "bg-brand-bg text-brand-ink", titel: "Protokoll", text: "Wer hat was wann geändert – Team, Freischaltungen, Moderation" },
   ];
 
@@ -102,7 +104,7 @@ export default async function AdminSeite() {
         <SpotlightSchalter aktiv={spotlightEinstellung?.spotlights_aktiv ?? false} tarife={spotlightEinstellung?.spotlights_tarife ?? ["free", "basic", "verein"]} />
       </section>
       <section className={KARTE} aria-label="Musikbereich">
-        <MusikSchalter aktiv={spotlightEinstellung?.musik_aktiv ?? false} />
+        <MusikSchalter aktiv={spotlightEinstellung?.musik_aktiv ?? false} speicher={speicher} />
       </section>
       <section className={KARTE} aria-label="JuryRaum">
         <JuryraumSchalter aktiv={spotlightEinstellung?.juryraum_aktiv ?? false} />

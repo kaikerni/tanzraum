@@ -31,6 +31,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { speicherVorpruefung } from "@/lib/speicher";
 import {
   spotlightVeroeffentlichen,
   storyMusikAuswahl,
@@ -150,6 +151,8 @@ export function SpotlightErstellen({
           setStatus(`Wird hochgeladen …${nr}`);
           const endung = blob.type.startsWith("image/") ? (blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg") : blob.type === "video/webm" ? "webm" : blob.type === "video/quicktime" ? "mov" : "mp4";
           pfad = `${userId}/${neueId()}.${endung}`;
+          const speicher = await speicherVorpruefung(supabase, "spotlights", pfad, blob.size);
+          if (speicher) throw new Error(speicher);
           const { error } = await supabase.storage.from("spotlights").upload(pfad, blob, { contentType: blob.type || (s.art === "foto" ? "image/jpeg" : "video/mp4") });
           if (error) throw new Error("Die Datei konnte nicht hochgeladen werden. Bitte versuche es erneut.");
         }

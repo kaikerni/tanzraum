@@ -3,7 +3,8 @@ import { RechtsSeite, Abschnitt } from "@/components/recht/RechtsSeite";
 import { createClient } from "@/lib/supabase/server";
 import { getAnbieter } from "@/lib/recht/anbieter";
 import { euro, getPreise, jahrHinweis } from "@/lib/tarife";
-import { ABDECKUNG_ENDE_TEXT, BASIC_PAUSE_TEXT, KEIN_BASIC_NOETIG_TEXT, MITGLIEDERIMPORT_TEXT, TARIF_EINLEITUNG, TARIF_LEISTUNGEN, TURNIER_ANMELDUNG_HINWEIS, VEREINSLIZENZ_TEXT } from "@/lib/tarif-leistungen";
+import { ABDECKUNG_ENDE_TEXT, BASIC_PAUSE_TEXT, KEIN_BASIC_NOETIG_TEXT, MITGLIEDERIMPORT_TEXT, TARIF_EINLEITUNG, TARIF_LEISTUNGEN, TURNIER_ANMELDUNG_HINWEIS, VEREINSLIZENZ_TEXT, leistungText } from "@/lib/tarif-leistungen";
+import { speicherKontingente } from "@/lib/speicher";
 
 export const metadata = { title: "Lizenzen" };
 // Preise live aus tarif_preise
@@ -12,7 +13,7 @@ export const revalidate = 300;
 // Kurzinfo zu den Lizenzen; verbindlich sind die Nutzungsbedingungen
 export default async function LizenzSeite() {
   const supabase = await createClient();
-  const [preise, a] = await Promise.all([getPreise(supabase), getAnbieter()]);
+  const [preise, a, speicher] = await Promise.all([getPreise(supabase), getAnbieter(), speicherKontingente(supabase)]);
 
   return (
     <RechtsSeite titel="Lizenzen" stand={null}>
@@ -40,7 +41,7 @@ export default async function LizenzSeite() {
         <p>{TARIF_EINLEITUNG.basic}</p>
         <ul>
           {TARIF_LEISTUNGEN.basic.filter((l) => !l.bald).map((l) => (
-            <li key={l.text}>{l.text}</li>
+            <li key={l.text}>{leistungText(l.text, speicher)}</li>
           ))}
         </ul>
         <p>{BASIC_PAUSE_TEXT}</p>
@@ -62,7 +63,7 @@ export default async function LizenzSeite() {
         </p>
         <ul>
           {TARIF_LEISTUNGEN.verein.filter((l) => !l.bald).map((l) => (
-            <li key={l.text}>{l.text}</li>
+            <li key={l.text}>{leistungText(l.text, speicher)}</li>
           ))}
         </ul>
         <p>

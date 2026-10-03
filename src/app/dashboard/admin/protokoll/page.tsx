@@ -22,6 +22,7 @@ const AKTION: Record<string, string> = {
   lizenz_verlaengert: "Lizenz verlängert",
   tarif_geaendert: "Lizenz geändert",
   navigation_geaendert: "Navigation geändert",
+  speicher_geaendert: "Speicherlimit geändert",
   nutzer_gesperrt: "Nutzer gesperrt",
   nutzer_entsperrt: "Nutzer entsperrt",
   meldung_bearbeitet: "Meldung bearbeitet",
@@ -56,6 +57,11 @@ function detailText(aktion: string, d: Record<string, unknown>): string {
   if (Array.isArray(d.rechte) && d.rechte.length) teile.push((d.rechte as string[]).map(rechtLabel).join(", "));
   if (d.alle_rechte === true) teile.push("alle Team-Bereiche");
   if (typeof d.titel === "string") teile.push(`„${d.titel}“`);
+  if (aktion === "speicher_geaendert" && typeof d.bereich === "string") {
+    const mbT = (x: unknown) => (typeof x === "number" ? `${x.toLocaleString("de-DE")} MB` : "–");
+    teile.push(`${d.bereich}: ${mbT(d.alt_mb)} → ${mbT(d.neu_mb)}`);
+    if (typeof d.alt_aktiv === "boolean" && d.alt_aktiv !== d.neu_aktiv) teile.push(d.neu_aktiv ? "Uploads wieder erlaubt" : "Uploads gesperrt");
+  }
   if (typeof d.zugang === "string") teile.push(`${String(d.zugang).toUpperCase()}${d.art ? ` (${d.art})` : ""}${d.bis ? ` bis ${d.bis}` : ""}`);
   if (typeof d.lizenzart === "string") teile.push(String(d.lizenzart));
   if (aktion.startsWith("treff_meldung_")) teile.push(aktion.replace("treff_meldung_", "Status: "));

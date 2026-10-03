@@ -8,6 +8,7 @@ import { LizenzKarte } from "@/components/tarif/LizenzKarte";
 import { OffeneUeberweisung } from "@/components/tarif/OffeneUeberweisung";
 import { TARIF_LABEL, datum, getPreise, type MeinTarifStatus } from "@/lib/tarife";
 import { lizenzStatus, restTage } from "@/lib/lizenz";
+import { speicherKontingente } from "@/lib/speicher";
 
 // Vereinslizenz, ueber die man abgedeckt ist: Verein, Status, gueltig bis (Abrechnung ueber den Verein)
 function VereinslizenzKarte({ verein, bis }: { verein: string | null; bis: string | null }) {
@@ -55,7 +56,7 @@ export default async function MeinTarifSeite({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: statusRoh }, preise, sp] = await Promise.all([supabase.rpc("mein_tarif_status"), getPreise(supabase), searchParams]);
+  const [{ data: statusRoh }, preise, sp, speicher] = await Promise.all([supabase.rpc("mein_tarif_status"), getPreise(supabase), searchParams, speicherKontingente(supabase)]);
   const status = statusRoh as MeinTarifStatus | null;
   if (!status?.zugang) redirect("/dashboard");
   const z = status.zugang;
@@ -142,6 +143,7 @@ export default async function MeinTarifSeite({
           startPeriode={sp.periode === "jahr" ? "jahr" : "monat"}
           vorgewaehlterVerein={sp.verein ?? null}
           wunsch={sp.wunsch === "basic" || sp.wunsch === "verein" ? sp.wunsch : null}
+          speicher={speicher}
         />
       ) : (
         <p className="form-error">Die Preise konnten gerade nicht geladen werden. Bitte versuche es später erneut.</p>

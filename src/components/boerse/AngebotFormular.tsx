@@ -4,6 +4,7 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, Loader2, Star, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { speicherVorpruefung } from "@/lib/speicher";
 import { bildVerkleinern } from "@/lib/medien/bild";
 import { angebotSpeichern, bilderEntfernen, type AngebotEingabe } from "@/app/dashboard/boerse/actions";
 import { ART_LABEL, ZUSTAND_LABEL, type Angebot, type BoerseArt, type Kategorie, type Zustand } from "@/lib/boerse";
@@ -60,6 +61,11 @@ export function AngebotFormular({
       try {
         const blob = await bildVerkleinern(datei, 1600);
         const pfad = `${userId}/${id}/${crypto.randomUUID()}.jpg`;
+        const speicher = await speicherVorpruefung(supabase, "boerse", pfad, blob.size);
+        if (speicher) {
+          setFehler(speicher);
+          break;
+        }
         const { error } = await supabase.storage.from("boerse").upload(pfad, blob, { contentType: "image/jpeg" });
         if (error) throw error;
         neu.push({ pfad, url: URL.createObjectURL(blob) });

@@ -579,6 +579,14 @@ export function vorschauDaten(ansicht: Ansicht, userId: string, einstellungen: V
       b.p_verein_id
         ? { belegt: 412345 + 1234567, limit: 500 * 1024 * 1024, dateien: 2, darf_hochladen: verwaltetTraining }
         : { belegt: 0, limit: 100 * 1024 * 1024, dateien: 0, darf_hochladen: tarif !== "free" },
+    // Speicher (Beispielwerte; echte Werte zentral in speicher_kontingente)
+    speicher_vorpruefung: true,
+    speicher_kontingente_oeffentlich: [
+      { schluessel: "teamcloud_verein", bezeichnung: "TeamCloud – Verein (VEREIN)", limit_mb: 500, aktiv: true },
+      { schluessel: "teamcloud_persoenlich", bezeichnung: "TeamCloud – persönlich (BASIC)", limit_mb: 100, aktiv: true },
+      { schluessel: "musik_verein", bezeichnung: "Musik – Verein", limit_mb: 1024, aktiv: true },
+      { schluessel: "musik_persoenlich", bezeichnung: "Musik – persönlich (BASIC)", limit_mb: 200, aktiv: true },
+    ],
     // Statistik & Verwaltung
     verein_statistik: statistik,
     // Standard (bereich_standard_rollen)

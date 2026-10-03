@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Check, CreditCard, Building2, Landmark } from "lucide-react";
 import { zahlungAufruf } from "./zahlungAufruf";
 import { ueberweisungBeantragen, vereinFuerLizenzAnlegen } from "@/app/dashboard/tarif/actions";
-import { TARIF_EINLEITUNG, TARIF_LEISTUNGEN, TURNIER_ANMELDUNG_HINWEIS } from "@/lib/tarif-leistungen";
+import { TARIF_EINLEITUNG, TARIF_LEISTUNGEN, TURNIER_ANMELDUNG_HINWEIS, leistungText } from "@/lib/tarif-leistungen";
 import { SendenButton, Meldung, LEERES_ERGEBNIS } from "@/components/ui/SendenButton";
 import { euro, gratisMonate, jahrKurz, type BezahlTarif, type Periode, type Preise } from "@/lib/tarife";
 import { LEISTUNGSBEGINN_TEXT } from "@/lib/recht/leistungsbeginn";
@@ -24,6 +24,7 @@ export function TarifKarten({
   vorgewaehlterVerein,
   wunsch,
   ueberweisungMoeglich = false,
+  speicher,
 }: {
   preise: Preise;
   effektiv: string;
@@ -35,6 +36,8 @@ export function TarifKarten({
   vorgewaehlterVerein: string | null;
   wunsch: string | null;
   ueberweisungMoeglich?: boolean;
+  // Speicherkontingente in MB (zentral, speicher_kontingente_oeffentlich)
+  speicher?: Record<string, number>;
 }) {
   const [periode, setPeriode] = useState<Periode>(startPeriode);
   const [laedt, setLaedt] = useState<string | null>(null);
@@ -182,7 +185,7 @@ export function TarifKarten({
             <li key={l.text} className={`flex gap-2 ${l.bald ? "text-brand-ink-soft" : ""}`}>
               <Check size={16} className={`mt-0.5 shrink-0 ${l.bald ? "text-brand-ink-soft" : FARBE[tarif].haken}`} />
               <span className="min-w-0 [overflow-wrap:anywhere]">
-                {l.text}
+                {leistungText(l.text, speicher)}
                 {l.bald && <span className="ml-1.5 rounded-full bg-brand-bg px-2 py-0.5 text-[11px] font-semibold">bald</span>}
               </span>
             </li>

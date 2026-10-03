@@ -7,6 +7,7 @@ import { SendenButton, Meldung, LEERES_ERGEBNIS, type AktionsErgebnis } from "@/
 import { ARTEN, ART_LABEL, KOSTUEM_BUCKET, ZUSTAENDE, ZUSTAND_LABEL, heuteBerlin, type Kostuemsatz, type Teil } from "@/lib/kostueme";
 import { bildVerkleinern } from "@/lib/medien/bild";
 import { createClient } from "@/lib/supabase/client";
+import { speicherVorpruefung } from "@/lib/speicher";
 
 export type Person = { vmId: string; name: string };
 
@@ -198,6 +199,8 @@ function FotoFormular({ teil, fertig }: { teil: Teil; fertig: () => void }) {
       const blob = await bildVerkleinern(datei, 1920);
       setStatus("Wird hochgeladen …");
       const pfad = `${teil.verein_id}/${teil.id}/${crypto.randomUUID()}.jpg`;
+      const speicher = await speicherVorpruefung(createClient(), KOSTUEM_BUCKET, pfad, blob.size);
+      if (speicher) return setMeldung({ error: speicher });
       const { error } = await createClient().storage.from(KOSTUEM_BUCKET).upload(pfad, blob, { contentType: "image/jpeg", upsert: false });
       if (error) throw error;
       const r = await fotoSetzen(teil.id, pfad);

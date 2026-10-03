@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, Save, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { speicherVorpruefung } from "@/lib/speicher";
 import { bildVerkleinern } from "@/lib/medien/bild";
 import { Meldung, type AktionsErgebnis } from "@/components/ui/SendenButton";
 import { wissenSpeichern, type WissenEingabe } from "@/app/dashboard/treff/wissen/actions";
@@ -119,6 +120,8 @@ export function WissenEditor({
             if (!f) return;
             const blob = await bildVerkleinern(f, 1600);
             const pfad = `${userId}/${crypto.randomUUID()}.jpg`;
+            const speicher = await speicherVorpruefung(createClient(), "wissen", pfad, blob.size);
+            if (speicher) return setMeldung({ error: speicher });
             const { error } = await createClient().storage.from("wissen").upload(pfad, blob, { contentType: "image/jpeg" });
             if (error) return setMeldung({ error: "Das Bild konnte nicht hochgeladen werden." });
             setE((alt) => ({ ...alt, bild_pfad: pfad }));
