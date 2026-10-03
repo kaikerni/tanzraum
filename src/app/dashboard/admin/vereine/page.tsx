@@ -4,13 +4,29 @@ import { KARTE } from "@/components/dashboard/Karten";
 import { VEREINS_MODULE } from "@/lib/navigation";
 import { adminSitzung, type Vereinskarte } from "@/lib/admin/zugang";
 import { VereinAnlegenAdmin } from "@/components/admin/VereinVerwaltungAdmin";
+import { VereinswechselAdmin } from "@/components/admin/VereinswechselAdmin";
+import type { AdminVereinswechsel } from "./actions";
 
 export const metadata = { title: "Vereine – TanzRaum-Administration" };
 
 // Vereinskarten nur mit Zahlen (Mitglieder, Gruppen, online) – keine Namen von Mitgliedern
 export default async function AdminVereineSeite() {
   const { supabase } = await adminSitzung("/dashboard/admin/vereine");
-  const [{ data }, { data: lizenzen }] = await Promise.all([supabase.rpc("admin_vereinskarten"), supabase.rpc("admin_vereinslizenzen")]);
+  const [{ data }, { data: lizenzen }, { data: wechselRoh }] = await Promise.all([
+    supabase.rpc("admin_vereinskarten"),
+    supabase.rpc("admin_vereinslizenzen"),
+    supabase.rpc("admin_vereinswechsel_liste"),
+  ]);
+  // deno-lint-ignore no-explicit-any
+  const wechsel: AdminVereinswechsel[] = ((wechselRoh ?? []) as any[]).map((w) => ({
+    id: w.id,
+    person: w.person ?? "Person",
+    bisherigerVerein: w.bisheriger_verein ?? "bisheriger Verein",
+    neuerVerein: w.neuer_verein ?? "neuer Verein",
+    angefragtVon: w.angefragt_von ?? null,
+    zugestimmtAm: w.zugestimmt_am,
+    stand: w.stand === "abgelehnt" ? "abgelehnt" : "offen",
+  }));
   const vereine = (data ?? []) as Vereinskarte[];
   // Lizenzstatus je Verein (Lizenztyp Verein): Aktiv / Test (mit Enddatum) bzw. Abgelaufen / Deaktiviert / ohne Lizenz
   const lizenzInfo = new Map(
@@ -38,6 +54,7 @@ export default async function AdminVereineSeite() {
         <p className="text-[13.5px] text-brand-ink-soft">{vereine.length} Vereine · nur zusammengefasste Zahlen, keine Mitgliederdaten.</p>
       </div>
       <VereinAnlegenAdmin />
+      <VereinswechselAdmin wechsel={wechsel} />
       {vereine.length === 0 ? (
         <p className={`${KARTE} text-[14px] text-brand-ink-soft`}>Noch keine Vereine registriert.</p>
       ) : (

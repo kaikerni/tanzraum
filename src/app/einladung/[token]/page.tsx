@@ -83,9 +83,22 @@ export default async function EinladungSeite({ params }: { params: Promise<{ tok
     );
   }
 
-  const [{ data }, { data: vor }] = UUID.test(token)
-    ? await Promise.all([supabase.rpc("einladung_info", { p_token: token }).maybeSingle(), supabase.rpc("einladung_vorschau", { p_token: token }).maybeSingle()])
-    : [{ data: null }, { data: null }];
+  const [{ data }, { data: vor }, { data: wechselNoetig }] = UUID.test(token)
+    ? await Promise.all([
+        supabase.rpc("einladung_info", { p_token: token }).maybeSingle(),
+        supabase.rpc("einladung_vorschau", { p_token: token }).maybeSingle(),
+        supabase.rpc("einladung_wechsel_noetig", { p_token: token }),
+      ])
+    : [{ data: null }, { data: null }, { data: null }];
+  const wechsel = wechselNoetig === true;
+  // Person ist einem anderen Verein zugeordnet: deutlicher Hinweis, Annehmen = ausdrueckliche Zustimmung zum Wechsel
+  const wechselHinweisVorlage = (vereinName: string | null) => wechsel ? (
+    <p className="rounded-xl border border-brand-gold/50 bg-brand-gold-wash px-3 py-2.5 text-[13.5px] text-brand-ink">
+      Du bist derzeit einem anderen Verein zugeordnet. Wenn du die Anfrage annimmst, wird deine bisherige Vereinszuordnung beendet und dein TanzRaum-Konto{" "}
+      {vereinName ?? "dem neuen Verein"} zugeordnet – sobald dein bisheriger Verein dich freigibt. Dein Konto, Profil, Spotlights und Nachrichten bleiben
+      erhalten; Vereinsdaten deines bisherigen Vereins werden nicht übertragen.
+    </p>
+  ) : null;
   // deno-lint-ignore no-explicit-any
   const info = data as any;
   // Persoenliche Einladung (importiertes/angelegtes Vereinsmitglied): Konto wird mit dem Mitglied verbunden
@@ -121,7 +134,8 @@ export default async function EinladungSeite({ params }: { params: Promise<{ tok
               ) : null}
               . Mit „Einladung annehmen“ wird dein TanzRaum-Konto mit deinem Vereinsmitglied verbunden.
             </p>
-            <EinladungAnnehmen token={token} />
+            {wechselHinweisVorlage(info.verein_name)}
+            <EinladungAnnehmen token={token} wechsel={wechsel} />
           </>
         ) : (
           <>
@@ -150,9 +164,10 @@ export default async function EinladungSeite({ params }: { params: Promise<{ tok
                   dem Verein <strong>{info.verein_name}</strong>
                 </>
               )}{" "}
-              beizutreten. Mit „Einladung annehmen“ bist du dabei.
+              beizutreten. {wechsel ? "" : "Mit „Einladung annehmen“ bist du dabei."}
             </p>
-            <EinladungAnnehmen token={token} />
+            {wechselHinweisVorlage(info.verein_name)}
+            <EinladungAnnehmen token={token} wechsel={wechsel} />
           </>
         )}
         <Link href="/dashboard" className="text-center text-[13px] text-brand-ink-soft hover:text-brand-ink">

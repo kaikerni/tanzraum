@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { KARTE } from "@/components/dashboard/Karten";
 import { LizenzVerwaltung, type LizenzZeile } from "@/components/admin/LizenzVerwaltung";
 import { lizenzStatus } from "@/lib/lizenz";
+import { FreischaltungEinladungen } from "@/components/admin/FreischaltungEinladungen";
+import { freischaltungEinladungen } from "./actions";
 
 export const metadata = { title: "Nutzer freischalten & Lizenzen – TanzRaum-Administration" };
 
@@ -29,7 +31,7 @@ export default async function LizenzenSeite({ searchParams }: { searchParams: Pr
   const sp = await searchParams;
   const q = (sp.q ?? "").trim().slice(0, 100);
   const art = FILTER.some((f) => f.id === sp.art) ? (sp.art ?? "") : "";
-  const { data } = await supabase.rpc("admin_lizenzen", { p_q: q || null });
+  const [{ data }, einladungen] = await Promise.all([supabase.rpc("admin_lizenzen", { p_q: q || null }), freischaltungEinladungen()]);
   // deno-lint-ignore no-explicit-any
   const alle: LizenzZeile[] = ((data ?? []) as any[]).map((z) => ({
     userId: z.user_id,
@@ -66,6 +68,7 @@ export default async function LizenzenSeite({ searchParams }: { searchParams: Pr
           Aktion wird protokolliert. Übersicht und Preise: <Link href="/dashboard/admin/tarife" className="font-semibold text-brand-red">Tarife & Lizenzen</Link>.
         </p>
       </div>
+      <FreischaltungEinladungen einladungen={einladungen} />
       <section className={`${KARTE} flex flex-col gap-3`}>
         <form action="/dashboard/admin/lizenzen" className="flex gap-2">
           <label className="field min-w-0 flex-1">

@@ -100,3 +100,26 @@ export async function einladungWiderrufenAdmin(id: string, vereinId: string): Pr
   neuLaden(vereinId);
   return { error: null, ok: "Einladung widerrufen." };
 }
+
+// ---------- Administrativer Vereinswechsel (nur TanzRaum-Admin; nur mit Zustimmung der Person) ----------
+export type AdminVereinswechsel = {
+  id: string;
+  person: string;
+  bisherigerVerein: string;
+  neuerVerein: string;
+  angefragtVon: string | null;
+  zugestimmtAm: string;
+  stand: "offen" | "abgelehnt";
+};
+
+export async function adminVereinswechselDurchfuehren(anfrageId: string, grund: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(anfrageId)) return { error: "Ungültige Anfrage." };
+  const g = grund.trim().slice(0, 1000);
+  if (g.length < 5) return { error: "Bitte gib den Anlass bzw. Grund an." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_vereinswechsel_durchfuehren", { p_anfrage_id: anfrageId, p_grund: g });
+  if (error) return { error: error.message };
+  revalidatePath("/dashboard/admin/vereine");
+  revalidatePath("/dashboard/admin/protokoll");
+  return { error: null, ok: "Vereinswechsel durchgeführt und protokolliert." };
+}

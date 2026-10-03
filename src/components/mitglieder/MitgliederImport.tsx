@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Check, FileUp, Loader2, Users } from "lucide-react";
-import { importAusfuehren, importPruefen, type ImportErgebnis, type ImportGruppe, type ImportTreffer } from "@/app/dashboard/mitglieder/actions";
+import { importAusfuehren, importPruefen, type ImportErgebnis, type ImportGruppe, type ImportKontoHinweis, type ImportTreffer } from "@/app/dashboard/mitglieder/actions";
 import { leseTabelle, TabellenFehler, type Tabelle } from "@/lib/mitglieder/tabelle";
 import { automatischZuordnen, dateiDuplikate, FELD, FELDER, zeilenAufbereiten, type FeldGruppe, type FeldKey, type Hinweis, type ImportZeile } from "@/lib/mitglieder/importFelder";
 
@@ -51,6 +51,7 @@ export function MitgliederImport({
   const [fehler, setFehler] = useState<string | null>(null);
   const [laeuft, setLaeuft] = useState(false);
   const [treffer, setTreffer] = useState<Map<number, ImportTreffer> | null>(null);
+  const [kontoHinweise, setKontoHinweise] = useState<ImportKontoHinweis[]>([]);
   const [entscheidung, setEntscheidung] = useState<Record<number, Entscheidung>>({});
   const [uebernehmen, setUebernehmen] = useState<Record<number, boolean>>({});
   const [alleTreffer, setAlleTreffer] = useState(false);
@@ -125,6 +126,7 @@ export function MitgliederImport({
     setLaeuft(false);
     if (r.error) return setFehler(r.error);
     const m = new Map((r.treffer ?? []).map((t) => [t.idx, t]));
+    setKontoHinweise(r.kontoHinweise ?? []);
     setTreffer(m);
     setEntscheidung(Object.fromEntries([...m.keys()].map((i) => [i, "vorhanden" as Entscheidung])));
     setUebernehmen({});
@@ -412,6 +414,27 @@ export function MitgliederImport({
               {sichtbareTreffer.length > 0 && (
                 <p className="mt-3 rounded-xl bg-brand-bg px-3.5 py-2.5 text-[14px] font-semibold text-brand-ink">
                   {anzahlVorhanden} bereits vorhanden · {anzahlNeu} {anzahlNeu === 1 ? "neues Mitglied" : "neue Mitglieder"} · {zahl(anzahlAenderung, "mögliche Änderung", "mögliche Änderungen")}
+                </p>
+              )}
+              {kontoHinweise.some((k) => k.art === "anderer_verein") && (
+                <div className="mt-3 rounded-xl border border-brand-gold/50 bg-brand-gold-wash px-3.5 py-2.5 text-[13px] text-brand-ink">
+                  <p className="font-semibold">
+                    {zahl(kontoHinweise.filter((k) => k.art === "anderer_verein").length, "E-Mail-Adresse gehört", "E-Mail-Adressen gehören")} zu einem TanzRaum-Konto,
+                    das bereits einem anderen Verein zugeordnet ist:
+                  </p>
+                  <p className="mt-0.5 [overflow-wrap:anywhere]">
+                    {kontoHinweise.filter((k) => k.art === "anderer_verein").map((k) => k.email).join(", ")}
+                  </p>
+                  <p className="mt-1 text-brand-ink-soft">
+                    Dieser TanzRaum-Nutzer ist bereits einem anderen Verein zugeordnet. Eine Übernahme ist nur nach Bestätigung durch den Nutzer möglich. Der Import
+                    legt nur euren Stammdatensatz an – es entsteht kein zweites Konto und kein Wechsel. Über die persönliche Einladung kann die Person zustimmen.
+                  </p>
+                </div>
+              )}
+              {kontoHinweise.some((k) => k.art === "konto") && (
+                <p className="mt-3 rounded-xl bg-brand-bg px-3.5 py-2.5 text-[13px] text-brand-ink">
+                  {zahl(kontoHinweise.filter((k) => k.art === "konto").length, "Person hat", "Personen haben")} bereits ein TanzRaum-Konto. Mit der persönlichen Einladung
+                  wird dieses Konto verbunden – es entsteht kein zweites Konto.
                 </p>
               )}
               {aufbereitet.doppelt.size > 0 && (

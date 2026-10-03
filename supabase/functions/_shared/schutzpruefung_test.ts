@@ -2,7 +2,7 @@
 //   node --experimental-strip-types supabase/functions/_shared/schutzpruefung_test.ts   (oder: deno run schutzpruefung_test.ts)
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { kiAktiviert, pruefeRegeln, pruefeUndVeroeffentliche, kiPruefen, type PruefKontext, type KiErgebnis } from "./schutzpruefung.ts";
+import { kiAktiviert, pruefeRegeln, pruefeRegelnMitSmileys, pruefeUndVeroeffentliche, kiPruefen, type PruefKontext, type KiErgebnis } from "./schutzpruefung.ts";
 
 const OEFF: PruefKontext = { oeffentlich: true, minderjaehrige: true, kontextEigene: [], kontextChat: [] };
 const GRUPPE_ERW: PruefKontext = { oeffentlich: false, minderjaehrige: false, kontextEigene: [], kontextChat: [] };
@@ -145,6 +145,24 @@ await fall("Edge Function: Schlüssel nur bei eingeschalteter KI gelesen, KI son
   await fall("KI aus 5: nie „nicht geprüft“ – kein Schlüssel nötig, kein Netzaufruf", () => assert.equal(netz, 0));
   globalThis.fetch = echtesFetch;
 }
+
+// ---------------- TanzRaum-Smileys im Text ----------------
+await fall("Smileys: Text + mehrere Smileys sind frei", () => {
+  for (const t of ["Training heute :t01::t23: 🔥💃💪", "5, 6, 7, 8 … :g01: :t02:", ":t01::t01::t01:"]) assert.equal(pruefeRegelnMitSmileys(t, OEFF).entscheidung, "frei", t);
+});
+await fall("Smileys: Codes verstecken nichts (zusammengezogen und getrennt geprueft)", () => {
+  for (const t of ["fi:t01:cken", "du :t01: hurensohn", "h:t01:u:g01:r:t02:e", "ruf mich an 0171:t01:2345678", "schreib mir auf snap :t01: privat"]) {
+    assert.equal(pruefeRegelnMitSmileys(t, OEFF).entscheidung, "blockiert", t);
+  }
+});
+await fall("Smileys: nur Codes -> ohne Regeltreffer veröffentlicht, Text bleibt erhalten", async () => {
+  const l = neu(); const r = await pruefeUndVeroeffentliche({ inhalt: ":t01::t23:" }, { ...deps({}, l), ki: null });
+  assert.equal(r.ok, true); assert.equal(l.blockiert.length, 0);
+});
+await fall("Smileys: blockierte Nachricht mit Codes wird nicht veröffentlicht", async () => {
+  const l = neu(); const r = await pruefeUndVeroeffentliche({ inhalt: "du hu:t01:rensohn" }, { ...deps({}, l), ki: null });
+  assert.equal(r.ok, false); assert.equal(l.veroeffentlicht, 0);
+});
 
 // ---------------- KI-Aufruf ----------------
 const antwort = (body: unknown, status = 200) => async () => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });

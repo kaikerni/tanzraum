@@ -72,10 +72,11 @@ export async function personHinzufuegen(_prev: AktionsErgebnis, formData: FormDa
       };
     case "schon_mitglied":
       return { error: "Diese Person ist eurem Verein bereits zugeordnet." };
+    case "zustimmung_angefragt":
     case "freigabe_angefragt":
       return {
         error: null,
-        ok: `${r.name ?? "Die Person"} ist noch einem anderen Verein zugeordnet. Wir haben den bisherigen Verein um Freigabe gebeten – danach wird sie euch automatisch hinzugefügt.`,
+        ok: "Dieser TanzRaum-Nutzer ist bereits einem anderen Verein zugeordnet. Eine Übernahme ist nur nach Bestätigung durch den Nutzer möglich. Die Person wurde gefragt – stimmt sie zu und gibt der bisherige Verein sie frei, wird sie euch automatisch hinzugefügt.",
       };
     case "hinzugefuegt": {
       if (r.antrag_id && r.benachrichtigung === "app_email") {

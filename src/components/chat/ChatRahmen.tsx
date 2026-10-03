@@ -10,6 +10,7 @@ import { alsChatEintrag, type ChatEintrag, type Kontaktanfrage } from "@/lib/cha
 import { kontaktanfrageBeantworten } from "@/app/dashboard/nachrichten/actions";
 import { ChatAvatar, zeitKurz } from "./ChatAvatar";
 import { PushSchalter } from "./PushSchalter";
+import { smileyCodesAlsText } from "@/lib/chat/inlineSmileys";
 
 const PRIVAT_GRUPPEN = ["Trainer", "Betreuer", "Andere Kontakte"] as const;
 
@@ -41,7 +42,7 @@ function ChatZeile({ c, offen }: { c: ChatEintrag; offen: boolean }) {
               ) : c.letzteNachricht ? (
                 <>
                   {c.letzterSender && <span className="font-medium text-brand-ink">{c.letzterSender}: </span>}
-                  {c.letzteNachricht}
+                  {smileyCodesAlsText(c.letzteNachricht)}
                 </>
               ) : (
                 (c.untertitel ?? "Noch keine Nachrichten")

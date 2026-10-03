@@ -11,6 +11,7 @@ import { WichtigPopup, type PopupEintrag } from "@/components/news/WichtigPopup"
 import { getAnkuendigungen, getOffeneWichtigeNews } from "@/lib/news/getNews";
 import { getMeineAntraege } from "@/lib/antraege/getAntraege";
 import { AntragHinweis } from "@/components/antraege/AntragHinweis";
+import { VereinswechselHinweis, type MeinVereinswechsel } from "@/components/verein/VereinswechselHinweis";
 import { OnlineHerzschlag } from "@/components/online/OnlineHerzschlag";
 import { NachrichtenZustellung } from "@/components/chat/NachrichtenZustellung";
 import { aktiveAnsicht } from "@/lib/admin/ansichtLesen";
@@ -59,7 +60,7 @@ export default async function DashboardLayout({
   const { data: rechtstexteOffen } = await supabase.rpc("rechtstexte_offen");
   if (rechtstexteOffen === true) redirect("/rechtstexte");
 
-  const [{ data: ungelesen }, { count: benachrichtigungen }, zugriff, wichtigeNews, ankuendigungen, meineAntraege, { count: neueAbmeldungen }] = await Promise.all([
+  const [{ data: ungelesen }, { count: benachrichtigungen }, zugriff, wichtigeNews, ankuendigungen, meineAntraege, { count: neueAbmeldungen }, { data: wechselRoh }] = await Promise.all([
     supabase.rpc("eigene_ungelesene_nachrichten_anzahl"),
     supabase
       .from("benachrichtigungen")
@@ -77,7 +78,16 @@ export default async function DashboardLayout({
       .eq("user_id", user.id)
       .eq("typ", "training_abmeldung")
       .eq("gelesen", false),
+    // Vereinswechsel-Anfragen, denen die Person zustimmen kann (bzw. Stand nach ihrer Zustimmung)
+    supabase.rpc("meine_vereinswechsel"),
   ]);
+  // deno-lint-ignore no-explicit-any
+  const vereinswechsel: MeinVereinswechsel[] = ((wechselRoh ?? []) as any[]).map((w) => ({
+    id: w.id,
+    zielVerein: w.ziel_verein,
+    bestaetigt: w.bestaetigt === true,
+    abgelehnt: w.bisheriger_verein_abgelehnt === true,
+  }));
   const offeneAntraege = meineAntraege.filter((a) => a.status === "offen");
   // Wichtige News und wichtige TanzRaum-Ankuendigungen erscheinen als Popup, bis sie bestaetigt sind
   const popup: PopupEintrag[] = [
@@ -169,6 +179,7 @@ export default async function DashboardLayout({
         <main className="flex flex-1 flex-col overflow-y-auto px-3 pb-28 pt-4 sm:px-5 md:pb-8 md:pt-5 xl:px-6">
           {ansicht && <AnsichtLeiste aktiv={ansicht} />}
           {offeneAntraege.length > 0 && <AntragHinweis antraege={offeneAntraege} />}
+          {vereinswechsel.length > 0 && <VereinswechselHinweis wechsel={vereinswechsel} />}
           <div className="flex-1">{children}</div>
           <AppFusszeile className="mx-auto mt-10 w-full max-w-[1200px]" />
         </main>

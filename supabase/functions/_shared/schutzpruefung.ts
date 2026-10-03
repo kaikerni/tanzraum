@@ -336,9 +336,23 @@ export const TEXTE = {
   gesperrt: "Du kannst in diesem Chat gerade nicht schreiben.",
 };
 
-// Alle pruefbaren Texte einer Nachricht (Text, Umfrage, Dateiname)
+// TanzRaum-Smileys im Text („:t01:“) sind reine Bildcodes. Geprueft wird der tatsaechliche Text ohne diese Codes –
+// einmal zusammengezogen („fi:t01:cken“ → „ficken“) und einmal mit Leerzeichen; blockiert eine Variante, wird blockiert.
+export const SMILEY_CODE = /:[a-z]{1,3}\d{1,3}:/g;
+export const ohneSmileyCodes = (text: string, ersatz = "") => text.replace(SMILEY_CODE, ersatz);
+
+// Alle pruefbaren Texte einer Nachricht (Text, Umfrage, Dateiname) – ohne Smiley-Codes
 export function pruefText(n: Nachricht): string {
-  return [n.inhalt ?? "", n.umfrage?.frage ?? "", ...(n.umfrage?.optionen ?? []), n.anhang?.name ?? ""].map((s) => String(s).trim()).filter(Boolean).join("\n");
+  return ohneSmileyCodes([n.inhalt ?? "", n.umfrage?.frage ?? "", ...(n.umfrage?.optionen ?? []), n.anhang?.name ?? ""].map((s) => String(s).trim()).filter(Boolean).join("\n")).trim();
+}
+
+// Regelpruefung ueber beide Varianten (Codes entfernt bzw. durch Leerzeichen ersetzt); die strengere gewinnt
+export function pruefeRegelnMitSmileys(roh: string, k: PruefKontext): RegelErgebnis {
+  const zusammen = pruefeRegeln(ohneSmileyCodes(roh), k);
+  if (zusammen.entscheidung === "blockiert" || !/:[a-z]{1,3}\d{1,3}:/.test(roh)) return zusammen;
+  const getrennt = pruefeRegeln(ohneSmileyCodes(roh, " "), k);
+  const rang = { frei: 0, verdacht: 1, blockiert: 2 } as const;
+  return rang[getrennt.entscheidung] > rang[zusammen.entscheidung] ? getrennt : zusammen;
 }
 
 export async function sha256(text: string): Promise<string> {
@@ -348,6 +362,7 @@ export async function sha256(text: string): Promise<string> {
 
 export async function pruefeUndVeroeffentliche(n: Nachricht, d: AblaufDeps): Promise<AblaufErgebnis> {
   const text = pruefText(n);
+  const roh = [n.inhalt ?? "", n.umfrage?.frage ?? "", ...(n.umfrage?.optionen ?? []), n.anhang?.name ?? ""].map((s) => String(s).trim()).filter(Boolean).join("\n");
   const vp = await d.vorpruefung(text);
   if (!vp.ok) {
     const code = vp.grund ?? "keine_rechte";
@@ -360,7 +375,7 @@ export async function pruefeUndVeroeffentliche(n: Nachricht, d: AblaufDeps): Pro
 
   // Ohne Text (Sticker, Foto/Video ohne Beschriftung, Standort im Gruppenchat): Regeln/KI entfallen, Vorpruefung (Flut, Sperre) gilt
   if (text) {
-    const r = pruefeRegeln(text, k);
+    const r = pruefeRegelnMitSmileys(roh, k);
     if (r.entscheidung === "blockiert") {
       await d.blockieren({ quelle: "regel", ergebnis: "blockiert", kategorie: r.kategorie ?? "sonstiges", schwere: r.schwere, hash, auszug: text.slice(0, 500) });
       return { ok: false, code: "blockiert", fehler: TEXTE.blockiert };

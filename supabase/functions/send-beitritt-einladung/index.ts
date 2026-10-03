@@ -2,6 +2,7 @@
 // Versendet eine bestehende Vereins- bzw. Gruppeneinladung per E-Mail.
 //
 //   POST { einladung_id, email }   (Authorization: Bearer <Nutzer-JWT>)
+//   POST { freischaltung_id }      kostenlose Sonderfreischaltung (nur TanzRaum-Admin; Empfaenger aus der Einladung)
 //
 // Serverseitige Pruefung:
 //   - angemeldet; Einladungsdaten werden ALS Nutzer ueber mail_einladung_daten() gelesen:
@@ -12,7 +13,7 @@
 // Link: <App>/einladung/<token>  (keine alten *.html-Seiten mehr)
 
 import { appUrl, CORS, istEmail, json, NEUTRALER_FEHLER, sendeMail } from "../_shared/mail.ts";
-import { vereinsEinladung } from "../_shared/vorlagen.ts";
+import { freischaltungEinladung, vereinsEinladung } from "../_shared/vorlagen.ts";
 import { angemeldet, dienst, protokollieren, UUID, versandSeit } from "../_shared/zugriff.ts";
 
 const ART = "einladung";
@@ -24,11 +25,29 @@ Deno.serve(async (req) => {
   const sitzung = await angemeldet(req);
   if (!sitzung) return json({ error: "Bitte melde dich an." }, 401);
 
-  let einladungId: unknown, email: unknown;
+  let einladungId: unknown, email: unknown, freischaltungId: unknown;
   try {
-    ({ einladung_id: einladungId, email } = await req.json());
+    ({ einladung_id: einladungId, email, freischaltung_id: freischaltungId } = await req.json());
   } catch {
     return json({ error: "Ungültige Anfrage." }, 400);
+  }
+
+  // Kostenlose Sonderfreischaltung: Berechtigung (nur TanzRaum-Admin) und Empfaenger prueft die Datenbank
+  if (freischaltungId !== undefined) {
+    if (typeof freischaltungId !== "string" || !UUID.test(freischaltungId)) return json({ error: "Ungültige Einladung." }, 400);
+    const { data: fd, error: fe } = await sitzung.nutzer.rpc("mail_freischaltung_daten", { p_id: freischaltungId });
+    const f = Array.isArray(fd) ? fd[0] : null;
+    if (fe || !f || !istEmail(f.email)) return json({ error: "Nicht berechtigt oder Einladung nicht mehr gültig." }, 403);
+    const dienstClient = dienst();
+    if ((await versandSeit(dienstClient, { art: "freischaltung", bezug_id: freischaltungId }, 24)) >= 5) {
+      return json({ error: "Diese Einladung wurde heute schon mehrfach gesendet. Bitte versuche es später erneut." }, 429);
+    }
+    const fm = freischaltungEinladung({ tarif: f.tarif, bis: f.bis, link: `${appUrl()}/freischaltung/${f.token}`, gueltigBis: f.gueltig_bis });
+    const fr = await sendeMail({ art: "freischaltung", an: [{ email: String(f.email).trim() }], betreff: fm.betreff, html: fm.html });
+    await protokollieren(dienstClient, { art: "freischaltung", absender_user: sitzung.userId, bezug_id: freischaltungId, erfolgreich: fr.ok });
+    if (!fr.ok) return json({ error: NEUTRALER_FEHLER }, 502);
+    await sitzung.nutzer.rpc("admin_freischaltung_gesendet", { p_id: freischaltungId });
+    return json({ ok: true });
   }
   if (typeof einladungId !== "string" || !UUID.test(einladungId)) return json({ error: "Ungültige Einladung." }, 400);
   if (!istEmail(email)) return json({ error: "Bitte gib eine gültige E-Mail-Adresse ein." }, 400);

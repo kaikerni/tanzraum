@@ -156,6 +156,28 @@ export function vereinsEinladung(p: { vereinName: string; gruppeName?: string | 
   };
 }
 
+// Kostenlose Sonderfreischaltung durch die TanzRaum-Administration (aktiv erst nach Annahme)
+export function freischaltungEinladung(p: { tarif: string; bis?: string | null; link: string; gueltigBis?: string | null }): Mail {
+  const tarif = p.tarif === "verein" ? "VEREIN" : "BASIC";
+  const datum = (d?: string | null) => (d ? new Date(d.length === 10 ? `${d}T12:00:00Z` : d).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", dateStyle: "long" }) : null);
+  const bis = datum(p.bis);
+  const linkBis = datum(p.gueltigBis);
+  return {
+    betreff: `Dein kostenloser TanzRaum-Zugang (${tarif})`,
+    html: layout({
+      vorschau: `TanzRaum schenkt dir einen kostenlosen ${tarif}-Zugang.`,
+      titel: `Dein kostenloser ${tarif}-Zugang`,
+      absaetze: [
+        "Hallo,",
+        `das TanzRaum-Team schaltet dich kostenlos für <strong>${tarif}</strong> frei – ${bis ? `bis zum <strong>${esc(bis)}</strong>` : "<strong>unbefristet</strong>"}.`,
+        "Melde dich mit dieser E-Mail-Adresse an oder registriere dich neu und nimm die Einladung an. Erst dann wird der Zugang aktiviert. Es entstehen keine Kosten, und es verlängert sich nichts automatisch kostenpflichtig.",
+      ],
+      button: { text: "Einladung annehmen", url: p.link },
+      hinweis: `Die Einladung gilt nur für diese E-Mail-Adresse und kann einmal angenommen werden.${linkBis ? ` Der Link ist gültig bis ${esc(linkBis)}.` : ""} Du erwartest keine Einladung? Dann ignoriere diese E-Mail.`,
+    }),
+  };
+}
+
 export function rundschreiben(p: { vereinName: string; absender?: string | null; betreff: string; text: string }): Mail {
   return {
     betreff: `${p.betreff} – ${p.vereinName}`,

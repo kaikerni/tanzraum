@@ -178,11 +178,15 @@ export default async function MitgliedsantraegeSeite({ searchParams }: { searchP
         />
         {ausgehend.length > 0 && (
           <div className="mt-4 rounded-xl bg-brand-bg p-3">
-            <p className="text-[12.5px] font-semibold text-brand-ink-soft">Wartet auf Freigabe durch den bisherigen Verein</p>
+            <p className="text-[12.5px] font-semibold text-brand-ink-soft">Angefragte Übernahmen (Person ist einem anderen Verein zugeordnet)</p>
             <ul className="mt-1 flex flex-col gap-1 text-[13.5px] text-brand-ink">
               {ausgehend.map((w) => (
                 <li key={w.id}>
-                  {w.person} <span className="text-brand-ink-soft">· bisher {w.andererVerein} · angefragt am {datumKurz(w.erstelltAm)}</span>
+                  {w.person}{" "}
+                  <span className="text-brand-ink-soft">
+                    · {w.stand === "wartet_auf_person" ? "wartet auf Bestätigung durch die Person" : "Person hat zugestimmt – wartet auf Freigabe durch den bisherigen Verein"} ·
+                    angefragt am {datumKurz(w.erstelltAm)}
+                  </span>
                 </li>
               ))}
             </ul>

@@ -91,3 +91,80 @@ export async function freischaltungVerlaengern(aboId: string, bis: string | null
   neuLaden();
   return { error: null, ok: bis ? `Verlängert bis ${new Date(bis).toLocaleDateString("de-DE")}.` : "Jetzt unbefristet." };
 }
+
+// ---------------------------------------------------------------------------------------------
+// Kostenlose Sonderfreischaltung per E-Mail-Einladung (nur TanzRaum-Admin; aktiv erst nach Annahme)
+// ---------------------------------------------------------------------------------------------
+export type FreischaltungEinladung = {
+  id: string;
+  email: string;
+  nutzer: string | null;
+  tarif: "basic" | "verein";
+  bis: string | null;
+  notiz: string | null;
+  erstelltAm: string;
+  gesendetAm: string | null;
+  angenommen: boolean;
+  angenommenAm: string | null;
+  status: "ausstehend" | "aktiv" | "abgelaufen" | "widerrufen";
+};
+
+export async function freischaltungEinladungen(): Promise<FreischaltungEinladung[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("admin_freischaltung_einladungen");
+  // deno-lint-ignore no-explicit-any
+  return ((data ?? []) as any[]).map((e) => ({
+    id: e.id,
+    email: e.email,
+    nutzer: e.nutzer ?? null,
+    tarif: e.tarif,
+    bis: e.bis ?? null,
+    notiz: e.notiz ?? null,
+    erstelltAm: e.erstellt_am,
+    gesendetAm: e.gesendet_am ?? null,
+    angenommen: e.angenommen === true,
+    angenommenAm: e.angenommen_am ?? null,
+    status: e.status,
+  }));
+}
+
+async function einladungMailSenden(supabase: Awaited<ReturnType<typeof createClient>>, id: string): Promise<string | null> {
+  const { error } = await supabase.functions.invoke("send-beitritt-einladung", { body: { freischaltung_id: id } });
+  return error ? "Die E-Mail konnte gerade nicht gesendet werden." : null;
+}
+
+export async function freischaltungEinladen(_: AktionsErgebnis, form: FormData): Promise<AktionsErgebnis> {
+  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  const tarif = String(form.get("tarif") ?? "");
+  const laufzeit = String(form.get("laufzeit") ?? "unbegrenzt");
+  const bis = laufzeit === "befristet" ? String(form.get("bis") ?? "") : "";
+  const notiz = String(form.get("notiz") ?? "").slice(0, 500);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) return { error: "Bitte gib eine gültige E-Mail-Adresse ein." };
+  if (tarif !== "basic" && tarif !== "verein") return { error: "Bitte BASIC oder VEREIN wählen." };
+  if (laufzeit === "befristet" && !DATUM.test(bis)) return { error: "Bitte das Datum „Kostenlos bis“ angeben." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("admin_freischaltung_einladen", { p_email: email, p_tarif: tarif, p_bis: bis || null, p_notiz: notiz });
+  if (error) return { error: freundlicherFehler(error) };
+  const id = (data as { id?: string } | null)?.id;
+  const mailFehler = id ? await einladungMailSenden(supabase, id) : "Die Einladung wurde nicht angelegt.";
+  revalidatePath("/dashboard/admin/lizenzen");
+  if (mailFehler) return { error: `Einladung angelegt, aber: ${mailFehler} Du kannst sie in der Übersicht erneut senden.` };
+  return { error: null, ok: `Einladung an ${email} gesendet. Der Zugang wird erst nach Annahme aktiviert.` };
+}
+
+export async function freischaltungEinladungErneutSenden(id: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(id)) return { error: "Ungültige Einladung." };
+  const supabase = await createClient();
+  const fehler = await einladungMailSenden(supabase, id);
+  revalidatePath("/dashboard/admin/lizenzen");
+  return fehler ? { error: fehler } : { error: null, ok: "Einladung erneut gesendet." };
+}
+
+export async function freischaltungEinladungWiderrufen(id: string): Promise<AktionsErgebnis> {
+  if (!UUID.test(id)) return { error: "Ungültige Einladung." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_freischaltung_einladung_widerrufen", { p_id: id });
+  if (error) return { error: freundlicherFehler(error) };
+  neuLaden();
+  return { error: null, ok: "Einladung widerrufen. Eine bereits aktive Freischaltung wurde beendet." };
+}

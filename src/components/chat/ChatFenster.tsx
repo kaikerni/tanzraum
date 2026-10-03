@@ -62,6 +62,8 @@ import { bildVerkleinern } from "@/lib/medien/bild";
 import { videoVorbereiten } from "@/lib/medien/video";
 import { SCHNELL_REAKTIONEN, stickerInfo, stickerUrl } from "@/lib/chat/sticker";
 import { SCHNELL_EMOJIS } from "@/lib/chat/emojis";
+import { einzelnerSmiley, hatSmileyCodes, smileyCode } from "@/lib/chat/inlineSmileys";
+import { TextMitSmileys } from "./TextMitSmileys";
 import { sperrgrundText } from "@/lib/chat/sperrgrund";
 import { Sprachaufnahme } from "./Sprachaufnahme";
 import { useAnruf } from "./AnrufProvider";
@@ -483,7 +485,10 @@ export function ChatFenster({
     audio?: { blob: Blob; dauer: number };
     sticker?: string;
   }) {
-    const inhalt = text.trim();
+    // Nur ein einzelner TanzRaum-Smiley im Text: wie bisher als grosser Sticker senden
+    const einzeln = !extra && medien.length === 0 && !anhangDatei ? einzelnerSmiley(text) : null;
+    if (einzeln) extra = { sticker: einzeln };
+    const inhalt = einzeln ? "" : text.trim();
     const sonder = extra?.umfrage || extra?.standort || extra?.audio || extra?.sticker;
     if (sendet || (!inhalt && medien.length === 0 && !anhangDatei && !sonder)) return;
     setSendet(true);
@@ -547,7 +552,7 @@ export function ChatFenster({
         const anhang = anhangDatei ? { art: anhangDatei.art, pfad: await dateiHochladen(anhangDatei.datei, anhangDatei.datei.name), name: anhangDatei.datei.name } : null;
         await einfuegen({ inhalt, anhang }, true);
       }
-      if (!sonder) {
+      if (!sonder || einzeln) {
         setText("");
         setMedien([]);
         setAnhangDatei(null);
@@ -1042,7 +1047,7 @@ export function ChatFenster({
                       <div className={`mb-1.5 flex items-center gap-2 rounded-lg border-l-4 border-brand-red px-2 py-1 ${nurSticker ? "bg-white/95 shadow-sm" : "bg-black/[0.04]"}`}>
                         <div className="min-w-0 flex-1">
                           <div className="text-[12px] font-bold text-brand-red">{n.antwortSender ?? "Unbekannt"}</div>
-                          <div className="line-clamp-2 text-[12.5px] text-brand-ink-soft">{n.antwortText}</div>
+                          <div className="line-clamp-2 text-[12.5px] text-brand-ink-soft">{n.antwortText && <TextMitSmileys text={n.antwortText} gross={false} />}</div>
                         </div>
                         {n.antwortSticker && (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -1080,7 +1085,7 @@ export function ChatFenster({
                         {n.umfrage && <UmfrageAnsicht n={n as ChatNachricht & { umfrage: Umfrage }} onAbgestimmt={laden} />}
                         {n.inhalt && (
                           <span className="whitespace-pre-wrap break-words">
-                            <MitLinks text={n.inhalt} />
+                            <TextMitSmileys text={n.inhalt} textTeil={(t) => <MitLinks text={t} />} />
                           </span>
                         )}
                       </>
@@ -1421,6 +1426,12 @@ export function ChatFenster({
               setAnhangDatei({ datei, art: "datei" });
             }}
           />
+          {hatSmileyCodes(text) && (
+            // Vorschau: TanzRaum-Smileys stehen im Eingabefeld als kurzer Code (z. B. „:t01:“)
+            <div className="mb-1.5 max-h-24 overflow-y-auto whitespace-pre-wrap break-words rounded-2xl bg-white px-3 py-1.5 text-[14.5px] leading-snug text-brand-ink shadow-sm" aria-label="Vorschau">
+              <TextMitSmileys text={text} gross={false} />
+            </div>
+          )}
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -1519,7 +1530,7 @@ export function ChatFenster({
           </form>
           {emojiOffen && !aufnahme && (
             <div className="-mx-2 mt-2 sm:-mx-3">
-              <SmileyAuswahl gesperrt={sendet} onWahl={(id) => senden({ sticker: id })} onEmoji={emojiEinfuegen} />
+              <SmileyAuswahl gesperrt={sendet} onWahl={(id) => emojiEinfuegen(smileyCode(id))} onEmoji={emojiEinfuegen} />
             </div>
           )}
         </div>

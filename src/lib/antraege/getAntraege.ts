@@ -86,7 +86,15 @@ export async function getAntraegeListe(supabase: SupabaseClient, vereinId: strin
   }));
 }
 
-export type FreigabeAnfrage = { id: string; richtung: "eingehend" | "ausgehend"; person: string; andererVerein: string; erstelltAm: string };
+export type FreigabeAnfrage = {
+  id: string;
+  richtung: "eingehend" | "ausgehend";
+  person: string;
+  andererVerein: string;
+  erstelltAm: string;
+  // ausgehend: Stand der Uebernahme (der bisherige Verein wird dem neuen Verein nicht genannt)
+  stand: "wartet_auf_person" | "wartet_auf_freigabe";
+};
 
 export async function getFreigabeAnfragen(supabase: SupabaseClient, vereinId: string): Promise<FreigabeAnfrage[]> {
   const { data } = await supabase.rpc("freigabe_anfragen", { p_verein_id: vereinId });
@@ -97,6 +105,7 @@ export async function getFreigabeAnfragen(supabase: SupabaseClient, vereinId: st
     person: w.person ?? "Person",
     andererVerein: w.anderer_verein ?? "anderer Verein",
     erstelltAm: w.erstellt_am,
+    stand: w.stand === "wartet_auf_person" ? "wartet_auf_person" : "wartet_auf_freigabe",
   }));
 }
 

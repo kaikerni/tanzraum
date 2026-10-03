@@ -205,12 +205,17 @@ export async function einladungEinloesen(_prev: AktionsErgebnis, formData: FormD
   const token = String(formData.get("token") ?? "").match(UUID)?.[0];
   if (!token) return { error: "Bitte einen gültigen Einladungslink oder -code eingeben." };
 
+  // Person ist einem anderen Verein zugeordnet und hat dem Wechsel auf der Einladungsseite ausdruecklich zugestimmt
+  const wechsel = formData.get("wechsel") === "ja";
   const { supabase } = await sitzung();
-  const { data, error } = await supabase.rpc("invite_einloesen", { p_token: token });
+  const { data, error } = await supabase.rpc("invite_einloesen", { p_token: token, p_wechsel_bestaetigt: wechsel });
   if (error) return { error: error.message };
   // deno-lint-ignore no-explicit-any
   const ergebnis = data as any;
-  if (!ergebnis?.success) return { error: ergebnis?.error ?? "Einladung konnte nicht eingelöst werden." };
+  if (!ergebnis?.success) {
+    if (wechsel && typeof ergebnis?.error === "string" && ergebnis.error.startsWith("Danke")) return { error: null, ok: ergebnis.error };
+    return { error: ergebnis?.error ?? "Einladung konnte nicht eingelöst werden." };
+  }
 
   revalidatePath("/dashboard", "layout");
   // Verein verlangt einen Mitgliedsantrag: direkt dorthin
@@ -319,4 +324,17 @@ export async function beitrittsanfrageEntscheiden(id: string, annehmen: boolean,
   revalidatePath("/dashboard/mitgliedsantraege");
   revalidatePath("/dashboard/mitglieder");
   return { error: null, ok: annehmen ? "Angenommen – die Person ist jetzt Mitglied." : "Abgelehnt." };
+}
+
+// ---------- Vereinswechsel: Zustimmung bzw. Ablehnung durch die Person selbst (DB: vereinswechsel_bestaetigen) ----------
+export async function vereinswechselEntscheiden(anfrageId: string, annehmen: boolean): Promise<AktionsErgebnis> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(anfrageId)) return { error: "Ungültige Anfrage." };
+  const { supabase } = await sitzung();
+  const { data, error } = await supabase.rpc("vereinswechsel_bestaetigen", { p_anfrage_id: anfrageId, p_annehmen: annehmen });
+  if (error) return { error: error.message };
+  revalidatePath("/dashboard", "layout");
+  const status = (data as { status?: string } | null)?.status;
+  if (status === "abgelehnt") return { error: null, ok: "Anfrage abgelehnt – an deiner Vereinszuordnung ändert sich nichts." };
+  if (status === "abgeschlossen") return { error: null, ok: "Erledigt – du bist jetzt dem neuen Verein zugeordnet." };
+  return { error: null, ok: "Danke! Dein bisheriger Verein wurde um Freigabe gebeten." };
 }

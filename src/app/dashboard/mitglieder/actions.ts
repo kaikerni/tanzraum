@@ -120,10 +120,22 @@ export type ImportTreffer = { idx: number; treffer: "email" | "mitgliedsnummer" 
 export type ImportErgebnis = { neu: number; aktualisiert: number; verknuepft: number; unveraendert: number; gruppenNeu: number; gruppenZugeordnet: number };
 export type ImportGruppe = { aktion: "vorhanden"; gruppe_id: string } | { aktion: "neu" } | { aktion: "keine" };
 
-export async function importPruefen(vereinId: string, zeilen: Record<string, unknown>[]): Promise<{ error: string | null; treffer?: ImportTreffer[] }> {
+// Neutrale Hinweise zu bestehenden TanzRaum-Konten (Import erstellt nie ein Konto und wechselt nie einen Verein):
+// anderer_verein = Konto ist einem anderen Verein zugeordnet (Uebernahme nur nach Zustimmung der Person), konto = Konto ohne Verein
+export type ImportKontoHinweis = { email: string; art: "anderer_verein" | "eigener_verein" | "konto" };
+
+export async function importPruefen(
+  vereinId: string,
+  zeilen: Record<string, unknown>[],
+): Promise<{ error: string | null; treffer?: ImportTreffer[]; kontoHinweise?: ImportKontoHinweis[] }> {
   const supabase = await sitzung();
-  const { data, error } = await supabase.rpc("mitglieder_import_pruefen", { p_verein_id: vereinId, p_zeilen: zeilen });
+  const emails = [...new Set(zeilen.map((z) => String(z.email ?? "").trim().toLowerCase()).filter((e) => e.includes("@")))];
+  const [{ data, error }, { data: konten }] = await Promise.all([
+    supabase.rpc("mitglieder_import_pruefen", { p_verein_id: vereinId, p_zeilen: zeilen }),
+    emails.length ? supabase.rpc("mitglieder_import_konto_hinweise", { p_verein_id: vereinId, p_emails: emails }) : Promise.resolve({ data: [] }),
+  ]);
   if (error) return { error: freundlicherFehler(error) };
+  const kontoHinweise = ((konten ?? []) as ImportKontoHinweis[]).filter((k) => k.art !== "eigener_verein");
   // deno-lint-ignore no-explicit-any
   const treffer = ((data ?? []) as any[]).map((t) => ({
     idx: t.idx,
@@ -133,7 +145,7 @@ export async function importPruefen(vereinId: string, zeilen: Record<string, unk
     zielName: t.ziel_name ?? "",
     aenderungen: t.aenderungen ?? {},
   }));
-  return { error: null, treffer };
+  return { error: null, treffer, kontoHinweise };
 }
 
 export async function importAusfuehren(
