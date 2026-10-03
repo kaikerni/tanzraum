@@ -102,8 +102,8 @@ export function OnlineSchalter({ sichtbar: start }: { sichtbar: boolean }) {
           <strong>Online-Status zeigen</strong>
           <br />
           <span className="text-brand-ink-soft">
-            Deine Kontakte und Mitglieder deines Vereins sehen, wenn du gerade online bist. Ohne diese Einstellung zählst du nur anonym in der
-            Gesamtzahl. Unter 16 Jahren wird der Status nie mit Namen gezeigt.
+            Deine Kontakte und Mitglieder deines Vereins sehen, wenn du gerade online bist (Standard: an). Schaltest du es aus, zählst du nur
+            anonym in der Gesamtzahl. Unter 16 Jahren wird der Status nie mit Namen gezeigt.
           </span>
         </span>
         <input

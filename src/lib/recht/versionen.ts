@@ -3,5 +3,5 @@
 // Registrierung und "Zustimmung nachholen" pruefen serverseitig, dass genau diese Fassung aktuell ist.
 export const RECHTSTEXT_VERSION = {
   nutzungsbedingungen: "01.10.2026",
-  datenschutz: "01.10.2026",
+  datenschutz: "03.10.2026",
 } as const;

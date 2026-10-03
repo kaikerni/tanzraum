@@ -15,7 +15,7 @@ export function NachrichtenZustellung({ userId }: { userId: string }) {
       wartet = setTimeout(() => {
         wartet = null;
         zuletzt = Date.now();
-        void supabase.rpc("nachrichten_zugestellt");
+        void supabase.rpc("nachrichten_zugestellt").then(() => undefined); // sendet erst mit then/await
       }, Math.max(0, 3000 - (Date.now() - zuletzt)));
     };
     melden();

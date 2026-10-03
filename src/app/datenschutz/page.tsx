@@ -81,8 +81,8 @@ export default async function DatenschutzSeite() {
           </li>
           <li>
             Online-Status: Solange TanzRaum geöffnet ist, speichern wir etwa minütlich den Zeitpunkt deiner letzten Aktivität. Daraus
-            entstehen nur Zahlen („12 gerade online“). Mit Namen sehen dich deine Kontakte und Mitglieder deines Vereins nur, wenn du das in
-            den Einstellungen einschaltest; Konten unter 16 Jahren werden nie mit Namen gezeigt. Die TanzRaum-Administration sieht
+            entstehen nur Zahlen („12 gerade online“). Mit Namen sehen dich nur deine Kontakte und Mitglieder deines Vereins; das ist voreingestellt
+            und lässt sich in den Einstellungen („Online-Status“) jederzeit ausschalten. Konten unter 16 Jahren werden nie mit Namen gezeigt. Die TanzRaum-Administration sieht
             ausschließlich zusammengefasste Zahlen.
           </li>
           <li>
